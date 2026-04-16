@@ -5,12 +5,23 @@ on:
     - cron: '0 6 * * 1'
   workflow_dispatch:
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   check-updates:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: DeterminateSystems/nix-installer-action@main
+
+      - uses: cachix/cachix-action@v16
+        with:
+          name: nix-amd-ai
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
       - name: Check for new releases
         id: check
         env:
@@ -24,19 +35,108 @@ jobs:
           LEM_CURRENT=$(grep 'version = ' pkgs/lemonade/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
           XDNA_CURRENT=$(grep 'rev = ' pkgs/xrt-plugin-amdxdna/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
 
-          echo "flm_update=$( [ "$FLM_LATEST" != "$FLM_CURRENT" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
-          echo "lem_update=$( [ "$LEM_LATEST" != "$LEM_CURRENT" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
-          echo "xdna_update=$( [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          echo "flm_latest=$FLM_LATEST" >> "$GITHUB_OUTPUT"
+          echo "lem_latest=$LEM_LATEST" >> "$GITHUB_OUTPUT"
+          echo "xdna_latest=$XDNA_LATEST" >> "$GITHUB_OUTPUT"
+          echo "flm_current=$FLM_CURRENT" >> "$GITHUB_OUTPUT"
+          echo "lem_current=$LEM_CURRENT" >> "$GITHUB_OUTPUT"
+          echo "xdna_current=$XDNA_CURRENT" >> "$GITHUB_OUTPUT"
+
+          NEEDS_UPDATE=false
+          [ "$FLM_LATEST" != "$FLM_CURRENT" ] && NEEDS_UPDATE=true
+          [ "$LEM_LATEST" != "$LEM_CURRENT" ] && NEEDS_UPDATE=true
+          [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && NEEDS_UPDATE=true
+          echo "needs_update=$NEEDS_UPDATE" >> "$GITHUB_OUTPUT"
 
           echo "FLM: $FLM_CURRENT -> $FLM_LATEST"
           echo "Lemonade: $LEM_CURRENT -> $LEM_LATEST"
           echo "XDNA: $XDNA_CURRENT -> $XDNA_LATEST"
 
-      - name: Create update issue
-        if: steps.check.outputs.flm_update == 'true' || steps.check.outputs.lem_update == 'true' || steps.check.outputs.xdna_update == 'true'
+      - name: Update FastFlowLM version
+        if: steps.check.outputs.needs_update == 'true' && steps.check.outputs.flm_latest != steps.check.outputs.flm_current
+        run: |
+          NEW_VER="${{ steps.check.outputs.flm_latest }}"
+          echo "Updating FastFlowLM to $NEW_VER"
+          sed -i "s/version = \".*\"/version = \"$NEW_VER\"/" pkgs/fastflowlm/default.nix
+          # Zero out hash to trigger prefetch
+          sed -i 's/hash = "sha256-.*"/hash = ""/' pkgs/fastflowlm/default.nix
+          # Try building to get new hash
+          NEW_HASH=$(nix build .#fastflowlm 2>&1 | grep 'got:' | awk '{print $2}' || true)
+          if [ -n "$NEW_HASH" ]; then
+            sed -i "s|hash = \"\"|hash = \"$NEW_HASH\"|" pkgs/fastflowlm/default.nix
+          fi
+
+      - name: Update Lemonade version
+        if: steps.check.outputs.needs_update == 'true' && steps.check.outputs.lem_latest != steps.check.outputs.lem_current
+        run: |
+          NEW_VER="${{ steps.check.outputs.lem_latest }}"
+          echo "Updating Lemonade to $NEW_VER"
+          sed -i "s/version = \".*\"/version = \"$NEW_VER\"/" pkgs/lemonade/default.nix
+          sed -i 's/hash = "sha256-.*"/hash = ""/' pkgs/lemonade/default.nix
+          NEW_HASH=$(nix build .#lemonade 2>&1 | grep 'got:' | awk '{print $2}' || true)
+          if [ -n "$NEW_HASH" ]; then
+            sed -i "s|hash = \"\"|hash = \"$NEW_HASH\"|" pkgs/lemonade/default.nix
+          fi
+
+      - name: Update xdna-driver revision
+        if: steps.check.outputs.needs_update == 'true' && steps.check.outputs.xdna_latest != steps.check.outputs.xdna_current
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh issue create \
-            --title "Upstream updates available" \
-            --body "New versions detected by automated check. Update package derivations and hashes."
+          NEW_REV="${{ steps.check.outputs.xdna_latest }}"
+          echo "Updating xdna-driver to $NEW_REV"
+
+          # Update plugin rev
+          sed -i "s/rev = \".*\"/rev = \"$NEW_REV\"/" pkgs/xrt-plugin-amdxdna/default.nix
+          sed -i 's/hash = "sha256-.*"/hash = ""/' pkgs/xrt-plugin-amdxdna/default.nix
+
+          # Also check if XRT submodule changed
+          NEW_XRT_REV=$(gh api "repos/amd/xdna-driver/contents/xrt?ref=$NEW_REV" --jq '.sha' || true)
+          if [ -n "$NEW_XRT_REV" ]; then
+            OLD_XRT_REV=$(grep 'rev = ' pkgs/xrt/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+            if [ "$NEW_XRT_REV" != "$OLD_XRT_REV" ]; then
+              echo "XRT submodule also changed: $OLD_XRT_REV -> $NEW_XRT_REV"
+              sed -i "s/rev = \".*\"/rev = \"$NEW_XRT_REV\"/" pkgs/xrt/default.nix
+              sed -i 's/hash = "sha256-.*"/hash = ""/' pkgs/xrt/default.nix
+              # Also update xrtSrc in plugin
+              sed -i "s/rev = \".*\"/rev = \"$NEW_XRT_REV\"/" pkgs/xrt-plugin-amdxdna/default.nix
+            fi
+          fi
+
+          # Try building to get new hashes (may fail — PR will show build status)
+          nix build .#xrt 2>&1 | grep 'got:' | awk '{print $2}' > /tmp/xrt-hash || true
+          nix build .#xrt-plugin-amdxdna 2>&1 | grep 'got:' | awk '{print $2}' > /tmp/plugin-hash || true
+
+      - name: Build updated packages
+        if: steps.check.outputs.needs_update == 'true'
+        continue-on-error: true
+        run: |
+          nix build .#xrt || echo "XRT build failed — hash may need manual update"
+          nix build .#xrt-plugin-amdxdna || echo "Plugin build failed — hash may need manual update"
+          nix build .#fastflowlm || echo "FLM build failed — hash may need manual update"
+          nix build .#lemonade || echo "Lemonade build failed — hash may need manual update"
+
+      - name: Create PR
+        if: steps.check.outputs.needs_update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH="update/$(date +%Y%m%d)"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add -A
+          git diff --cached --quiet && echo "No changes to commit" && exit 0
+
+          BODY="## Upstream updates detected\n\n"
+          [ "${{ steps.check.outputs.flm_latest }}" != "${{ steps.check.outputs.flm_current }}" ] && \
+            BODY="${BODY}- FastFlowLM: ${{ steps.check.outputs.flm_current }} -> ${{ steps.check.outputs.flm_latest }}\n"
+          [ "${{ steps.check.outputs.lem_latest }}" != "${{ steps.check.outputs.lem_current }}" ] && \
+            BODY="${BODY}- Lemonade: ${{ steps.check.outputs.lem_current }} -> ${{ steps.check.outputs.lem_latest }}\n"
+          [ "${{ steps.check.outputs.xdna_latest }}" != "${{ steps.check.outputs.xdna_current }}" ] && \
+            BODY="${BODY}- xdna-driver: ${{ steps.check.outputs.xdna_current }} -> ${{ steps.check.outputs.xdna_latest }}\n"
+          BODY="${BODY}\n**Note:** Hashes may need manual correction if auto-prefetch failed. Check build logs."
+
+          git commit -m "chore: bump upstream package versions"
+          git push origin "$BRANCH"
+          echo -e "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -
