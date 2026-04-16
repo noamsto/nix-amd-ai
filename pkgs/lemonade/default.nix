@@ -11,6 +11,8 @@
   libwebsockets,
   systemd,
   libcap,
+  jq,
+  fastflowlm,
 }:
 stdenv.mkDerivation rec {
   pname = "lemonade";
@@ -21,7 +23,7 @@ stdenv.mkDerivation rec {
     hash = "sha256-+37NZ2qr5Kk7lbEHd9VYCgqq5VV37oy5TT9Pe7YYndg=";
   };
 
-  nativeBuildInputs = [autoPatchelfHook rpm cpio];
+  nativeBuildInputs = [autoPatchelfHook rpm cpio jq];
 
   buildInputs = [
     stdenv.cc.cc.lib # libstdc++
@@ -35,6 +37,14 @@ stdenv.mkDerivation rec {
 
   unpackPhase = ''
     rpm2cpio $src | cpio -idm
+  '';
+
+  # Patch backend_versions.json to match our FLM version.
+  # The file is explicitly designed to be user-editable (see its "comment" field).
+  postPatch = ''
+    jq '.flm.npu = "v${fastflowlm.version}"' \
+      opt/share/lemonade-server/resources/backend_versions.json > tmp.json
+    mv tmp.json opt/share/lemonade-server/resources/backend_versions.json
   '';
 
   installPhase = ''

@@ -13,11 +13,11 @@
       flake = {
         overlays.default = final: prev: let
           xrt = final.callPackage ./pkgs/xrt {};
-        in {
-          inherit xrt;
-          xrt-plugin-amdxdna = final.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           fastflowlm = final.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          lemonade = final.callPackage ./pkgs/lemonade {};
+        in {
+          inherit xrt fastflowlm;
+          xrt-plugin-amdxdna = final.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
+          lemonade = final.callPackage ./pkgs/lemonade {inherit fastflowlm;};
         };
 
         nixosModules.default = {
@@ -28,16 +28,15 @@
 
       perSystem = {
         pkgs,
-        system,
         ...
       }: let
         xrt = pkgs.callPackage ./pkgs/xrt {};
+        fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
       in {
         packages = {
-          inherit xrt;
+          inherit xrt fastflowlm;
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
-          fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          lemonade = pkgs.callPackage ./pkgs/lemonade {};
+          lemonade = pkgs.callPackage ./pkgs/lemonade {inherit fastflowlm;};
         };
       };
     };

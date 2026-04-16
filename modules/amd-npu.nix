@@ -20,6 +20,8 @@
     optionalString cfg.enableROCm
     ":${pkgs.rocmPackages.clr}/lib";
 
+  llamacppRocm = pkgs.llama-cpp-rocm;
+
   pathList =
     [xrt-combined]
     ++ optional cfg.enableFastFlowLM pkgs.fastflowlm;
@@ -116,7 +118,8 @@ in {
       ]
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
       ++ optional cfg.enableLemonade pkgs.lemonade
-      ++ optional cfg.enableROCm pkgs.rocmPackages.clr;
+      ++ optional cfg.enableROCm pkgs.rocmPackages.clr
+      ++ optional cfg.enableROCm llamacppRocm;
 
     # Lemonade systemd service
     systemd.services.lemond = mkIf cfg.enableLemonade {
@@ -137,7 +140,8 @@ in {
           "XRT_PATH=${xrt-combined}"
           "LD_LIBRARY_PATH=${xrt-combined}/lib${optionalROCmLibs}"
           "PATH=${makeBinPath pathList}:/run/current-system/sw/bin"
-        ];
+        ]
+        ++ optional cfg.enableROCm "LEMONADE_LLAMACPP_ROCM_BIN=${llamacppRocm}/bin/llama-server";
       };
     };
   };
