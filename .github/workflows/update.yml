@@ -1,0 +1,42 @@
+name: Check for upstream updates
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+jobs:
+  check-updates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: DeterminateSystems/nix-installer-action@main
+      - name: Check for new releases
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          FLM_LATEST=$(gh api repos/FastFlowLM/FastFlowLM/releases/latest --jq '.tag_name' | sed 's/^v//')
+          LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name' | sed 's/^v//')
+          XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=1.7&per_page=1" --jq '.[0].sha')
+
+          FLM_CURRENT=$(grep 'version = ' pkgs/fastflowlm/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          LEM_CURRENT=$(grep 'version = ' pkgs/lemonade/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          XDNA_CURRENT=$(grep 'rev = ' pkgs/xrt-plugin-amdxdna/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+
+          echo "flm_update=$( [ "$FLM_LATEST" != "$FLM_CURRENT" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          echo "lem_update=$( [ "$LEM_LATEST" != "$LEM_CURRENT" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+          echo "xdna_update=$( [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && echo true || echo false )" >> "$GITHUB_OUTPUT"
+
+          echo "FLM: $FLM_CURRENT -> $FLM_LATEST"
+          echo "Lemonade: $LEM_CURRENT -> $LEM_LATEST"
+          echo "XDNA: $XDNA_CURRENT -> $XDNA_LATEST"
+
+      - name: Create update issue
+        if: steps.check.outputs.flm_update == 'true' || steps.check.outputs.lem_update == 'true' || steps.check.outputs.xdna_update == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue create \
+            --title "Upstream updates available" \
+            --body "New versions detected by automated check. Update package derivations and hashes."
