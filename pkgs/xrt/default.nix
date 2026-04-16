@@ -21,10 +21,8 @@
   libuuid,
   libxcrypt,
   ncurses,
-  gawk,
   libsystemtap,
   wget,
-  cacert,
 }:
 stdenv.mkDerivation rec {
   pname = "xrt";

@@ -16,15 +16,8 @@
   xrt,
 }:
 let
-  # Fetch XRT source for internal headers (the built xrt package has public
-  # headers, but the shim needs internal ones from source tree)
-  xrtSrc = fetchFromGitHub {
-    owner = "Xilinx";
-    repo = "XRT";
-    rev = "89b2f18e7060be7487595b8800f729589b0e83ee";
-    hash = "sha256-nQuR8lZufaT4YPrCD7eFqdBTRf/K6Q3NRHlu0hYHHt0=";
-    fetchSubmodules = true;
-  };
+  # Reuse XRT source for internal headers the shim needs but aren't in the installed package
+  xrtSrc = xrt.src;
 in
   stdenv.mkDerivation rec {
     pname = "xrt-plugin-amdxdna";

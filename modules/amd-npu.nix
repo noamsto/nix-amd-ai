@@ -3,8 +3,8 @@
   lib,
   pkgs,
   ...
-}:
-with lib; let
+}: let
+  inherit (lib) mkEnableOption mkOption mkIf types optionalString optional makeBinPath versionAtLeast;
   cfg = config.hardware.amd-npu;
 
   xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
