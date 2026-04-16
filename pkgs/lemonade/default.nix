@@ -1,20 +1,63 @@
 {
   lib,
   stdenv,
-  ...
+  fetchurl,
+  autoPatchelfHook,
+  rpm,
+  cpio,
+  zstd,
+  zlib,
+  openssl,
+  libwebsockets,
+  systemd,
+  libcap,
 }:
-stdenv.mkDerivation {
+stdenv.mkDerivation rec {
   pname = "lemonade";
-  version = "0.0.0-placeholder";
-  src = builtins.toFile "placeholder" "";
-  dontUnpack = true;
-  buildPhase = ''
-    echo "lemonade: not yet implemented" >&2
-    exit 1
+  version = "10.2.0";
+
+  src = fetchurl {
+    url = "https://github.com/lemonade-sdk/lemonade/releases/download/v${version}/lemonade-server-${version}.x86_64.rpm";
+    hash = "sha256-+37NZ2qr5Kk7lbEHd9VYCgqq5VV37oy5TT9Pe7YYndg=";
+  };
+
+  nativeBuildInputs = [autoPatchelfHook rpm cpio];
+
+  buildInputs = [
+    stdenv.cc.cc.lib # libstdc++
+    zstd
+    zlib
+    openssl
+    libwebsockets
+    systemd
+    libcap
+  ];
+
+  unpackPhase = ''
+    rpm2cpio $src | cpio -idm
   '';
+
+  installPhase = ''
+    mkdir -p $out/bin $out/share
+
+    install -m755 opt/bin/lemonade $out/bin/lemonade
+    install -m755 opt/bin/lemond $out/bin/lemond
+    install -m755 opt/bin/lemonade-server $out/bin/lemonade-server
+
+    # lemond searches for resources/ next to the binary AND in /opt/share/lemonade-server/
+    # Place next to binary so the relative lookup works in the Nix store
+    cp -r opt/share/lemonade-server/resources $out/bin/resources
+
+    # Also install to share/ for completeness (man pages, examples)
+    cp -r opt/share/lemonade-server/* $out/share/
+    cp -r opt/share/man $out/share/
+  '';
+
   meta = {
-    description = "Lemonade - AMD AI inference server";
+    description = "Local AI server with OpenAI-compatible API for NPU/GPU inference";
+    homepage = "https://github.com/lemonade-sdk/lemonade";
     license = lib.licenses.asl20;
     platforms = ["x86_64-linux"];
+    mainProgram = "lemond";
   };
 }
