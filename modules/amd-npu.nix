@@ -115,6 +115,7 @@ in {
         pkgs.lshw
       ]
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
+      ++ optional cfg.enableLemonade pkgs.lemonade
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr;
 
     # Lemonade systemd service
