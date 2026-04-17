@@ -19,6 +19,7 @@
           xrt-plugin-amdxdna = final.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = final.callPackage ./pkgs/lemonade {inherit fastflowlm;};
           llama-cpp-rocm = prev.llama-cpp-rocm;
+          llama-cpp-vulkan = prev.llama-cpp.override {vulkanSupport = true;};
         };
 
         nixosModules.default = {
@@ -40,6 +41,8 @@
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {inherit fastflowlm;};
           llama-cpp-rocm = pkgs.llama-cpp-rocm;
+          llama-cpp-vulkan = pkgs.llama-cpp.override {vulkanSupport = true;};
+          benchmark = pkgs.callPackage ./pkgs/benchmark {};
         };
 
         checks = {
@@ -86,6 +89,35 @@
               }
             ];
           }).config.system.build.etc;
+
+          module-eval-vulkan-true = (inputs.nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              inputs.self.nixosModules.default
+              {
+                boot.loader.grub.enable = false;
+                fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; };
+                hardware.amd-npu = {
+                  enable = true;
+                  enableFastFlowLM = true;
+                  enableLemonade = true;
+                  enableROCm = false;
+                  enableVulkan = true;
+                  lemonade.user = "noams";
+                };
+                users.users.noams = {
+                  isNormalUser = true;
+                  extraGroups = ["video" "render"];
+                };
+              }
+            ];
+          }).config.system.build.etc;
+        };
+
+        apps.benchmark = {
+          type = "app";
+          program = "${pkgs.callPackage ./pkgs/benchmark {}}/bin/benchmark";
+          meta = {description = "Benchmark lemonade backends (ROCm, Vulkan, FLM)";};
         };
       };
     };

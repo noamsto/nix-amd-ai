@@ -14,6 +14,7 @@
   jq,
   fastflowlm,
   llama-cpp-rocm,
+  llama-cpp-vulkan,
 }:
 stdenv.mkDerivation rec {
   pname = "lemonade";
@@ -46,7 +47,8 @@ stdenv.mkDerivation rec {
   # lemonade-sdk/lemonade#1652 (>= semver comparison for FLM on Linux).
   postPatch = ''
     jq '.flm.npu = "v${fastflowlm.version}"
-        | .llamacpp.rocm = "b${llama-cpp-rocm.version}"' \
+        | .llamacpp.rocm = "b${llama-cpp-rocm.version}"
+        | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"' \
       opt/share/lemonade-server/resources/backend_versions.json > tmp.json
     mv tmp.json opt/share/lemonade-server/resources/backend_versions.json
   '';
@@ -78,6 +80,20 @@ if [ -n "\$LEMONADE_LLAMACPP_ROCM_BIN" ]; then
   ROCM_INSTALL_DIR="\$CONFIG_DIR/bin/llamacpp/rocm"
   mkdir -p "\$ROCM_INSTALL_DIR"
   printf '%s' "\$ROCM_VERSION" > "\$ROCM_INSTALL_DIR/version.txt"
+fi
+if [ -n "\$LEMONADE_LLAMACPP_VULKAN_BIN" ]; then
+  CONFIG_DIR="\''${LEMONADE_CACHE_DIR:-\$HOME/.cache/lemonade}"
+  CONFIG_FILE="\$CONFIG_DIR/config.json"
+  mkdir -p "\$CONFIG_DIR"
+  if [ -f "\$CONFIG_FILE" ]; then
+    ${jq}/bin/jq --arg bin "\$LEMONADE_LLAMACPP_VULKAN_BIN" '.llamacpp.vulkan_bin = \$bin' "\$CONFIG_FILE" > "\$CONFIG_FILE.tmp" && mv "\$CONFIG_FILE.tmp" "\$CONFIG_FILE"
+  else
+    ${jq}/bin/jq -n --arg bin "\$LEMONADE_LLAMACPP_VULKAN_BIN" '{llamacpp: {vulkan_bin: \$bin}}' > "\$CONFIG_FILE"
+  fi
+  VULKAN_VERSION="\$(${jq}/bin/jq -r '.llamacpp.vulkan' $out/libexec/lemonade/resources/backend_versions.json)"
+  VULKAN_INSTALL_DIR="\$CONFIG_DIR/bin/llamacpp/vulkan"
+  mkdir -p "\$VULKAN_INSTALL_DIR"
+  printf '%s' "\$VULKAN_VERSION" > "\$VULKAN_INSTALL_DIR/version.txt"
 fi
 exec "$out/libexec/lemonade/$bin" "\$@"
 EOF
