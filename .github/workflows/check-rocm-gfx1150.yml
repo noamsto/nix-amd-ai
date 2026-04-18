@@ -2,8 +2,8 @@ name: Check ROCm gfx1150 native support
 
 on:
   schedule:
-    # First Monday of each month at 06:00 UTC.
-    - cron: '0 6 1-7 * 1'
+    # Weekly, Mondays at 06:00 UTC — matches the existing update.yml cadence.
+    - cron: '0 6 * * 1'
   workflow_dispatch:
 
 concurrency:
