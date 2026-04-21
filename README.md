@@ -75,12 +75,12 @@ If you see `lemonade backends` reporting a backend as `installed` but benchmarks
 
 All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600). Prompt 256 tokens, generation 128 tokens, 3 iterations after 1 warmup.
 
-### Large, prefill-heavy: Gemma-4-26B-A4B-it-GGUF (~15.7 GB, via `llama-bench`)
+### Large: Gemma-4-26B-A4B-it-GGUF (~15.7 GB, via `llama-bench`, llama.cpp b8770)
 
 | Metric | ROCm | Vulkan | Winner |
 | ------ | ---- | ------ | ------ |
-| Prefill (pp) | 395 t/s | 265 t/s | ROCm (+49%) |
-| Decode (tg)  | 10.4 t/s | 13.6 t/s | Vulkan (+31%) |
+| Prefill (pp512) | 360 ± 18 t/s | 370 ± 3 t/s | Vulkan (+3%, within noise) |
+| Decode (tg128)  | 13.86 ± 0.18 t/s | 17.52 ± 0.33 t/s | Vulkan (+26%) |
 
 ### Mid-size, chat-shaped: Qwen3.5-9B (same family on all three backends)
 
@@ -94,9 +94,9 @@ Notes: FLM's TTFT is dominated by a one-off NPU compile-to-cache; steady-state d
 
 **Recommendation:**
 
-- **Interactive chat on mid-size models** (7–14B Q4): use **Vulkan**. Wins both TTFT and decode here — Vulkan's low per-dispatch overhead dominates when prefill batches are small.
-- **Prefill-heavy workloads on large models** (long-context, RAG, batch on 20B+): use **ROCm**. The rocBLAS GEMM advantage shows up as model size grows.
-- **Power-budget / idle-CPU scenarios**: use **FLM/NPU** — decode is competitive with Vulkan and offloads the GPU, but the compile-on-first-load TTFT is noticeable.
+- **General LLM inference (7B–26B Q4):** use **Vulkan**. On Strix Point 890M with llama.cpp b8770, Vulkan wins decode at every size tested and ties or wins prefill. The previous "ROCm for prefill-heavy" advice no longer holds now that ROCm targets gfx1150 natively (the gfx1102 Tensile arch-logic was apparently more tuned than gfx1150's is today).
+- **Power-budget / idle-GPU scenarios:** use **FLM/NPU** — decode is competitive with Vulkan and offloads the GPU, but the compile-on-first-load TTFT is noticeable.
+- **ROCm** is kept installed as a fallback and for ecosystem tooling (`rocminfo`, profiling, HIP apps); re-evaluate when newer rocBLAS/Tensile logic for gfx1150 lands.
 
 Enable all three and let lemonade pick the recipe per model.
 
