@@ -14,18 +14,25 @@
         overlays.default = final: prev: let
           xrt = final.callPackage ./pkgs/xrt {};
           fastflowlm = final.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          # Lemonade RPM requires libwebsockets.so.20 (>= 4.4); pin to the
-          # version from nix-amd-ai's nixpkgs input for consumers on older channels.
-          libwebsockets-pinned = (import inputs.nixpkgs {inherit (final) system;}).libwebsockets;
+          # Reach into nix-amd-ai's own nixpkgs input for packages whose
+          # version / build config needs to be stable regardless of the
+          # consumer's channel:
+          #   - libwebsockets: lemonade RPM needs .so.20 (>= 4.4); nixos-25.11
+          #     still ships 4.3.5 (.so.19).
+          #   - llama-cpp-{rocm,vulkan}: older nixpkgs channels build without
+          #     gfx1150 in AMDGPU_TARGETS and predate recent Vulkan perf work.
+          # `prev` / `final` are the consumer's pkgs, so we import our input
+          # explicitly.
+          pinned = import inputs.nixpkgs {inherit (final.stdenv.hostPlatform) system;};
         in {
           inherit xrt fastflowlm;
           xrt-plugin-amdxdna = final.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = final.callPackage ./pkgs/lemonade {
             inherit fastflowlm;
-            libwebsockets = libwebsockets-pinned;
+            inherit (pinned) libwebsockets;
           };
-          llama-cpp-rocm = prev.llama-cpp-rocm;
-          llama-cpp-vulkan = prev.llama-cpp.override {vulkanSupport = true;};
+          inherit (pinned) llama-cpp-rocm;
+          llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
         };
 
         nixosModules.default = {
