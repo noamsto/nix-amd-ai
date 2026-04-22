@@ -145,6 +145,10 @@ in {
           "XRT_PATH=${xrt-combined}"
           "LD_LIBRARY_PATH=${xrt-combined}/lib${optionalROCmLibs}"
           "PATH=${makeBinPath pathList}:/run/current-system/sw/bin"
+          # Disable lemond's 300s upstream timeout so long prompt-processing
+          # phases (common with large agent system prompts on iGPU) don't
+          # abort before the first token. See lemonade-sdk/lemonade#1364.
+          "LEMONADE_GLOBAL_TIMEOUT=0"
         ]
         ++ optional cfg.enableROCm "LEMONADE_LLAMACPP_ROCM_BIN=${pkgs.llama-cpp-rocm}/bin/llama-server"
         ++ optional cfg.enableVulkan "LEMONADE_LLAMACPP_VULKAN_BIN=${pkgs.llama-cpp-vulkan}/bin/llama-server";

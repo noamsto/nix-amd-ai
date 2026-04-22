@@ -100,6 +100,25 @@ Notes: FLM's TTFT is dominated by a one-off NPU compile-to-cache; steady-state d
 
 Enable all three and let lemonade pick the recipe per model.
 
+## Coding agents and client timeouts
+
+Coding agents (Claude Code, opencode) ship large system prompts — 10k+ tokens once MCP servers, skills, and tool schemas are loaded. On a Strix Point iGPU, prompt processing runs at ~350 t/s, so the agent's first turn spends 25–35 s before the first token is emitted. Neither lemonade nor the agents send SSE keep-alive events during that silent window, and most clients close the socket after ~30 s, yielding:
+
+```
+[Info] (Process) srv  log_server_r: done request: POST /v1/chat/completions 127.0.0.1 200
+[Error] (HttpClient) CURL error: Failed writing received data to disk/application
+[Error] (WrappedServer) Streaming request failed: ...
+```
+
+Tracked upstream as [lemonade-sdk/lemonade#1364](https://github.com/lemonade-sdk/lemonade/issues/1364). Until that lands, this module sets `LEMONADE_GLOBAL_TIMEOUT=0` on the `lemond` service to disable its own 300 s upstream cap, which covers the variant where lemonade gives up on llama-server. The downstream client timeout remains a separate problem — best addressed by shortening the prompt or choosing a leaner agent.
+
+**Practical guidance:**
+
+- **Vulkan for chat and short prompts.** Decode is ~26 % faster than ROCm; for interactive conversations the prompt fits under the timeout easily.
+- **ROCm for heavy coding agents.** Prefill is marginally faster and often just enough to land under the ~30 s client cutoff with 10k-token prompts.
+- **[pi](https://github.com/badlogic/pi-mono)** (Hugging Face's recommended local coding agent — see the [official docs](https://huggingface.co/docs/hub/en/agents-local)) is the best fit for this hardware. Its prompt is a fraction of Claude Code's and it's designed around llama.cpp-served local models.
+- **Claude Code / opencode** are usable — strip down MCP servers, skills, and plugins to shrink the startup prompt, and prefer ROCm while #1364 is unresolved.
+
 ## Validation
 
 You can verify that backends are correctly wired by running:
