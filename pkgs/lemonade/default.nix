@@ -18,11 +18,11 @@
 }:
 stdenv.mkDerivation rec {
   pname = "lemonade";
-  version = "10.3.0";
+  version = "10.2.0";
 
   src = fetchurl {
     url = "https://github.com/lemonade-sdk/lemonade/releases/download/v${version}/lemonade-server-${version}.x86_64.rpm";
-    hash = "sha256-iKPjmC8FE1ZHQyIEJkFMzDwZNKBuJzmKviIlkiGo0u4=";
+    hash = "sha256-+37NZ2qr5Kk7lbEHd9VYCgqq5VV37oy5TT9Pe7YYndg=";
   };
 
   nativeBuildInputs = [autoPatchelfHook rpm cpio jq];
