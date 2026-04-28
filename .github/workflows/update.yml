@@ -41,13 +41,10 @@ jobs:
             "${{ steps.check.outputs.xdna_latest }}" "${{ steps.check.outputs.xdna_current }}"
 
       - name: Build updated packages
+        id: build
         if: steps.check.outputs.needs_update == 'true'
         continue-on-error: true
-        run: |
-          nix build .#xrt || echo "XRT build failed"
-          nix build .#xrt-plugin-amdxdna || echo "Plugin build failed"
-          nix build .#fastflowlm || echo "FLM build failed"
-          nix build .#lemonade || echo "Lemonade build failed"
+        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade --print-build-logs
 
       - name: Create PR
         if: steps.check.outputs.needs_update == 'true'
@@ -72,5 +69,8 @@ jobs:
           [ "${{ steps.check.outputs.xdna_latest }}" != "${{ steps.check.outputs.xdna_current }}" ] && \
             BODY+="- xdna-driver: ${{ steps.check.outputs.xdna_current }} -> ${{ steps.check.outputs.xdna_latest }}"$'\n'
           BODY+=$'\n'"**Note:** Hashes may need manual correction if auto-prefetch failed."
+          if [ "${{ steps.build.outcome }}" != "success" ]; then
+            BODY+=$'\n\n'"⚠️ **Build failed** in this workflow run. See the \"Build updated packages\" step logs and resolve before merging — typical causes: ABI bumps in vendored libs (e.g. libwebsockets SONAME), Cargo.lock drift, or hash mismatches."
+          fi
 
           echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -
