@@ -17,22 +17,22 @@
           # Reach into nix-amd-ai's own nixpkgs input for packages whose
           # version / build config needs to be stable regardless of the
           # consumer's channel:
-          #   - libwebsockets: lemonade RPM needs .so.20 (>= 4.4); nixos-25.11
+          #   - libwebsockets: lemonade needs .so.20 (>= 4.4); nixos-25.11
           #     still ships 4.3.5 (.so.19).
           #   - llama-cpp-{rocm,vulkan}: older nixpkgs channels build without
           #     gfx1150 in AMDGPU_TARGETS and predate recent Vulkan perf work.
           # `prev` / `final` are the consumer's pkgs, so we import our input
           # explicitly.
           pinned = import inputs.nixpkgs {inherit (final.stdenv.hostPlatform) system;};
+          llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
         in {
-          inherit xrt fastflowlm;
+          inherit xrt fastflowlm llama-cpp-vulkan;
+          inherit (pinned) llama-cpp-rocm libwebsockets;
           xrt-plugin-amdxdna = final.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = final.callPackage ./pkgs/lemonade {
-            inherit fastflowlm;
-            inherit (pinned) libwebsockets;
+            inherit fastflowlm llama-cpp-vulkan;
+            inherit (pinned) libwebsockets llama-cpp-rocm;
           };
-          inherit (pinned) llama-cpp-rocm;
-          llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
         };
 
         nixosModules.default = {
@@ -52,15 +52,12 @@
       in {
         packages = {
           inherit xrt fastflowlm llama-cpp-vulkan;
+          inherit (pkgs) llama-cpp-rocm;
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
-          lemonade = pkgs.callPackage ./pkgs/lemonade {inherit fastflowlm;};
-          # WIP from-source build of lemonade (lemond + lemonade + lemonade-server only;
-          # no web app, no Tauri). Replaces the prebuilt RPM once verified.
-          lemonade-source = pkgs.callPackage ./pkgs/lemonade/from-source.nix {
+          lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan;
             llama-cpp-rocm = pkgs.llama-cpp-rocm;
           };
-          llama-cpp-rocm = pkgs.llama-cpp-rocm;
           benchmark = pkgs.callPackage ./pkgs/benchmark {};
         };
 

@@ -1,114 +1,176 @@
 {
   lib,
   stdenv,
-  fetchurl,
-  autoPatchelfHook,
-  rpm,
-  cpio,
+  callPackage,
+  fetchFromGitHub,
+  cmake,
+  ninja,
+  pkg-config,
+  python3,
+  jq,
+  nlohmann_json,
+  cli11,
+  curl,
   zstd,
-  zlib,
-  openssl,
+  brotli,
+  httplib,
   libwebsockets,
+  openssl,
   systemd,
   libcap,
-  jq,
+  libdrm,
   fastflowlm,
   llama-cpp-rocm,
   llama-cpp-vulkan,
-}:
-stdenv.mkDerivation rec {
-  pname = "lemonade";
-  version = "10.2.0";
+  # Default-on opt-out flags. Headless / server-only consumers can flip these
+  # off via .override to skip the npm/Rust builds and shrink the closure.
+  withWebApp ? true,
+  withTauri ? true,
+}: let
+  version = "10.3.0";
 
-  src = fetchurl {
-    url = "https://github.com/lemonade-sdk/lemonade/releases/download/v${version}/lemonade-server-${version}.x86_64.rpm";
-    hash = "sha256-+37NZ2qr5Kk7lbEHd9VYCgqq5VV37oy5TT9Pe7YYndg=";
+  src = fetchFromGitHub {
+    owner = "lemonade-sdk";
+    repo = "lemonade";
+    rev = "v${version}";
+    hash = "sha256-IQE8E/88yI8MoqyTvoDSNjbPX9F7yW2ckne2PaDewxk=";
   };
 
-  nativeBuildInputs = [autoPatchelfHook rpm cpio jq];
+  web-app = callPackage ./web-app.nix {inherit src version;};
+  tauri-frontend = callPackage ./tauri-frontend.nix {inherit src version;};
+  tauri-app = callPackage ./tauri-app.nix {inherit src version tauri-frontend;};
+in stdenv.mkDerivation {
+  pname = "lemonade";
+  inherit version src;
 
-  buildInputs = [
-    stdenv.cc.cc.lib # libstdc++
-    zstd
-    zlib
-    openssl
-    libwebsockets
-    systemd
-    libcap
+  nativeBuildInputs = [
+    cmake
+    ninja
+    pkg-config
+    python3
+    jq
   ];
 
-  unpackPhase = ''
-    rpm2cpio $src | cpio -idm
+  buildInputs = [
+    nlohmann_json
+    cli11
+    curl
+    zstd
+    brotli
+    httplib
+    libwebsockets
+    openssl
+    systemd
+    libcap
+    libdrm
+  ];
+
+  # nixpkgs ships httplib as `httplib.pc`, but lemonade's CMakeLists looks for
+  # `cpp-httplib.pc` via pkg_check_modules. Synthesize an alias .pc file and add
+  # it to PKG_CONFIG_PATH so USE_SYSTEM_HTTPLIB takes the system path instead of
+  # falling through to FetchContent (which requires network and breaks the
+  # nix sandbox).
+  preConfigure = ''
+    mkdir -p $TMPDIR/pc-shim
+    cat > $TMPDIR/pc-shim/cpp-httplib.pc <<EOF
+    prefix=${httplib}
+    includedir=${httplib}/include
+    Name: cpp-httplib
+    Description: C++ header-only HTTP/HTTPS server and client library (alias for httplib)
+    Version: ${httplib.version}
+    Cflags: -I${httplib}/include
+    EOF
+    export PKG_CONFIG_PATH=$TMPDIR/pc-shim:$PKG_CONFIG_PATH
   '';
 
-  # Lemonade v10.2.0 requires exact backend version matches; override pinned
-  # versions to match what nix-amd-ai actually ships.
-  # Remove FLM override after upgrading to a release containing
-  # lemonade-sdk/lemonade#1652 (>= semver comparison for FLM on Linux).
+  cmakeFlags = [
+    (lib.cmakeFeature "CMAKE_BUILD_TYPE" "Release")
+    # Web app and Tauri are built as separate derivations and merged in
+    # postInstall, so the C++ build never runs npm or cargo itself.
+    (lib.cmakeBool "BUILD_WEB_APP" false)
+    (lib.cmakeBool "BUILD_TAURI_APP" false)
+    (lib.cmakeBool "REQUIRE_LINUX_TRAY" false)
+  ];
+
   postPatch = ''
-    jq '.flm.npu = "v${fastflowlm.version}"
-        | .llamacpp.rocm = "b${llama-cpp-rocm.version}"
-        | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"' \
-      opt/share/lemonade-server/resources/backend_versions.json > tmp.json
-    mv tmp.json opt/share/lemonade-server/resources/backend_versions.json
+    # Lemonade's CMakeLists assumes Debian's compiled libcpp-httplib.so
+    # (target name `cpp-httplib`); nixpkgs ships httplib header-only, so the
+    # link of -lcpp-httplib fails. Header-only cpp-httplib doesn't need a
+    # link entry — the inline functions are emitted into our own .o files —
+    # so use ''${HTTPLIB_LIBRARIES} (empty under our header-only .pc shim)
+    # instead of the literal `cpp-httplib` target name.
+    substituteInPlace CMakeLists.txt \
+      --replace-fail \
+        'target_link_libraries(lemonade-server-core PUBLIC cpp-httplib)' \
+        'target_link_libraries(lemonade-server-core PUBLIC ''${HTTPLIB_LIBRARIES})'
+    substituteInPlace src/cpp/cli/CMakeLists.txt \
+      --replace-fail \
+        'target_link_libraries(lemonade PRIVATE cpp-httplib)' \
+        'target_link_libraries(lemonade PRIVATE ''${HTTPLIB_LIBRARIES})'
+    substituteInPlace src/cpp/legacy-cli/CMakeLists.txt \
+      --replace-fail \
+        'target_link_libraries(lemonade-server PRIVATE cpp-httplib)' \
+        'target_link_libraries(lemonade-server PRIVATE ''${HTTPLIB_LIBRARIES})'
+
+    # Three install(CODE ...) blocks in cli, legacy-cli, and the top-level
+    # CMakeLists try to symlink binaries / units into /usr/bin and
+    # /usr/lib/systemd/system via $ENV{DESTDIR} — designed for Debian's
+    # DESTDIR-staged build. In Nix, DESTDIR is unset and CMAKE_INSTALL_PREFIX
+    # is $out, so $ENV{DESTDIR}/usr/bin resolves to /usr/bin, which the
+    # sandbox refuses. Drop those symlink blocks; the binaries and unit live
+    # at $out/{bin,lib/systemd/system}/ and the NixOS module wires them in.
+    sed -i '/Create symlink in standard bin path only if not installing to/,/^endif()$/d' \
+      src/cpp/cli/CMakeLists.txt \
+      src/cpp/legacy-cli/CMakeLists.txt
+    sed -i '/Create symlink in standard systemd search path only if not installing to/,/^    endif()$/d' CMakeLists.txt
+
+    # secrets.conf install rule writes to absolute /etc/lemonade/conf.d. The
+    # NixOS module is what owns /etc, not us — relocate the template under
+    # $out so it ships with the derivation but doesn't try to populate /etc.
+    substituteInPlace CMakeLists.txt \
+      --replace-fail \
+        'DESTINATION /etc/lemonade/conf.d' \
+        'DESTINATION share/lemonade/conf.d.example'
+
+    # Pin backend_versions.json to whatever fastflowlm / llama-cpp builds
+    # we ship, so lemonade's "installed vs needs update" check stays
+    # satisfied and it doesn't try to download backends at runtime.
+    if [ -f src/cpp/resources/backend_versions.json ]; then
+      jq '.flm.npu = "v${fastflowlm.version}"
+          | .llamacpp.rocm = "b${llama-cpp-rocm.version}"
+          | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"' \
+        src/cpp/resources/backend_versions.json > src/cpp/resources/backend_versions.json.tmp
+      mv src/cpp/resources/backend_versions.json.tmp src/cpp/resources/backend_versions.json
+    fi
   '';
 
-  installPhase = ''
-    mkdir -p $out/bin $out/share $out/libexec/lemonade
-
-    install -m755 opt/bin/lemonade $out/libexec/lemonade/lemonade
-    install -m755 opt/bin/lemond $out/libexec/lemonade/lemond
-    install -m755 opt/bin/lemonade-server $out/libexec/lemonade/lemonade-server
-
-    # Create wrappers that refresh ROCm runtime config on every launch.
-    # Lemonade compares ~/.cache/lemonade/bin/llamacpp/rocm/version.txt against
-    # resources/backend_versions.json .llamacpp.rocm to decide installed vs
-    # update_required, so we pin both the rocm_bin path and that version.txt.
-    for bin in lemonade lemond lemonade-server; do
-      cat > $out/bin/$bin <<EOF
-#!/usr/bin/env bash
-if [ -n "\$LEMONADE_LLAMACPP_ROCM_BIN" ]; then
-  CONFIG_DIR="\''${LEMONADE_CACHE_DIR:-\$HOME/.cache/lemonade}"
-  CONFIG_FILE="\$CONFIG_DIR/config.json"
-  mkdir -p "\$CONFIG_DIR"
-  if [ -f "\$CONFIG_FILE" ]; then
-    ${jq}/bin/jq --arg bin "\$LEMONADE_LLAMACPP_ROCM_BIN" '.llamacpp.rocm_bin = \$bin' "\$CONFIG_FILE" > "\$CONFIG_FILE.tmp" && mv "\$CONFIG_FILE.tmp" "\$CONFIG_FILE"
-  else
-    ${jq}/bin/jq -n --arg bin "\$LEMONADE_LLAMACPP_ROCM_BIN" '{llamacpp: {rocm_bin: \$bin}}' > "\$CONFIG_FILE"
-  fi
-  ROCM_VERSION="\$(${jq}/bin/jq -r '.llamacpp.rocm' $out/libexec/lemonade/resources/backend_versions.json)"
-  ROCM_INSTALL_DIR="\$CONFIG_DIR/bin/llamacpp/rocm"
-  mkdir -p "\$ROCM_INSTALL_DIR"
-  printf '%s' "\$ROCM_VERSION" > "\$ROCM_INSTALL_DIR/version.txt"
-fi
-if [ -n "\$LEMONADE_LLAMACPP_VULKAN_BIN" ]; then
-  CONFIG_DIR="\''${LEMONADE_CACHE_DIR:-\$HOME/.cache/lemonade}"
-  CONFIG_FILE="\$CONFIG_DIR/config.json"
-  mkdir -p "\$CONFIG_DIR"
-  if [ -f "\$CONFIG_FILE" ]; then
-    ${jq}/bin/jq --arg bin "\$LEMONADE_LLAMACPP_VULKAN_BIN" '.llamacpp.vulkan_bin = \$bin' "\$CONFIG_FILE" > "\$CONFIG_FILE.tmp" && mv "\$CONFIG_FILE.tmp" "\$CONFIG_FILE"
-  else
-    ${jq}/bin/jq -n --arg bin "\$LEMONADE_LLAMACPP_VULKAN_BIN" '{llamacpp: {vulkan_bin: \$bin}}' > "\$CONFIG_FILE"
-  fi
-  VULKAN_VERSION="\$(${jq}/bin/jq -r '.llamacpp.vulkan' $out/libexec/lemonade/resources/backend_versions.json)"
-  VULKAN_INSTALL_DIR="\$CONFIG_DIR/bin/llamacpp/vulkan"
-  mkdir -p "\$VULKAN_INSTALL_DIR"
-  printf '%s' "\$VULKAN_VERSION" > "\$VULKAN_INSTALL_DIR/version.txt"
-fi
-exec "$out/libexec/lemonade/$bin" "\$@"
-EOF
-      chmod +x $out/bin/$bin
-    done
-
-    # lemond searches for resources/ next to the binary AND in /opt/share/lemonade-server/
-    # Place next to binary so the relative lookup works in the Nix store
-    cp -r opt/share/lemonade-server/resources $out/libexec/lemonade/resources
-    ln -s ../libexec/lemonade/resources $out/bin/resources
-
-    # Also install to share/ for completeness (man pages, examples)
-    cp -r opt/share/lemonade-server/* $out/share/
-    cp -r opt/share/man $out/share/
+  # lemond looks for resources/ adjacent to its own binary (it tries
+  # ${argv0_dir}/resources first, then /opt/share/lemonade-server/resources).
+  # Neither matches our store layout, so the bin/resources symlink satisfies
+  # the relative lookup. The web UI lives where BUILD_WEB_APP=ON would have
+  # produced it (share/lemonade-server/resources/web-app/), as a symlink to
+  # the buildNpmPackage output to avoid duplicating ~3 MB into our closure.
+  postInstall = ''
+    ln -s ../share/lemonade-server/resources $out/bin/resources
+  ''
+  + lib.optionalString withWebApp ''
+    ln -s ${web-app} $out/share/lemonade-server/resources/web-app
+  ''
+  + lib.optionalString withTauri ''
+    ln -s ${tauri-app}/bin/lemonade-app $out/bin/lemonade-app
+    install -d $out/share/applications $out/share/pixmaps
+    ln -s ${tauri-app}/share/applications/lemonade-app.desktop $out/share/applications/lemonade-app.desktop
+    ln -s ${tauri-app}/share/pixmaps/lemonade-app.svg $out/share/pixmaps/lemonade-app.svg
   '';
+
+  # Surface the inner staging derivations so each can be built independently
+  # for hash refresh and debugging:
+  #   nix build .#lemonade.web-app
+  #   nix build .#lemonade.tauri-frontend
+  #   nix build .#lemonade.tauri-app
+  passthru = {
+    inherit web-app tauri-frontend tauri-app;
+  };
 
   meta = {
     description = "Local AI server with OpenAI-compatible API for NPU/GPU inference";
