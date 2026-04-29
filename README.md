@@ -9,10 +9,27 @@ AMD AI inference stack for NixOS — packages XRT, XDNA driver plugin, FastFlowL
 | `xrt` | Xilinx Runtime for AMD NPU | Built from [Xilinx/XRT](https://github.com/Xilinx/XRT) |
 | `xrt-plugin-amdxdna` | XDNA userspace driver plugin | Built from [amd/xdna-driver](https://github.com/amd/xdna-driver) branch `1.7` |
 | `fastflowlm` | NPU-optimized LLM runtime | Built from [FastFlowLM](https://github.com/FastFlowLM/FastFlowLM) |
-| `lemonade` | OpenAI-compatible local AI server | [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) RPM |
+| `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
+
+The `lemonade` package composes three derivations:
+
+- `lemonade.passthru.web-app` — React web UI (`buildNpmPackage`, served by `lemond` at `/`)
+- `lemonade.passthru.tauri-frontend` — desktop-shell renderer bundle (`buildNpmPackage`)
+- `lemonade.passthru.tauri-app` — Tauri desktop binary (`rustPlatform.buildRustPackage` against webkit2gtk-4.1)
+
+Both UIs are built by default. Headless / server-only consumers can opt out:
+
+```nix
+nix-amd-ai.overlays.default = final: prev: {
+  lemonade = (prev.lemonade.override {
+    withWebApp = true;   # default — web UI served by lemond
+    withTauri = false;   # skip Rust + webkit2gtk closure
+  });
+};
+```
 
 ## Usage
 
@@ -65,11 +82,9 @@ trusted-public-keys = ["nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4
 
 ### Why `enableROCm` / `enableVulkan` matter on NixOS
 
-Lemonade's RPM ships its own `llama-server` binaries for each backend, but they're linked against Linux FHS paths (`/usr/lib`) for `libvulkan.so.1`, `libstdc++.so.6`, etc. On NixOS those libraries are not on the default loader path, so the bundled binaries fail to dlopen and **lemonade silently falls back to CPU** — the server still responds, it just does so at a fraction of GPU speed.
+The lemonade source build deliberately doesn't bundle backend `llama-server` binaries — it expects a host-provided path. `enableROCm = true` and `enableVulkan = true` wire in the `llama-cpp-rocm` / `llama-cpp-vulkan` packages built in this flake (correct RPATH for NixOS via `autoPatchelfHook`) by exporting `LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN`. The lemonade wrapper persists those paths into `~/.cache/lemonade/config.json` on every launch so both the `lemond` service and ad-hoc CLI invocations pick them up.
 
-`enableROCm = true` and `enableVulkan = true` replace the bundled binaries with the `llama-cpp-rocm` / `llama-cpp-vulkan` packages built in this flake (correct RPATH via `autoPatchelfHook`) by exporting `LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN`. The lemonade wrapper persists those paths into `~/.cache/lemonade/config.json` on every launch so both the `lemond` service and ad-hoc CLI invocations pick them up.
-
-If you see `lemonade backends` reporting a backend as `installed` but benchmarks report <5 t/s decode on a small model, you're on CPU — check that the matching `enable*` option is set and the host has been rebuilt.
+If `lemonade backends` reports a backend as `installed` but benchmarks report <5 t/s decode on a small model, you're on CPU — check that the matching `enable*` option is set and the host has been rebuilt.
 
 ## Which backend should I use?
 
