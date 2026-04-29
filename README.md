@@ -25,8 +25,8 @@ Both UIs are built by default. Headless / server-only consumers can opt out:
 ```nix
 nix-amd-ai.overlays.default = final: prev: {
   lemonade = (prev.lemonade.override {
-    withWebApp = true;   # default — web UI served by lemond
-    withTauri = false;   # skip Rust + webkit2gtk closure
+    withWebApp = true;        # default — web UI served by lemond
+    withDesktopApp = false;   # skip Rust + webkit2gtk closure
   });
 };
 ```

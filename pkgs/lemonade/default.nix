@@ -25,7 +25,7 @@
   # Default-on opt-out flags. Headless / server-only consumers can flip these
   # off via .override to skip the npm/Rust builds and shrink the closure.
   withWebApp ? true,
-  withTauri ? true,
+  withDesktopApp ? true,
 }: let
   version = "10.3.0";
 
@@ -156,7 +156,7 @@ in stdenv.mkDerivation {
   + lib.optionalString withWebApp ''
     ln -s ${web-app} $out/share/lemonade-server/resources/web-app
   ''
-  + lib.optionalString withTauri ''
+  + lib.optionalString withDesktopApp ''
     ln -s ${tauri-app}/bin/lemonade-app $out/bin/lemonade-app
     install -d $out/share/applications $out/share/pixmaps
     ln -s ${tauri-app}/share/applications/lemonade-app.desktop $out/share/applications/lemonade-app.desktop
