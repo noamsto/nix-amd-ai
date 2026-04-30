@@ -10,6 +10,7 @@
   gtk3,
   librsvg,
   gst_all_1,
+  pipewire,
   version,
   src,
   tauri-frontend,
@@ -45,15 +46,16 @@ rustPlatform.buildRustPackage {
     glib
     gtk3
     librsvg
-    # gst-plugins-bad ships webrtcdsp, which WebKit needs to satisfy
-    # getUserMedia's echoCancellation/noiseSuppression constraints; without
-    # it, the voice-transcription panel fails with "Invalid constraint".
-    # wrapGAppsHook3 exports GST_PLUGIN_SYSTEM_PATH_1_0 from buildInputs.
+    # WebKit getUserMedia needs webrtcdsp (gst-plugins-bad) for the
+    # echoCancellation/noiseSuppression constraints, and pipewiresrc
+    # (in pipewire, not gst-plugins-*) for mic capture on Wayland.
+    # wrapGAppsHook3 picks these up from buildInputs into GST_PLUGIN_SYSTEM_PATH_1_0.
     gst_all_1.gstreamer
     gst_all_1.gst-plugins-base
     gst_all_1.gst-plugins-good
     gst_all_1.gst-plugins-bad
     gst_all_1.gst-libav
+    pipewire
   ];
 
   # `tauri/custom-protocol` flips tauri-codegen from dev mode (loading via
