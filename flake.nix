@@ -51,13 +51,17 @@
           xrt = pinned.callPackage ./pkgs/xrt {};
           fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
           llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
+          whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
+          stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
         in {
           inherit xrt fastflowlm llama-cpp-vulkan libwebsockets;
+          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
           inherit (pinned) llama-cpp-rocm;
           xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pinned.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan libwebsockets;
-            inherit (pinned) llama-cpp-rocm;
+            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            inherit (pinned) llama-cpp-rocm whisper-cpp stable-diffusion-cpp;
           };
         };
 
@@ -75,15 +79,21 @@
         xrt = pkgs.callPackage ./pkgs/xrt {};
         fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
         llama-cpp-vulkan = pkgs.llama-cpp.override {vulkanSupport = true;};
+        whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
+        stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
         libwebsockets = libwebsocketsOverride pkgs;
       in {
         packages = {
           inherit xrt fastflowlm llama-cpp-vulkan libwebsockets;
+          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
           inherit (pkgs) llama-cpp-rocm;
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan libwebsockets;
+            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
             llama-cpp-rocm = pkgs.llama-cpp-rocm;
+            whisper-cpp = pkgs.whisper-cpp;
+            stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
           benchmark = pkgs.callPackage ./pkgs/benchmark {};
         };

@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionalAttrs makeBinPath versionAtLeast;
+  inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast;
   cfg = config.hardware.amd-npu;
 
   xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
@@ -46,6 +46,17 @@ in {
     };
 
     enableVulkan = mkEnableOption "declarative Vulkan backend wiring for lemonade";
+
+    enableImageGen = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Whether to wire stable-diffusion.cpp recipes (sd-cpp:cpu and, when
+        enableROCm is true, sd-cpp:rocm) into lemonade. Disable to drop
+        ~150 MB CPU-only / ~1.5 GB with ROCm from the closure if you only
+        use lemonade for LLM inference.
+      '';
+    };
 
     lemonade = {
       port = mkOption {
@@ -104,17 +115,34 @@ in {
     ];
 
     # Environment variables for XRT plugin discovery
-    environment.sessionVariables = {
-      XILINX_XRT = "${xrt-combined}";
-      XRT_PATH = "${xrt-combined}";
-    } // optionalAttrs cfg.enableROCm {
-      LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
-      # Activates the "system" llamacpp recipe via our nix-amd-ai
-      # is_ggml_hip_plugin_available() patch in pkgs/lemonade.
-      LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
-    } // optionalAttrs cfg.enableVulkan {
-      LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
-    };
+    environment.sessionVariables =
+      {
+        XILINX_XRT = "${xrt-combined}";
+        XRT_PATH = "${xrt-combined}";
+      }
+      // optionalAttrs cfg.enableLemonade {
+        # CPU recipes work on every host, no GPU enable flag needed.
+        LEMONADE_LLAMACPP_CPU_BIN = "${pkgs.llama-cpp}/bin/llama-server";
+        LEMONADE_WHISPERCPP_CPU_BIN = "${pkgs.whisper-cpp}/bin/whisper-server";
+      }
+      // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {
+        LEMONADE_SDCPP_CPU_BIN = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
+      }
+      // optionalAttrs cfg.enableROCm {
+        LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
+        # Activates the "system" llamacpp recipe via our nix-amd-ai
+        # is_ggml_hip_plugin_available() patch in pkgs/lemonade.
+        LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
+      }
+      // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
+        LEMONADE_SDCPP_ROCM_BIN = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
+      }
+      // optionalAttrs cfg.enableVulkan {
+        LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
+        # whispercpp.vulkan_bin works thanks to our config_file.cpp env-mapping
+        # patch in pkgs/lemonade — upstream v10.3.0 doesn't ship the mapping.
+        LEMONADE_WHISPERCPP_VULKAN_BIN = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
+      };
 
     # System packages
     environment.systemPackages =
@@ -125,9 +153,18 @@ in {
       ]
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
       ++ optional cfg.enableLemonade pkgs.lemonade
+      ++ optionals cfg.enableLemonade [
+        pkgs.llama-cpp
+        pkgs.whisper-cpp
+      ]
+      ++ optional (cfg.enableLemonade && cfg.enableImageGen) pkgs.stable-diffusion-cpp
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr
       ++ optional cfg.enableROCm pkgs.llama-cpp-rocm
-      ++ optional cfg.enableVulkan pkgs.llama-cpp-vulkan;
+      ++ optional (cfg.enableROCm && cfg.enableImageGen) pkgs.stable-diffusion-cpp-rocm
+      ++ optionals cfg.enableVulkan [
+        pkgs.llama-cpp-vulkan
+        pkgs.whisper-cpp-vulkan
+      ];
 
     # Lemonade systemd service
     systemd.services.lemond = mkIf cfg.enableLemonade {
@@ -143,19 +180,29 @@ in {
         RestartSec = "5s";
         KillSignal = "SIGINT";
         LimitMEMLOCK = "infinity";
-        Environment = [
-          "XILINX_XRT=${xrt-combined}"
-          "XRT_PATH=${xrt-combined}"
-          "LD_LIBRARY_PATH=${xrt-combined}/lib${optionalROCmLibs}"
-          "PATH=${makeBinPath pathList}:/run/current-system/sw/bin"
-          # Disable lemond's 300s upstream timeout so long prompt-processing
-          # phases (common with large agent system prompts on iGPU) don't
-          # abort before the first token. See lemonade-sdk/lemonade#1364.
-          "LEMONADE_GLOBAL_TIMEOUT=0"
-        ]
-        ++ optional cfg.enableROCm "LEMONADE_LLAMACPP_ROCM_BIN=${pkgs.llama-cpp-rocm}/bin/llama-server"
-        ++ optional cfg.enableROCm "LEMONADE_GGML_HIP_PATH=${pkgs.llama-cpp-rocm}/lib/libggml-hip.so"
-        ++ optional cfg.enableVulkan "LEMONADE_LLAMACPP_VULKAN_BIN=${pkgs.llama-cpp-vulkan}/bin/llama-server";
+        Environment =
+          [
+            "XILINX_XRT=${xrt-combined}"
+            "XRT_PATH=${xrt-combined}"
+            "LD_LIBRARY_PATH=${xrt-combined}/lib${optionalROCmLibs}"
+            "PATH=${makeBinPath pathList}:/run/current-system/sw/bin"
+            # Disable lemond's 300s upstream timeout so long prompt-processing
+            # phases (common with large agent system prompts on iGPU) don't
+            # abort before the first token. See lemonade-sdk/lemonade#1364.
+            "LEMONADE_GLOBAL_TIMEOUT=0"
+            "LEMONADE_LLAMACPP_CPU_BIN=${pkgs.llama-cpp}/bin/llama-server"
+            "LEMONADE_WHISPERCPP_CPU_BIN=${pkgs.whisper-cpp}/bin/whisper-server"
+          ]
+          ++ optional cfg.enableImageGen "LEMONADE_SDCPP_CPU_BIN=${pkgs.stable-diffusion-cpp}/bin/sd-server"
+          ++ optionals cfg.enableROCm [
+            "LEMONADE_LLAMACPP_ROCM_BIN=${pkgs.llama-cpp-rocm}/bin/llama-server"
+            "LEMONADE_GGML_HIP_PATH=${pkgs.llama-cpp-rocm}/lib/libggml-hip.so"
+          ]
+          ++ optional (cfg.enableROCm && cfg.enableImageGen) "LEMONADE_SDCPP_ROCM_BIN=${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server"
+          ++ optionals cfg.enableVulkan [
+            "LEMONADE_LLAMACPP_VULKAN_BIN=${pkgs.llama-cpp-vulkan}/bin/llama-server"
+            "LEMONADE_WHISPERCPP_VULKAN_BIN=${pkgs.whisper-cpp-vulkan}/bin/whisper-server"
+          ];
       };
     };
   };

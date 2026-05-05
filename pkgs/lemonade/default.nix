@@ -22,6 +22,10 @@
   fastflowlm,
   llama-cpp-rocm,
   llama-cpp-vulkan,
+  whisper-cpp,
+  whisper-cpp-vulkan,
+  stable-diffusion-cpp,
+  stable-diffusion-cpp-rocm,
   # Default-on opt-out flags. Headless / server-only consumers can flip these
   # off via .override to skip the npm/Rust builds and shrink the closure.
   withWebApp ? true,
@@ -209,13 +213,46 @@ in stdenv.mkDerivation {
     }
     // On Linux x86_64, check common system library paths for the HIP plugin'
 
-    # Pin backend_versions.json to whatever fastflowlm / llama-cpp builds
-    # we ship, so lemonade's "installed vs needs update" check stays
-    # satisfied and it doesn't try to download backends at runtime.
+    # whispercpp's vulkan and rocm backends accept *_bin via runtime config
+    # (build_bin_config_key) but lemonade ships no env-var migration for
+    # them — only LEMONADE_WHISPERCPP_{CPU,NPU}_BIN are mapped. Add the
+    # missing vulkan mapping so the NixOS module can wire whisper-cpp's
+    # vulkan build via systemd Environment. (rocm not exposed for
+    # whispercpp at all in v${version} RECIPE_DEFS.)
+    substituteInPlace src/cpp/server/config_file.cpp \
+      --replace-fail \
+        '{"LEMONADE_WHISPERCPP_NPU_BIN",      "whispercpp", "npu_bin"},' \
+        '{"LEMONADE_WHISPERCPP_NPU_BIN",      "whispercpp", "npu_bin"},
+    {"LEMONADE_WHISPERCPP_VULKAN_BIN",   "whispercpp", "vulkan_bin"},'
+
+    # ConfigFile::load only runs migrate_from_env when ~/.cache/lemonade/
+    # config.json doesn't exist (first run). After that, env-var changes
+    # are silently ignored — so a NixOS module bumping pkgs.llama-cpp from
+    # the systemd Environment won't take effect unless the user manually
+    # deletes config.json. Re-apply the env overlay on every load so
+    # systemd-set bin paths stay authoritative. migrate_from_env's first
+    # arg is just the merge base (despite the name), so passing the loaded
+    # config in lets env values override stored ones.
+    substituteInPlace src/cpp/server/config_file.cpp \
+      --replace-fail \
+        'return utils::JsonUtils::merge(defaults, loaded);' \
+        'return migrate_from_env(utils::JsonUtils::merge(defaults, loaded));'
+
+    # Pin backend_versions.json to whatever fastflowlm / llama-cpp /
+    # whisper-cpp / sd-cpp builds we ship, so lemonade's "installed vs
+    # needs update" check stays satisfied and it doesn't try to download
+    # backends at runtime. sd-cpp.cpu uses the vanilla nixpkgs version
+    # (master-NNN-HASH); ROCm/Vulkan variants share the same upstream
+    # commit so one version covers all three sd-cpp keys.
     if [ -f src/cpp/resources/backend_versions.json ]; then
       jq '.flm.npu = "v${fastflowlm.version}"
           | .llamacpp.rocm = "b${llama-cpp-rocm.version}"
-          | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"' \
+          | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"
+          | .whispercpp.cpu = "v${whisper-cpp.version}"
+          | .whispercpp.vulkan = "v${whisper-cpp-vulkan.version}"
+          | ."sd-cpp".cpu = "${stable-diffusion-cpp.version}"
+          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"
+          | ."sd-cpp"."rocm-preview" = "${stable-diffusion-cpp-rocm.version}"' \
         src/cpp/resources/backend_versions.json > src/cpp/resources/backend_versions.json.tmp
       mv src/cpp/resources/backend_versions.json.tmp src/cpp/resources/backend_versions.json
     fi
