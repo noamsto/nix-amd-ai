@@ -146,6 +146,69 @@ in stdenv.mkDerivation {
         'if (label == "audio") {' \
         'if (label == "audio" || label == "transcription" || label == "realtime-transcription") {'
 
+    # Make user-supplied llamacpp.*_bin paths fully authoritative. v10.3.0
+    # added a no_fetch_executables throw and rocm-stable / TheRock runtime
+    # downloads to install_backend that fire BEFORE install_from_github's
+    # path-override short-circuit, so the env-var-migrated *_bin we set
+    # in the NixOS module gets ignored: the runtime libs still download
+    # into ~/.cache/lemonade/bin/ and llamacpp_server prepends them to
+    # LD_LIBRARY_PATH, shadowing the libs the nix-built llama-server is
+    # RPATH-bound to. Short-circuit install_backend the moment we see a
+    # user-supplied bin path. See lemonade-sdk/lemonade#1791 and
+    # noamsto/nix-amd-ai#5.
+    substituteInPlace src/cpp/server/backend_manager.cpp \
+      --replace-fail \
+        '    if (auto* cfg = RuntimeConfig::global()) {
+        if (cfg->no_fetch_executables()) {
+            throw std::runtime_error(
+                "Fetching executable artifacts is disabled");
+        }
+    }' \
+        '    if (!backends::BackendUtils::find_external_backend_binary(recipe, resolved_backend).empty()) {
+        return;
+    }
+
+    if (auto* cfg = RuntimeConfig::global()) {
+        if (cfg->no_fetch_executables()) {
+            throw std::runtime_error(
+                "Fetching executable artifacts is disabled");
+        }
+    }'
+
+    # Companion to the install_backend patch above. When the user pointed
+    # llamacpp.rocm_bin at a system binary, that binary already resolves
+    # its ROCm libs through its own RPATH; lemonade prepending TheRock's
+    # ~/.cache/lemonade/bin/.../lib (or the rocm-stable runtime dir) to
+    # LD_LIBRARY_PATH would override that and crash on lib version skew.
+    substituteInPlace src/cpp/server/backends/llamacpp_server.cpp \
+      --replace-fail \
+        '    // For ROCm on Linux, set LD_LIBRARY_PATH to include the ROCm library directory
+    std::vector<std::pair<std::string, std::string>> env_vars;
+#ifndef _WIN32
+    if (is_llamacpp_rocm_backend(llamacpp_backend)) {' \
+        '    // For ROCm on Linux, set LD_LIBRARY_PATH to include the ROCm library directory
+    std::vector<std::pair<std::string, std::string>> env_vars;
+#ifndef _WIN32
+    if (is_llamacpp_rocm_backend(llamacpp_backend) &&
+        BackendUtils::find_external_backend_binary(SPEC.recipe, llamacpp_backend).empty()) {'
+
+    # Teach is_ggml_hip_plugin_available() about a NixOS-friendly env var
+    # so the "system" llamacpp recipe stops being permanently "unsupported"
+    # here. The hardcoded probe only knows Debian/Ubuntu/Arch FHS paths;
+    # libggml-hip.so on NixOS lives in $\{llama-cpp-rocm}/lib. With the env
+    # var set, "system" + prefer_system: true becomes a real option.
+    substituteInPlace src/cpp/server/utils/path_utils.cpp \
+      --replace-fail \
+        'bool is_ggml_hip_plugin_available() {
+#ifdef __linux__
+    // On Linux x86_64, check common system library paths for the HIP plugin' \
+        'bool is_ggml_hip_plugin_available() {
+#ifdef __linux__
+    if (const char* env = std::getenv("LEMONADE_GGML_HIP_PATH"); env && *env && fs::exists(env)) {
+        return true;
+    }
+    // On Linux x86_64, check common system library paths for the HIP plugin'
+
     # Pin backend_versions.json to whatever fastflowlm / llama-cpp builds
     # we ship, so lemonade's "installed vs needs update" check stays
     # satisfied and it doesn't try to download backends at runtime.

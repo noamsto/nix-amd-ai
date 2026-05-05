@@ -109,6 +109,9 @@ in {
       XRT_PATH = "${xrt-combined}";
     } // optionalAttrs cfg.enableROCm {
       LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
+      # Activates the "system" llamacpp recipe via our nix-amd-ai
+      # is_ggml_hip_plugin_available() patch in pkgs/lemonade.
+      LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
     } // optionalAttrs cfg.enableVulkan {
       LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
     };
@@ -151,6 +154,7 @@ in {
           "LEMONADE_GLOBAL_TIMEOUT=0"
         ]
         ++ optional cfg.enableROCm "LEMONADE_LLAMACPP_ROCM_BIN=${pkgs.llama-cpp-rocm}/bin/llama-server"
+        ++ optional cfg.enableROCm "LEMONADE_GGML_HIP_PATH=${pkgs.llama-cpp-rocm}/lib/libggml-hip.so"
         ++ optional cfg.enableVulkan "LEMONADE_LLAMACPP_VULKAN_BIN=${pkgs.llama-cpp-vulkan}/bin/llama-server";
       };
     };
