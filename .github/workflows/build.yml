@@ -20,6 +20,6 @@ jobs:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build all packages
-        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade
+        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#llama-cpp-vulkan .#llama-cpp-rocm .#whisper-cpp-vulkan .#stable-diffusion-cpp-rocm
       - name: Check flake
         run: nix flake check
