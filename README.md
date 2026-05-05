@@ -113,8 +113,13 @@ Vanilla v10.3.0 ignores these env vars on NixOS for several reasons that this fl
 - `is_ggml_hip_plugin_available()` honors `LEMONADE_GGML_HIP_PATH` so the `system` llamacpp recipe stops being permanently `unsupported` on NixOS.
 - `LEMONADE_WHISPERCPP_VULKAN_BIN` is added to the env-var migration table (upstream only mapped CPU/NPU for whispercpp).
 - `ConfigFile::load` re-applies the env overlay on every startup, not just first run, so bumping `pkgs.*` propagates without users having to delete `~/.cache/lemonade/config.json`.
+- The download SSE handler treats `sink.write` failure as a transient client disconnect rather than a cancel signal, so a backgrounded Tauri window doesn't kill an in-flight multi-GB download.
 
 If `lemonade backends` reports a backend as `installed` but benchmarks report <5 t/s decode on a small model, you're on CPU — check that the matching `enable*` option is set and the host has been rebuilt.
+
+### Tauri desktop app: download progress is fragile when backgrounded
+
+WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
 
 ## Which backend should I use?
 

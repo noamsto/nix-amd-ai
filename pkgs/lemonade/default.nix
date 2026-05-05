@@ -238,6 +238,24 @@ in stdenv.mkDerivation {
         'return utils::JsonUtils::merge(defaults, loaded);' \
         'return migrate_from_env(utils::JsonUtils::merge(defaults, loaded));'
 
+    # Don't abort downloads when the SSE progress stream's TCP socket goes
+    # away. WebKitGTK suspends the network process for backgrounded windows
+    # (different workspace, minimized) at ~60-90s, killing the SSE stream and
+    # losing GBs of partial download. Let the download finish in the
+    # background; the next client poll will see it as installed. See
+    # noamsto/nix-amd-ai#5.
+    substituteInPlace src/cpp/server/server.cpp \
+      --replace-fail \
+        'if (!sink.write(event.c_str(), event.size())) {
+                        LOG(INFO, "Server") << "Client disconnected, cancelling download" << std::endl;
+                        return false;
+                    }
+                    return true;' \
+        'if (!sink.write(event.c_str(), event.size())) {
+                        LOG(INFO, "Server") << "Client disconnected; download continues in background" << std::endl;
+                    }
+                    return true;'
+
     # Pin backend_versions.json to whatever fastflowlm / llama-cpp /
     # whisper-cpp / sd-cpp builds we ship, so lemonade's "installed vs
     # needs update" check stays satisfied and it doesn't try to download
