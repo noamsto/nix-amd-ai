@@ -144,7 +144,15 @@ in {
         LEMONADE_WHISPERCPP_VULKAN_BIN = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
       };
 
-    # System packages
+    # System packages.
+    #
+    # The GPU-enabled llama-cpp / whisper-cpp variants are listed BEFORE the
+    # CPU variants so that `llama-server` / `whisper-server` resolved through
+    # PATH (e.g. by the lemonade "system" recipe, which has no env-var hook
+    # and just does a PATH lookup) point at the GPU build. nixpkgs buildEnv
+    # merges packages in declaration order, and the first package providing a
+    # given relative path wins; declaring CPU first would shadow the GPU
+    # binaries.
     environment.systemPackages =
       [
         xrt-combined
@@ -153,18 +161,18 @@ in {
       ]
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
       ++ optional cfg.enableLemonade pkgs.lemonade
-      ++ optionals cfg.enableLemonade [
-        pkgs.llama-cpp
-        pkgs.whisper-cpp
-      ]
-      ++ optional (cfg.enableLemonade && cfg.enableImageGen) pkgs.stable-diffusion-cpp
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr
       ++ optional cfg.enableROCm pkgs.llama-cpp-rocm
       ++ optional (cfg.enableROCm && cfg.enableImageGen) pkgs.stable-diffusion-cpp-rocm
       ++ optionals cfg.enableVulkan [
         pkgs.llama-cpp-vulkan
         pkgs.whisper-cpp-vulkan
-      ];
+      ]
+      ++ optionals cfg.enableLemonade [
+        pkgs.llama-cpp
+        pkgs.whisper-cpp
+      ]
+      ++ optional (cfg.enableLemonade && cfg.enableImageGen) pkgs.stable-diffusion-cpp;
 
     # Lemonade systemd service
     systemd.services.lemond = mkIf cfg.enableLemonade {
