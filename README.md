@@ -106,7 +106,9 @@ The lemonade source build deliberately doesn't bundle backend `llama-server` / `
 | `enableVulkan` | `llamacpp:vulkan`, `whispercpp:vulkan` |
 | `enableImageGen` (default true) | Gates all `sd-cpp:*` packages; turn off for ~150 MB CPU / ~1.5 GB ROCm savings on headless LLM-only hosts |
 
-Vanilla v10.3.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
+Lemonade v10.4.0 added an experimental `llamacpp:vllm` (vLLM ROCm) backend for Strix Halo / Strix Point on Linux. We don't wire it: on Strix Point gfx1150 our benchmarks already show Vulkan ahead of ROCm for both prefill and decode, vLLM's batching wins don't apply to single-user lemonade workloads, and upstream still distributes it as a TheRock-style prebuilt blob with no env-var migration. Revisit when it leaves experimental, when a Strix Halo host lands here, or if anyone benchmarks it past Vulkan on gfx1150.
+
+Vanilla v10.4.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
 
 - `install_backend` short-circuits on `find_external_backend_binary` *before* the `no_fetch_executables` throw and the rocm-stable / TheRock runtime fetches, so user-supplied `*_bin` paths actually skip the entire download flow.
 - The Linux ROCm `LD_LIBRARY_PATH` block is gated on the same check, so a nix-store `llama-server` keeps its RPATH-resolved libs instead of being shadowed by `~/.cache/lemonade/bin/.../lib`.
