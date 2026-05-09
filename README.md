@@ -14,6 +14,7 @@ AMD AI inference stack for NixOS — packages XRT, XDNA driver plugin, FastFlowL
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
+| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`, `gaia-emr`, `gaia-code`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
 CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`.
@@ -122,6 +123,21 @@ If `lemonade backends` reports a backend as `installed` but benchmarks report <5
 ### Tauri desktop app: download progress is fragile when backgrounded
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
+
+## GAIA agent framework
+
+[AMD GAIA](https://github.com/amd/gaia) is a Python agent framework that uses lemond as its inference backend (Email Triage / Code / Jira / Blender / RAG / MCP agents, plus a built-in web UI). Upstream targets pip / electron installers, neither of which fits a NixOS host cleanly, and the Python dependency tree is large and fast-moving (weekly-ish releases, torch + transformers + ~60 transitive deps). The flake therefore ships a thin `uvx` wrapper rather than a from-source Nix build:
+
+```bash
+nix run .#gaia                     # interactive CLI; falls back to printing help
+nix run .#gaia -- ui               # launch the web UI (FastAPI + bundled SPA)
+nix shell .#gaia -c gaia-mcp       # MCP bridge server
+nix shell .#gaia -c gaia-code      # code-agent CLI
+```
+
+The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~60 transitive deps into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
+
+Bump the pinned version in `pkgs/gaia/default.nix` when a new GAIA release lands and you want it. CI doesn't auto-bump GAIA today (only lemonade / fastflowlm / xdna are wired into `scripts/check-updates.sh`).
 
 ## Which backend should I use?
 

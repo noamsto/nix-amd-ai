@@ -63,6 +63,7 @@
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
             inherit (pinned) llama-cpp-rocm whisper-cpp stable-diffusion-cpp;
           };
+          gaia = pinned.callPackage ./pkgs/gaia {};
         };
 
         nixosModules.default = {
@@ -95,6 +96,7 @@
             whisper-cpp = pkgs.whisper-cpp;
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
+          gaia = pkgs.callPackage ./pkgs/gaia {};
           benchmark = pkgs.callPackage ./pkgs/benchmark {};
         };
 
