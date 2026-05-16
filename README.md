@@ -19,6 +19,8 @@ AMD AI inference stack for NixOS — packages XRT, XDNA driver plugin, FastFlowL
 
 CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`.
 
+**Temporary override:** the three `llama-cpp*` packages are pinned to the MTP merge commit ([ggml-org/llama.cpp#22673](https://github.com/ggml-org/llama.cpp/pull/22673)) for ~1.85× decode on compatible Qwen3.6 GGUFs. The weekly update workflow flags the override for removal once nixpkgs llama-cpp catches up past `b9175`.
+
 The `lemonade` package composes three derivations:
 
 - `lemonade.passthru.web-app` — React web UI (`buildNpmPackage`, served by `lemond` at `/`)
@@ -109,7 +111,7 @@ The lemonade source build deliberately doesn't bundle backend `llama-server` / `
 
 Lemonade v10.4.0 added an experimental `llamacpp:vllm` (vLLM ROCm) backend for Strix Halo / Strix Point on Linux. We don't wire it: on Strix Point gfx1150 our benchmarks already show Vulkan ahead of ROCm for both prefill and decode, vLLM's batching wins don't apply to single-user lemonade workloads, and upstream still distributes it as a TheRock-style prebuilt blob with no env-var migration. Revisit when it leaves experimental, when a Strix Halo host lands here, or if anyone benchmarks it past Vulkan on gfx1150.
 
-Vanilla v10.4.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
+Vanilla v10.5.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
 
 - `install_backend` short-circuits on `find_external_backend_binary` *before* the `no_fetch_executables` throw and the rocm-stable / TheRock runtime fetches, so user-supplied `*_bin` paths actually skip the entire download flow.
 - The Linux ROCm `LD_LIBRARY_PATH` block is gated on the same check, so a nix-store `llama-server` keeps its RPATH-resolved libs instead of being shadowed by `~/.cache/lemonade/bin/.../lib`.
