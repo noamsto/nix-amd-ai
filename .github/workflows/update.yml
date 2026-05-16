@@ -30,6 +30,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/check-updates.sh
 
+      - name: Update nixpkgs lock
+        if: steps.check.outputs.nixpkgs_needs_update == 'true'
+        run: nix flake update nixpkgs
+
       - name: Bump versions
         if: steps.check.outputs.needs_update == 'true'
         env:
@@ -71,6 +75,17 @@ jobs:
             BODY+="- Lemonade: ${{ steps.check.outputs.lem_current }} -> ${{ steps.check.outputs.lem_latest }}"$'\n'
           [ "${{ steps.check.outputs.xdna_latest }}" != "${{ steps.check.outputs.xdna_current }}" ] && \
             BODY+="- xdna-driver: ${{ steps.check.outputs.xdna_current }} -> ${{ steps.check.outputs.xdna_latest }}"$'\n'
+
+          NIXPKGS_DIFFS='${{ steps.check.outputs.nixpkgs_backend_diffs }}'
+          if [ -n "$NIXPKGS_DIFFS" ]; then
+            BODY+=$'\n'"### nixpkgs backend versions"$'\n'
+            BODY+="$NIXPKGS_DIFFS"
+          fi
+
+          if [ "${{ steps.check.outputs.mtp_cleanup }}" = "true" ]; then
+            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up past b9175."$'\n'
+          fi
+
           BODY+=$'\n'"**Note:** Hashes may need manual correction if auto-prefetch failed."
 
           echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -
