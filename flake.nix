@@ -37,29 +37,6 @@
           done
         '';
       });
-
-    # Pin llama-cpp to the MTP merge commit (ggml-org/llama.cpp#22673, merged
-    # 2026-05-16) for ~1.85x decode speedup on compatible Qwen3.6 GGUFs.
-    # Drop once nixpkgs llama-cpp >= b9175. Upstream moved the webui from
-    # tools/server/webui to tools/ui in this window, so override npmRoot and
-    # the postPatch that removed the now-gone tools/server/public/index.html.gz.
-    llamaCppMtpOverride = pkgs: pkg:
-      pkg.overrideAttrs (_old: {
-        # LLAMA_BUILD_NUMBER is stamped into a C int literal, so this string
-        # must be numeric. b9174 was tagged just before the MTP merge, so we
-        # number this preview as the next build (9175).
-        version = "9175";
-        pname = "llama-cpp-mtp";
-        src = pkgs.fetchFromGitHub {
-          owner = "ggml-org";
-          repo = "llama.cpp";
-          rev = "255582687b8dd211fdbc582e43ab842491554e94";
-          hash = "sha256-vW7pzlkj0yZ8R7wu5GO6PmB9hCFsitDBdquZsC9xLCU=";
-        };
-        postPatch = "";
-        npmRoot = "tools/ui";
-        npmDepsHash = "sha256-WaEePrEZ7O/7deP2KJhe0AwiSKYA8HOqETmMHUkmBe0=";
-      });
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux"];
@@ -73,19 +50,18 @@
           libwebsockets = libwebsocketsOverride pinned;
           xrt = pinned.callPackage ./pkgs/xrt {};
           fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          llama-cpp = llamaCppMtpOverride pinned pinned.llama-cpp;
-          llama-cpp-vulkan = llamaCppMtpOverride pinned (pinned.llama-cpp.override {vulkanSupport = true;});
-          llama-cpp-rocm = llamaCppMtpOverride pinned pinned.llama-cpp-rocm;
+          llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
           whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
           stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
         in {
-          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
+          inherit xrt fastflowlm llama-cpp-vulkan libwebsockets;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+          inherit (pinned) llama-cpp-rocm;
           xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pinned.callPackage ./pkgs/lemonade {
-            inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
+            inherit fastflowlm llama-cpp-vulkan libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
-            inherit (pinned) whisper-cpp stable-diffusion-cpp;
+            inherit (pinned) llama-cpp-rocm whisper-cpp stable-diffusion-cpp;
           };
           gaia = pinned.callPackage ./pkgs/gaia {};
         };
@@ -103,20 +79,20 @@
       }: let
         xrt = pkgs.callPackage ./pkgs/xrt {};
         fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
-        llama-cpp = llamaCppMtpOverride pkgs pkgs.llama-cpp;
-        llama-cpp-vulkan = llamaCppMtpOverride pkgs (pkgs.llama-cpp.override {vulkanSupport = true;});
-        llama-cpp-rocm = llamaCppMtpOverride pkgs pkgs.llama-cpp-rocm;
+        llama-cpp-vulkan = pkgs.llama-cpp.override {vulkanSupport = true;};
         whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
         stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
         libwebsockets = libwebsocketsOverride pkgs;
       in {
         packages = {
-          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
+          inherit xrt fastflowlm llama-cpp-vulkan libwebsockets;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+          inherit (pkgs) llama-cpp-rocm;
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {
-            inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
+            inherit fastflowlm llama-cpp-vulkan libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            llama-cpp-rocm = pkgs.llama-cpp-rocm;
             whisper-cpp = pkgs.whisper-cpp;
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
