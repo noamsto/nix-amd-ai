@@ -31,13 +31,13 @@
   withWebApp ? true,
   withDesktopApp ? true,
 }: let
-  version = "10.4.0";
+  version = "10.5.0";
 
   src = fetchFromGitHub {
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-NQmNdpeC38k0RdGs4WeYnWRomsr0/r98GeDcgt5TzNs=";
+    hash = "sha256-HMUDkO3Lg2GUqJqvrCXmDm4Q0OYqn1+DCQWC5yuy4/U=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
@@ -136,20 +136,6 @@ in stdenv.mkDerivation {
         'DESTINATION /etc/lemonade/conf.d' \
         'DESTINATION share/lemonade/conf.d.example'
 
-    # FLM-recipe whisper models report their capabilities as
-    # ["realtime-transcription","transcription"] (the labels emitted by
-    # `flm list --json`). Lemonade's `get_model_type_from_labels` only
-    # recognises the literal label "audio", so FLM whisper falls through to
-    # ModelType::LLM and the audio router rejects every realtime call with
-    # `Audio transcription not supported by FLM llm model`. Teach the
-    # classifier that "transcription" / "realtime-transcription" also imply
-    # the AUDIO deployment mode. See lemonade-sdk/lemonade — no upstream
-    # issue yet at v${version}.
-    substituteInPlace src/cpp/include/lemon/model_types.h \
-      --replace-fail \
-        'if (label == "audio") {' \
-        'if (label == "audio" || label == "transcription" || label == "realtime-transcription") {'
-
     # Make user-supplied llamacpp.*_bin paths fully authoritative. v10.3.0
     # added a no_fetch_executables throw and rocm-stable / TheRock runtime
     # downloads to install_backend that fire BEFORE install_from_github's
@@ -235,8 +221,8 @@ in stdenv.mkDerivation {
     # config in lets env values override stored ones.
     substituteInPlace src/cpp/server/config_file.cpp \
       --replace-fail \
-        'return utils::JsonUtils::merge(defaults, loaded);' \
-        'return migrate_from_env(utils::JsonUtils::merge(defaults, loaded));'
+        'json merged = utils::JsonUtils::merge(defaults, loaded);' \
+        'json merged = migrate_from_env(utils::JsonUtils::merge(defaults, loaded));'
 
     # Don't abort downloads when the SSE progress stream's TCP socket goes
     # away. WebKitGTK suspends the network process for backgrounded windows
