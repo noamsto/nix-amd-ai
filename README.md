@@ -19,8 +19,6 @@ AMD AI inference stack for NixOS — packages XRT, XDNA driver plugin, FastFlowL
 
 CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`.
 
-**Temporary override:** the three `llama-cpp*` packages are pinned to the MTP merge commit ([ggml-org/llama.cpp#22673](https://github.com/ggml-org/llama.cpp/pull/22673)) for ~1.85× decode on compatible Qwen3.6 GGUFs. The weekly update workflow flags the override for removal once nixpkgs llama-cpp catches up past `b9175`.
-
 The `lemonade` package composes three derivations:
 
 - `lemonade.passthru.web-app` — React web UI (`buildNpmPackage`, served by `lemond` at `/`)
