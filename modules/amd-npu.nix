@@ -75,6 +75,17 @@ in {
         type = types.str;
         description = "User account to run the Lemonade server as.";
       };
+
+      flashAttn = mkOption {
+        type = types.enum ["auto" "on" "off"];
+        default = "on";
+        description = ''
+          Value passed as `--flash-attn` to lemond-spawned llama-server. Defaults to "on"
+          because upstream lemonade doesn't enable FA for llama-cpp despite enabling it
+          for vLLM (see vllm_server.cpp:202); measured ~5% decode / ~10% prefill gain on
+          gfx1150 + Gemma. Set "auto" or "off" to override.
+        '';
+      };
     };
   };
 
@@ -129,6 +140,8 @@ in {
         # CPU recipes work on every host, no GPU enable flag needed.
         LEMONADE_LLAMACPP_CPU_BIN = "${pkgs.llama-cpp}/bin/llama-server";
         LEMONADE_WHISPERCPP_CPU_BIN = "${pkgs.whisper-cpp}/bin/whisper-server";
+        # Force-set FA because upstream lemonade defaults to no flag at all.
+        LEMONADE_LLAMACPP_ARGS = "--flash-attn ${cfg.lemonade.flashAttn}";
       }
       // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {
         LEMONADE_SDCPP_CPU_BIN = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
@@ -205,6 +218,7 @@ in {
             "LEMONADE_GLOBAL_TIMEOUT=0"
             "LEMONADE_LLAMACPP_CPU_BIN=${pkgs.llama-cpp}/bin/llama-server"
             "LEMONADE_WHISPERCPP_CPU_BIN=${pkgs.whisper-cpp}/bin/whisper-server"
+            "LEMONADE_LLAMACPP_ARGS=--flash-attn ${cfg.lemonade.flashAttn}"
           ]
           ++ optional cfg.enableImageGen "LEMONADE_SDCPP_CPU_BIN=${pkgs.stable-diffusion-cpp}/bin/sd-server"
           ++ optionals cfg.enableROCm [
