@@ -563,6 +563,84 @@ def print_markdown_table(rows):
         )
 
 
+def format_mtp_row(model_id, backend, off_tps, on_tps):
+    """Format one markdown table row for the MTP A/B sweep."""
+
+    def fmt(v):
+        return f"{v:.1f}" if isinstance(v, (int, float)) else "N/A"
+
+    if isinstance(off_tps, (int, float)) and off_tps > 0 \
+            and isinstance(on_tps, (int, float)):
+        speedup = f"{on_tps / off_tps:.2f}x"
+    else:
+        speedup = "N/A"
+    return (
+        f"| {model_id} | {backend} | {fmt(off_tps)} |"
+        f" {fmt(on_tps)} | {speedup} |"
+    )
+
+
+_BACKEND_BIN_ENV = {
+    "rocm": "LEMONADE_LLAMACPP_ROCM_BIN",
+    "vulkan": "LEMONADE_LLAMACPP_VULKAN_BIN",
+}
+
+
+def _resolve_backend_bin(backend):
+    """Look up the llama-server binary for a backend.
+
+    Each backend is a separately-compiled build in this flake. The
+    NixOS module exports LEMONADE_LLAMACPP_<BACKEND>_BIN pointing at
+    the relevant /nix/store path.
+    """
+    env_var = _BACKEND_BIN_ENV.get(backend)
+    if env_var is None:
+        raise ValueError(
+            f"unknown backend {backend!r};"
+            f" expected one of {sorted(_BACKEND_BIN_ENV)}"
+        )
+    path = os.environ.get(env_var)
+    if not path:
+        raise RuntimeError(
+            f"{env_var} not set in environment; the nix-amd-ai"
+            f" module sets it when enable{backend.title()} = true."
+            f" Run from a session where the module env is active."
+        )
+    return path
+
+
+def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
+    """Run warmup + repeat completions against a live llama-server.
+
+    Returns the mean decode t/s (from server-reported timings), or None
+    if no successful iterations.
+    """
+    prompt = build_prompt(prompt_tokens)
+    for _ in range(warmup):
+        run_completion(server.base_url, "default", prompt, gen_tokens)
+
+    tps_samples = []
+    for i in range(repeat):
+        _, tps, ntok = run_completion(
+            server.base_url, "default", prompt, gen_tokens,
+        )
+        if tps is None:
+            print(
+                f"    iter {i + 1}: no tokens received",
+                file=sys.stderr,
+            )
+            continue
+        print(
+            f"    iter {i + 1}: decode={tps:.1f} t/s, tokens={ntok}",
+            file=sys.stderr,
+        )
+        tps_samples.append(tps)
+
+    if not tps_samples:
+        return None
+    return statistics.mean(tps_samples)
+
+
 def run_mtp_ab(
     model_id, backends, prompt_tokens, gen_tokens, warmup, repeat,
 ):
@@ -572,7 +650,89 @@ def run_mtp_ab(
     --spec-type draft-mtp) against the same GGUF. Prints a markdown
     table.
     """
-    raise NotImplementedError("filled in by Task 7")
+    if not backends:
+        print(
+            "ERROR: --mtp-ab-backends produced an empty backend list",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    gguf = resolve_lemonade_gguf(model_id)
+    if gguf is None:
+        print(
+            f"ERROR: model {model_id!r} not found in lemonade cache."
+            f" Run: lemonade pull {model_id}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    print(
+        f"\nMTP A/B sweep: model={model_id}\n"
+        f"  gguf={gguf}\n"
+        f"  backends={backends}\n"
+        f"  protocol: prompt={prompt_tokens} tokens,"
+        f" gen={gen_tokens} tokens,"
+        f" {warmup} warmup + {repeat} measured\n",
+        file=sys.stderr,
+    )
+
+    rows = []
+    for backend in backends:
+        bin_path = _resolve_backend_bin(backend)
+        devices_output = subprocess.run(
+            [bin_path, "--list-devices"],
+            capture_output=True, text=True, timeout=30,
+        ).stdout
+        devices = parse_llama_devices(devices_output)
+        device = pick_device(devices, backend)
+        print(
+            f"\n[{backend}] bin={bin_path} device={device}",
+            file=sys.stderr,
+        )
+
+        results = {}
+        for spec_type in ("none", "draft-mtp"):
+            print(
+                f"\n[{backend}] --spec-type {spec_type}",
+                file=sys.stderr,
+            )
+            port = find_free_port()
+            argv = build_llama_server_args(
+                bin_path=bin_path, gguf=gguf, port=port,
+                device=device, spec_type=spec_type,
+                n_gpu_layers=99, ctx_size=4096,
+            )
+            try:
+                with LlamaServer(argv, port) as server:
+                    results[spec_type] = _measure_one_spec(
+                        server, prompt_tokens, gen_tokens, warmup, repeat,
+                    )
+            except RuntimeError as exc:
+                msg = str(exc)
+                if spec_type == "draft-mtp" and "mtp" in msg.lower():
+                    print(
+                        f"ERROR: model {model_id!r} has no MTP head"
+                        f" (--spec-type draft-mtp rejected by"
+                        f" llama-server). Pick an MTP-labeled model.",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                raise
+
+        row = format_mtp_row(
+            model_id=model_id,
+            backend=backend,
+            off_tps=results.get("none"),
+            on_tps=results.get("draft-mtp"),
+        )
+        rows.append(row)
+        print("\n" + row, file=sys.stderr)
+
+    print()
+    print("| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |")
+    print("| ----- | ------- | ------------: | -----------: | ------: |")
+    for row in rows:
+        print(row)
 
 
 def main():

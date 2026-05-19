@@ -178,5 +178,29 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
         self.assertIn("none", args)
 
 
+class FormatMtpRowTests(unittest.TestCase):
+    def test_typical_row(self):
+        row = benchmark.format_mtp_row(
+            model_id="Qwen3.6-27B-MTP-GGUF",
+            backend="vulkan",
+            off_tps=20.0,
+            on_tps=30.0,
+        )
+        self.assertIn("Qwen3.6-27B-MTP-GGUF", row)
+        self.assertIn("vulkan", row)
+        self.assertIn("20.0", row)
+        self.assertIn("30.0", row)
+        self.assertIn("1.50x", row)
+
+    def test_missing_data_shows_na(self):
+        row = benchmark.format_mtp_row(
+            model_id="X",
+            backend="rocm",
+            off_tps=None,
+            on_tps=10.0,
+        )
+        self.assertIn("N/A", row)
+
+
 if __name__ == "__main__":
     unittest.main()
