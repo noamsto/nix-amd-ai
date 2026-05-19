@@ -31,13 +31,13 @@
   withWebApp ? true,
   withDesktopApp ? true,
 }: let
-  version = "10.5.0";
+  version = "10.5.1";
 
   src = fetchFromGitHub {
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-HMUDkO3Lg2GUqJqvrCXmDm4Q0OYqn1+DCQWC5yuy4/U=";
+    hash = "sha256-jPc/KeuDUrkGSfvDx4rWB9tL6+f6w2Le6zMNvbj4y7Q=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
