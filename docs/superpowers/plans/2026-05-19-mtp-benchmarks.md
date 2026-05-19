@@ -225,33 +225,54 @@ git commit -m "feat(benchmark): add resolve_lemonade_gguf helper"
 - Modify: `pkgs/benchmark/tests/test_benchmark.py`
 - Modify: `pkgs/benchmark/benchmark.py`
 
-**Background:** First, confirm the exact output format of `llama-server --list-devices` on this host. Run it once before writing the test — the parser must match real output.
+**Background:** Each backend has its own separately-compiled `llama-server` binary; one sees ROCm devices, the other sees Vulkan devices. Paths are exposed via:
 
-- [ ] **Step 1: Capture real `--list-devices` output for the test fixture**
+- `LEMONADE_LLAMACPP_ROCM_BIN` → ROCm build
+- `LEMONADE_LLAMACPP_VULKAN_BIN` → Vulkan build
 
-Run:
-```bash
-llama-server --list-devices 2>&1 | tee /tmp/llama-devices.txt
+Captured real `--list-devices` output (b9213 mtp build on Strix Point):
+
+ROCm binary:
+```
+Available devices:
+  ROCm0: AMD Radeon 890M Graphics (27935 MiB, 49248 MiB free)
 ```
 
-Expected: lines like `Vulkan0: AMD Radeon Graphics (...)` and `ROCm0: AMD Radeon 890M (...)`. If the format is different, adapt the regex in Step 3 accordingly. **Paste the actual output into the implementation as a docstring example.**
+Vulkan binary:
+```
+Available devices:
+  Vulkan0: AMD Radeon 890M Graphics (RADV STRIX1) (36127 MiB, 35117 MiB free)
+```
 
-- [ ] **Step 2: Add failing tests**
+So `parse_llama_devices()` will operate on a single-backend output per call, and `pick_device()` validates that the expected device is present.
+
+- [ ] **Step 1: Add failing tests**
 
 Append to `pkgs/benchmark/tests/test_benchmark.py`:
 
 ```python
 class ParseLlamaDevicesTests(unittest.TestCase):
-    SAMPLE = (
+    ROCM_OUTPUT = (
         "Available devices:\n"
-        "  Vulkan0: AMD Radeon Graphics (gfx1150) (28000 MiB)\n"
-        "  ROCm0: AMD Radeon 890M Graphics (28000 MiB)\n"
+        "  ROCm0: AMD Radeon 890M Graphics (27935 MiB, 49248 MiB free)\n"
+    )
+    VULKAN_OUTPUT = (
+        "Available devices:\n"
+        "  Vulkan0: AMD Radeon 890M Graphics (RADV STRIX1)"
+        " (36127 MiB, 35117 MiB free)\n"
     )
 
-    def test_parses_vulkan_and_rocm(self):
-        devices = benchmark.parse_llama_devices(self.SAMPLE)
-        self.assertIn("Vulkan0", devices)
-        self.assertIn("ROCm0", devices)
+    def test_parses_rocm(self):
+        self.assertEqual(
+            benchmark.parse_llama_devices(self.ROCM_OUTPUT),
+            ["ROCm0"],
+        )
+
+    def test_parses_vulkan(self):
+        self.assertEqual(
+            benchmark.parse_llama_devices(self.VULKAN_OUTPUT),
+            ["Vulkan0"],
+        )
 
     def test_empty_output_returns_empty(self):
         self.assertEqual(benchmark.parse_llama_devices(""), [])
@@ -281,15 +302,15 @@ class PickDeviceTests(unittest.TestCase):
             benchmark.pick_device(["Vulkan0"], "rocm")
 ```
 
-- [ ] **Step 3: Run tests to verify they fail**
+- [ ] **Step 2: Run tests to verify they fail**
 
 ```bash
 cd /home/noams/git/noamsto/nix-amd-ai/pkgs/benchmark && python3 -m unittest tests.test_benchmark -v
 ```
 
-Expected: 6 new failures referencing `parse_llama_devices` and `pick_device`.
+Expected: 7 new failures referencing `parse_llama_devices` and `pick_device`.
 
-- [ ] **Step 4: Implement both helpers**
+- [ ] **Step 3: Implement both helpers**
 
 Add after `resolve_lemonade_gguf`:
 
@@ -339,19 +360,34 @@ def pick_device(devices, backend):
     )
 ```
 
-- [ ] **Step 5: Run tests to verify they pass**
+- [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
 cd /home/noams/git/noamsto/nix-amd-ai/pkgs/benchmark && python3 -m unittest tests.test_benchmark -v
 ```
 
-Expected: 11 tests pass.
+Expected: 13 tests pass (6 from Tasks 1+2, plus 7 new in this task).
 
-- [ ] **Step 6: Adjust regex if real output differs from sample**
+- [ ] **Step 5: Sanity-check against the real binaries**
 
-If Step 1 captured a format different from the sample (e.g. `  device 0: Vulkan0` instead of `  Vulkan0:`), update both the `SAMPLE` constant in the test and the regex in `parse_llama_devices`, then re-run Step 5.
+```bash
+"$LEMONADE_LLAMACPP_ROCM_BIN" --list-devices 2>&1 | python3 -c "
+import sys
+sys.path.insert(0, 'pkgs/benchmark')
+import benchmark
+print(benchmark.parse_llama_devices(sys.stdin.read()))
+"
+"$LEMONADE_LLAMACPP_VULKAN_BIN" --list-devices 2>&1 | python3 -c "
+import sys
+sys.path.insert(0, 'pkgs/benchmark')
+import benchmark
+print(benchmark.parse_llama_devices(sys.stdin.read()))
+"
+```
 
-- [ ] **Step 7: Commit**
+Expected: `['ROCm0']` and `['Vulkan0']`. If output is empty or unexpected, the regex needs adjustment.
+
+- [ ] **Step 6: Commit**
 
 ```bash
 cd /home/noams/git/noamsto/nix-amd-ai
@@ -375,6 +411,7 @@ Append to `pkgs/benchmark/tests/test_benchmark.py`:
 class BuildLlamaServerArgsTests(unittest.TestCase):
     def test_includes_required_flags(self):
         args = benchmark.build_llama_server_args(
+            bin_path="/nix/store/abc/bin/llama-server",
             gguf="/tmp/model.gguf",
             port=18080,
             device="Vulkan0",
@@ -382,7 +419,7 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
             n_gpu_layers=99,
             ctx_size=4096,
         )
-        self.assertEqual(args[0], "llama-server")
+        self.assertEqual(args[0], "/nix/store/abc/bin/llama-server")
         self.assertIn("--model", args)
         self.assertIn("/tmp/model.gguf", args)
         self.assertIn("--port", args)
@@ -398,6 +435,7 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
 
     def test_spec_type_none_still_passed(self):
         args = benchmark.build_llama_server_args(
+            bin_path="/usr/bin/llama-server",
             gguf="/tmp/model.gguf",
             port=18080,
             device="ROCm0",
@@ -423,15 +461,19 @@ Add after `pick_device`:
 
 ```python
 def build_llama_server_args(
-    gguf, port, device, spec_type, n_gpu_layers, ctx_size,
+    bin_path, gguf, port, device, spec_type, n_gpu_layers, ctx_size,
 ):
     """Build the argv list to spawn llama-server for an MTP A/B run.
+
+    bin_path is the absolute path to the backend-specific llama-server
+    binary (ROCm and Vulkan are separately-compiled builds in this
+    flake, exposed via LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars).
 
     spec_type must be a value accepted by `--spec-type`. For our A/B:
     'none' (MTP off) and 'draft-mtp' (MTP on, requires b9213+).
     """
     return [
-        "llama-server",
+        bin_path,
         "--model", gguf,
         "--port", str(port),
         "--host", "127.0.0.1",
@@ -451,13 +493,14 @@ cd /home/noams/git/noamsto/nix-amd-ai/pkgs/benchmark && python3 -m unittest test
 
 Expected: 13 tests pass.
 
-- [ ] **Step 5: Verify `--no-webui` is accepted on this build**
+- [ ] **Step 5: Verify `--no-webui` is accepted on the backend binaries**
 
 ```bash
-llama-server --help 2>&1 | grep -- '--no-webui'
+"$LEMONADE_LLAMACPP_ROCM_BIN" --help 2>&1 | grep -- '--no-webui'
+"$LEMONADE_LLAMACPP_VULKAN_BIN" --help 2>&1 | grep -- '--no-webui'
 ```
 
-Expected: one matching line. If missing, drop `--no-webui` from the args list and re-run Step 4.
+Expected: one matching line each. If missing, drop `--no-webui` from the args list and re-run Step 4.
 
 - [ ] **Step 6: Commit**
 
@@ -848,6 +891,35 @@ def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
     return statistics.mean(tps_samples)
 
 
+_BACKEND_BIN_ENV = {
+    "rocm": "LEMONADE_LLAMACPP_ROCM_BIN",
+    "vulkan": "LEMONADE_LLAMACPP_VULKAN_BIN",
+}
+
+
+def _resolve_backend_bin(backend):
+    """Look up the llama-server binary for a backend.
+
+    Each backend is a separately-compiled build in this flake. The
+    NixOS module exports LEMONADE_LLAMACPP_<BACKEND>_BIN pointing at
+    the relevant /nix/store path.
+    """
+    env_var = _BACKEND_BIN_ENV.get(backend)
+    if env_var is None:
+        raise ValueError(
+            f"unknown backend {backend!r};"
+            f" expected one of {sorted(_BACKEND_BIN_ENV)}"
+        )
+    path = os.environ.get(env_var)
+    if not path:
+        raise RuntimeError(
+            f"{env_var} not set in environment; the nix-amd-ai"
+            f" module sets it when enable{backend.title()} = true."
+            f" Run from a session where the module env is active."
+        )
+    return path
+
+
 def run_mtp_ab(
     model_id, backends, prompt_tokens, gen_tokens, warmup, repeat,
 ):
@@ -861,16 +933,9 @@ def run_mtp_ab(
         )
         sys.exit(2)
 
-    devices_output = subprocess.run(
-        ["llama-server", "--list-devices"],
-        capture_output=True, text=True, timeout=30,
-    ).stdout
-    devices = parse_llama_devices(devices_output)
-
     print(
         f"\nMTP A/B sweep: model={model_id}\n"
         f"  gguf={gguf}\n"
-        f"  devices={devices}\n"
         f"  backends={backends}\n"
         f"  protocol: prompt={prompt_tokens} tokens,"
         f" gen={gen_tokens} tokens,"
@@ -880,7 +945,17 @@ def run_mtp_ab(
 
     rows = []
     for backend in backends:
+        bin_path = _resolve_backend_bin(backend)
+        devices_output = subprocess.run(
+            [bin_path, "--list-devices"],
+            capture_output=True, text=True, timeout=30,
+        ).stdout
+        devices = parse_llama_devices(devices_output)
         device = pick_device(devices, backend)
+        print(
+            f"\n[{backend}] bin={bin_path} device={device}",
+            file=sys.stderr,
+        )
 
         results = {}
         for spec_type in ("none", "draft-mtp"):
@@ -890,8 +965,9 @@ def run_mtp_ab(
             )
             port = find_free_port()
             argv = build_llama_server_args(
-                gguf=gguf, port=port, device=device,
-                spec_type=spec_type, n_gpu_layers=99, ctx_size=4096,
+                bin_path=bin_path, gguf=gguf, port=port,
+                device=device, spec_type=spec_type,
+                n_gpu_layers=99, ctx_size=4096,
             )
             try:
                 with LlamaServer(argv, port) as server:
