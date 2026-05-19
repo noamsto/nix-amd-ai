@@ -215,7 +215,7 @@ class LlamaServer:
     `term_timeout` seconds, then SIGKILLs if still alive.
     """
 
-    def __init__(self, argv, port, ready_timeout=120, term_timeout=10):
+    def __init__(self, argv, port, ready_timeout=300, term_timeout=10):
         self.argv = argv
         self.port = port
         self.ready_timeout = ready_timeout
