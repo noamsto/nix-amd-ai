@@ -675,7 +675,7 @@ def main():
         default="rocm,vulkan",
         help=(
             "Comma-separated list of backends to sweep when --mtp-ab"
-            " is set (default: rocm,vulkan)."
+            " is set."
         ),
     )
     args = parser.parse_args()
