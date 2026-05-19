@@ -109,33 +109,42 @@ def resolve_lemonade_gguf(model_id, cache_root=None):
     return None
 
 
+_BACKEND_PREFIX = {"rocm": "ROCm", "vulkan": "Vulkan"}
+
+
 def parse_llama_devices(output):
     """Parse the output of `llama-server --list-devices`.
 
     Returns a list of device identifier strings (e.g. ['Vulkan0',
-    'ROCm0']) suitable for passing to `--device`. Tolerant of
-    leading whitespace and trailing descriptions; uses the first
-    non-whitespace token before ':' as the device id.
+    'ROCm0']) suitable for passing to `--device`. Recognizes only
+    tokens whose prefix matches a known backend (see _BACKEND_PREFIX);
+    other ':'-suffixed words (headers, diagnostics) are skipped.
+
+    Raises RuntimeError if output is non-empty but no devices are
+    parsed — likely indicates a format change in llama-server that
+    needs the regex or prefix list updated.
     """
     devices = []
+    known_prefixes = tuple(_BACKEND_PREFIX.values())
     for line in output.splitlines():
         m = re.match(r"\s*([A-Za-z][A-Za-z0-9]*)\s*:", line)
-        if m:
-            tok = m.group(1)
-            if tok.lower() in ("available", "devices"):
-                continue
-            devices.append(tok)
+        if m and m.group(1).startswith(known_prefixes):
+            devices.append(m.group(1))
+    if output.strip() and not devices:
+        raise RuntimeError(
+            f"parse_llama_devices: no devices parsed from"
+            f" non-empty output (format change?). Raw output:\n"
+            f"{output!r}"
+        )
     return devices
-
-
-_BACKEND_PREFIX = {"rocm": "ROCm", "vulkan": "Vulkan"}
 
 
 def pick_device(devices, backend):
     """Return the device string matching the requested backend.
 
-    backend must be 'rocm' or 'vulkan'. Raises ValueError if the
-    backend is unknown or no matching device is present.
+    backend must be a key of _BACKEND_PREFIX (e.g. 'rocm', 'vulkan').
+    Raises ValueError if the backend is unknown or no matching device
+    is present in `devices`.
     """
     prefix = _BACKEND_PREFIX.get(backend)
     if prefix is None:

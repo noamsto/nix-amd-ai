@@ -96,6 +96,20 @@ class ParseLlamaDevicesTests(unittest.TestCase):
     def test_empty_output_returns_empty(self):
         self.assertEqual(benchmark.parse_llama_devices(""), [])
 
+    def test_non_empty_output_with_no_devices_raises(self):
+        # Simulates a format change where llama-server emits text but
+        # nothing matching a known device prefix.
+        with self.assertRaises(RuntimeError):
+            benchmark.parse_llama_devices(
+                "Some unrelated diagnostic output: foo bar\n"
+            )
+
+    def test_header_only_output_raises(self):
+        # "Available devices:" line alone, no device entries — should
+        # raise rather than return [].
+        with self.assertRaises(RuntimeError):
+            benchmark.parse_llama_devices("Available devices:\n")
+
 
 class PickDeviceTests(unittest.TestCase):
     DEVICES = ["Vulkan0", "ROCm0"]
