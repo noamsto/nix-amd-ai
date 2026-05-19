@@ -22,6 +22,7 @@ import json
 import os
 import pathlib
 import re
+import shlex
 import signal
 import socket
 import statistics
@@ -206,7 +207,7 @@ class LlamaServer:
 
     def __enter__(self):
         print(
-            f"  Spawning: {' '.join(self.argv)}",
+            f"  Spawning: {shlex.join(self.argv)}",
             file=sys.stderr,
         )
         self.proc = subprocess.Popen(
@@ -222,6 +223,7 @@ class LlamaServer:
         return self
 
     def _wait_ready(self):
+        assert self.proc is not None
         deadline = time.monotonic() + self.ready_timeout
         last_err = None
         while time.monotonic() < deadline:
@@ -245,7 +247,7 @@ class LlamaServer:
             f" within {self.ready_timeout}s (last error: {last_err})"
         )
 
-    def __exit__(self, exc_type, exc, tb):
+    def __exit__(self, _exc_type, _exc, _tb):
         if self.proc is None:
             return
         if self.proc.poll() is None:
