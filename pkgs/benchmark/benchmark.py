@@ -440,6 +440,39 @@ def build_prompt(prompt_tokens):
     return "The " * prompt_tokens
 
 
+# A naturalistic prompt for MTP measurement. Synthetic prompts like
+# `"The " * N` produce wildly unstable MTP draft acceptance rates
+# (7 to 19 t/s variance on identical iterations). This passage is
+# repetitive English prose at the token level, which gives the MTP
+# draft head something realistic to predict against.
+_MTP_PROMPT_BASE = (
+    "The quick brown fox jumps over the lazy dog. "
+    "It was a bright cold day in April, and the clocks were striking thirteen. "
+    "All happy families are alike; each unhappy family is unhappy in its own way. "
+    "In the beginning the Universe was created. This has made a lot of people very angry and been widely regarded as a bad move. "
+    "Many years later, as he faced the firing squad, Colonel Aureliano Buendia was to remember that distant afternoon when his father took him to discover ice. "
+    "It is a truth universally acknowledged, that a single man in possession of a good fortune, must be in want of a wife. "
+    "Call me Ishmael. Some years ago - never mind how long precisely - having little or no money in my purse, and nothing particular to interest me on shore, I thought I would sail about a little and see the watery part of the world. "
+    "Mr and Mrs Dursley, of number four, Privet Drive, were proud to say that they were perfectly normal, thank you very much. "
+)
+
+
+def build_mtp_prompt(prompt_tokens):
+    """Build a naturalistic prompt of approximately prompt_tokens tokens.
+
+    Repeats a fixed passage of well-known opening lines until the token
+    target is met. Llama tokenizers turn ~3 to 4 chars into a token on
+    English text, so we use that ratio to estimate length without
+    actually tokenizing.
+    """
+    # ~3.5 chars per token on English -> target chars to hit prompt_tokens
+    target_chars = prompt_tokens * 4
+    out = ""
+    while len(out) < target_chars:
+        out += _MTP_PROMPT_BASE
+    return out[:target_chars]
+
+
 def run_completion(
     base_url, model_id, prompt, gen_tokens,
     completions_path="/api/v1/completions",
@@ -652,7 +685,7 @@ def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
     Returns the mean decode t/s (from server-reported timings), or None
     if no successful iterations.
     """
-    prompt = build_prompt(prompt_tokens)
+    prompt = build_mtp_prompt(prompt_tokens)
     for _ in range(warmup):
         run_completion(
             server.base_url, "default", prompt, gen_tokens,
@@ -718,7 +751,11 @@ def run_mtp_ab(
     )
 
     rows = []
+    first_backend = True
     for backend in backends:
+        if not first_backend:
+            time.sleep(3)
+        first_backend = False
         bin_path = _resolve_backend_bin(backend)
         devices_output = subprocess.run(
             [bin_path, "--list-devices"],
@@ -732,7 +769,15 @@ def run_mtp_ab(
         )
 
         results = {}
+        first_spec = True
         for spec_type in ("none", "draft-mtp"):
+            if not first_spec:
+                # Let the GPU driver settle after previous server exit.
+                # Sustained back-to-back llama-server spawns can hit
+                # Vulkan/RADV state issues that surface as startup
+                # failures on the third+ spawn.
+                time.sleep(3)
+            first_spec = False
             print(
                 f"\n[{backend}] --spec-type {spec_type}",
                 file=sys.stderr,

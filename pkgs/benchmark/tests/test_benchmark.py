@@ -243,5 +243,24 @@ class FormatMtpRowTests(unittest.TestCase):
         self.assertEqual(row.count("N/A"), 2)
 
 
+class BuildMtpPromptTests(unittest.TestCase):
+    def test_returns_naturalistic_english(self):
+        prompt = benchmark.build_mtp_prompt(64)
+        # Should contain well-known opening lines (canary check)
+        self.assertIn("quick brown fox", prompt)
+
+    def test_length_scales_with_token_count(self):
+        small = benchmark.build_mtp_prompt(16)
+        large = benchmark.build_mtp_prompt(256)
+        self.assertGreater(len(large), len(small))
+
+    def test_token_count_estimate_is_in_ballpark(self):
+        # ~3.5 chars per English token, so 100 tokens ~= 350 chars
+        # Our formula uses 4 chars per token, so output should be ~400 chars
+        prompt = benchmark.build_mtp_prompt(100)
+        self.assertGreater(len(prompt), 300)
+        self.assertLess(len(prompt), 500)
+
+
 if __name__ == "__main__":
     unittest.main()
