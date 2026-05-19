@@ -434,8 +434,15 @@ def build_prompt(prompt_tokens):
     return "The " * prompt_tokens
 
 
-def run_completion(base_url, model_id, prompt, gen_tokens):
+def run_completion(
+    base_url, model_id, prompt, gen_tokens,
+    completions_path="/api/v1/completions",
+):
     """Run one streaming completion.
+
+    completions_path defaults to lemonade's '/api/v1/completions'. Pass
+    '/v1/completions' when talking to a raw llama-server (the MTP A/B
+    mode spawns the server directly without the lemonade prefix).
 
     Returns (ttft_sec, decode_tps, total_tokens_generated).
     """
@@ -456,7 +463,7 @@ def run_completion(base_url, model_id, prompt, gen_tokens):
     final_timings = None
 
     for raw_line in http_post_stream(
-        base_url, "/api/v1/completions", payload
+        base_url, completions_path, payload
     ):
         if raw_line.strip() == "[DONE]":
             break
@@ -641,12 +648,16 @@ def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
     """
     prompt = build_prompt(prompt_tokens)
     for _ in range(warmup):
-        run_completion(server.base_url, "default", prompt, gen_tokens)
+        run_completion(
+            server.base_url, "default", prompt, gen_tokens,
+            completions_path="/v1/completions",
+        )
 
     tps_samples = []
     for i in range(repeat):
         _ttft, tps, ntok = run_completion(
             server.base_url, "default", prompt, gen_tokens,
+            completions_path="/v1/completions",
         )
         if tps is None:
             print(
