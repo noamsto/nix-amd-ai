@@ -194,6 +194,11 @@ def build_llama_server_args(
 
     spec_type must be a value accepted by `--spec-type`. For our A/B:
     'none' (MTP off) and 'draft-mtp' (MTP on, requires b9213+).
+
+    --parallel 1 forces a single slot so KV-cache memory matches a
+    single-user inference workload. Without it, llama-server defaults
+    to 4 slots × ctx_size, which on iGPU pushes the model + KV cache
+    over the Vulkan/ROCm budget and silently CPU-offloads layers.
     """
     return [
         bin_path,
@@ -204,6 +209,7 @@ def build_llama_server_args(
         "--spec-type", spec_type,
         "--n-gpu-layers", str(n_gpu_layers),
         "--ctx-size", str(ctx_size),
+        "--parallel", "1",
     ]
 
 

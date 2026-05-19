@@ -184,6 +184,7 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
             ("--spec-type", "draft-mtp"),
             ("--n-gpu-layers", "99"),
             ("--ctx-size", "4096"),
+            ("--parallel", "1"),
         ]
         for flag, value in expected_pairs:
             self.assertIn(flag, args)
