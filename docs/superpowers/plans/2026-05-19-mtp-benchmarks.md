@@ -1097,13 +1097,15 @@ echo "exit=$?"
 
 Expected: existing behavior unchanged — markdown table with one row, `exit=0` (or `exit=1` if t/s < 5, same as before).
 
-- [ ] **Step 7: Stop lemond again before pulling MTP models**
+- [ ] **Step 7: Ensure lemond is up before pulling MTP models**
 
 ```bash
-sudo systemctl stop lemond
+sudo systemctl start lemond  # if stopped earlier
 ```
 
-(Models still pull fine while lemond is stopped — `lemonade pull` runs as a CLI client and talks to the configured backend, but the pull itself only writes to the cache. If a future lemonade version changes that, restart lemond around `lemonade pull` calls.)
+`lemonade pull` is a CLI client that REQUIRES `lemond` to be running — it talks to the server which performs the download into the HF hub cache. (The plan originally claimed pulls worked with lemond stopped; this was incorrect and corrected during Task 8.)
+
+Stop `lemond` again only AFTER the pulls land (before the benchmark sweep in Task 10), to free VRAM for the spawned `llama-server` processes.
 
 - [ ] **Step 8: Commit any fixes uncovered by the smoke tests**
 
