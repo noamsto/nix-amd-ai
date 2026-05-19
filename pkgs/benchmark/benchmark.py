@@ -22,6 +22,7 @@ import json
 import os
 import pathlib
 import re
+import signal
 import socket
 import statistics
 import subprocess
@@ -185,6 +186,81 @@ def build_llama_server_args(
         "--n-gpu-layers", str(n_gpu_layers),
         "--ctx-size", str(ctx_size),
     ]
+
+
+class LlamaServer:
+    """Context manager that spawns and reaps a llama-server subprocess.
+
+    Spawns the server with the given argv, polls /health until ready or
+    timeout, exposes `base_url`. On exit sends SIGTERM, waits up to
+    `term_timeout` seconds, then SIGKILLs if still alive.
+    """
+
+    def __init__(self, argv, port, ready_timeout=120, term_timeout=10):
+        self.argv = argv
+        self.port = port
+        self.ready_timeout = ready_timeout
+        self.term_timeout = term_timeout
+        self.base_url = f"http://127.0.0.1:{port}"
+        self.proc = None
+
+    def __enter__(self):
+        print(
+            f"  Spawning: {' '.join(self.argv)}",
+            file=sys.stderr,
+        )
+        self.proc = subprocess.Popen(
+            self.argv,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        try:
+            self._wait_ready()
+        except Exception:
+            self.__exit__(None, None, None)
+            raise
+        return self
+
+    def _wait_ready(self):
+        deadline = time.monotonic() + self.ready_timeout
+        last_err = None
+        while time.monotonic() < deadline:
+            if self.proc.poll() is not None:
+                stderr = self.proc.stderr.read().decode(
+                    "utf-8", errors="replace"
+                )
+                raise RuntimeError(
+                    f"llama-server exited with code"
+                    f" {self.proc.returncode} before becoming ready."
+                    f" stderr:\n{stderr[-2000:]}"
+                )
+            try:
+                http_get(self.base_url, "/health")
+                return
+            except (urllib.error.URLError, ConnectionError, OSError) as exc:
+                last_err = exc
+                time.sleep(0.5)
+        raise TimeoutError(
+            f"llama-server at {self.base_url} did not become ready"
+            f" within {self.ready_timeout}s (last error: {last_err})"
+        )
+
+    def __exit__(self, exc_type, exc, tb):
+        if self.proc is None:
+            return
+        if self.proc.poll() is None:
+            self.proc.send_signal(signal.SIGTERM)
+            try:
+                self.proc.wait(timeout=self.term_timeout)
+            except subprocess.TimeoutExpired:
+                print(
+                    "  WARNING: llama-server did not exit on SIGTERM;"
+                    " sending SIGKILL",
+                    file=sys.stderr,
+                )
+                self.proc.kill()
+                self.proc.wait()
+        self.proc = None
 
 
 def set_llamacpp_backend(config_path, backend):
