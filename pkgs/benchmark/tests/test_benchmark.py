@@ -201,6 +201,17 @@ class FormatMtpRowTests(unittest.TestCase):
         )
         self.assertIn("N/A", row)
 
+    def test_on_tps_none_also_shows_na(self):
+        row = benchmark.format_mtp_row(
+            model_id="X",
+            backend="rocm",
+            off_tps=20.0,
+            on_tps=None,
+        )
+        self.assertIn("N/A", row)
+        # speedup column must also be N/A when on_tps is None
+        self.assertEqual(row.count("N/A"), 2)
+
 
 if __name__ == "__main__":
     unittest.main()

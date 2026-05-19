@@ -585,6 +585,11 @@ _BACKEND_BIN_ENV = {
     "vulkan": "LEMONADE_LLAMACPP_VULKAN_BIN",
 }
 
+_BACKEND_NIX_OPTION = {
+    "rocm": "enableROCm",
+    "vulkan": "enableVulkan",
+}
+
 
 def _resolve_backend_bin(backend):
     """Look up the llama-server binary for a backend.
@@ -601,9 +606,10 @@ def _resolve_backend_bin(backend):
         )
     path = os.environ.get(env_var)
     if not path:
+        nix_opt = _BACKEND_NIX_OPTION[backend]
         raise RuntimeError(
             f"{env_var} not set in environment; the nix-amd-ai"
-            f" module sets it when enable{backend.title()} = true."
+            f" module sets it when hardware.amd-npu.{nix_opt} = true."
             f" Run from a session where the module env is active."
         )
     return path
@@ -621,7 +627,7 @@ def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
 
     tps_samples = []
     for i in range(repeat):
-        _, tps, ntok = run_completion(
+        _ttft, tps, ntok = run_completion(
             server.base_url, "default", prompt, gen_tokens,
         )
         if tps is None:
@@ -681,7 +687,7 @@ def run_mtp_ab(
         bin_path = _resolve_backend_bin(backend)
         devices_output = subprocess.run(
             [bin_path, "--list-devices"],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True, text=True, timeout=30, check=True,
         ).stdout
         devices = parse_llama_devices(devices_output)
         device = pick_device(devices, backend)
