@@ -170,6 +170,8 @@ def build_llama_server_args(
     binary (ROCm and Vulkan are separately-compiled builds in this
     flake, exposed via LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars).
 
+    port, n_gpu_layers, and ctx_size are integers (stringified here).
+
     spec_type must be a value accepted by `--spec-type`. For our A/B:
     'none' (MTP off) and 'draft-mtp' (MTP on, requires b9213+).
     """
@@ -182,7 +184,6 @@ def build_llama_server_args(
         "--spec-type", spec_type,
         "--n-gpu-layers", str(n_gpu_layers),
         "--ctx-size", str(ctx_size),
-        "--no-webui",
     ]
 
 

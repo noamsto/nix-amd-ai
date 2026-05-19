@@ -147,18 +147,22 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
             ctx_size=4096,
         )
         self.assertEqual(args[0], "/nix/store/abc/bin/llama-server")
-        self.assertIn("--model", args)
-        self.assertIn("/tmp/model.gguf", args)
-        self.assertIn("--port", args)
-        self.assertIn("18080", args)
-        self.assertIn("--device", args)
-        self.assertIn("Vulkan0", args)
-        self.assertIn("--spec-type", args)
-        self.assertIn("draft-mtp", args)
-        self.assertIn("--n-gpu-layers", args)
-        self.assertIn("99", args)
-        self.assertIn("--ctx-size", args)
-        self.assertIn("4096", args)
+        expected_pairs = [
+            ("--model", "/tmp/model.gguf"),
+            ("--port", "18080"),
+            ("--host", "127.0.0.1"),
+            ("--device", "Vulkan0"),
+            ("--spec-type", "draft-mtp"),
+            ("--n-gpu-layers", "99"),
+            ("--ctx-size", "4096"),
+        ]
+        for flag, value in expected_pairs:
+            self.assertIn(flag, args)
+            idx = args.index(flag)
+            self.assertEqual(
+                args[idx + 1], value,
+                f"{flag} not immediately followed by {value!r}",
+            )
 
     def test_spec_type_none_still_passed(self):
         args = benchmark.build_llama_server_args(
