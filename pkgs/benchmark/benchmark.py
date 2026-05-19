@@ -194,13 +194,15 @@ def build_llama_server_args(
 
     spec_type must be a value accepted by `--spec-type`. For our A/B:
     'none' (MTP off) and 'draft-mtp' (MTP on, requires b9213+).
+    When spec_type != 'none', --spec-draft-n-max 6 is appended
+    (upstream-recommended draft length for MTP).
 
     --parallel 1 forces a single slot so KV-cache memory matches a
     single-user inference workload. Without it, llama-server defaults
     to 4 slots × ctx_size, which on iGPU pushes the model + KV cache
     over the Vulkan/ROCm budget and silently CPU-offloads layers.
     """
-    return [
+    args = [
         bin_path,
         "--model", gguf,
         "--port", str(port),
@@ -211,6 +213,11 @@ def build_llama_server_args(
         "--ctx-size", str(ctx_size),
         "--parallel", "1",
     ]
+    # --spec-draft-n-max only applies when speculative decoding is on.
+    # Upstream recommends 6 for MTP; default is conservative.
+    if spec_type != "none":
+        args.extend(["--spec-draft-n-max", "6"])
+    return args
 
 
 class LlamaServer:

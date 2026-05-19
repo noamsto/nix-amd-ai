@@ -185,6 +185,7 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
             ("--n-gpu-layers", "99"),
             ("--ctx-size", "4096"),
             ("--parallel", "1"),
+            ("--spec-draft-n-max", "6"),
         ]
         for flag, value in expected_pairs:
             self.assertIn(flag, args)
@@ -206,6 +207,9 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
         )
         self.assertIn("--spec-type", args)
         self.assertIn("none", args)
+        # --spec-draft-n-max is only relevant when speculative decoding
+        # is on; should be absent for spec_type='none'.
+        self.assertNotIn("--spec-draft-n-max", args)
 
 
 class FormatMtpRowTests(unittest.TestCase):
