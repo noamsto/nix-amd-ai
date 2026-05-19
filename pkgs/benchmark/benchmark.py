@@ -563,6 +563,18 @@ def print_markdown_table(rows):
         )
 
 
+def run_mtp_ab(
+    model_id, backends, prompt_tokens, gen_tokens, warmup, repeat,
+):
+    """Drive an MTP-on / MTP-off A/B across the given backends.
+
+    Spawns llama-server twice per backend (--spec-type none, then
+    --spec-type draft-mtp) against the same GGUF. Prints a markdown
+    table.
+    """
+    raise NotImplementedError("filled in by Task 7")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Benchmark lemonade backends via HTTP API",
@@ -571,8 +583,12 @@ def main():
     parser.add_argument(
         "model_ids",
         metavar="MODEL_ID",
-        nargs="+",
-        help="One or more lemonade model IDs to benchmark",
+        nargs="*",
+        default=[],
+        help=(
+            "One or more lemonade model IDs to benchmark (lemonade"
+            " HTTP mode). Omit when using --mtp-ab."
+        ),
     )
     parser.add_argument(
         "--base-url",
@@ -642,7 +658,56 @@ def main():
             " are running in an environment without sudo."
         ),
     )
+    parser.add_argument(
+        "--mtp-ab",
+        metavar="MODEL_ID",
+        default=None,
+        help=(
+            "Run a same-GGUF A/B between --spec-type none and"
+            " --spec-type draft-mtp on the given lemonade model id."
+            " Spawns llama-server directly (bypasses lemond); requires"
+            " the model to be pulled and to have an MTP head."
+            " Mutually exclusive with the positional MODEL_ID arguments."
+        ),
+    )
+    parser.add_argument(
+        "--mtp-ab-backends",
+        default="rocm,vulkan",
+        help=(
+            "Comma-separated list of backends to sweep when --mtp-ab"
+            " is set (default: rocm,vulkan)."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.mtp_ab:
+        if args.model_ids:
+            print(
+                "ERROR: --mtp-ab is mutually exclusive with"
+                " positional MODEL_ID arguments",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        backends = [
+            b.strip() for b in args.mtp_ab_backends.split(",") if b.strip()
+        ]
+        run_mtp_ab(
+            model_id=args.mtp_ab,
+            backends=backends,
+            prompt_tokens=args.prompt_tokens,
+            gen_tokens=args.gen_tokens,
+            warmup=args.warmup,
+            repeat=args.repeat,
+        )
+        return
+
+    if not args.model_ids:
+        print(
+            "ERROR: at least one MODEL_ID is required (or use"
+            " --mtp-ab)",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     model_ids = args.model_ids
     base_url = args.base_url.rstrip("/")
