@@ -82,6 +82,10 @@ jobs:
             BODY+="$NIXPKGS_DIFFS"
           fi
 
+          if [ "${{ steps.check.outputs.mtp_cleanup }}" = "true" ]; then
+            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up past b9175."$'\n'
+          fi
+
           BODY+=$'\n'"**Note:** Hashes may need manual correction if auto-prefetch failed."
 
           echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -

@@ -41,6 +41,17 @@ if [ "$NIXPKGS_CURRENT_REV" != "$NIXPKGS_LATEST_REV" ]; then
   done
 fi
 
+# Drop flake.nix llamaCppMtpOverride once nixpkgs llama-cpp catches up past
+# b9175 (the MTP merge build).
+MTP_CLEANUP=false
+if grep -q "llamaCppMtpOverride" flake.nix; then
+  llamacpp_new=$(nix eval --raw "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.version" 2>/dev/null || echo "")
+  llamacpp_num="${llamacpp_new%%-*}"
+  if [[ "$llamacpp_num" =~ ^[0-9]+$ ]] && [ "$llamacpp_num" -ge 9175 ]; then
+    MTP_CLEANUP=true
+  fi
+fi
+
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   {
     echo "flm_latest=$FLM_LATEST"
@@ -51,6 +62,7 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "xdna_current=$XDNA_CURRENT"
     echo "needs_update=$NEEDS_UPDATE"
     echo "nixpkgs_needs_update=$NIXPKGS_NEEDS_UPDATE"
+    echo "mtp_cleanup=$MTP_CLEANUP"
     # Multi-line outputs need the heredoc form (GitHub Actions docs).
     echo "nixpkgs_backend_diffs<<NIXPKGS_EOF"
     printf '%s' "$NIXPKGS_BACKEND_DIFFS"
