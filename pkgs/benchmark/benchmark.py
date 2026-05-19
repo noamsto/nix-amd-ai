@@ -94,20 +94,38 @@ def find_free_port():
 def resolve_lemonade_gguf(model_id, cache_root=None):
     """Return the absolute path to the GGUF file for a lemonade model id.
 
-    Looks under <cache_root>/<model_id>/ recursively for the
-    lexicographically first .gguf file (sorted by full path).
-    Returns None if the model directory does not exist or contains
-    no .gguf.
+    Lemonade stores models in the HuggingFace hub cache layout:
+    <cache_root>/models--<owner>--<repo>/snapshots/<rev>/<file>.gguf
 
-    cache_root defaults to ~/.cache/lemonade/models.
+    The lemonade model id is the trailing repo segment (everything
+    after the second `--`). This resolver scans top-level entries,
+    matches by repo segment, then recursively finds the lexicographically
+    first .gguf file under the matched directory.
+
+    Returns None if no matching `models--*--<model_id>` directory
+    exists or the matched directory contains no .gguf file.
+
+    cache_root defaults to ~/.cache/huggingface/hub.
     """
     if cache_root is None:
-        cache_root = os.path.expanduser("~/.cache/lemonade/models")
-    model_dir = pathlib.Path(cache_root) / model_id
-    if not model_dir.is_dir():
+        cache_root = os.path.expanduser("~/.cache/huggingface/hub")
+    cache_dir = pathlib.Path(cache_root)
+    if not cache_dir.is_dir():
         return None
-    for gguf in sorted(model_dir.rglob("*.gguf")):
-        return str(gguf)
+    for entry in sorted(cache_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        if not entry.name.startswith("models--"):
+            continue
+        # name pattern: models--<owner>--<repo>
+        parts = entry.name.split("--", 2)
+        if len(parts) != 3:
+            continue
+        if parts[2] != model_id:
+            continue
+        for gguf in sorted(entry.rglob("*.gguf")):
+            return str(gguf)
+        return None  # matched dir but no gguf
     return None
 
 

@@ -26,48 +26,77 @@ class FindFreePortTests(unittest.TestCase):
 
 
 class ResolveLemonadeGgufTests(unittest.TestCase):
-    def test_returns_none_when_model_dir_missing(self):
+    MODEL_ID = "Qwen3.6-27B-MTP-GGUF"
+    HF_DIR = "models--unsloth--Qwen3.6-27B-MTP-GGUF"
+
+    def test_returns_none_when_cache_root_missing(self):
+        # Point at a path that doesn't exist
         with tempfile.TemporaryDirectory() as tmp:
             result = benchmark.resolve_lemonade_gguf(
-                "Qwen3.6-27B-MTP-GGUF",
+                self.MODEL_ID,
+                cache_root=str(pathlib.Path(tmp) / "nonexistent"),
+            )
+            self.assertIsNone(result)
+
+    def test_returns_none_when_model_dir_missing(self):
+        # Cache root exists but no matching models--*--<id> dir
+        with tempfile.TemporaryDirectory() as tmp:
+            result = benchmark.resolve_lemonade_gguf(
+                self.MODEL_ID,
                 cache_root=tmp,
             )
             self.assertIsNone(result)
 
     def test_returns_none_when_model_dir_has_no_gguf(self):
         with tempfile.TemporaryDirectory() as tmp:
-            model_dir = pathlib.Path(tmp) / "Qwen3.6-27B-MTP-GGUF"
-            model_dir.mkdir()
+            model_dir = pathlib.Path(tmp) / self.HF_DIR / "snapshots" / "abc"
+            model_dir.mkdir(parents=True)
             (model_dir / "config.json").write_text("{}")
             result = benchmark.resolve_lemonade_gguf(
-                "Qwen3.6-27B-MTP-GGUF",
+                self.MODEL_ID,
                 cache_root=tmp,
             )
             self.assertIsNone(result)
 
-    def test_finds_single_gguf_in_model_dir(self):
+    def test_finds_gguf_in_snapshots_subdir(self):
         with tempfile.TemporaryDirectory() as tmp:
-            model_dir = pathlib.Path(tmp) / "Qwen3.6-27B-MTP-GGUF"
-            model_dir.mkdir()
-            gguf = model_dir / "Qwen3.6-27B-UD-Q4_K_XL.gguf"
+            snapshot_dir = pathlib.Path(tmp) / self.HF_DIR / "snapshots" / "abc"
+            snapshot_dir.mkdir(parents=True)
+            gguf = snapshot_dir / "Qwen3.6-27B-UD-Q4_K_XL.gguf"
             gguf.write_bytes(b"")
             result = benchmark.resolve_lemonade_gguf(
-                "Qwen3.6-27B-MTP-GGUF",
+                self.MODEL_ID,
                 cache_root=tmp,
             )
             self.assertEqual(result, str(gguf))
 
-    def test_recursive_search_finds_nested_gguf(self):
+    def test_ignores_other_models_in_cache(self):
+        # Cache contains other HF models, none matching our id
         with tempfile.TemporaryDirectory() as tmp:
-            nested = pathlib.Path(tmp) / "Qwen3.6-27B-MTP-GGUF" / "snapshots" / "abc"
-            nested.mkdir(parents=True)
-            gguf = nested / "model.gguf"
-            gguf.write_bytes(b"")
+            other = (
+                pathlib.Path(tmp)
+                / "models--unsloth--SomeOtherModel-GGUF"
+                / "snapshots" / "def"
+            )
+            other.mkdir(parents=True)
+            (other / "irrelevant.gguf").write_bytes(b"")
             result = benchmark.resolve_lemonade_gguf(
-                "Qwen3.6-27B-MTP-GGUF",
+                self.MODEL_ID,
                 cache_root=tmp,
             )
-            self.assertEqual(result, str(gguf))
+            self.assertIsNone(result)
+
+    def test_ignores_non_model_directories(self):
+        # Subdir not matching `models--*--*` pattern is ignored
+        with tempfile.TemporaryDirectory() as tmp:
+            (pathlib.Path(tmp) / "version.txt").write_text("1")
+            (pathlib.Path(tmp) / "tmp_dir").mkdir()
+            (pathlib.Path(tmp) / "models--malformed").mkdir()
+            result = benchmark.resolve_lemonade_gguf(
+                self.MODEL_ID,
+                cache_root=tmp,
+            )
+            self.assertIsNone(result)
 
 
 class ParseLlamaDevicesTests(unittest.TestCase):
