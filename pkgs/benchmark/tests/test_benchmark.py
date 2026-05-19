@@ -34,6 +34,17 @@ class ResolveLemonadeGgufTests(unittest.TestCase):
             )
             self.assertIsNone(result)
 
+    def test_returns_none_when_model_dir_has_no_gguf(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            model_dir = pathlib.Path(tmp) / "Qwen3.6-27B-MTP-GGUF"
+            model_dir.mkdir()
+            (model_dir / "config.json").write_text("{}")
+            result = benchmark.resolve_lemonade_gguf(
+                "Qwen3.6-27B-MTP-GGUF",
+                cache_root=tmp,
+            )
+            self.assertIsNone(result)
+
     def test_finds_single_gguf_in_model_dir(self):
         with tempfile.TemporaryDirectory() as tmp:
             model_dir = pathlib.Path(tmp) / "Qwen3.6-27B-MTP-GGUF"

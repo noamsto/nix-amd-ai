@@ -91,8 +91,9 @@ def find_free_port():
 def resolve_lemonade_gguf(model_id, cache_root=None):
     """Return the absolute path to the GGUF file for a lemonade model id.
 
-    Looks under <cache_root>/<model_id>/ recursively for the first .gguf
-    file. Returns None if the model directory does not exist or contains
+    Looks under <cache_root>/<model_id>/ recursively for the
+    lexicographically first .gguf file (sorted by full path).
+    Returns None if the model directory does not exist or contains
     no .gguf.
 
     cache_root defaults to ~/.cache/lemonade/models.
