@@ -111,21 +111,16 @@ in stdenv.mkDerivation {
       --replace-fail \
         'target_link_libraries(lemonade PRIVATE cpp-httplib)' \
         'target_link_libraries(lemonade PRIVATE ''${HTTPLIB_LIBRARIES})'
-    substituteInPlace src/cpp/legacy-cli/CMakeLists.txt \
-      --replace-fail \
-        'target_link_libraries(lemonade-server PRIVATE cpp-httplib)' \
-        'target_link_libraries(lemonade-server PRIVATE ''${HTTPLIB_LIBRARIES})'
 
-    # Three install(CODE ...) blocks in cli, legacy-cli, and the top-level
-    # CMakeLists try to symlink binaries / units into /usr/bin and
-    # /usr/lib/systemd/system via $ENV{DESTDIR} — designed for Debian's
-    # DESTDIR-staged build. In Nix, DESTDIR is unset and CMAKE_INSTALL_PREFIX
-    # is $out, so $ENV{DESTDIR}/usr/bin resolves to /usr/bin, which the
-    # sandbox refuses. Drop those symlink blocks; the binaries and unit live
-    # at $out/{bin,lib/systemd/system}/ and the NixOS module wires them in.
+    # Two install(CODE ...) blocks in cli and the top-level CMakeLists try
+    # to symlink binaries / units into /usr/bin and /usr/lib/systemd/system
+    # via $ENV{DESTDIR} — designed for Debian's DESTDIR-staged build. In
+    # Nix, DESTDIR is unset and CMAKE_INSTALL_PREFIX is $out, so
+    # $ENV{DESTDIR}/usr/bin resolves to /usr/bin, which the sandbox refuses.
+    # Drop those symlink blocks; the binaries and unit live at
+    # $out/{bin,lib/systemd/system}/ and the NixOS module wires them in.
     sed -i '/Create symlink in standard bin path only if not installing to/,/^endif()$/d' \
-      src/cpp/cli/CMakeLists.txt \
-      src/cpp/legacy-cli/CMakeLists.txt
+      src/cpp/cli/CMakeLists.txt
     sed -i '/Create symlink in standard systemd search path only if not installing to/,/^    endif()$/d' CMakeLists.txt
 
     # secrets.conf install rule writes to absolute /etc/lemonade/conf.d. The
