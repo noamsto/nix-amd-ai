@@ -161,6 +161,31 @@ def pick_device(devices, backend):
     )
 
 
+def build_llama_server_args(
+    bin_path, gguf, port, device, spec_type, n_gpu_layers, ctx_size,
+):
+    """Build the argv list to spawn llama-server for an MTP A/B run.
+
+    bin_path is the absolute path to the backend-specific llama-server
+    binary (ROCm and Vulkan are separately-compiled builds in this
+    flake, exposed via LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars).
+
+    spec_type must be a value accepted by `--spec-type`. For our A/B:
+    'none' (MTP off) and 'draft-mtp' (MTP on, requires b9213+).
+    """
+    return [
+        bin_path,
+        "--model", gguf,
+        "--port", str(port),
+        "--host", "127.0.0.1",
+        "--device", device,
+        "--spec-type", spec_type,
+        "--n-gpu-layers", str(n_gpu_layers),
+        "--ctx-size", str(ctx_size),
+        "--no-webui",
+    ]
+
+
 def set_llamacpp_backend(config_path, backend):
     """Write llamacpp.backend into lemonade's config.json.
 

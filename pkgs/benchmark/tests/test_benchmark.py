@@ -135,5 +135,44 @@ class PickDeviceTests(unittest.TestCase):
             benchmark.pick_device(["Vulkan0"], "rocm")
 
 
+class BuildLlamaServerArgsTests(unittest.TestCase):
+    def test_includes_required_flags(self):
+        args = benchmark.build_llama_server_args(
+            bin_path="/nix/store/abc/bin/llama-server",
+            gguf="/tmp/model.gguf",
+            port=18080,
+            device="Vulkan0",
+            spec_type="draft-mtp",
+            n_gpu_layers=99,
+            ctx_size=4096,
+        )
+        self.assertEqual(args[0], "/nix/store/abc/bin/llama-server")
+        self.assertIn("--model", args)
+        self.assertIn("/tmp/model.gguf", args)
+        self.assertIn("--port", args)
+        self.assertIn("18080", args)
+        self.assertIn("--device", args)
+        self.assertIn("Vulkan0", args)
+        self.assertIn("--spec-type", args)
+        self.assertIn("draft-mtp", args)
+        self.assertIn("--n-gpu-layers", args)
+        self.assertIn("99", args)
+        self.assertIn("--ctx-size", args)
+        self.assertIn("4096", args)
+
+    def test_spec_type_none_still_passed(self):
+        args = benchmark.build_llama_server_args(
+            bin_path="/usr/bin/llama-server",
+            gguf="/tmp/model.gguf",
+            port=18080,
+            device="ROCm0",
+            spec_type="none",
+            n_gpu_layers=99,
+            ctx_size=4096,
+        )
+        self.assertIn("--spec-type", args)
+        self.assertIn("none", args)
+
+
 if __name__ == "__main__":
     unittest.main()
