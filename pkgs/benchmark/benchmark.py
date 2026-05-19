@@ -20,6 +20,7 @@ backend but the measured decode t/s will be far below
 import argparse
 import json
 import os
+import pathlib
 import socket
 import statistics
 import subprocess
@@ -85,6 +86,25 @@ def find_free_port():
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]
+
+
+def resolve_lemonade_gguf(model_id, cache_root=None):
+    """Return the absolute path to the GGUF file for a lemonade model id.
+
+    Looks under <cache_root>/<model_id>/ recursively for the first .gguf
+    file. Returns None if the model directory does not exist or contains
+    no .gguf.
+
+    cache_root defaults to ~/.cache/lemonade/models.
+    """
+    if cache_root is None:
+        cache_root = os.path.expanduser("~/.cache/lemonade/models")
+    model_dir = pathlib.Path(cache_root) / model_id
+    if not model_dir.is_dir():
+        return None
+    for gguf in sorted(model_dir.rglob("*.gguf")):
+        return str(gguf)
+    return None
 
 
 def set_llamacpp_backend(config_path, backend):
