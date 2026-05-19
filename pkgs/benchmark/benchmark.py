@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 import pathlib
+import re
 import socket
 import statistics
 import subprocess
@@ -106,6 +107,49 @@ def resolve_lemonade_gguf(model_id, cache_root=None):
     for gguf in sorted(model_dir.rglob("*.gguf")):
         return str(gguf)
     return None
+
+
+def parse_llama_devices(output):
+    """Parse the output of `llama-server --list-devices`.
+
+    Returns a list of device identifier strings (e.g. ['Vulkan0',
+    'ROCm0']) suitable for passing to `--device`. Tolerant of
+    leading whitespace and trailing descriptions; uses the first
+    non-whitespace token before ':' as the device id.
+    """
+    devices = []
+    for line in output.splitlines():
+        m = re.match(r"\s*([A-Za-z][A-Za-z0-9]*)\s*:", line)
+        if m:
+            tok = m.group(1)
+            if tok.lower() in ("available", "devices"):
+                continue
+            devices.append(tok)
+    return devices
+
+
+_BACKEND_PREFIX = {"rocm": "ROCm", "vulkan": "Vulkan"}
+
+
+def pick_device(devices, backend):
+    """Return the device string matching the requested backend.
+
+    backend must be 'rocm' or 'vulkan'. Raises ValueError if the
+    backend is unknown or no matching device is present.
+    """
+    prefix = _BACKEND_PREFIX.get(backend)
+    if prefix is None:
+        raise ValueError(
+            f"unknown backend {backend!r};"
+            f" expected one of {sorted(_BACKEND_PREFIX)}"
+        )
+    for d in devices:
+        if d.startswith(prefix):
+            return d
+    raise ValueError(
+        f"no {backend} device found in {devices}; check"
+        f" llama-server --list-devices"
+    )
 
 
 def set_llamacpp_backend(config_path, backend):

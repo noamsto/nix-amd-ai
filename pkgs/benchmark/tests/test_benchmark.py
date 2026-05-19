@@ -70,5 +70,56 @@ class ResolveLemonadeGgufTests(unittest.TestCase):
             self.assertEqual(result, str(gguf))
 
 
+class ParseLlamaDevicesTests(unittest.TestCase):
+    ROCM_OUTPUT = (
+        "Available devices:\n"
+        "  ROCm0: AMD Radeon 890M Graphics (27935 MiB, 49248 MiB free)\n"
+    )
+    VULKAN_OUTPUT = (
+        "Available devices:\n"
+        "  Vulkan0: AMD Radeon 890M Graphics (RADV STRIX1)"
+        " (36127 MiB, 35117 MiB free)\n"
+    )
+
+    def test_parses_rocm(self):
+        self.assertEqual(
+            benchmark.parse_llama_devices(self.ROCM_OUTPUT),
+            ["ROCm0"],
+        )
+
+    def test_parses_vulkan(self):
+        self.assertEqual(
+            benchmark.parse_llama_devices(self.VULKAN_OUTPUT),
+            ["Vulkan0"],
+        )
+
+    def test_empty_output_returns_empty(self):
+        self.assertEqual(benchmark.parse_llama_devices(""), [])
+
+
+class PickDeviceTests(unittest.TestCase):
+    DEVICES = ["Vulkan0", "ROCm0"]
+
+    def test_picks_rocm(self):
+        self.assertEqual(
+            benchmark.pick_device(self.DEVICES, "rocm"),
+            "ROCm0",
+        )
+
+    def test_picks_vulkan(self):
+        self.assertEqual(
+            benchmark.pick_device(self.DEVICES, "vulkan"),
+            "Vulkan0",
+        )
+
+    def test_unknown_backend_raises(self):
+        with self.assertRaises(ValueError):
+            benchmark.pick_device(self.DEVICES, "cuda")
+
+    def test_missing_device_raises(self):
+        with self.assertRaises(ValueError):
+            benchmark.pick_device(["Vulkan0"], "rocm")
+
+
 if __name__ == "__main__":
     unittest.main()
