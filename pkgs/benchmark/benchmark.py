@@ -74,6 +74,20 @@ def http_post_stream(base_url, path, payload, timeout=300):
                     yield line[6:].decode("utf-8", errors="replace")
 
 
+def find_free_port():
+    """Return an unused TCP port on localhost.
+
+    Binds to port 0 to let the kernel pick, reads the port, then closes
+    the socket. The port is briefly racy until the caller binds again,
+    which is fine for our subprocess spawn flow.
+    """
+    import socket
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
 def set_llamacpp_backend(config_path, backend):
     """Write llamacpp.backend into lemonade's config.json.
 
