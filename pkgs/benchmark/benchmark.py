@@ -20,6 +20,7 @@ backend but the measured decode t/s will be far below
 import argparse
 import json
 import os
+import socket
 import statistics
 import subprocess
 import sys
@@ -81,8 +82,6 @@ def find_free_port():
     the socket. The port is briefly racy until the caller binds again,
     which is fine for our subprocess spawn flow.
     """
-    import socket
-
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("127.0.0.1", 0))
         return s.getsockname()[1]

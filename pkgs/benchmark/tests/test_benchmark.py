@@ -1,5 +1,7 @@
 """Unit tests for benchmark.py pure helpers."""
 
+# pyright: reportAttributeAccessIssue=false
+
 import os
 import sys
 import unittest
