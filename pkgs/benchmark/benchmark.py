@@ -20,6 +20,11 @@ backend but the measured decode t/s will be far below
 import argparse
 import json
 import os
+import pathlib
+import re
+import shlex
+import signal
+import socket
 import statistics
 import subprocess
 import sys
@@ -72,6 +77,224 @@ def http_post_stream(base_url, path, payload, timeout=300):
                 line = line.rstrip(b"\r")
                 if line.startswith(b"data: "):
                     yield line[6:].decode("utf-8", errors="replace")
+
+
+def find_free_port():
+    """Return an unused TCP port on localhost.
+
+    Binds to port 0 to let the kernel pick, reads the port, then closes
+    the socket. The port is briefly racy until the caller binds again,
+    which is fine for our subprocess spawn flow.
+    """
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("127.0.0.1", 0))
+        return s.getsockname()[1]
+
+
+def resolve_lemonade_gguf(model_id, cache_root=None):
+    """Return the absolute path to the GGUF file for a lemonade model id.
+
+    Lemonade stores models in the HuggingFace hub cache layout:
+    <cache_root>/models--<owner>--<repo>/snapshots/<rev>/<file>.gguf
+
+    The lemonade model id is the trailing repo segment (everything
+    after the second `--`). This resolver scans top-level entries,
+    matches by repo segment, then recursively finds the lexicographically
+    first .gguf file under the matched directory.
+
+    Returns None if no matching `models--*--<model_id>` directory
+    exists or the matched directory contains no .gguf file.
+
+    cache_root defaults to ~/.cache/huggingface/hub.
+    """
+    if cache_root is None:
+        cache_root = os.path.expanduser("~/.cache/huggingface/hub")
+    cache_dir = pathlib.Path(cache_root)
+    if not cache_dir.is_dir():
+        return None
+    for entry in sorted(cache_dir.iterdir()):
+        if not entry.is_dir():
+            continue
+        if not entry.name.startswith("models--"):
+            continue
+        # name pattern: models--<owner>--<repo>
+        parts = entry.name.split("--", 2)
+        if len(parts) != 3:
+            continue
+        if parts[2] != model_id:
+            continue
+        for gguf in sorted(entry.rglob("*.gguf")):
+            return str(gguf)
+        return None  # matched dir but no gguf
+    return None
+
+
+_BACKEND_PREFIX = {"rocm": "ROCm", "vulkan": "Vulkan"}
+
+
+def parse_llama_devices(output):
+    """Parse the output of `llama-server --list-devices`.
+
+    Returns a list of device identifier strings (e.g. ['Vulkan0',
+    'ROCm0']) suitable for passing to `--device`. Recognizes only
+    tokens whose prefix matches a known backend (see _BACKEND_PREFIX);
+    other ':'-suffixed words (headers, diagnostics) are skipped.
+
+    Raises RuntimeError if output is non-empty but no devices are
+    parsed — likely indicates a format change in llama-server that
+    needs the regex or prefix list updated.
+    """
+    devices = []
+    known_prefixes = tuple(_BACKEND_PREFIX.values())
+    for line in output.splitlines():
+        m = re.match(r"\s*([A-Za-z][A-Za-z0-9]*)\s*:", line)
+        if m and m.group(1).startswith(known_prefixes):
+            devices.append(m.group(1))
+    if output.strip() and not devices:
+        raise RuntimeError(
+            f"parse_llama_devices: no devices parsed from"
+            f" non-empty output (format change?). Raw output:\n"
+            f"{output!r}"
+        )
+    return devices
+
+
+def pick_device(devices, backend):
+    """Return the device string matching the requested backend.
+
+    backend must be a key of _BACKEND_PREFIX (e.g. 'rocm', 'vulkan').
+    Raises ValueError if the backend is unknown or no matching device
+    is present in `devices`.
+    """
+    prefix = _BACKEND_PREFIX.get(backend)
+    if prefix is None:
+        raise ValueError(
+            f"unknown backend {backend!r};"
+            f" expected one of {sorted(_BACKEND_PREFIX)}"
+        )
+    for d in devices:
+        if d.startswith(prefix):
+            return d
+    raise ValueError(
+        f"no {backend} device found in {devices}; check"
+        f" llama-server --list-devices"
+    )
+
+
+def build_llama_server_args(
+    bin_path, gguf, port, device, spec_type, n_gpu_layers, ctx_size,
+):
+    """Build the argv list to spawn llama-server for an MTP A/B run.
+
+    bin_path is the absolute path to the backend-specific llama-server
+    binary (ROCm and Vulkan are separately-compiled builds in this
+    flake, exposed via LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars).
+
+    port, n_gpu_layers, and ctx_size are integers (stringified here).
+
+    spec_type must be a value accepted by `--spec-type`. For our A/B:
+    'none' (MTP off) and 'draft-mtp' (MTP on, requires b9213+).
+    When spec_type != 'none', --spec-draft-n-max 6 is appended
+    (upstream-recommended draft length for MTP).
+
+    --parallel 1 forces a single slot so KV-cache memory matches a
+    single-user inference workload. Without it, llama-server defaults
+    to 4 slots × ctx_size, which on iGPU pushes the model + KV cache
+    over the Vulkan/ROCm budget and silently CPU-offloads layers.
+    """
+    args = [
+        bin_path,
+        "--model", gguf,
+        "--port", str(port),
+        "--host", "127.0.0.1",
+        "--device", device,
+        "--spec-type", spec_type,
+        "--n-gpu-layers", str(n_gpu_layers),
+        "--ctx-size", str(ctx_size),
+        "--parallel", "1",
+    ]
+    # --spec-draft-n-max only applies when speculative decoding is on.
+    # Upstream recommends 6 for MTP; default is conservative.
+    if spec_type != "none":
+        args.extend(["--spec-draft-n-max", "6"])
+    return args
+
+
+class LlamaServer:
+    """Context manager that spawns and reaps a llama-server subprocess.
+
+    Spawns the server with the given argv, polls /health until ready or
+    timeout, exposes `base_url`. On exit sends SIGTERM, waits up to
+    `term_timeout` seconds, then SIGKILLs if still alive.
+    """
+
+    def __init__(self, argv, port, ready_timeout=300, term_timeout=10):
+        self.argv = argv
+        self.port = port
+        self.ready_timeout = ready_timeout
+        self.term_timeout = term_timeout
+        self.base_url = f"http://127.0.0.1:{port}"
+        self.proc = None
+
+    def __enter__(self):
+        print(
+            f"  Spawning: {shlex.join(self.argv)}",
+            file=sys.stderr,
+        )
+        self.proc = subprocess.Popen(
+            self.argv,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        try:
+            self._wait_ready()
+        except Exception:
+            self.__exit__(None, None, None)
+            raise
+        return self
+
+    def _wait_ready(self):
+        assert self.proc is not None
+        assert self.proc.stderr is not None
+        deadline = time.monotonic() + self.ready_timeout
+        last_err = None
+        while time.monotonic() < deadline:
+            if self.proc.poll() is not None:
+                stderr = self.proc.stderr.read().decode(
+                    "utf-8", errors="replace"
+                )
+                raise RuntimeError(
+                    f"llama-server exited with code"
+                    f" {self.proc.returncode} before becoming ready."
+                    f" stderr:\n{stderr[-2000:]}"
+                )
+            try:
+                http_get(self.base_url, "/health")
+                return
+            except (urllib.error.URLError, ConnectionError, OSError) as exc:
+                last_err = exc
+                time.sleep(0.5)
+        raise TimeoutError(
+            f"llama-server at {self.base_url} did not become ready"
+            f" within {self.ready_timeout}s (last error: {last_err})"
+        )
+
+    def __exit__(self, _exc_type, _exc, _tb):
+        if self.proc is None:
+            return
+        if self.proc.poll() is None:
+            self.proc.send_signal(signal.SIGTERM)
+            try:
+                self.proc.wait(timeout=self.term_timeout)
+            except subprocess.TimeoutExpired:
+                print(
+                    "  WARNING: llama-server did not exit on SIGTERM;"
+                    " sending SIGKILL",
+                    file=sys.stderr,
+                )
+                self.proc.kill()
+                self.proc.wait()
+        self.proc = None
 
 
 def set_llamacpp_backend(config_path, backend):
@@ -224,8 +447,61 @@ def build_prompt(prompt_tokens):
     return "The " * prompt_tokens
 
 
-def run_completion(base_url, model_id, prompt, gen_tokens):
+# A naturalistic prompt for MTP measurement. Synthetic prompts like
+# `"The " * N` produce wildly unstable MTP draft acceptance rates
+# (7 to 19 t/s variance on identical iterations). This passage is
+# repetitive English prose at the token level, which gives the MTP
+# draft head something realistic to predict against.
+_MTP_PROMPT_BASE = (
+    "The quick brown fox jumps over the lazy dog. "
+    "It was a bright cold day in April, and the clocks were "
+    "striking thirteen. "
+    "All happy families are alike; each unhappy family is "
+    "unhappy in its own way. "
+    "In the beginning the Universe was created. This has made "
+    "a lot of people very angry and been widely regarded as a "
+    "bad move. "
+    "Many years later, as he faced the firing squad, Colonel "
+    "Aureliano Buendia was to remember that distant afternoon "
+    "when his father took him to discover ice. "
+    "It is a truth universally acknowledged, that a single man "
+    "in possession of a good fortune, must be in want of a wife. "
+    "Call me Ishmael. Some years ago - never mind how long "
+    "precisely - having little or no money in my purse, and "
+    "nothing particular to interest me on shore, I thought I "
+    "would sail about a little and see the watery part of the "
+    "world. "
+    "Mr and Mrs Dursley, of number four, Privet Drive, were "
+    "proud to say that they were perfectly normal, thank you "
+    "very much. "
+)
+
+
+def build_mtp_prompt(prompt_tokens):
+    """Build a naturalistic prompt of approximately prompt_tokens tokens.
+
+    Repeats a fixed passage of well-known opening lines until the token
+    target is met. Llama tokenizers turn ~3 to 4 chars into a token on
+    English text, so we use that ratio to estimate length without
+    actually tokenizing.
+    """
+    # ~3.5 chars per token on English -> target chars to hit prompt_tokens
+    target_chars = prompt_tokens * 4
+    out = ""
+    while len(out) < target_chars:
+        out += _MTP_PROMPT_BASE
+    return out[:target_chars]
+
+
+def run_completion(
+    base_url, model_id, prompt, gen_tokens,
+    completions_path="/api/v1/completions",
+):
     """Run one streaming completion.
+
+    completions_path defaults to lemonade's '/api/v1/completions'. Pass
+    '/v1/completions' when talking to a raw llama-server (the MTP A/B
+    mode spawns the server directly without the lemonade prefix).
 
     Returns (ttft_sec, decode_tps, total_tokens_generated).
     """
@@ -246,7 +522,7 @@ def run_completion(base_url, model_id, prompt, gen_tokens):
     final_timings = None
 
     for raw_line in http_post_stream(
-        base_url, "/api/v1/completions", payload
+        base_url, completions_path, payload
     ):
         if raw_line.strip() == "[DONE]":
             break
@@ -371,6 +647,200 @@ def print_markdown_table(rows):
         )
 
 
+def format_mtp_row(model_id, backend, off_tps, on_tps):
+    """Format one markdown table row for the MTP A/B sweep."""
+
+    def fmt(v):
+        return f"{v:.1f}" if isinstance(v, (int, float)) else "N/A"
+
+    if isinstance(off_tps, (int, float)) and off_tps > 0 \
+            and isinstance(on_tps, (int, float)):
+        speedup = f"{on_tps / off_tps:.2f}x"
+    else:
+        speedup = "N/A"
+    return (
+        f"| {model_id} | {backend} | {fmt(off_tps)} |"
+        f" {fmt(on_tps)} | {speedup} |"
+    )
+
+
+_BACKEND_BIN_ENV = {
+    "rocm": "LEMONADE_LLAMACPP_ROCM_BIN",
+    "vulkan": "LEMONADE_LLAMACPP_VULKAN_BIN",
+}
+
+_BACKEND_NIX_OPTION = {
+    "rocm": "enableROCm",
+    "vulkan": "enableVulkan",
+}
+
+
+def _resolve_backend_bin(backend):
+    """Look up the llama-server binary for a backend.
+
+    Each backend is a separately-compiled build in this flake. The
+    NixOS module exports LEMONADE_LLAMACPP_<BACKEND>_BIN pointing at
+    the relevant /nix/store path.
+    """
+    env_var = _BACKEND_BIN_ENV.get(backend)
+    if env_var is None:
+        raise ValueError(
+            f"unknown backend {backend!r};"
+            f" expected one of {sorted(_BACKEND_BIN_ENV)}"
+        )
+    path = os.environ.get(env_var)
+    if not path:
+        nix_opt = _BACKEND_NIX_OPTION[backend]
+        raise RuntimeError(
+            f"{env_var} not set in environment; the nix-amd-ai"
+            f" module sets it when hardware.amd-npu.{nix_opt} = true."
+            f" Run from a session where the module env is active."
+        )
+    return path
+
+
+def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
+    """Run warmup + repeat completions against a live llama-server.
+
+    Returns the mean decode t/s (from server-reported timings), or None
+    if no successful iterations.
+    """
+    prompt = build_mtp_prompt(prompt_tokens)
+    for _ in range(warmup):
+        run_completion(
+            server.base_url, "default", prompt, gen_tokens,
+            completions_path="/v1/completions",
+        )
+
+    tps_samples = []
+    for i in range(repeat):
+        _ttft, tps, ntok = run_completion(
+            server.base_url, "default", prompt, gen_tokens,
+            completions_path="/v1/completions",
+        )
+        if tps is None:
+            print(
+                f"    iter {i + 1}: no tokens received",
+                file=sys.stderr,
+            )
+            continue
+        print(
+            f"    iter {i + 1}: decode={tps:.1f} t/s, tokens={ntok}",
+            file=sys.stderr,
+        )
+        tps_samples.append(tps)
+
+    if not tps_samples:
+        return None
+    return statistics.mean(tps_samples)
+
+
+def run_mtp_ab(
+    model_id, backends, prompt_tokens, gen_tokens, warmup, repeat,
+):
+    """Drive an MTP-on / MTP-off A/B across the given backends.
+
+    Spawns llama-server twice per backend (--spec-type none, then
+    --spec-type draft-mtp) against the same GGUF. Prints a markdown
+    table.
+    """
+    if not backends:
+        print(
+            "ERROR: --mtp-ab-backends produced an empty backend list",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    gguf = resolve_lemonade_gguf(model_id)
+    if gguf is None:
+        print(
+            f"ERROR: model {model_id!r} not found in lemonade cache."
+            f" Run: lemonade pull {model_id}",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
+    print(
+        f"\nMTP A/B sweep: model={model_id}\n"
+        f"  gguf={gguf}\n"
+        f"  backends={backends}\n"
+        f"  protocol: prompt={prompt_tokens} tokens,"
+        f" gen={gen_tokens} tokens,"
+        f" {warmup} warmup + {repeat} measured\n",
+        file=sys.stderr,
+    )
+
+    rows = []
+    first_backend = True
+    for backend in backends:
+        if not first_backend:
+            time.sleep(3)
+        first_backend = False
+        bin_path = _resolve_backend_bin(backend)
+        devices_output = subprocess.run(
+            [bin_path, "--list-devices"],
+            capture_output=True, text=True, timeout=30, check=True,
+        ).stdout
+        devices = parse_llama_devices(devices_output)
+        device = pick_device(devices, backend)
+        print(
+            f"\n[{backend}] bin={bin_path} device={device}",
+            file=sys.stderr,
+        )
+
+        results = {}
+        first_spec = True
+        for spec_type in ("none", "draft-mtp"):
+            if not first_spec:
+                # Let the GPU driver settle after previous server exit.
+                # Sustained back-to-back llama-server spawns can hit
+                # Vulkan/RADV state issues that surface as startup
+                # failures on the third+ spawn.
+                time.sleep(3)
+            first_spec = False
+            print(
+                f"\n[{backend}] --spec-type {spec_type}",
+                file=sys.stderr,
+            )
+            port = find_free_port()
+            argv = build_llama_server_args(
+                bin_path=bin_path, gguf=gguf, port=port,
+                device=device, spec_type=spec_type,
+                n_gpu_layers=99, ctx_size=4096,
+            )
+            try:
+                with LlamaServer(argv, port) as server:
+                    results[spec_type] = _measure_one_spec(
+                        server, prompt_tokens, gen_tokens, warmup, repeat,
+                    )
+            except RuntimeError as exc:
+                msg = str(exc)
+                if spec_type == "draft-mtp" and "mtp" in msg.lower():
+                    print(
+                        f"ERROR: model {model_id!r} has no MTP head"
+                        f" (--spec-type draft-mtp rejected by"
+                        f" llama-server). Pick an MTP-labeled model.",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+                raise
+
+        row = format_mtp_row(
+            model_id=model_id,
+            backend=backend,
+            off_tps=results.get("none"),
+            on_tps=results.get("draft-mtp"),
+        )
+        rows.append(row)
+        print("\n" + row, file=sys.stderr)
+
+    print()
+    print("| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |")
+    print("| ----- | ------- | ------------: | -----------: | ------: |")
+    for row in rows:
+        print(row)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Benchmark lemonade backends via HTTP API",
@@ -379,8 +849,12 @@ def main():
     parser.add_argument(
         "model_ids",
         metavar="MODEL_ID",
-        nargs="+",
-        help="One or more lemonade model IDs to benchmark",
+        nargs="*",
+        default=[],
+        help=(
+            "One or more lemonade model IDs to benchmark (lemonade"
+            " HTTP mode). Omit when using --mtp-ab."
+        ),
     )
     parser.add_argument(
         "--base-url",
@@ -450,7 +924,56 @@ def main():
             " are running in an environment without sudo."
         ),
     )
+    parser.add_argument(
+        "--mtp-ab",
+        metavar="MODEL_ID",
+        default=None,
+        help=(
+            "Run a same-GGUF A/B between --spec-type none and"
+            " --spec-type draft-mtp on the given lemonade model id."
+            " Spawns llama-server directly (bypasses lemond); requires"
+            " the model to be pulled and to have an MTP head."
+            " Mutually exclusive with the positional MODEL_ID arguments."
+        ),
+    )
+    parser.add_argument(
+        "--mtp-ab-backends",
+        default="rocm,vulkan",
+        help=(
+            "Comma-separated list of backends to sweep when --mtp-ab"
+            " is set."
+        ),
+    )
     args = parser.parse_args()
+
+    if args.mtp_ab:
+        if args.model_ids:
+            print(
+                "ERROR: --mtp-ab is mutually exclusive with"
+                " positional MODEL_ID arguments",
+                file=sys.stderr,
+            )
+            sys.exit(2)
+        backends = [
+            b.strip() for b in args.mtp_ab_backends.split(",") if b.strip()
+        ]
+        run_mtp_ab(
+            model_id=args.mtp_ab,
+            backends=backends,
+            prompt_tokens=args.prompt_tokens,
+            gen_tokens=args.gen_tokens,
+            warmup=args.warmup,
+            repeat=args.repeat,
+        )
+        return
+
+    if not args.model_ids:
+        print(
+            "ERROR: at least one MODEL_ID is required (or use"
+            " --mtp-ab)",
+            file=sys.stderr,
+        )
+        sys.exit(2)
 
     model_ids = args.model_ids
     base_url = args.base_url.rstrip("/")
