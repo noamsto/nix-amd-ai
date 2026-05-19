@@ -224,6 +224,7 @@ class LlamaServer:
 
     def _wait_ready(self):
         assert self.proc is not None
+        assert self.proc.stderr is not None
         deadline = time.monotonic() + self.ready_timeout
         last_err = None
         while time.monotonic() < deadline:
