@@ -212,6 +212,9 @@ def build_llama_server_args(
         "--n-gpu-layers", str(n_gpu_layers),
         "--ctx-size", str(ctx_size),
         "--parallel", "1",
+        # Match lemonade's serving config; without it the KV cache for
+        # large ctx overflows the iGPU budget and silently CPU-offloads.
+        "--flash-attn", "on",
     ]
     # --spec-draft-n-max only applies when speculative decoding is on.
     # Upstream recommends 6 for MTP; default is conservative.
@@ -493,9 +496,30 @@ def build_mtp_prompt(prompt_tokens):
     return out[:target_chars]
 
 
+def build_completion_payload(
+    model_id, prompt, gen_tokens, ignore_eos=False
+):
+    """Build the JSON body for a streaming /completions request.
+
+    With ignore_eos=True the server keeps generating until max_tokens
+    regardless of EOS. Required for the MTP A/B decode measurement:
+    otherwise a stochastic immediate-EOS produces a 1-token (empty
+    text) completion that scores as a zero-token failure.
+    """
+    payload = {
+        "model": model_id,
+        "prompt": prompt,
+        "max_tokens": gen_tokens,
+        "stream": True,
+    }
+    if ignore_eos:
+        payload["ignore_eos"] = True
+    return payload
+
+
 def run_completion(
     base_url, model_id, prompt, gen_tokens,
-    completions_path="/api/v1/completions",
+    completions_path="/api/v1/completions", ignore_eos=False,
 ):
     """Run one streaming completion.
 
@@ -505,12 +529,9 @@ def run_completion(
 
     Returns (ttft_sec, decode_tps, total_tokens_generated).
     """
-    payload = {
-        "model": model_id,
-        "prompt": prompt,
-        "max_tokens": gen_tokens,
-        "stream": True,
-    }
+    payload = build_completion_payload(
+        model_id, prompt, gen_tokens, ignore_eos=ignore_eos
+    )
 
     t_start = time.monotonic()
     t_first_token = None
@@ -709,14 +730,14 @@ def _measure_one_spec(server, prompt_tokens, gen_tokens, warmup, repeat):
     for _ in range(warmup):
         run_completion(
             server.base_url, "default", prompt, gen_tokens,
-            completions_path="/v1/completions",
+            completions_path="/v1/completions", ignore_eos=True,
         )
 
     tps_samples = []
     for i in range(repeat):
         _ttft, tps, ntok = run_completion(
             server.base_url, "default", prompt, gen_tokens,
-            completions_path="/v1/completions",
+            completions_path="/v1/completions", ignore_eos=True,
         )
         if tps is None:
             print(
@@ -806,7 +827,9 @@ def run_mtp_ab(
             argv = build_llama_server_args(
                 bin_path=bin_path, gguf=gguf, port=port,
                 device=device, spec_type=spec_type,
-                n_gpu_layers=99, ctx_size=4096,
+                # ctx sized to the 512+128-token A/B workload with
+                # headroom; 4096 wastes KV memory and risks offload.
+                n_gpu_layers=99, ctx_size=2048,
             )
             try:
                 with LlamaServer(argv, port) as server:
