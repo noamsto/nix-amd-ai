@@ -44,19 +44,44 @@ jobs:
             "${{ steps.check.outputs.lem_latest }}" "${{ steps.check.outputs.lem_current }}" \
             "${{ steps.check.outputs.xdna_latest }}" "${{ steps.check.outputs.xdna_current }}"
 
-      - name: Build updated packages
+      - name: Validate flake eval
         if: steps.check.outputs.needs_update == 'true'
+        id: flake_check
         continue-on-error: true
         run: |
-          nix build .#xrt || echo "XRT build failed"
-          nix build .#xrt-plugin-amdxdna || echo "Plugin build failed"
-          nix build .#fastflowlm || echo "FLM build failed"
-          nix build .#lemonade || echo "Lemonade build failed"
+          if nix flake check --no-build 2>&1 | tee /tmp/flake-check.log; then
+            echo "status=pass" >> "$GITHUB_OUTPUT"
+          else
+            echo "status=fail" >> "$GITHUB_OUTPUT"
+            {
+              echo "log<<CHECK_EOF"
+              tail -40 /tmp/flake-check.log
+              echo "CHECK_EOF"
+            } >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build updated packages
+        if: steps.check.outputs.needs_update == 'true'
+        id: build
+        run: |
+          FAILED=""
+          for pkg in xrt xrt-plugin-amdxdna fastflowlm lemonade; do
+            if ! nix build ".#$pkg"; then
+              FAILED+="- ${pkg}"$'\n'
+            fi
+          done
+          {
+            echo "failed<<BUILD_EOF"
+            printf '%s' "$FAILED"
+            echo "BUILD_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create PR
         if: steps.check.outputs.needs_update == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          FLAKE_CHECK_LOG: ${{ steps.flake_check.outputs.log }}
+          BUILD_FAILED: ${{ steps.build.outputs.failed }}
         run: |
           git diff --quiet && echo "No changes" && exit 0
 
@@ -84,6 +109,15 @@ jobs:
 
           if [ "${{ steps.check.outputs.mtp_cleanup }}" = "true" ]; then
             BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up past b9175."$'\n'
+          fi
+
+          if [ "${{ steps.flake_check.outputs.status }}" = "fail" ]; then
+            BODY+=$'\n'"### ⚠️ \`nix flake check\` failed"$'\n'
+            BODY+=$'\n''```'$'\n'"$FLAKE_CHECK_LOG"$'\n''```'$'\n'
+          fi
+
+          if [ -n "$BUILD_FAILED" ]; then
+            BODY+=$'\n'"### ⚠️ Build failures"$'\n'"$BUILD_FAILED"
           fi
 
           BODY+=$'\n'"**Note:** Hashes may need manual correction if auto-prefetch failed."
