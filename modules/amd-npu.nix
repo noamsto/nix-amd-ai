@@ -198,6 +198,34 @@ in {
       after = ["network-online.target"];
       wants = ["network-online.target"];
       wantedBy = ["multi-user.target"];
+      path = pathList ++ ["/run/current-system/sw"];
+      environment =
+        {
+          XILINX_XRT = "${xrt-combined}";
+          XRT_PATH = "${xrt-combined}";
+          LD_LIBRARY_PATH = "${xrt-combined}/lib${optionalROCmLibs}";
+          # Disable lemond's 300s upstream timeout so long prompt-processing
+          # phases (common with large agent system prompts on iGPU) don't
+          # abort before the first token. See lemonade-sdk/lemonade#1364.
+          LEMONADE_GLOBAL_TIMEOUT = "0";
+          LEMONADE_LLAMACPP_CPU_BIN = "${pkgs.llama-cpp}/bin/llama-server";
+          LEMONADE_WHISPERCPP_CPU_BIN = "${pkgs.whisper-cpp}/bin/whisper-server";
+          LEMONADE_LLAMACPP_ARGS = "--flash-attn ${cfg.lemonade.flashAttn}";
+        } // optionalAttrs cfg.enableImageGen {
+          LEMONADE_SDCPP_CPU_BIN = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
+        } // optionalAttrs cfg.enableROCm {
+          LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
+          LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
+        } // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
+          LEMONADE_SDCPP_ROCM_BIN = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
+        } // optionalAttrs cfg.enableVulkan {
+          LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
+          LEMONADE_WHISPERCPP_VULKAN_BIN = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
+        } // optionalAttrs cfg.enableFastFlowLM {
+          # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
+          # New in FLM 0.9.41.
+          FLM_DISABLE_UPDATE_CHECK = "1";
+        };
       serviceConfig = {
         Type = "simple";
         User = cfg.lemonade.user;
@@ -206,33 +234,6 @@ in {
         RestartSec = "5s";
         KillSignal = "SIGINT";
         LimitMEMLOCK = "infinity";
-        Environment =
-          [
-            "XILINX_XRT=${xrt-combined}"
-            "XRT_PATH=${xrt-combined}"
-            "LD_LIBRARY_PATH=${xrt-combined}/lib${optionalROCmLibs}"
-            "PATH=${makeBinPath pathList}:/run/current-system/sw/bin"
-            # Disable lemond's 300s upstream timeout so long prompt-processing
-            # phases (common with large agent system prompts on iGPU) don't
-            # abort before the first token. See lemonade-sdk/lemonade#1364.
-            "LEMONADE_GLOBAL_TIMEOUT=0"
-            "LEMONADE_LLAMACPP_CPU_BIN=${pkgs.llama-cpp}/bin/llama-server"
-            "LEMONADE_WHISPERCPP_CPU_BIN=${pkgs.whisper-cpp}/bin/whisper-server"
-            "LEMONADE_LLAMACPP_ARGS=--flash-attn ${cfg.lemonade.flashAttn}"
-          ]
-          ++ optional cfg.enableImageGen "LEMONADE_SDCPP_CPU_BIN=${pkgs.stable-diffusion-cpp}/bin/sd-server"
-          ++ optionals cfg.enableROCm [
-            "LEMONADE_LLAMACPP_ROCM_BIN=${pkgs.llama-cpp-rocm}/bin/llama-server"
-            "LEMONADE_GGML_HIP_PATH=${pkgs.llama-cpp-rocm}/lib/libggml-hip.so"
-          ]
-          ++ optional (cfg.enableROCm && cfg.enableImageGen) "LEMONADE_SDCPP_ROCM_BIN=${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server"
-          ++ optionals cfg.enableVulkan [
-            "LEMONADE_LLAMACPP_VULKAN_BIN=${pkgs.llama-cpp-vulkan}/bin/llama-server"
-            "LEMONADE_WHISPERCPP_VULKAN_BIN=${pkgs.whisper-cpp-vulkan}/bin/whisper-server"
-          ]
-          # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
-          # New in FLM 0.9.41.
-          ++ optional cfg.enableFastFlowLM "FLM_DISABLE_UPDATE_CHECK=1";
       };
     };
   };
