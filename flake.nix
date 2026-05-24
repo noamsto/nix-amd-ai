@@ -38,7 +38,7 @@
         '';
       });
 
-    # Pin llama-cpp to b9213 (the build lemonade v10.5.1 ships against) so
+    # Pin llama-cpp to b9253 (the build lemonade v10.6.0 ships against) so
     # the `mtp` recipe lights up — MTP support merged in ggml-org/llama.cpp#22673
     # at b9175. The posix_spawnp patch works around upstream issue #20868: at
     # b9175+, mul_mm.comp's shader-variant explosion makes shader-gen's
@@ -47,19 +47,19 @@
     llamaCppMtpSrc = pkgs: pkgs.fetchFromGitHub {
       owner = "ggml-org";
       repo = "llama.cpp";
-      rev = "49c21f97cd04c7eedb0318aaf00b18344cfea688";
-      hash = "sha256-hxtZlfsOBBqVH7DHfFptYkdaqis7bKb9anhZPpCRXi0=";
+      rev = "29f1482221b68fdbf5bd9b762c9e3e350e21f1ec";
+      hash = "sha256-EehegfVuh3Y88bjCzMU5Mgkc+ZqhPwBVrRR2oaYwCaw=";
     };
     llamaCppMtpOverride = pkgs: pkg:
       pkg.overrideAttrs (_old: {
         # LLAMA_BUILD_NUMBER is stamped into a C int literal.
-        version = "9213";
+        version = "9253";
         pname = "llama-cpp-mtp";
         src = llamaCppMtpSrc pkgs;
         patches = [./pkgs/llama-cpp-vulkan-shaders-gen-posix-spawn.patch];
         postPatch = "";
         npmRoot = "tools/ui";
-        npmDepsHash = "sha256-WaEePrEZ7O/7deP2KJhe0AwiSKYA8HOqETmMHUkmBe0=";
+        npmDepsHash = "sha256-Iyg8FpcTKf2UYHuK7mA3cTAqVaLcQPcS0YCa5Qf01Gc=";
       });
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
