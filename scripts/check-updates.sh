@@ -41,14 +41,9 @@ if [ "$NIXPKGS_CURRENT_REV" != "$NIXPKGS_LATEST_REV" ]; then
   done
 fi
 
-# Cross-check llamaCppMtpOverride against what Lemonade actually ships against.
-# Lemonade pins its backend versions in src/cpp/resources/backend_versions.json;
-# our flake.nix override must match `llamacpp.vulkan` for MTP to light up.
-#
-#   mtp_override_needs_update: Lemonade-required != what our flake currently pins
-#                              → human must hand-bump version/rev/hash in flake.nix.
-#   mtp_cleanup:               nixpkgs llama-cpp >= Lemonade-required
-#                              → can drop the override entirely.
+# Cross-check llamaCppMtpOverride against Lemonade's backend_versions.json
+# (llamacpp.vulkan). Our flake pin must match for MTP to light up; nixpkgs
+# catching up to that pin means we can drop the override entirely.
 MTP_OVERRIDE_NEEDS_UPDATE=false
 MTP_CLEANUP=false
 MTP_REQUIRED=""
