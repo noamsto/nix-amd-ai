@@ -41,13 +41,28 @@ if [ "$NIXPKGS_CURRENT_REV" != "$NIXPKGS_LATEST_REV" ]; then
   done
 fi
 
-# Drop flake.nix llamaCppMtpOverride once nixpkgs llama-cpp catches up past
-# b9175 (the MTP merge build).
+# Cross-check llamaCppMtpOverride against Lemonade's backend_versions.json
+# (llamacpp.vulkan). Our flake pin must match for MTP to light up; nixpkgs
+# catching up to that pin means we can drop the override entirely.
+MTP_OVERRIDE_NEEDS_UPDATE=false
 MTP_CLEANUP=false
+MTP_REQUIRED=""
+MTP_CURRENT=""
 if grep -q "llamaCppMtpOverride" flake.nix; then
+  MTP_CURRENT=$(grep -A1 'LLAMA_BUILD_NUMBER' flake.nix | grep 'version =' | sed 's/.*"\([0-9]*\)".*/\1/')
+  MTP_REQUIRED=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/resources/backend_versions.json?ref=v${LEM_LATEST}" \
+    -H "Accept: application/vnd.github.v3.raw" \
+    --jq '.llamacpp.vulkan' 2>/dev/null | sed 's/^b//')
+
+  if [ -n "$MTP_REQUIRED" ] && [ -n "$MTP_CURRENT" ] && [ "$MTP_REQUIRED" != "$MTP_CURRENT" ]; then
+    MTP_OVERRIDE_NEEDS_UPDATE=true
+    NEEDS_UPDATE=true
+    echo "MTP override: b${MTP_CURRENT} -> b${MTP_REQUIRED} (lemonade v${LEM_LATEST} pins llamacpp.vulkan)"
+  fi
+
   llamacpp_new=$(nix eval --raw "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.version" 2>/dev/null || echo "")
   llamacpp_num="${llamacpp_new%%-*}"
-  if [[ "$llamacpp_num" =~ ^[0-9]+$ ]] && [ "$llamacpp_num" -ge 9175 ]; then
+  if [ -n "$MTP_REQUIRED" ] && [[ "$llamacpp_num" =~ ^[0-9]+$ ]] && [ "$llamacpp_num" -ge "$MTP_REQUIRED" ]; then
     MTP_CLEANUP=true
   fi
 fi
@@ -63,6 +78,9 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "needs_update=$NEEDS_UPDATE"
     echo "nixpkgs_needs_update=$NIXPKGS_NEEDS_UPDATE"
     echo "mtp_cleanup=$MTP_CLEANUP"
+    echo "mtp_override_needs_update=$MTP_OVERRIDE_NEEDS_UPDATE"
+    echo "mtp_required=$MTP_REQUIRED"
+    echo "mtp_current=$MTP_CURRENT"
     # Multi-line outputs need the heredoc form (GitHub Actions docs).
     echo "nixpkgs_backend_diffs<<NIXPKGS_EOF"
     printf '%s' "$NIXPKGS_BACKEND_DIFFS"
