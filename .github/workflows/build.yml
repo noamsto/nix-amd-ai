@@ -34,22 +34,44 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          fetch-tags: true
       - name: Tag and release
         env:
           GH_TOKEN: ${{ github.token }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
         run: |
-          tag="v$(date -u +%Y.%m.%d)"
-          if git rev-parse "$tag" >/dev/null 2>&1; then
-            echo "Tag $tag already exists, nothing to do."
+          # Only release when the package set changed — skip CI/docs-only pushes.
+          changed=$(git diff --name-only "$BEFORE" "$SHA" 2>/dev/null || git show --name-only --format= "$SHA")
+          if ! echo "$changed" | grep -qE '^(flake\.(lock|nix)|pkgs/)'; then
+            echo "No package changes in this push; skipping release."
             exit 0
           fi
+
+          # First free vYYYY.MM.DD[-N] tag, so same-day re-cuts suffix instead of
+          # silently skipping (the old behaviour stranded later merges).
+          base="v$(date -u +%Y.%m.%d)"
+          tag="$base"
+          n=1
+          while git rev-parse "$tag" >/dev/null 2>&1; do
+            n=$((n + 1))
+            tag="${base}-${n}"
+          done
+
           prev_tag=$(git describe --tags --abbrev=0 2>/dev/null || true)
           if [ -n "$prev_tag" ]; then
-            range="${prev_tag}..HEAD"
-            notes=$(git log --pretty='* %s (%h)' "$range")
+            notes=$(git log --pretty='* %s (%h)' "${prev_tag}..HEAD")
           else
             notes="First tagged release."
           fi
-          git tag "$tag" "${{ github.sha }}"
+
+          lem=$(grep 'version = ' pkgs/lemonade/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          if [ -n "$lem" ]; then
+            title="$tag — Lemonade $lem"
+          else
+            title="$tag"
+          fi
+
+          git tag "$tag" "$SHA"
           git push origin "$tag"
-          printf '%s\n' "$notes" | gh release create "$tag" --title "$tag" --notes-file -
+          printf '%s\n' "$notes" | gh release create "$tag" --title "$title" --notes-file -
