@@ -32,8 +32,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "Xilinx";
     repo = "XRT";
-    rev = "59ec704cb9c3f76d09524e94bd9c321a72c903d6";
-    hash = "sha256-Yt6vjNstljqZTanNB4mYMIPDd+Q+3lLoXpF2jWAxpmM=";
+    rev = "c14df528b9e98ef1ecaf05f5720ef05d9158dc22";
+    hash = "sha256-xErKqZFOFiY+k0o1L8bki6kPwahba66hOxvuj4czXh4=";
     fetchSubmodules = true;
   };
 
