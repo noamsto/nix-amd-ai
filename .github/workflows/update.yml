@@ -107,8 +107,14 @@ jobs:
             BODY+="$NIXPKGS_DIFFS"
           fi
 
+          if [ "${{ steps.check.outputs.mtp_override_needs_update }}" = "true" ]; then
+            BODY+=$'\n'"### ⚠️ MTP override needs hand-bump"$'\n'
+            BODY+="Lemonade v${{ steps.check.outputs.lem_latest }} pins \`llamacpp.vulkan = b${{ steps.check.outputs.mtp_required }}\`, but \`llamaCppMtpOverride\` in \`flake.nix\` is at \`b${{ steps.check.outputs.mtp_current }}\`."$'\n'
+            BODY+="Update \`version\`, \`rev\` (commit for tag \`b${{ steps.check.outputs.mtp_required }}\` in \`ggml-org/llama.cpp\`), and both hashes in the \`llamaCppMtpSrc\` / \`llamaCppMtpOverride\` blocks."$'\n'
+          fi
+
           if [ "${{ steps.check.outputs.mtp_cleanup }}" = "true" ]; then
-            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up past b9175."$'\n'
+            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up to b${{ steps.check.outputs.mtp_required }} (what Lemonade pins)."$'\n'
           fi
 
           if [ "${{ steps.flake_check.outputs.status }}" = "fail" ]; then
