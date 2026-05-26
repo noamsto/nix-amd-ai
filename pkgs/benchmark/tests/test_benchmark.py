@@ -185,6 +185,7 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
             ("--n-gpu-layers", "99"),
             ("--ctx-size", "4096"),
             ("--parallel", "1"),
+            ("--flash-attn", "on"),
             ("--spec-draft-n-max", "6"),
         ]
         for flag, value in expected_pairs:
@@ -207,6 +208,10 @@ class BuildLlamaServerArgsTests(unittest.TestCase):
         )
         self.assertIn("--spec-type", args)
         self.assertIn("none", args)
+        # --flash-attn matches lemonade's serving config; applies
+        # regardless of spec_type.
+        idx = args.index("--flash-attn")
+        self.assertEqual(args[idx + 1], "on")
         # --spec-draft-n-max is only relevant when speculative decoding
         # is on; should be absent for spec_type='none'.
         self.assertNotIn("--spec-draft-n-max", args)
@@ -264,6 +269,28 @@ class BuildMtpPromptTests(unittest.TestCase):
         prompt = benchmark.build_mtp_prompt(100)
         self.assertGreater(len(prompt), 300)
         self.assertLess(len(prompt), 500)
+
+
+class BuildCompletionPayloadTests(unittest.TestCase):
+    def test_basic_payload(self):
+        p = benchmark.build_completion_payload("m", "hello", 64)
+        self.assertEqual(p["model"], "m")
+        self.assertEqual(p["prompt"], "hello")
+        self.assertEqual(p["max_tokens"], 64)
+        self.assertTrue(p["stream"])
+
+    def test_ignore_eos_absent_by_default(self):
+        # Lemonade path measures natural decode; must not force tokens.
+        p = benchmark.build_completion_payload("m", "hello", 64)
+        self.assertNotIn("ignore_eos", p)
+
+    def test_ignore_eos_forces_fixed_token_count(self):
+        # MTP A/B needs every iteration to emit exactly max_tokens, or
+        # a stochastic immediate-EOS yields a zero-token sample.
+        p = benchmark.build_completion_payload(
+            "m", "hello", 64, ignore_eos=True
+        )
+        self.assertTrue(p["ignore_eos"])
 
 
 if __name__ == "__main__":
