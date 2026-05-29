@@ -82,3 +82,48 @@ func TestBuildLlamaServerArgs_SpecTypeNone(t *testing.T) {
 		t.Error("--spec-draft-n-max should be absent when spec_type=none")
 	}
 }
+
+// TestResolveCtxSize covers the --ctx-size wiring: a positive request is
+// honored, and <= 0 falls back to the 2048 default. RunMTPAB feeds this
+// resolved value straight into ServerArgs.Ctx → "--ctx-size".
+func TestResolveCtxSize(t *testing.T) {
+	tests := []struct {
+		name string
+		in   int
+		want int
+	}{
+		{"explicit 4096 honored", 4096, 4096},
+		{"zero defaults to 2048", 0, 2048},
+		{"negative defaults to 2048", -1, 2048},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := resolveCtxSize(tc.in); got != tc.want {
+				t.Errorf("resolveCtxSize(%d) = %d, want %d", tc.in, got, tc.want)
+			}
+		})
+	}
+}
+
+// TestBuildLlamaServerArgs_CtxSizeFlows confirms the resolved ctx size lands
+// on the "--ctx-size" flag, end-to-end through the args builder.
+func TestBuildLlamaServerArgs_CtxSizeFlows(t *testing.T) {
+	for _, ctx := range []int{resolveCtxSize(4096), resolveCtxSize(0)} {
+		args := BuildLlamaServerArgs(ServerArgs{
+			BinPath:   "/usr/bin/llama-server",
+			ModelPath: "/tmp/model.gguf",
+			Port:      18080,
+			Device:    "ROCm0",
+			SpecType:  "none",
+			NGL:       99,
+			Ctx:       ctx,
+		})
+		want := "4096"
+		if ctx == 2048 {
+			want = "2048"
+		}
+		if v, ok := flagValue(args, "--ctx-size"); !ok || v != want {
+			t.Errorf("--ctx-size for Ctx=%d: got %q %v, want %q true", ctx, v, ok, want)
+		}
+	}
+}

@@ -179,6 +179,7 @@ func runHeadlessMTPAB(o opts) int {
 		GenTokens:    o.GenTokens,
 		Warmup:       o.Warmup,
 		Repeat:       o.Repeat,
+		CtxSize:      o.CtxSize,
 	}
 
 	results, err := bench.RunMTPAB(abOpts)

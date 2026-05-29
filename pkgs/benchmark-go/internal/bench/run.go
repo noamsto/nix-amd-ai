@@ -261,6 +261,8 @@ type MTPABOpts struct {
 	GenTokens    int
 	Warmup       int
 	Repeat       int
+	// CtxSize is the llama-server --ctx-size. <= 0 defaults to 2048.
+	CtxSize int
 	// BackendBinEnv maps backend key → env var name for the binary path.
 	// nil uses the standard LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars.
 	BackendBinEnv map[string]string
@@ -302,6 +304,20 @@ func resolveBackendBin(backend string, binEnv map[string]string) (string, error)
 	return path, nil
 }
 
+// mtpABDefaultCtx is the fallback --ctx-size for the MTP A/B sweep: sized to
+// the 512+128-token workload with headroom. Larger ctx wastes KV memory and
+// risks iGPU offload (mirrors Python's run_mtp_ab ctx_size=2048).
+const mtpABDefaultCtx = 2048
+
+// resolveCtxSize returns the requested ctx size, falling back to
+// mtpABDefaultCtx when ctx <= 0 (so callers that don't set it keep 2048).
+func resolveCtxSize(ctx int) int {
+	if ctx <= 0 {
+		return mtpABDefaultCtx
+	}
+	return ctx
+}
+
 // RunMTPAB runs an MTP-on / MTP-off A/B across the given backends,
 // spawning llama-server twice per backend. Mirrors Python's run_mtp_ab.
 func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
@@ -312,6 +328,8 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 	if binEnv == nil {
 		binEnv = defaultBackendBinEnv
 	}
+
+	ctxSize := resolveCtxSize(o.CtxSize)
 
 	gguf := ResolveLemonadeGGUF(o.ModelID, "")
 	if gguf == "" {
@@ -381,7 +399,7 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 					Device:    device,
 					SpecType:  specType,
 					NGL:       99,
-					Ctx:       2048,
+					Ctx:       ctxSize,
 				})
 
 				srv := NewLlamaServer(argv, port)
