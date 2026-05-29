@@ -33,8 +33,13 @@ func WaitForLemond(baseURL string, timeout time.Duration) error {
 	for time.Now().Before(deadline) {
 		resp, err := http.Get(url) //nolint:noctx
 		if err == nil {
+			status := resp.StatusCode
 			_ = resp.Body.Close()
-			return nil
+			// Python's urlopen raises on non-2xx, so it retries through
+			// startup 503s; only a 2xx response counts as ready here.
+			if status >= 200 && status < 300 {
+				return nil
+			}
 		}
 		time.Sleep(time.Second)
 	}

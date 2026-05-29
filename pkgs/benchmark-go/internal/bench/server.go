@@ -20,6 +20,7 @@ const (
 	defaultTermTimeout = 10 * time.Second
 
 	// pollInterval is how often waitReady polls /health.
+	// Polls faster than Python's 0.5s; no behavioral downside.
 	pollInterval = 250 * time.Millisecond
 )
 

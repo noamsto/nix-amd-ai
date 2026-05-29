@@ -21,6 +21,11 @@ type MeasureOpts struct {
 	Warmup       int
 	Repeat       int
 	IgnoreEOS    bool
+	// PhaseLog prints "Warming up"/"Measuring" to stderr at the phase
+	// boundaries, matching Python's benchmark_model interleaving. The MTP
+	// path (_measure_one_spec) leaves it false — Python prints no phase logs
+	// there.
+	PhaseLog bool
 }
 
 // MeasureResult holds per-iteration samples from a measurement run.
@@ -143,9 +148,10 @@ func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResul
 		compTokens = textCount
 	}
 
-	// decode_tps: server-reported if truthy, else wall-clock.
+	// decode_tps: server-reported if truthy, else wall-clock. Python gates on
+	// truthiness (!= 0), so a pathological negative server TPS is taken as-is.
 	var decodeTPS float64
-	if finalPredictedTPS > 0 {
+	if finalPredictedTPS != 0 {
 		decodeTPS = finalPredictedTPS
 	} else if compTokens <= 1 {
 		decodeTPS = 0
@@ -191,10 +197,16 @@ func MeasureSpec(baseURL, path, model string, o MeasureOpts) MeasureResult {
 		IgnoreEOS: o.IgnoreEOS,
 	}
 
+	if o.PhaseLog {
+		fmt.Fprintf(os.Stderr, "  Warming up (%d iteration(s))...\n", o.Warmup)
+	}
 	for range o.Warmup {
 		runOneCompletion(baseURL, path, opts)
 	}
 
+	if o.PhaseLog {
+		fmt.Fprintf(os.Stderr, "  Measuring (%d iteration(s))...\n", o.Repeat)
+	}
 	var result MeasureResult
 	for i := range o.Repeat {
 		cr := runOneCompletion(baseURL, path, opts)
@@ -240,10 +252,9 @@ func BenchmarkModel(o BenchmarkModelOpts) (BenchmarkModelResult, error) {
 		Warmup:       o.Warmup,
 		Repeat:       o.Repeat,
 		IgnoreEOS:    false,
+		PhaseLog:     true,
 	}
 
-	fmt.Fprintf(os.Stderr, "  Warming up (%d iteration(s))...\n", o.Warmup)
-	fmt.Fprintf(os.Stderr, "  Measuring (%d iteration(s))...\n", o.Repeat)
 	r := MeasureSpec(o.BaseURL, lemonadeCompletionsPath, o.ModelID, mo)
 
 	// Guard: empty → N/A.
