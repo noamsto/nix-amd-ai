@@ -6,42 +6,22 @@ import (
 )
 
 func TestBuildPrompt(t *testing.T) {
-	t.Run("zero", func(t *testing.T) {
-		p := BuildPrompt(0)
-		if p != "" {
-			t.Errorf("got %q, want empty string", p)
+	cases := []struct {
+		n    int
+		want string
+	}{
+		{0, ""},
+		{1, "The "},
+		{2, "The The "},
+		{3, "The The The "},
+		{4, "The The The The "},
+		{5, "The The The The The "},
+	}
+	for _, c := range cases {
+		if got := BuildPrompt(c.n); got != c.want {
+			t.Errorf("BuildPrompt(%d): got %q, want %q", c.n, got, c.want)
 		}
-	})
-
-	t.Run("one", func(t *testing.T) {
-		p := BuildPrompt(1)
-		if p != "The " {
-			t.Errorf("got %q, want %q", p, "The ")
-		}
-	})
-
-	t.Run("three", func(t *testing.T) {
-		p := BuildPrompt(3)
-		if p != "The The The " {
-			t.Errorf("got %q, want %q", p, "The The The ")
-		}
-	})
-
-	t.Run("repeats_the_exactly", func(t *testing.T) {
-		p := BuildPrompt(5)
-		parts := strings.SplitAfter(p, "The ")
-		// SplitAfter on "The " for "The The The The The " gives ["The ", "The ", "The ", "The ", "The ", ""]
-		// so len-1 parts before trailing empty = 5
-		count := 0
-		for _, part := range parts {
-			if part == "The " {
-				count++
-			}
-		}
-		if count != 5 {
-			t.Errorf("expected 5 'The ' repetitions, got %d in %q", count, p)
-		}
-	})
+	}
 }
 
 func TestBuildMTPPrompt(t *testing.T) {
@@ -79,11 +59,4 @@ func TestBuildMTPPrompt(t *testing.T) {
 			t.Errorf("expected MTP prompt to start with 'The quick brown fox', got prefix: %q", p[:min(30, len(p))])
 		}
 	})
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }

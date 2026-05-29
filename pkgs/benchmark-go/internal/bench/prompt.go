@@ -43,9 +43,10 @@ func BuildPrompt(promptTokens int) string {
 // Matches Python's build_mtp_prompt exactly.
 func BuildMTPPrompt(promptTokens int) string {
 	targetChars := promptTokens * 4
-	out := ""
-	for len(out) < targetChars {
-		out += mtpPromptBase
+	var b strings.Builder
+	b.Grow(targetChars)
+	for b.Len() < targetChars {
+		b.WriteString(mtpPromptBase)
 	}
-	return out[:targetChars]
+	return b.String()[:targetChars]
 }

@@ -50,6 +50,7 @@ type sseChunk struct {
 // final_usage / final_timings overwrite-on-each-truthy behavior.
 func ParseSSE(r io.Reader) (SSEResult, error) {
 	var out SSEResult
+	var text strings.Builder
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for sc.Scan() {
@@ -74,11 +75,12 @@ func ParseSSE(r io.Reader) (SSEResult, error) {
 		}
 		// Python iterates all choices and counts only non-empty text.
 		for _, ch := range c.Choices {
-			out.Text += ch.Text
+			text.WriteString(ch.Text)
 			if ch.Text != "" {
 				out.TextTokenCount++
 			}
 		}
 	}
+	out.Text = text.String()
 	return out, sc.Err()
 }
