@@ -123,6 +123,7 @@
           };
           gaia = pkgs.callPackage ./pkgs/gaia {};
           benchmark = pkgs.callPackage ./pkgs/benchmark {};
+          benchmark-go = pkgs.callPackage ./pkgs/benchmark-go {};
         };
 
         checks = {
