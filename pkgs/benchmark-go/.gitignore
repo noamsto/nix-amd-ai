@@ -1,0 +1,3 @@
+# buildGoModule fetches deps as a fixed-output derivation pinned by
+# vendorHash; never commit an in-tree vendor/ dir.
+/vendor/
