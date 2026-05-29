@@ -74,6 +74,7 @@ in stdenv.mkDerivation {
   # it to PKG_CONFIG_PATH so USE_SYSTEM_HTTPLIB takes the system path instead of
   # falling through to FetchContent (which requires network and breaks the
   # nix sandbox).
+  # Drop once lemonade-sdk/lemonade#2047 (httplib pkg-config name fallback) lands.
   preConfigure = ''
     mkdir -p $TMPDIR/pc-shim
     cat > $TMPDIR/pc-shim/cpp-httplib.pc <<EOF
@@ -103,6 +104,7 @@ in stdenv.mkDerivation {
     # link entry — the inline functions are emitted into our own .o files —
     # so use ''${HTTPLIB_LIBRARIES} (empty under our header-only .pc shim)
     # instead of the literal `cpp-httplib` target name.
+    # Drop once lemonade-sdk/lemonade#2047 lands (upstreams this exact rewrite).
     substituteInPlace CMakeLists.txt \
       --replace-fail \
         'target_link_libraries(lemonade-server-core PUBLIC cpp-httplib)' \
@@ -182,6 +184,7 @@ in stdenv.mkDerivation {
     # here. The hardcoded probe only knows Debian/Ubuntu/Arch FHS paths;
     # libggml-hip.so on NixOS lives in $\{llama-cpp-rocm}/lib. With the env
     # var set, "system" + prefer_system: true becomes a real option.
+    # Drop once lemonade-sdk/lemonade#2044 lands (upstreams LEMONADE_GGML_HIP_PATH).
     substituteInPlace src/cpp/server/utils/path_utils.cpp \
       --replace-fail \
         'bool is_ggml_hip_plugin_available() {
@@ -200,6 +203,7 @@ in stdenv.mkDerivation {
     # missing vulkan mapping so the NixOS module can wire whisper-cpp's
     # vulkan build via systemd Environment. (rocm not exposed for
     # whispercpp at all in v${version} RECIPE_DEFS.)
+    # Drop once lemonade-sdk/lemonade#2045 lands (upstreams the vulkan mapping).
     substituteInPlace src/cpp/server/config_file.cpp \
       --replace-fail \
         '{"LEMONADE_WHISPERCPP_NPU_BIN",      "whispercpp", "npu_bin"},' \
