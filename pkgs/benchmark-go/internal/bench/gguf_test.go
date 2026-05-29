@@ -70,7 +70,8 @@ func TestResolveLemonadeGGUF_IgnoresOtherModels(t *testing.T) {
 
 func TestResolveLemonadeGGUF_IgnoresMalformedDirs(t *testing.T) {
 	tmp := t.TempDir()
-	// models--malformed has only 2 parts after split("--", 2)
+	// models--malformed yields only 2 parts under SplitN(name, "--", 3),
+	// so it fails the len(parts) != 3 check and is ignored
 	if err := os.MkdirAll(filepath.Join(tmp, "models--malformed"), 0o755); err != nil {
 		t.Fatal(err)
 	}

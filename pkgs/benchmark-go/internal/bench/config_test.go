@@ -95,16 +95,28 @@ func TestSetLlamacppBackend_MissingFile_CreatesIt(t *testing.T) {
 	}
 }
 
-func TestRestoreLlamacppBackend_RestoresToVulkan(t *testing.T) {
+func TestRestoreLlamacppBackend_RoundTrip(t *testing.T) {
 	tmp := t.TempDir()
 	cfgPath := filepath.Join(tmp, "config.json")
 
-	// Set up rocm config
-	prev, _ := SetLlamacppBackend(cfgPath, "rocm")
-	_ = prev
+	// Pre-seed the file with vulkan, the value we expect to be restored.
+	initial := map[string]any{
+		"llamacpp": map[string]any{"backend": "vulkan"},
+	}
+	data, _ := json.MarshalIndent(initial, "", "  ")
+	os.WriteFile(cfgPath, data, 0o644)
 
-	// Restore to vulkan
-	if err := RestoreLlamacppBackend(cfgPath, "vulkan"); err != nil {
+	// Set rocm, capturing the prior value for the restore.
+	prev, err := SetLlamacppBackend(cfgPath, "rocm")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if prev != "vulkan" {
+		t.Fatalf("prev = %q, want vulkan", prev)
+	}
+
+	// Restore using the captured prev — should put vulkan back.
+	if err := RestoreLlamacppBackend(cfgPath, prev); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
 

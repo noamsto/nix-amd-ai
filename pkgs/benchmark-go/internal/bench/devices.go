@@ -52,6 +52,11 @@ func ParseLlamaDevices(output string) ([]string, error) {
 // PickDevice returns the first device string whose prefix matches the given
 // backend key (e.g. "rocm", "vulkan"). Returns ("", false) when the backend is
 // unknown or no matching device is present.
+//
+// Python's pick_device raises on both of these miss cases; the Go equivalent
+// is the bool. Callers MUST check it and treat ("", false) as a hard error in
+// BOTH cases (unknown backend AND no matching device) — never pass the empty
+// string on as a --device flag.
 func PickDevice(devs []string, backend string) (string, bool) {
 	prefix, ok := backendPrefix[backend]
 	if !ok {
