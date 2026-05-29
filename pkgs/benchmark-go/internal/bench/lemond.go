@@ -1,12 +1,12 @@
 package bench
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"os/exec"
-	"strings"
 	"time"
 )
 
@@ -29,9 +29,12 @@ func RestartLemond(service string) error {
 // matching Python's wait_for_lemond (polls every 1s).
 func WaitForLemond(baseURL string, timeout time.Duration) error {
 	url := baseURL + "/api/v1/models"
+	// Per-attempt timeout so a hung connection can't run past the deadline,
+	// matching waitReady's bounded client.
+	client := &http.Client{Timeout: 5 * time.Second}
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		resp, err := http.Get(url) //nolint:noctx
+		resp, err := client.Get(url) //nolint:noctx
 		if err == nil {
 			status := resp.StatusCode
 			_ = resp.Body.Close()
@@ -54,12 +57,12 @@ func LoadModel(baseURL, modelID string) error {
 		return err
 	}
 	url := baseURL + "/api/v1/load"
-	req, err := http.NewRequest(http.MethodPost, url, strings.NewReader(string(payload)))
+	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(payload))
 	if err != nil {
 		return err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	client := &http.Client{Timeout: 300 * time.Second}
+	client := &http.Client{Timeout: completionHTTPTimeout}
 	resp, err := client.Do(req)
 	if err != nil {
 		return fmt.Errorf("load model %q: %w", modelID, err)

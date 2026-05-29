@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -87,6 +88,11 @@ type LlamaServer struct {
 
 	cmd    *exec.Cmd
 	stderr *bytes.Buffer
+	// waitDone receives the single cmd.Wait() result. The goroutine started
+	// in Start() is the sole owner of cmd.Wait(); both waitReadyWithEarlyExit
+	// and Stop() drain this channel rather than calling Wait() again, so
+	// cmd.Wait() runs exactly once over the server's lifetime.
+	waitDone chan error
 }
 
 // NewLlamaServer constructs a LlamaServer with the given argv and port,
@@ -113,6 +119,11 @@ func (s *LlamaServer) Start() error {
 		return fmt.Errorf("spawn llama-server: %w", err)
 	}
 
+	// Single owner of cmd.Wait(): this goroutine. ProcessState is guaranteed
+	// set once a value lands on waitDone, so the early-exit check can read it.
+	s.waitDone = make(chan error, 1)
+	go func() { s.waitDone <- s.cmd.Wait() }()
+
 	if err := s.waitReadyWithEarlyExit(); err != nil {
 		_ = s.Stop()
 		return err
@@ -120,20 +131,26 @@ func (s *LlamaServer) Start() error {
 	return nil
 }
 
-// waitReadyWithEarlyExit polls /health but also checks for early process exit,
-// matching Python's _wait_ready which reads stderr and raises on returncode.
+// waitReadyWithEarlyExit polls /health but also detects early process exit via
+// the waitDone channel, matching Python's _wait_ready which reads stderr and
+// raises on returncode. Reading from waitDone (instead of cmd.ProcessState,
+// which is nil until Wait returns) guarantees a fast crash is caught instead
+// of burning the full ReadyTimeout.
 func (s *LlamaServer) waitReadyWithEarlyExit() error {
 	url := s.BaseURL + "/health"
 	deadline := time.Now().Add(s.ReadyTimeout)
 	var lastErr error
 	for time.Now().Before(deadline) {
-		// Check if process exited early.
-		if s.cmd.ProcessState != nil && s.cmd.ProcessState.Exited() {
+		// Detect early exit without blocking. Once a value is on waitDone,
+		// cmd.Wait() has returned and cmd.ProcessState is populated.
+		select {
+		case <-s.waitDone:
 			return fmt.Errorf(
-				"llama-server exited with code %d before becoming ready. stderr:\n%s",
+				"llama-server exited early (code %d) before becoming ready. stderr:\n%s",
 				s.cmd.ProcessState.ExitCode(),
 				lastN(s.stderr.String(), 2000),
 			)
+		default:
 		}
 
 		remaining := time.Until(deadline)
@@ -164,28 +181,33 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 
 // Stop sends SIGTERM and waits up to TermTimeout, then SIGKILLs if still alive.
 // Mirrors Python's LlamaServer.__exit__.
+//
+// Stop drains the same waitDone channel the readiness goroutine feeds, so
+// cmd.Wait() is never called a second time. If the process already exited
+// (waitReadyWithEarlyExit consumed the value), ProcessState is set and Stop
+// returns without signaling.
 func (s *LlamaServer) Stop() error {
 	if s.cmd == nil || s.cmd.Process == nil {
 		return nil
 	}
-	// Only signal if the process is still running.
-	if s.cmd.ProcessState != nil && s.cmd.ProcessState.Exited() {
+	defer func() { s.cmd = nil }()
+
+	// If cmd.Wait() already returned (ProcessState set), the process is gone
+	// and waitDone has already been drained — nothing to signal or wait on.
+	if s.cmd.ProcessState != nil {
 		return nil
 	}
+
 	_ = s.cmd.Process.Signal(syscall.SIGTERM)
 
-	done := make(chan error, 1)
-	go func() { done <- s.cmd.Wait() }()
-
 	select {
-	case <-done:
+	case <-s.waitDone:
 		// Exited cleanly after SIGTERM.
 	case <-time.After(s.TermTimeout):
-		fmt.Println("WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
+		fmt.Fprintln(os.Stderr, "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
 		_ = s.cmd.Process.Kill()
-		<-done
+		<-s.waitDone
 	}
-	s.cmd = nil
 	return nil
 }
 

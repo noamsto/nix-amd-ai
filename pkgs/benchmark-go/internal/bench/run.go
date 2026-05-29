@@ -13,6 +13,14 @@ import (
 	"time"
 )
 
+// completionHTTPTimeout bounds streaming completion and model-load requests.
+// Shared by runOneCompletion and LoadModel so they cannot silently diverge.
+const completionHTTPTimeout = 300 * time.Second
+
+// settleDelay is paused between llama-server launches (between backends and
+// between spec types) to let GPU memory drain before the next launch.
+const settleDelay = 3 * time.Second // let GPU memory drain before next llama-server launch
+
 // MeasureOpts holds parameters for MeasureSpec / BenchmarkModel.
 type MeasureOpts struct {
 	PromptTokens int
@@ -67,7 +75,7 @@ func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResul
 	}
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{Timeout: 300 * time.Second}
+	client := &http.Client{Timeout: completionHTTPTimeout}
 
 	tStart := time.Now()
 	resp, err := client.Do(req)
@@ -324,7 +332,7 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 	var results []MTPABResult
 	for i, backend := range o.Backends {
 		if i > 0 {
-			time.Sleep(3 * time.Second)
+			time.Sleep(settleDelay)
 		}
 
 		binPath, err := resolveBackendBin(backend, binEnv)
@@ -353,39 +361,47 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 		specTypes := []string{"none", "draft-mtp"}
 		for j, specType := range specTypes {
 			if j > 0 {
-				time.Sleep(3 * time.Second)
+				time.Sleep(settleDelay)
 			}
-			fmt.Fprintf(os.Stderr, "\n[%s] --spec-type %s\n", backend, specType)
+			// Run each spec in its own closure so the deferred Stop() always
+			// runs — on normal return, on the error path, or on a panic —
+			// before the loop moves to the next spec or returns.
+			tps, err := func() (*float64, error) {
+				fmt.Fprintf(os.Stderr, "\n[%s] --spec-type %s\n", backend, specType)
 
-			port, err := FindFreePort()
-			if err != nil {
-				return nil, fmt.Errorf("[%s] find free port: %w", backend, err)
-			}
-
-			argv := BuildLlamaServerArgs(ServerArgs{
-				BinPath:   binPath,
-				ModelPath: gguf,
-				Port:      port,
-				Device:    device,
-				SpecType:  specType,
-				NGL:       99,
-				Ctx:       2048,
-			})
-
-			srv := NewLlamaServer(argv, port)
-			if startErr := srv.Start(); startErr != nil {
-				msg := startErr.Error()
-				if specType == "draft-mtp" && strings.Contains(strings.ToLower(msg), "mtp") {
-					return nil, fmt.Errorf(
-						"model %q has no MTP head (--spec-type draft-mtp rejected by llama-server)."+
-							" Pick an MTP-labeled model", o.ModelID,
-					)
+				port, err := FindFreePort()
+				if err != nil {
+					return nil, fmt.Errorf("[%s] find free port: %w", backend, err)
 				}
-				return nil, fmt.Errorf("[%s] spec=%s server start: %w", backend, specType, startErr)
-			}
 
-			tps := measureOneSpec(srv, o)
-			_ = srv.Stop()
+				argv := BuildLlamaServerArgs(ServerArgs{
+					BinPath:   binPath,
+					ModelPath: gguf,
+					Port:      port,
+					Device:    device,
+					SpecType:  specType,
+					NGL:       99,
+					Ctx:       2048,
+				})
+
+				srv := NewLlamaServer(argv, port)
+				if startErr := srv.Start(); startErr != nil {
+					msg := startErr.Error()
+					if specType == "draft-mtp" && strings.Contains(strings.ToLower(msg), "mtp") {
+						return nil, fmt.Errorf(
+							"model %q has no MTP head (--spec-type draft-mtp rejected by llama-server)."+
+								" Pick an MTP-labeled model", o.ModelID,
+						)
+					}
+					return nil, fmt.Errorf("[%s] spec=%s server start: %w", backend, specType, startErr)
+				}
+				defer func() { _ = srv.Stop() }()
+
+				return measureOneSpec(srv, o), nil
+			}()
+			if err != nil {
+				return nil, err
+			}
 			specTPS[specType] = tps
 		}
 
