@@ -40,17 +40,14 @@ type sseChunk struct {
 	} `json:"timings"`
 }
 
-// ParseSSE reads an OpenAI-style completion SSE stream, replicating what
-// run_completion extracts: concatenated text, server usage/timings, and a
-// client-side non-empty-text token count for fallback.
+// scanSSE performs the low-level SSE scan shared by ParseSSE and
+// runOneCompletion: bufio-scans lines, strips the "data: " prefix, breaks on
+// "[DONE]", JSON-decodes each chunk (silently skipping non-JSON and non-data
+// lines), and invokes onChunk per decoded chunk. Returns the scanner error.
 //
-// Non-JSON lines and non-data lines are silently skipped, matching Python's
-// run_completion which wraps json.loads in a try/except JSONDecodeError. The
-// last chunk carrying a truthy usage / timings wins, matching Python's
-// final_usage / final_timings overwrite-on-each-truthy behavior.
-func ParseSSE(r io.Reader) (SSEResult, error) {
-	var out SSEResult
-	var text strings.Builder
+// Matches Python's run_completion loop: non-data lines skipped, "[DONE]"
+// terminates, json.loads wrapped in try/except JSONDecodeError.
+func scanSSE(r io.Reader, onChunk func(c sseChunk)) error {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
 	for sc.Scan() {
@@ -66,6 +63,21 @@ func ParseSSE(r io.Reader) (SSEResult, error) {
 		if err := json.Unmarshal([]byte(payload), &c); err != nil {
 			continue
 		}
+		onChunk(c)
+	}
+	return sc.Err()
+}
+
+// ParseSSE reads an OpenAI-style completion SSE stream, replicating what
+// run_completion extracts: concatenated text, server usage/timings, and a
+// client-side non-empty-text token count for fallback.
+//
+// The last chunk carrying a truthy usage / timings wins, matching Python's
+// final_usage / final_timings overwrite-on-each-truthy behavior.
+func ParseSSE(r io.Reader) (SSEResult, error) {
+	var out SSEResult
+	var text strings.Builder
+	err := scanSSE(r, func(c sseChunk) {
 		// Python: `if usage:` / `if timings:` — only truthy blocks overwrite.
 		if c.Usage != nil && c.Usage.CompletionTokens != 0 {
 			out.CompletionTokens = c.Usage.CompletionTokens
@@ -80,7 +92,7 @@ func ParseSSE(r io.Reader) (SSEResult, error) {
 				out.TextTokenCount++
 			}
 		}
-	}
+	})
 	out.Text = text.String()
-	return out, sc.Err()
+	return out, err
 }

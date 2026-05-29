@@ -1,7 +1,6 @@
 package bench
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -77,9 +76,10 @@ func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResul
 	}
 	defer resp.Body.Close()
 
-	// Parse SSE stream while recording per-token wall-clock times.
-	// This reimplements the key parts of ParseSSE with timing hooks,
-	// matching Python's run_completion loop exactly.
+	// Parse SSE stream while recording per-token wall-clock times. Shares
+	// scanSSE with ParseSSE; the only reason runOneCompletion needs its own
+	// onChunk is the per-token timing, which ParseSSE does not capture.
+	// Matches Python's run_completion loop exactly.
 	var (
 		tFirstToken time.Time
 		tLastToken  time.Time
@@ -89,33 +89,7 @@ func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResul
 		finalPredictedTPS float64
 	)
 
-	type sseTimingChunk struct {
-		Choices []struct {
-			Text string `json:"text"`
-		} `json:"choices"`
-		Usage *struct {
-			CompletionTokens int `json:"completion_tokens"`
-		} `json:"usage"`
-		Timings *struct {
-			PredictedPerSecond float64 `json:"predicted_per_second"`
-		} `json:"timings"`
-	}
-
-	sc := bufio.NewScanner(resp.Body)
-	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
-	for sc.Scan() {
-		line := strings.TrimRight(sc.Text(), "\r")
-		if !strings.HasPrefix(line, "data: ") {
-			continue
-		}
-		payload := line[len("data: "):]
-		if strings.TrimSpace(payload) == "[DONE]" {
-			break
-		}
-		var c sseTimingChunk
-		if err := json.Unmarshal([]byte(payload), &c); err != nil {
-			continue
-		}
+	_ = scanSSE(resp.Body, func(c sseChunk) {
 		// Overwrite on each truthy value — matches Python final_usage/final_timings.
 		if c.Usage != nil && c.Usage.CompletionTokens != 0 {
 			finalCompTokens = c.Usage.CompletionTokens
@@ -133,7 +107,7 @@ func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResul
 				tLastToken = now
 			}
 		}
-	}
+	})
 
 	// No tokens received → sentinel, matching Python's `if t_first_token is None`.
 	if tFirstToken.IsZero() {
