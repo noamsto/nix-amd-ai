@@ -3,10 +3,60 @@ package bench
 import (
 	"io/fs"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sort"
 	"strings"
 )
+
+// resolveHFCacheRoot is the pure (injectable) core of defaultHFCacheRoot.
+// Precedence:
+//  1. env("HF_HUB_CACHE") — points directly at the hub dir.
+//  2. env("HF_HOME") + "/hub".
+//  3. euid==0 && env("SUDO_USER") non-empty and not "root" — resolve that
+//     user's home via lookupHome; on failure fall back to "/home/<SUDO_USER>".
+//  4. userHome() + "/.cache/huggingface/hub".
+func resolveHFCacheRoot(
+	env func(string) string,
+	euid int,
+	lookupHome func(string) (string, error),
+	userHome func() (string, error),
+) string {
+	if v := env("HF_HUB_CACHE"); v != "" {
+		return v
+	}
+	if v := env("HF_HOME"); v != "" {
+		return filepath.Join(v, "hub")
+	}
+	if euid == 0 {
+		if su := env("SUDO_USER"); su != "" && su != "root" {
+			home, err := lookupHome(su)
+			if err != nil {
+				home = "/home/" + su
+			}
+			return filepath.Join(home, ".cache", "huggingface", "hub")
+		}
+	}
+	home, _ := userHome()
+	return filepath.Join(home, ".cache", "huggingface", "hub")
+}
+
+// defaultHFCacheRoot returns the HuggingFace hub cache dir, honoring HF env
+// vars and resolving the invoking user's home when running under sudo.
+func defaultHFCacheRoot() string {
+	return resolveHFCacheRoot(
+		os.Getenv,
+		os.Geteuid(),
+		func(u string) (string, error) {
+			ue, err := user.Lookup(u)
+			if err != nil {
+				return "", err
+			}
+			return ue.HomeDir, nil
+		},
+		os.UserHomeDir,
+	)
+}
 
 // ResolveGGUFByCheckpoint resolves a lemonade checkpoint ("owner/repo" or
 // "owner/repo:variant") to a local GGUF path using the HuggingFace hub cache.
@@ -20,8 +70,7 @@ func ResolveGGUFByCheckpoint(checkpoint, cacheRoot string) string {
 		return ""
 	}
 	if cacheRoot == "" {
-		home, _ := os.UserHomeDir()
-		cacheRoot = filepath.Join(home, ".cache", "huggingface", "hub")
+		cacheRoot = defaultHFCacheRoot()
 	}
 
 	// Split "owner/repo[:variant]"
@@ -100,8 +149,7 @@ func ResolveGGUFByCheckpoint(checkpoint, cacheRoot string) string {
 // cacheRoot defaults to ~/.cache/huggingface/hub when empty.
 func ResolveLemonadeGGUF(modelID, cacheRoot string) string {
 	if cacheRoot == "" {
-		home, _ := os.UserHomeDir()
-		cacheRoot = filepath.Join(home, ".cache", "huggingface", "hub")
+		cacheRoot = defaultHFCacheRoot()
 	}
 
 	entries, err := os.ReadDir(cacheRoot)

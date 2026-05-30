@@ -1,10 +1,125 @@
 package bench
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
 )
+
+// --- resolveHFCacheRoot tests ---
+
+func TestResolveHFCacheRoot_HFHubCache(t *testing.T) {
+	// HF_HUB_CACHE takes top precedence, returned as-is.
+	env := func(k string) string {
+		if k == "HF_HUB_CACHE" {
+			return "/custom/hub/cache"
+		}
+		return ""
+	}
+	got := resolveHFCacheRoot(env, 0, nil, nil)
+	want := "/custom/hub/cache"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveHFCacheRoot_HFHome(t *testing.T) {
+	// HF_HOME present, HF_HUB_CACHE absent → join with "hub".
+	env := func(k string) string {
+		if k == "HF_HOME" {
+			return "/custom/hf"
+		}
+		return ""
+	}
+	got := resolveHFCacheRoot(env, 0, nil, nil)
+	want := filepath.Join("/custom/hf", "hub")
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveHFCacheRoot_SudoUser(t *testing.T) {
+	// euid==0, SUDO_USER=alice, lookupHome succeeds → alice's cache.
+	env := func(k string) string {
+		if k == "SUDO_USER" {
+			return "alice"
+		}
+		return ""
+	}
+	lookupHome := func(u string) (string, error) {
+		if u == "alice" {
+			return "/home/alice", nil
+		}
+		return "", errors.New("not found")
+	}
+	got := resolveHFCacheRoot(env, 0, lookupHome, nil)
+	want := "/home/alice/.cache/huggingface/hub"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveHFCacheRoot_SudoUserLookupFails(t *testing.T) {
+	// euid==0, SUDO_USER=alice, lookupHome fails → fall back to /home/alice.
+	env := func(k string) string {
+		if k == "SUDO_USER" {
+			return "alice"
+		}
+		return ""
+	}
+	lookupHome := func(_ string) (string, error) {
+		return "", errors.New("no passwd entry")
+	}
+	got := resolveHFCacheRoot(env, 0, lookupHome, nil)
+	want := "/home/alice/.cache/huggingface/hub"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveHFCacheRoot_SudoUserIsRoot(t *testing.T) {
+	// euid==0 but SUDO_USER=root (real root, not a sudo invocation) → userHome path.
+	env := func(k string) string {
+		if k == "SUDO_USER" {
+			return "root"
+		}
+		return ""
+	}
+	userHome := func() (string, error) { return "/root", nil }
+	got := resolveHFCacheRoot(env, 0, nil, userHome)
+	want := "/root/.cache/huggingface/hub"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveHFCacheRoot_SudoUserUnset(t *testing.T) {
+	// euid==0 but SUDO_USER unset → userHome path.
+	env := func(_ string) string { return "" }
+	userHome := func() (string, error) { return "/root", nil }
+	got := resolveHFCacheRoot(env, 0, nil, userHome)
+	want := "/root/.cache/huggingface/hub"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
+
+func TestResolveHFCacheRoot_NormalUser(t *testing.T) {
+	// euid != 0 → userHome path regardless of SUDO_USER.
+	env := func(k string) string {
+		if k == "SUDO_USER" {
+			return "alice"
+		}
+		return ""
+	}
+	userHome := func() (string, error) { return "/home/bob", nil }
+	got := resolveHFCacheRoot(env, 1000, nil, userHome)
+	want := "/home/bob/.cache/huggingface/hub"
+	if got != want {
+		t.Errorf("got %q, want %q", got, want)
+	}
+}
 
 func TestResolveLemonadeGGUF_MissingCacheRoot(t *testing.T) {
 	tmp := t.TempDir()
