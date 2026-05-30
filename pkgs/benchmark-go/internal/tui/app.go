@@ -88,8 +88,7 @@ func New(info hw.Info, cfg Config) tea.Model {
 
 // Init satisfies tea.Model; starts the rail GPU ticker and requests terminal background color.
 func (m model) Init() tea.Cmd {
-	bgCmd := func() tea.Msg { return tea.RequestBackgroundColor() }
-	return tea.Batch(railTickCmd(m.railGRBM), bgCmd)
+	return tea.Batch(railTickCmd(m.railGRBM), tea.RequestBackgroundColor)
 }
 
 // preflightResultsMsg carries the results of a preflight.Run call.
