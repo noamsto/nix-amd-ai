@@ -6,8 +6,9 @@ package preflight
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
-	"os"
+	"io"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -226,9 +227,23 @@ func listListeners() []Listener {
 // ---------------------------------------------------------------------------
 
 // stopLemond returns a fixer that stops the given systemd service via sudo.
+// Stdout/Stderr are not wired to os.Stdout: the interactive TUI invokes this
+// fixer while bubbletea owns the terminal, so any child output would corrupt
+// the render. systemctl stop is quiet on success; stderr is captured into the
+// returned error.
 func stopLemond(service string) func() error {
 	return func() error {
-		return exec.Command("sudo", "systemctl", "stop", service).Run()
+		cmd := exec.Command("sudo", "systemctl", "stop", service)
+		var stderr bytes.Buffer
+		cmd.Stdout = io.Discard
+		cmd.Stderr = &stderr
+		if err := cmd.Run(); err != nil {
+			if msg := strings.TrimSpace(stderr.String()); msg != "" {
+				return fmt.Errorf("stopping %s: %w: %s", service, err, msg)
+			}
+			return fmt.Errorf("stopping %s: %w", service, err)
+		}
+		return nil
 	}
 }
 
@@ -258,11 +273,19 @@ func setPerformance() func() error {
 }
 
 // writeSysfsPerformance writes "performance" to a sysfs path via sudo tee.
+// Stdout is discarded (NOT os.Stdout): tee echoes its input, which would
+// scribble over the bubbletea render when the TUI invokes this fixer. Stderr
+// is captured and folded into the returned error.
 func writeSysfsPerformance(path string) error {
 	cmd := exec.Command("sudo", "tee", path)
 	cmd.Stdin = strings.NewReader("performance")
-	cmd.Stdout = os.Stdout
+	cmd.Stdout = io.Discard
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
+		if msg := strings.TrimSpace(stderr.String()); msg != "" {
+			return fmt.Errorf("writing %s: %w: %s", path, err, msg)
+		}
 		return fmt.Errorf("writing %s: %w", path, err)
 	}
 	return nil

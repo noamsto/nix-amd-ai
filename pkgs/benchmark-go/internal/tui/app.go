@@ -25,8 +25,8 @@ const screenLast = screenResults
 // Config holds tunable parameters for the TUI (service names, endpoints, paths).
 type Config struct {
 	LemondService string // default "lemond.service"
-	BaseURL       string // default "http://localhost:13305"
-	ConfigPath    string // lemonade config path
+	BaseURL       string // default "http://localhost:13305"; consumed in Task 5.3/5.4
+	ConfigPath    string // lemonade config path; consumed in Task 5.3/5.4
 }
 
 // model is the root bubbletea model; it holds navigation state and hw info.
@@ -121,6 +121,13 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		case tea.KeyEsc:
 			if m.current > screenHW {
+				// Leaving preflight invalidates its results: GPU/power/service
+				// state may have changed (incl. via a fixer). Clear them so the
+				// next Enter re-runs preflight.Run fresh rather than showing stale data.
+				if m.current == screenPreflight {
+					m.preflightLoaded = false
+					m.preflightResults = nil
+				}
 				m.current--
 			}
 		case tea.KeyCtrlC:

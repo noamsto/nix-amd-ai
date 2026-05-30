@@ -219,9 +219,10 @@ func TestFixerKeyIgnoredOnOtherScreens(t *testing.T) {
 
 	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
 	_, cmd := m.Update(keyMsg)
+	// A non-nil Cmd on a non-preflight screen is itself the failure: the fixer
+	// key must be inert outside screenPreflight.
 	if cmd != nil {
-		// Execute the cmd to confirm it doesn't call Fix.
-		_ = cmd()
+		t.Fatalf("Update('s') on non-preflight screen returned non-nil Cmd")
 	}
 	if fixCalled != 0 {
 		t.Fatalf("Fix called on non-preflight screen; must be 0")

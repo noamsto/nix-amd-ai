@@ -31,24 +31,17 @@ func isPowerResult(r preflight.Result) bool {
 // Format: <glyph> <name>  <reason>  [key hint if fixable]
 // Pure function — safe to unit-test without bubbletea.
 func renderPreflightLine(r preflight.Result) string {
-	var glyph string
 	var glyphRender string
-
 	switch r.Status {
 	case preflight.Pass:
-		glyph = "✓"
-		glyphRender = passStyle.Render(glyph)
+		glyphRender = passStyle.Render("✓")
 	case preflight.Warn:
-		glyph = "⚠"
-		glyphRender = warnStyle.Render(glyph)
+		glyphRender = warnStyle.Render("⚠")
 	case preflight.Fail:
-		glyph = "✗"
-		glyphRender = failStyle.Render(glyph)
+		glyphRender = failStyle.Render("✗")
 	default:
-		glyph = "?"
-		glyphRender = glyph
+		glyphRender = "?"
 	}
-	_ = glyph // used above
 
 	line := glyphRender + "  " + r.Name
 
