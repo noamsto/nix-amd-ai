@@ -297,6 +297,7 @@ func runMTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) te
 			Warmup:       req.params.Warmup,
 			Repeat:       req.params.Repeat,
 			CtxSize:      req.params.Ctx,
+			LogW:         io.Discard,
 			OnIteration: func(backend, specType string, iter int, tps float64) {
 				spec := specLabel(specType)
 				key := mtpKey(modelID, backend, spec)
@@ -417,6 +418,7 @@ func benchmarkModelsLive(ctx context.Context, req runRequest, backend string, pr
 			GenTokens:    req.genTk,
 			Warmup:       req.params.Warmup,
 			Repeat:       req.params.Repeat,
+			LogW:         io.Discard,
 			OnIteration: func(iter int, tps float64) {
 				samples = append(samples, tps)
 				sendMsg(ctx, progress, runProgressMsg{

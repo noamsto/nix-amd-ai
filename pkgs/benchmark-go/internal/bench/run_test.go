@@ -1,10 +1,14 @@
 package bench
 
 import (
+	"bytes"
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -229,5 +233,94 @@ func TestMeasureSpec_CtxCancelInterruptsHTTP(t *testing.T) {
 	case <-done:
 	case <-time.After(5 * time.Second):
 		t.Fatal("MeasureSpec did not return after ctx cancel; HTTP call was not interrupted")
+	}
+}
+
+// TestLogWriterNilIsStderr verifies the nil→os.Stderr default contract.
+func TestLogWriterNilIsStderr(t *testing.T) {
+	if got := logWriter(nil); got != os.Stderr {
+		t.Errorf("logWriter(nil) = %v, want os.Stderr", got)
+	}
+}
+
+// TestLogWriterNonNilPassthrough verifies a non-nil writer is returned as-is.
+func TestLogWriterNonNilPassthrough(t *testing.T) {
+	var buf bytes.Buffer
+	if got := logWriter(&buf); got != &buf {
+		t.Errorf("logWriter(&buf) returned a different writer")
+	}
+}
+
+// TestMeasureSpec_LogWRoutesPhaseLog verifies that when LogW is set and PhaseLog
+// is true, the "Warming up"/"Measuring" lines land in LogW and NOT on os.Stderr.
+func TestMeasureSpec_LogWRoutesPhaseLog(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, cannedSSE(4, 64, 42.0))
+	}))
+	defer srv.Close()
+
+	var buf bytes.Buffer
+	o := MeasureOpts{
+		PromptTokens: 8,
+		GenTokens:    64,
+		Warmup:       1,
+		Repeat:       2,
+		PhaseLog:     true,
+		LogW:         &buf,
+	}
+	MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
+
+	got := buf.String()
+	if !strings.Contains(got, "Warming up") {
+		t.Errorf("LogW missing 'Warming up'; got: %q", got)
+	}
+	if !strings.Contains(got, "Measuring") {
+		t.Errorf("LogW missing 'Measuring'; got: %q", got)
+	}
+}
+
+// TestMeasureSpec_LogWNilDefaultsToStderr verifies nil LogW compiles and runs
+// without panic (the default os.Stderr path is exercised implicitly by existing
+// tests that pass nil LogW).
+func TestMeasureSpec_LogWNilDefaultsToStderr(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, cannedSSE(4, 64, 42.0))
+	}))
+	defer srv.Close()
+
+	// LogW deliberately omitted (nil) — must not panic and must return samples.
+	o := MeasureOpts{PromptTokens: 8, GenTokens: 64, Warmup: 0, Repeat: 1}
+	result := MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
+	if len(result.DecodeTPS) != 1 {
+		t.Errorf("expected 1 sample with nil LogW, got %d", len(result.DecodeTPS))
+	}
+}
+
+// TestMeasureSpec_LogWDiscard verifies io.Discard silences all output.
+func TestMeasureSpec_LogWDiscard(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		// Return no tokens so the no-token warning fires.
+		_, _ = fmt.Fprint(w, "data: {\"choices\":[{\"text\":\"\"}]}\n\ndata: [DONE]\n\n")
+	}))
+	defer srv.Close()
+
+	// Should complete without panic; io.Discard absorbs the WARNING lines.
+	o := MeasureOpts{
+		PromptTokens: 8,
+		GenTokens:    64,
+		Warmup:       0,
+		Repeat:       2,
+		PhaseLog:     true,
+		LogW:         io.Discard,
+	}
+	result := MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
+	if len(result.DecodeTPS) != 0 {
+		t.Errorf("expected 0 samples (no-token server), got %d", len(result.DecodeTPS))
 	}
 }

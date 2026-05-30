@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
 	"os"
@@ -14,6 +15,15 @@ import (
 	"strings"
 	"time"
 )
+
+// logWriter returns w if non-nil, otherwise os.Stderr.
+// Used so a nil LogW field transparently defaults to headless behavior.
+func logWriter(w io.Writer) io.Writer {
+	if w == nil {
+		return os.Stderr
+	}
+	return w
+}
 
 // ErrNoMTPHead is returned by RunMTPAB when llama-server rejects
 // --spec-type draft-mtp because the model has no MTP draft head.
@@ -32,11 +42,15 @@ type MeasureOpts struct {
 	Warmup       int
 	Repeat       int
 	IgnoreEOS    bool
-	// PhaseLog prints "Warming up"/"Measuring" to stderr at the phase
+	// PhaseLog prints "Warming up"/"Measuring" to LogW at the phase
 	// boundaries, matching Python's benchmark_model interleaving. The MTP
 	// path (_measure_one_spec) leaves it false — Python prints no phase logs
 	// there.
 	PhaseLog bool
+	// LogW is the destination for status prints ("Warming up", "Measuring",
+	// per-iteration warnings). nil → os.Stderr (headless default).
+	// The TUI sets this to io.Discard to keep the alt-screen clean.
+	LogW io.Writer
 	// OnIteration, if non-nil, is called after each measured (non-warmup)
 	// iteration with the 1-based index and the iteration's decode t/s. Skipped
 	// no-token iterations do not fire it. Nil-safe: nil means no callback.
@@ -184,8 +198,9 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 		IgnoreEOS: o.IgnoreEOS,
 	}
 
+	lw := logWriter(o.LogW)
 	if o.PhaseLog {
-		fmt.Fprintf(os.Stderr, "  Warming up (%d iteration(s))...\n", o.Warmup)
+		fmt.Fprintf(lw, "  Warming up (%d iteration(s))...\n", o.Warmup)
 	}
 	for range o.Warmup {
 		if ctx.Err() != nil {
@@ -195,7 +210,7 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 	}
 
 	if o.PhaseLog {
-		fmt.Fprintf(os.Stderr, "  Measuring (%d iteration(s))...\n", o.Repeat)
+		fmt.Fprintf(lw, "  Measuring (%d iteration(s))...\n", o.Repeat)
 	}
 	var result MeasureResult
 	for i := range o.Repeat {
@@ -204,7 +219,7 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 		}
 		cr := runOneCompletion(ctx, baseURL, path, opts)
 		if !cr.ok {
-			fmt.Fprintf(os.Stderr, "  WARNING: iteration %d produced no tokens\n", i+1)
+			fmt.Fprintf(lw, "  WARNING: iteration %d produced no tokens\n", i+1)
 			continue
 		}
 		result.TTFT = append(result.TTFT, cr.ttft)
@@ -223,6 +238,8 @@ type BenchmarkModelOpts struct {
 	GenTokens    int
 	Warmup       int
 	Repeat       int
+	// LogW is the destination for status prints. nil → os.Stderr.
+	LogW io.Writer
 	// OnIteration, if non-nil, fires after each measured iteration. See
 	// MeasureOpts.OnIteration.
 	OnIteration func(iter int, decodeTPS float64)
@@ -238,7 +255,7 @@ type BenchmarkModelResult struct {
 // BenchmarkModel loads a model into lemonade then warms up and measures.
 // ctx cancellation interrupts the in-flight measurement; LoadModel has its own timeout.
 func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelResult, error) {
-	fmt.Fprintf(os.Stderr, "  Loading %q...\n", o.ModelID)
+	fmt.Fprintf(logWriter(o.LogW), "  Loading %q...\n", o.ModelID)
 	if err := LoadModel(o.BaseURL, o.ModelID); err != nil {
 		return BenchmarkModelResult{}, err
 	}
@@ -250,6 +267,7 @@ func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelRe
 		Repeat:       o.Repeat,
 		IgnoreEOS:    false,
 		PhaseLog:     true,
+		LogW:         o.LogW,
 		OnIteration:  o.OnIteration,
 	}
 
@@ -280,6 +298,10 @@ type MTPABOpts struct {
 	// BackendBinEnv maps backend key → env var name for the binary path.
 	// nil uses the standard LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars.
 	BackendBinEnv map[string]string
+	// LogW is the destination for status prints ("MTP A/B sweep", per-backend
+	// bin/device lines, per-spec-type lines). nil → os.Stderr.
+	// The TUI sets this to io.Discard.
+	LogW io.Writer
 	// OnIteration, if non-nil, fires after each measured iteration with the
 	// backend, spec type ("none" | "draft-mtp"), the 1-based iteration index,
 	// and the iteration's decode t/s. Lets a TUI stream per-iteration progress.
@@ -353,7 +375,8 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 		)
 	}
 
-	fmt.Fprintf(os.Stderr,
+	lw := logWriter(o.LogW)
+	fmt.Fprintf(lw,
 		"\nMTP A/B sweep: model=%s\n  gguf=%s\n  backends=%v\n"+
 			"  protocol: prompt=%d tokens, gen=%d tokens,"+
 			" %d warmup + %d measured\n\n",
@@ -390,7 +413,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			return nil, fmt.Errorf("[%s] no matching device found (devices=%v)", backend, devices)
 		}
 
-		fmt.Fprintf(os.Stderr, "\n[%s] bin=%s device=%s\n", backend, binPath, device)
+		fmt.Fprintf(lw, "\n[%s] bin=%s device=%s\n", backend, binPath, device)
 
 		specTPS := map[string]*float64{}
 		specTypes := []string{"none", "draft-mtp"}
@@ -405,7 +428,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			// runs — on normal return, on the error path, or on a panic —
 			// before the loop moves to the next spec or returns.
 			tps, err := func() (*float64, error) {
-				fmt.Fprintf(os.Stderr, "\n[%s] --spec-type %s\n", backend, specType)
+				fmt.Fprintf(lw, "\n[%s] --spec-type %s\n", backend, specType)
 
 				port, err := FindFreePort()
 				if err != nil {
@@ -423,6 +446,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 				})
 
 				srv := NewLlamaServer(argv, port)
+				srv.LogW = o.LogW
 				if startErr := srv.Start(); startErr != nil {
 					msg := startErr.Error()
 					if specType == "draft-mtp" && strings.Contains(strings.ToLower(msg), "mtp") {
@@ -461,6 +485,7 @@ func measureOneSpec(ctx context.Context, srv *LlamaServer, o MTPABOpts, backend,
 		Warmup:       o.Warmup,
 		Repeat:       o.Repeat,
 		IgnoreEOS:    true,
+		LogW:         o.LogW,
 	}
 	if o.OnIteration != nil {
 		mo.OnIteration = func(iter int, decodeTPS float64) {

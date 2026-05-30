@@ -3,9 +3,9 @@ package bench
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net"
 	"net/http"
-	"os"
 	"os/exec"
 	"syscall"
 	"time"
@@ -71,6 +71,8 @@ type LlamaServer struct {
 	BaseURL      string
 	ReadyTimeout time.Duration
 	TermTimeout  time.Duration
+	// LogW is the destination for Stop's SIGKILL warning. nil → os.Stderr.
+	LogW io.Writer
 
 	cmd    *exec.Cmd
 	stderr *bytes.Buffer
@@ -181,7 +183,7 @@ func (s *LlamaServer) Stop() error {
 	case <-s.waitDone:
 		// Exited cleanly after SIGTERM.
 	case <-time.After(s.TermTimeout):
-		fmt.Fprintln(os.Stderr, "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
+		fmt.Fprintln(logWriter(s.LogW), "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
 		_ = s.cmd.Process.Kill()
 		<-s.waitDone
 	}
