@@ -14,6 +14,7 @@ import (
 const (
 	railTickInterval = time.Second
 	gpuBusyThreshold = 5.0
+	defaultRailWidth = 80
 )
 
 type railState struct {
@@ -51,6 +52,9 @@ func railArch(info hw.Info) string {
 
 // railBudget renders the GTT budget segment.
 func railBudget(info hw.Info) string {
+	if info.GTTBytes == 0 {
+		return "? GTT"
+	}
 	return fmt.Sprintf("%.0fGB GTT", float64(info.GTTBytes)/(1<<30))
 }
 
@@ -90,7 +94,7 @@ func railPreflight(s railPreflightSummary) string {
 // width<=0 defaults to 80.
 func joinFit(segs []string, sep string, width int) string {
 	if width <= 0 {
-		width = 80
+		width = defaultRailWidth
 	}
 	result := ""
 	dropped := false
@@ -99,16 +103,21 @@ func joinFit(segs []string, sep string, width int) string {
 		if i > 0 {
 			candidate = sep + seg
 		}
-		if lipgloss.Width(result+candidate) <= width {
-			result += candidate
-		} else {
+		if lipgloss.Width(result+candidate) > width {
+			// Segments are priority-ordered left-to-right: stop at the first
+			// overflow rather than gap-filling with later shorter segments.
 			dropped = true
+			break
 		}
+		result += candidate
 	}
 	if dropped {
-		ellipsis := sep + "…"
-		if lipgloss.Width(result+ellipsis) <= width {
-			result += ellipsis
+		ell := "…"
+		if lipgloss.Width(result) > 0 {
+			ell = sep + "…"
+		}
+		if lipgloss.Width(result+ell) <= width {
+			result += ell
 		}
 	}
 	return result
@@ -120,7 +129,7 @@ var railStyle = lipgloss.NewStyle().Faint(true)
 // width<=0 defaults to 80.
 func renderRail(info hw.Info, st railState, width int) string {
 	if width <= 0 {
-		width = 80
+		width = defaultRailWidth
 	}
 	segs := []string{
 		railArch(info),

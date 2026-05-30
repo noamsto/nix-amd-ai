@@ -143,6 +143,48 @@ func TestJoinFitTruncates(t *testing.T) {
 			t.Fatalf("joinFit(width=12) should have dropped 'charlie': %q", result)
 		}
 	})
+
+	t.Run("empty input returns empty string", func(t *testing.T) {
+		if got := joinFit(nil, " · ", 80); got != "" {
+			t.Fatalf("joinFit(nil) = %q, want \"\"", got)
+		}
+		if got := joinFit([]string{}, " · ", 80); got != "" {
+			t.Fatalf("joinFit([]) = %q, want \"\"", got)
+		}
+	})
+
+	t.Run("single oversize segment has no leading separator", func(t *testing.T) {
+		result := joinFit([]string{"toolong"}, " · ", 3)
+		if strings.HasPrefix(result, " · ") {
+			t.Fatalf("joinFit single-oversize must not start with separator: %q", result)
+		}
+	})
+
+	t.Run("long middle segment truncates not gap-fills", func(t *testing.T) {
+		// "alpha" fits; the long middle segment overflows. With the break fix,
+		// the loop stops there and "z" (a shorter trailing segment) is NOT
+		// gap-filled in.
+		mid := []string{"alpha", "verylongmiddlesegment", "z"}
+		result := joinFit(mid, " · ", 12)
+		if !strings.Contains(result, "alpha") {
+			t.Fatalf("expected 'alpha' kept: %q", result)
+		}
+		if strings.Contains(result, "z") {
+			t.Fatalf("trailing 'z' must not be gap-filled after overflow: %q", result)
+		}
+		if !strings.Contains(result, "…") {
+			t.Fatalf("expected '…' after overflow: %q", result)
+		}
+	})
+}
+
+func TestRailBudgetZero(t *testing.T) {
+	if got := railBudget(hw.Info{GTTBytes: 0}); got != "? GTT" {
+		t.Fatalf("railBudget(0) = %q, want %q", got, "? GTT")
+	}
+	if got := railBudget(hw.Info{GTTBytes: 27 << 30}); got != "27GB GTT" {
+		t.Fatalf("railBudget(27GiB) = %q, want %q", got, "27GB GTT")
+	}
 }
 
 func TestRenderRailContainsArchNoPanic(t *testing.T) {
