@@ -275,7 +275,10 @@ func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelR
 			isMoE:      isMoE,
 			estimated:  estimated,
 			downloaded: m.Downloaded,
-			suggested:  m.Suggested,
+			// ★ marks "hot"/featured models. The API's `suggested` is true for
+			// nearly the whole catalog (it just means "curated"), so it's useless
+			// as a marker; the "hot" label is the selective featured signal.
+			suggested: hasLabel(m.Labels, "hot"),
 		}
 		if m.Downloaded {
 			downloaded = append(downloaded, row)

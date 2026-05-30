@@ -326,8 +326,11 @@ func TestBuildModelRows_DownloadedSortedFirst(t *testing.T) {
 func TestBuildModelRows_SuggestedField(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "suggested-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Suggested: true},
-		{ID: "plain-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Suggested: false},
+		// ★ must come from the "hot" label, NOT the near-ubiquitous Suggested flag:
+		// hot-model has the hot label but Suggested=false; plain-model has
+		// Suggested=true but no hot label.
+		{ID: "hot-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Labels: []string{"hot"}, Suggested: false},
+		{ID: "plain-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Suggested: true},
 	}
 
 	rows := buildModelRows(fakeList, info, ModeHTTP)
@@ -336,13 +339,13 @@ func TestBuildModelRows_SuggestedField(t *testing.T) {
 	}
 	for _, r := range rows {
 		switch r.id {
-		case "suggested-model":
+		case "hot-model":
 			if !r.suggested {
-				t.Errorf("suggested-model: suggested = false, want true")
+				t.Errorf("hot-model: suggested = false, want true (hot label → ★)")
 			}
 		case "plain-model":
 			if r.suggested {
-				t.Errorf("plain-model: suggested = true, want false")
+				t.Errorf("plain-model: suggested = true, want false (Suggested flag must not drive ★)")
 			}
 		}
 	}
