@@ -1,7 +1,7 @@
 package tui
 
 import (
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
@@ -83,10 +83,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Re-run preflight after any fix attempt (error or success).
 		return m, runPreflightCmd(m.info, m.lemondService())
 
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		// Screen-specific key handling for preflight fixers.
 		if m.current == screenPreflight && m.preflightLoaded {
-			switch string(msg.Runes) {
+			switch msg.String() {
 			case "s":
 				// Stop lemond — only if the lemond result has a Fix.
 				for _, r := range m.preflightResults {
@@ -110,8 +110,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		switch msg.Type {
-		case tea.KeyEnter:
+		switch msg.String() {
+		case "enter":
 			if m.current < screenLast {
 				m.current++
 				// Kick off preflight when entering the preflight screen.
@@ -119,7 +119,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, runPreflightCmd(m.info, m.lemondService())
 				}
 			}
-		case tea.KeyEsc:
+		case "esc":
 			if m.current > screenHW {
 				// Leaving preflight invalidates its results: GPU/power/service
 				// state may have changed (incl. via a fixer). Clear them so the
@@ -130,37 +130,35 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.current--
 			}
-		case tea.KeyCtrlC:
+		case "ctrl+c", "q":
 			return m, tea.Quit
-		case tea.KeyRunes:
-			if string(msg.Runes) == "q" {
-				return m, tea.Quit
-			}
 		}
 	}
 	return m, nil
 }
 
 // View renders the currently active screen.
-func (m model) View() string {
+func (m model) View() tea.View {
+	var s string
 	switch m.current {
 	case screenHW:
-		return renderHWPanel(m.info)
+		s = renderHWPanel(m.info)
 	case screenPreflight:
-		return renderPreflightScreen(m.preflightResults, m.preflightLoaded)
+		s = renderPreflightScreen(m.preflightResults, m.preflightLoaded)
 	case screenMode:
-		return renderMode()
+		s = renderMode()
 	case screenModel:
-		return renderModel()
+		s = renderModel()
 	case screenParams:
-		return renderParams()
+		s = renderParams()
 	case screenRun:
-		return renderRun()
+		s = renderRun()
 	case screenResults:
-		return renderResults()
+		s = renderResults()
 	default:
-		return renderHWPanel(m.info)
+		s = renderHWPanel(m.info)
 	}
+	return tea.NewView(s)
 }
 
 // --- per-screen stubs (real implementations come in 5.3-5.4) ---

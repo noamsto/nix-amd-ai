@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
 )
@@ -21,7 +21,7 @@ func TestRenderPreflightLinePass(t *testing.T) {
 		t.Errorf("Pass result: expected '✓'; got %q", out)
 	}
 	// No key hint on a passing result.
-	if strings.Contains(out, "[") {
+	if strings.Contains(out, "[s]") || strings.Contains(out, "[p]") {
 		t.Errorf("Pass result: unexpected key hint in %q", out)
 	}
 }
@@ -86,7 +86,7 @@ func TestRenderPreflightLineWarnNoFix(t *testing.T) {
 	if !strings.Contains(out, "⚠") {
 		t.Errorf("Warn result: expected '⚠'; got %q", out)
 	}
-	if strings.Contains(out, "[") {
+	if strings.Contains(out, "[s]") || strings.Contains(out, "[p]") {
 		t.Errorf("Warn without Fix: unexpected key hint in %q", out)
 	}
 }
@@ -131,7 +131,7 @@ func TestFixerOnlyOnKeypress(t *testing.T) {
 	}
 
 	// Send 's' key — must produce a non-nil Cmd without calling Fix inline.
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	keyMsg := tea.KeyPressMsg{Code: 's', Text: "s"}
 	newModel, cmd := m.Update(keyMsg)
 	_ = newModel
 	if fixCalled != 0 {
@@ -183,7 +183,7 @@ func TestFixerPowerKeyOnlyOnKeypress(t *testing.T) {
 		t.Fatalf("Fix called during View(); must be 0")
 	}
 
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	keyMsg := tea.KeyPressMsg{Code: 'p', Text: "p"}
 	_, cmd := m.Update(keyMsg)
 	if fixCalled != 0 {
 		t.Fatalf("Fix called during Update('p'); must be 0")
@@ -217,7 +217,7 @@ func TestFixerKeyIgnoredOnOtherScreens(t *testing.T) {
 		preflightLoaded:  true,
 	}
 
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	keyMsg := tea.KeyPressMsg{Code: 's', Text: "s"}
 	_, cmd := m.Update(keyMsg)
 	// A non-nil Cmd on a non-preflight screen is itself the failure: the fixer
 	// key must be inert outside screenPreflight.
@@ -244,7 +244,7 @@ func TestFixerNotCalledWhenNoFix(t *testing.T) {
 		preflightLoaded:  true,
 	}
 
-	keyMsg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'s'}}
+	keyMsg := tea.KeyPressMsg{Code: 's', Text: "s"}
 	_, cmd := m.Update(keyMsg)
 	if cmd != nil {
 		t.Fatalf("Update('s') on result with nil Fix returned non-nil Cmd")

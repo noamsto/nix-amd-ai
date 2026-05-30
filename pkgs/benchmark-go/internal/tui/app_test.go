@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/x/exp/teatest"
+	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/exp/teatest/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/tui"
@@ -45,7 +45,7 @@ func TestEnterAdvancesScreen(t *testing.T) {
 		return bytes.Contains(out, []byte("Hardware"))
 	}, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 
-	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	tm.Send(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	teatest.WaitFor(t, tm.Output(), func(out []byte) bool {
 		return bytes.Contains(out, []byte("Preflight"))
@@ -84,7 +84,7 @@ func TestPreflightScreenHeader(t *testing.T) {
 		return bytes.Contains(out, []byte("Hardware"))
 	}, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 
-	tm.Send(tea.KeyMsg{Type: tea.KeyEnter})
+	tm.Send(tea.KeyPressMsg{Code: tea.KeyEnter})
 
 	// The heading "Preflight" must appear; the loading indicator or results
 	// may appear too — both are acceptable.
@@ -104,7 +104,7 @@ func TestQuitKey(t *testing.T) {
 		return bytes.Contains(out, []byte("Hardware"))
 	}, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 
-	tm.Send(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	tm.Send(tea.KeyPressMsg{Code: 'q', Text: "q"})
 
 	tm.WaitFinished(t, teatest.WithFinalTimeout(3*time.Second))
 }

@@ -3,7 +3,7 @@ package tui
 import (
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
 )
