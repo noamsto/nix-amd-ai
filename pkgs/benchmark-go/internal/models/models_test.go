@@ -125,3 +125,51 @@ func TestParseModels_checkpointEmptyWhenAbsent(t *testing.T) {
 		t.Errorf("ms[0].Checkpoint = %q, want empty", ms[0].Checkpoint)
 	}
 }
+
+func TestParseModels_sizeSuggestedLabels(t *testing.T) {
+	// Mirrors real lemonade API response for Qwen3.6-27B-MTP-GGUF.
+	raw := `{"data":[
+		{"id":"Qwen3.6-27B-MTP-GGUF","downloaded":true,"recipe":"llamacpp","size":18.8,"suggested":true,"labels":["vision","tool-calling","mtp","hot"]},
+		{"id":"Gemma-4-26B-A4B-it-GGUF","downloaded":false,"recipe":"llamacpp","size":15.2,"suggested":false,"labels":["llamacpp"]}
+	]}`
+
+	ms, err := ParseModels([]byte(raw))
+	if err != nil {
+		t.Fatalf("ParseModels error: %v", err)
+	}
+	if len(ms) != 2 {
+		t.Fatalf("want 2 models, got %d", len(ms))
+	}
+
+	// First model: size, suggested=true, labels including "mtp"
+	m0 := ms[0]
+	if m0.Size != 18.8 {
+		t.Errorf("ms[0].Size = %v, want 18.8", m0.Size)
+	}
+	if !m0.Suggested {
+		t.Errorf("ms[0].Suggested = false, want true")
+	}
+	hasLabel := func(labels []string, want string) bool {
+		for _, l := range labels {
+			if l == want {
+				return true
+			}
+		}
+		return false
+	}
+	if !hasLabel(m0.Labels, "mtp") {
+		t.Errorf("ms[0].Labels = %v, want to contain \"mtp\"", m0.Labels)
+	}
+
+	// Second model: size present even though not downloaded, suggested=false
+	m1 := ms[1]
+	if m1.Size != 15.2 {
+		t.Errorf("ms[1].Size = %v, want 15.2", m1.Size)
+	}
+	if m1.Suggested {
+		t.Errorf("ms[1].Suggested = true, want false")
+	}
+	if m1.Downloaded {
+		t.Errorf("ms[1].Downloaded = true, want false")
+	}
+}

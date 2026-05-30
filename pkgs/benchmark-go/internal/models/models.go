@@ -17,6 +17,8 @@ type Model struct {
 	Labels     []string `json:"labels"`
 	Recipe     string   `json:"recipe"`     // lemonade recipe (e.g. "llamacpp"); may be empty
 	Checkpoint string   `json:"checkpoint"` // HF repo + optional variant (e.g. "owner/repo:variant")
+	Size       float64  `json:"size"`       // model size in GB (present even when not downloaded)
+	Suggested  bool     `json:"suggested"`  // lemonade marks this as a recommended model
 }
 
 // modelsEnvelope is the {"data":[...]} wrapper from /api/v1/models.
@@ -35,6 +37,8 @@ type rawModel struct {
 	Recipe     string   `json:"recipe"`
 	Backend    string   `json:"backend"`    // fallback for recipe
 	Checkpoint string   `json:"checkpoint"` // HF repo + optional variant
+	Size       float64  `json:"size"`       // GB, present even when not downloaded
+	Suggested  bool     `json:"suggested"`
 }
 
 // ParseModels decodes the /api/v1/models response body into a []Model.
@@ -86,6 +90,8 @@ func convertModels(raws []rawModel) []Model {
 			Labels:     r.Labels,
 			Recipe:     recipe,
 			Checkpoint: r.Checkpoint,
+			Size:       r.Size,
+			Suggested:  r.Suggested,
 		})
 	}
 	return out
