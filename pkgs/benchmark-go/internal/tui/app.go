@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
@@ -52,6 +53,11 @@ type model struct {
 	// Results screen state (screenResults). Populated on transition.
 	results resultsState
 
+	// Status rail state.
+	rail     railState
+	width    int
+	railGRBM func() float64 // nil → defaultRailGRBM
+
 	// Seams for testing. nil values fall back to the real implementations:
 	//   runBench → defaultRunBench (spawns llama-server / hits lemonade)
 	//   grbmFunc → defaultGRBM (reads real GPU)
@@ -79,8 +85,8 @@ func New(info hw.Info, cfg Config) tea.Model {
 	return model{current: screenHW, info: info, cfg: cfg}
 }
 
-// Init satisfies tea.Model; no startup command needed.
-func (m model) Init() tea.Cmd { return nil }
+// Init satisfies tea.Model; starts the rail GPU ticker.
+func (m model) Init() tea.Cmd { return railTickCmd(m.railGRBM) }
 
 // preflightResultsMsg carries the results of a preflight.Run call.
 type preflightResultsMsg struct {
@@ -115,12 +121,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		return m, nil
+
+	case railTickMsg:
+		m.rail.gpuPct = msg.pct
+		return m, railTickCmd(m.railGRBM)
+
 	case logWrittenMsg:
 		return m.handleLogWritten(msg)
 
 	case preflightResultsMsg:
 		m.preflightResults = msg.results
 		m.preflightLoaded = true
+		m.rail.preflight = summarizePreflight(m.preflightResults)
 		return m, nil
 
 	case modelsLoadedMsg:
@@ -272,7 +287,8 @@ func (m model) View() tea.View {
 	default:
 		s = renderHWPanel(m.info)
 	}
-	v := tea.NewView(s)
+	rail := renderRail(m.info, m.rail, m.width)
+	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, rail, s))
 	v.AltScreen = true
 	return v
 }
