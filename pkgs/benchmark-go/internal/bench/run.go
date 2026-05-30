@@ -39,6 +39,10 @@ type MeasureOpts struct {
 	// path (_measure_one_spec) leaves it false — Python prints no phase logs
 	// there.
 	PhaseLog bool
+	// OnIteration, if non-nil, is called after each measured (non-warmup)
+	// iteration with the 1-based index and the iteration's decode t/s. Skipped
+	// no-token iterations do not fire it. Nil-safe: nil means no callback.
+	OnIteration func(iter int, decodeTPS float64)
 }
 
 // MeasureResult holds per-iteration samples from a measurement run.
@@ -204,6 +208,9 @@ func MeasureSpec(baseURL, path, model string, o MeasureOpts) MeasureResult {
 		}
 		result.TTFT = append(result.TTFT, cr.ttft)
 		result.DecodeTPS = append(result.DecodeTPS, cr.decodeTPS)
+		if o.OnIteration != nil {
+			o.OnIteration(len(result.DecodeTPS), cr.decodeTPS)
+		}
 	}
 	return result
 }
@@ -216,6 +223,9 @@ type BenchmarkModelOpts struct {
 	GenTokens    int
 	Warmup       int
 	Repeat       int
+	// OnIteration, if non-nil, fires after each measured iteration. See
+	// MeasureOpts.OnIteration.
+	OnIteration func(iter int, decodeTPS float64)
 }
 
 // BenchmarkModelResult holds aggregated results. Nil pointer fields signal
@@ -241,6 +251,7 @@ func BenchmarkModel(o BenchmarkModelOpts) (BenchmarkModelResult, error) {
 		Repeat:       o.Repeat,
 		IgnoreEOS:    false,
 		PhaseLog:     true,
+		OnIteration:  o.OnIteration,
 	}
 
 	r := MeasureSpec(o.BaseURL, lemonadeCompletionsPath, o.ModelID, mo)
@@ -272,6 +283,10 @@ type MTPABOpts struct {
 	// BackendBinEnv maps backend key → env var name for the binary path.
 	// nil uses the standard LEMONADE_LLAMACPP_{ROCM,VULKAN}_BIN env vars.
 	BackendBinEnv map[string]string
+	// OnIteration, if non-nil, fires after each measured iteration with the
+	// backend, spec type ("none" | "draft-mtp"), the 1-based iteration index,
+	// and the iteration's decode t/s. Lets a TUI stream per-iteration progress.
+	OnIteration func(backend, specType string, iter int, decodeTPS float64)
 }
 
 // MTPABResult holds the MTP-off and MTP-on TPS for one backend.
@@ -421,7 +436,7 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 				}
 				defer func() { _ = srv.Stop() }()
 
-				return measureOneSpec(srv, o), nil
+				return measureOneSpec(srv, o, backend, specType), nil
 			}()
 			if err != nil {
 				return nil, err
@@ -441,13 +456,18 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 // measureOneSpec runs warmup+repeat MTP completions against a running LlamaServer.
 // Returns mean decode TPS, or nil if no successful iterations.
 // Mirrors Python's _measure_one_spec.
-func measureOneSpec(srv *LlamaServer, o MTPABOpts) *float64 {
+func measureOneSpec(srv *LlamaServer, o MTPABOpts, backend, specType string) *float64 {
 	mo := MeasureOpts{
 		PromptTokens: o.PromptTokens,
 		GenTokens:    o.GenTokens,
 		Warmup:       o.Warmup,
 		Repeat:       o.Repeat,
 		IgnoreEOS:    true,
+	}
+	if o.OnIteration != nil {
+		mo.OnIteration = func(iter int, decodeTPS float64) {
+			o.OnIteration(backend, specType, iter, decodeTPS)
+		}
 	}
 	r := MeasureSpec(srv.BaseURL, "/v1/completions", "default", mo)
 	if len(r.DecodeTPS) == 0 {

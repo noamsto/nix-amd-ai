@@ -108,6 +108,72 @@ func TestMeasureSpec_NoTokensSentinel(t *testing.T) {
 	}
 }
 
+func TestMeasureSpec_OnIteration(t *testing.T) {
+	const (
+		numChunks  = 4
+		compTokens = 128
+		predTPS    = 42.5
+		warmup     = 2
+		repeat     = 3
+	)
+
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, cannedSSE(numChunks, compTokens, predTPS))
+	}))
+	defer srv.Close()
+
+	type sample struct {
+		iter int
+		tps  float64
+	}
+	var got []sample
+	o := MeasureOpts{
+		PromptTokens: 8,
+		GenTokens:    128,
+		Warmup:       warmup,
+		Repeat:       repeat,
+		OnIteration: func(iter int, decodeTPS float64) {
+			got = append(got, sample{iter, decodeTPS})
+		},
+	}
+	MeasureSpec(srv.URL, "/v1/completions", "m", o)
+
+	// Exactly Repeat callbacks (warmup iterations must NOT fire it).
+	if len(got) != repeat {
+		t.Fatalf("expected %d OnIteration callbacks, got %d", repeat, len(got))
+	}
+	for i, s := range got {
+		if s.iter != i+1 {
+			t.Errorf("callback %d: iter = %d, want %d (1-based)", i, s.iter, i+1)
+		}
+		if s.tps <= 0 {
+			t.Errorf("callback %d: tps = %v, want > 0", i, s.tps)
+		}
+	}
+}
+
+func TestMeasureSpec_OnIterationSkipsNoToken(t *testing.T) {
+	// All iterations produce no tokens → OnIteration must never fire.
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, "data: {\"choices\":[{\"text\":\"\"}]}\n\ndata: [DONE]\n\n")
+	}))
+	defer srv.Close()
+
+	calls := 0
+	o := MeasureOpts{
+		PromptTokens: 8, GenTokens: 64, Warmup: 0, Repeat: 3,
+		OnIteration: func(int, float64) { calls++ },
+	}
+	MeasureSpec(srv.URL, "/v1/completions", "m", o)
+	if calls != 0 {
+		t.Errorf("expected 0 callbacks for no-token iterations, got %d", calls)
+	}
+}
+
 func TestMeasureSpec_EmptySliceGuard(t *testing.T) {
 	// Verify that when all iterations produce no tokens, calling MeanStdev on
 	// the empty result would be wrong — but we DON'T call it here; we just
