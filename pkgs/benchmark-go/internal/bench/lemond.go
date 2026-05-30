@@ -43,6 +43,31 @@ func WaitForLemond(baseURL string, timeout time.Duration) error {
 	return fmt.Errorf("lemond did not become reachable at %s within %s", baseURL, timeout)
 }
 
+// UnloadLemonadeModel evacuates lemonade's currently-loaded model from the GPU
+// via POST /api/v1/unload. This is the gentle way to free GPU memory before a
+// benchmark: it frees ~instantly, needs no sudo, leaves the lemond daemon up,
+// and lemonade simply reloads on its next request — far less invasive than
+// stopping the service or killing processes. Idempotent: a 200 is returned even
+// when no model is loaded.
+func UnloadLemonadeModel(baseURL string) error {
+	url := baseURL + "/api/v1/unload"
+	req, err := http.NewRequest(http.MethodPost, url, nil)
+	if err != nil {
+		return err
+	}
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return fmt.Errorf("unload lemonade model: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("unload lemonade model: HTTP %d: %s", resp.StatusCode, body)
+	}
+	return nil
+}
+
 // LoadModel loads a model into lemonade via POST /api/v1/load.
 func LoadModel(baseURL, modelID string) error {
 	payload, err := json.Marshal(map[string]string{"model_name": modelID})

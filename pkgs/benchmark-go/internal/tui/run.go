@@ -321,6 +321,8 @@ func runMTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) te
 			Repeat:       req.params.Repeat,
 			CtxSize:      req.params.Ctx,
 			LogW:         io.Discard,
+			// Lets the GPU-memory guardrail evacuate a lemonade-held model.
+			BaseURL: req.baseURL,
 			OnIteration: func(backend, specType string, iter int, tps float64) {
 				spec := specLabel(specType)
 				key := mtpKey(modelID, backend, spec)

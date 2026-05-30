@@ -250,6 +250,27 @@ func GRBMBusyPct() float64 {
 	return pct
 }
 
+// GPUMemFree returns free GTT bytes (total − used), read live from amdgpu sysfs.
+// ok is false when the card or files can't be read, or the values are nonsense
+// (used > total) — callers should fail open in that case, not block. Cheap
+// enough to call right before each server launch as a memory guardrail.
+func GPUMemFree() (free uint64, ok bool) {
+	cardDev, err := findAMDGPUCard()
+	if err != nil {
+		return 0, false
+	}
+	total := parseBytesFile(readFile(filepath.Join(cardDev, "mem_info_gtt_total")))
+	usedData := readFile(filepath.Join(cardDev, "mem_info_gtt_used"))
+	if total == 0 || usedData == nil {
+		return 0, false
+	}
+	used := parseBytesFile(usedData)
+	if used > total {
+		return 0, false
+	}
+	return total - used, true
+}
+
 // Detect reads host hardware and returns an Info struct.
 // It never panics and degrades gracefully when any source is unavailable.
 func Detect() Info {

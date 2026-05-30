@@ -14,6 +14,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 )
 
 // logWriter returns w if non-nil, otherwise os.Stderr.
@@ -306,6 +308,91 @@ type MTPABOpts struct {
 	// backend, spec type ("none" | "draft-mtp"), the 1-based iteration index,
 	// and the iteration's decode t/s. Lets a TUI stream per-iteration progress.
 	OnIteration func(backend, specType string, iter int, decodeTPS float64)
+	// BaseURL is the lemonade server (scheme+host+port). Used only to evacuate a
+	// lemonade-held model when the GPU-memory guardrail trips. "" disables it.
+	BaseURL string
+	// GPUMemFree returns live free GPU (GTT) bytes; ok=false when unreadable.
+	// nil defaults to hw.GPUMemFree. The guardrail in RunMTPAB uses it to fail
+	// fast when the GPU can't hold the model (test seam: inject a fake).
+	GPUMemFree func() (free uint64, ok bool)
+	// Evacuate frees GPU memory when the guardrail trips (default: unload the
+	// lemonade model via BaseURL). nil + empty BaseURL disables evacuation, so
+	// the guardrail fails fast instead (test seam: inject a fake).
+	Evacuate func() error
+}
+
+// gpuDrainPolls / gpuDrainPollInterval bound how long ensureGPUMem waits for
+// GTT to drain after an evacuation. Unload is near-instant (measured <1s) but a
+// short poll absorbs allocator lag.
+const (
+	gpuDrainPolls        = 6
+	gpuDrainPollInterval = 500 * time.Millisecond
+)
+
+// ensureGPUMem is the GPU-memory guardrail: it confirms the model fits in free
+// GPU memory before a server is spawned. If memory is short it evacuates (the
+// default frees a lemonade-held model, the most common occupant) and re-checks,
+// returning an actionable error only if the GPU is still too full afterward.
+// Fails open (nil) when free memory can't be measured — the server's stderr
+// tail then surfaces in any readiness-timeout error.
+func ensureGPUMem(modelBytes uint64, memFree func() (uint64, bool), evacuate func() error, lw io.Writer) error {
+	if modelBytes == 0 || memFree == nil {
+		return nil
+	}
+	free, ok := memFree()
+	if !ok {
+		return nil
+	}
+	if checkGPUMemBudget(modelBytes, free) == nil {
+		return nil
+	}
+
+	if evacuate != nil {
+		fmt.Fprintf(lw, "  GPU low on free memory (%.1f GiB); evacuating loaded model…\n", giB(free))
+		if err := evacuate(); err != nil {
+			fmt.Fprintf(lw, "  WARNING: evacuate failed: %v\n", err)
+		} else {
+			for range gpuDrainPolls {
+				time.Sleep(gpuDrainPollInterval)
+				if f, ok := memFree(); ok && checkGPUMemBudget(modelBytes, f) == nil {
+					return nil
+				}
+			}
+		}
+	}
+
+	free, ok = memFree()
+	if !ok {
+		return nil
+	}
+	return checkGPUMemBudget(modelBytes, free)
+}
+
+// gpuMemHeadroomBytes is GTT needed beyond the GGUF file itself: KV cache, the
+// MTP draft head, and allocator fragmentation. The loaded footprint runs
+// ~1–2 GiB over file size at ctx 2048 (measured: 15.5 GiB file → 17.3 GiB GTT).
+const gpuMemHeadroomBytes = 2 << 30 // 2 GiB
+
+func giB(b uint64) float64 { return float64(b) / (1 << 30) }
+
+// checkGPUMemBudget fails fast when free GPU memory can't hold the model plus
+// headroom. This is the guardrail against the silent failure mode where a server
+// starts on a GPU that's already occupied (a loaded lemonade model or a stray
+// llama-server), loads partially, then never goes ready — surfacing only as an
+// HTTP 503 after the full 5-minute readiness timeout. modelBytes is the GGUF
+// file size; freeBytes is live free GTT. Returns nil when there is enough room.
+func checkGPUMemBudget(modelBytes, freeBytes uint64) error {
+	need := modelBytes + gpuMemHeadroomBytes
+	if freeBytes >= need {
+		return nil
+	}
+	return fmt.Errorf(
+		"insufficient free GPU memory: %.1f GiB free but the model needs ~%.1f GiB "+
+			"(%.1f GiB model + headroom). Something else is holding the GPU — a loaded "+
+			"lemonade model or a stray llama-server. Free it (lemonade unload, or kill "+
+			"the llama-server process) and retry",
+		giB(freeBytes), giB(need), giB(modelBytes),
+	)
 }
 
 // MTPABResult holds the MTP-off and MTP-on TPS for one backend.
@@ -375,6 +462,21 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 		)
 	}
 
+	// Model file size + the GPU-memory probe drive the pre-spawn guardrail below.
+	var modelBytes uint64
+	if fi, statErr := os.Stat(gguf); statErr == nil && fi.Size() > 0 {
+		modelBytes = uint64(fi.Size())
+	}
+	memFree := o.GPUMemFree
+	if memFree == nil {
+		memFree = hw.GPUMemFree
+	}
+	evacuate := o.Evacuate
+	if evacuate == nil && o.BaseURL != "" {
+		baseURL := strings.TrimRight(o.BaseURL, "/")
+		evacuate = func() error { return UnloadLemonadeModel(baseURL) }
+	}
+
 	lw := logWriter(o.LogW)
 	fmt.Fprintf(lw,
 		"\nMTP A/B sweep: model=%s\n  gguf=%s\n  backends=%v\n"+
@@ -433,6 +535,13 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 				port, err := FindFreePort()
 				if err != nil {
 					return nil, fmt.Errorf("[%s] find free port: %w", backend, err)
+				}
+
+				// Guardrail: ensure the GPU can hold the model (evacuating a
+				// lemonade-held model if needed) instead of spawning a server
+				// that hangs until the 5m readiness timeout. Re-checked per spec.
+				if memErr := ensureGPUMem(modelBytes, memFree, evacuate, lw); memErr != nil {
+					return nil, fmt.Errorf("[%s] spec=%s: %w", backend, specType, memErr)
 				}
 
 				argv := BuildLlamaServerArgs(ServerArgs{

@@ -202,6 +202,8 @@ func runHeadlessMTPAB(ctx context.Context, o opts) int {
 		Warmup:       o.Warmup,
 		Repeat:       o.Repeat,
 		CtxSize:      o.CtxSize,
+		// Lets the GPU-memory guardrail evacuate a lemonade-held model.
+		BaseURL: strings.TrimRight(o.BaseURL, "/"),
 	}
 
 	results, err := bench.RunMTPAB(ctx, abOpts)

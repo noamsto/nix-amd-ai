@@ -157,9 +157,12 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 			time.Sleep(pollInterval)
 		}
 	}
+	// Server is still alive but never went ready (e.g. GPU starved by another
+	// process, stuck fitting params). Include its stderr tail so the failure is
+	// diagnosable instead of a bare "HTTP 503".
 	return fmt.Errorf(
-		"llama-server at %s did not become ready within %s (last error: %v)",
-		s.BaseURL, s.ReadyTimeout, lastErr,
+		"llama-server at %s did not become ready within %s (last error: %v). stderr:\n%s",
+		s.BaseURL, s.ReadyTimeout, lastErr, lastN(s.stderr.String(), 2000),
 	)
 }
 
