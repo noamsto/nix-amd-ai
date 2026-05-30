@@ -240,6 +240,8 @@ Launches a full-screen TUI that walks through:
 6. **Live run** — streaming progress with GPU% utilisation
 7. **Results** — measured vs predicted, markdown export, log written to `bench-logs-<topic>-<date>/` (cwd-relative)
 
+A persistent **status rail** sits above every screen — `gfx arch · GTT budget · GPU% · power · preflight` — refreshed live (~1s), so you can see whether the GPU is actually idle (e.g. another process holding a model) without leaving the current step. Colors adapt to the terminal background, staying legible on both light and dark themes.
+
 For trustworthy numbers: run with an idle GPU and on AC power (the preflight guard will prompt if either condition isn't met).
 
 The benchmark is a portable Go binary. It runs off-Nix on any machine with lemonade installed — just put the binary on `$PATH`.
