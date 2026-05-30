@@ -194,3 +194,48 @@ func TestResolveGGUFByCheckpoint_CaseInsensitiveVariantMatch(t *testing.T) {
 		t.Errorf("got %q, want %q", got, wantPath)
 	}
 }
+
+func TestResolveGGUFByCheckpoint_OnlyMmproj(t *testing.T) {
+	// Realistic partial-download state: snapshot has only an mmproj projection
+	// file, no model shard → resolver returns "" (mmproj excluded + len==0 guard).
+	// Case-insensitive: an uppercase MMproj must also be excluded.
+	root := t.TempDir()
+	dir := filepath.Join(root, "models--unsloth--gemma-4-26B-A4B-it-GGUF", "snapshots", "rev1")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"mmproj-F16.gguf", "MMproj-BF16.gguf"} {
+		if err := os.WriteFile(filepath.Join(dir, name), []byte{}, 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	got := ResolveGGUFByCheckpoint("unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M", root)
+	if got != "" {
+		t.Errorf("got %q, want empty (only mmproj files present)", got)
+	}
+}
+
+func TestResolveGGUFByCheckpoint_TagNoMatch(t *testing.T) {
+	// A real .gguf exists but the variant tag matches no filename → "".
+	root := t.TempDir()
+	dir := filepath.Join(root, "models--unsloth--TestRepo-GGUF", "snapshots", "rev1")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "TestModel-UD-Q4_K_M.gguf"), []byte{}, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	got := ResolveGGUFByCheckpoint("unsloth/TestRepo-GGUF:UD-Q8_0", root)
+	if got != "" {
+		t.Errorf("got %q, want empty (variant tag UD-Q8_0 matches no file)", got)
+	}
+}
+
+func TestResolveGGUFByCheckpoint_MultiSlashRepo(t *testing.T) {
+	// A repo part containing a further "/" (checkpoint "a/b/c") is rejected
+	// rather than building a path that descends into a subdir.
+	got := ResolveGGUFByCheckpoint("a/b/c", t.TempDir())
+	if got != "" {
+		t.Errorf("got %q, want empty for multi-slash checkpoint", got)
+	}
+}

@@ -85,9 +85,10 @@ func TestFormatModelRow_Alignment(t *testing.T) {
 	// Find the display offset of the size string "4.5 GiB" in each row.
 	// Both must match because the id column is padded/truncated to idColumnWidth.
 	findSizeOffset := func(row string) int {
-		// Walk by rune width until we find the size content after the id column.
-		// The format is: "[ ] " (4) + idCol (idColumnWidth) + "  " (2) + size...
-		// We count display width from the start to the size column start.
+		// Locate the size content (byte offset; the prefix is pure ASCII here),
+		// then convert the prefix to its display-column width via lipgloss.Width.
+		// Both rows must yield the same offset because the id column is
+		// padded/truncated to idColumnWidth.
 		target := "4.5 GiB"
 		idx := strings.Index(row, target)
 		if idx < 0 {

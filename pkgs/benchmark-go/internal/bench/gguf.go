@@ -31,6 +31,11 @@ func ResolveGGUFByCheckpoint(checkpoint, cacheRoot string) string {
 		return ""
 	}
 	owner, repo := parts[0], parts[1]
+	// A repo containing a further "/" would build a path that descends into a
+	// subdir (models--a--b/c); reject it.
+	if strings.Contains(repo, "/") {
+		return ""
+	}
 
 	// Cache dir name is exact: models--<owner>--<repo>
 	dirName := "models--" + owner + "--" + repo
@@ -49,7 +54,7 @@ func ResolveGGUFByCheckpoint(checkpoint, cacheRoot string) string {
 		if !strings.HasSuffix(base, ".gguf") {
 			return nil
 		}
-		if strings.HasPrefix(base, "mmproj") {
+		if strings.HasPrefix(strings.ToLower(base), "mmproj") {
 			return nil
 		}
 		ggufs = append(ggufs, path)
