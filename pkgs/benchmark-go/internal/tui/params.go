@@ -265,7 +265,8 @@ func handleParamsKey(m model, msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "enter":
 		m.current = screenRun
-		return m, nil
+		cmd := m.startRun()
+		return m, cmd
 	case "esc":
 		m.current = screenModel
 		return m, nil

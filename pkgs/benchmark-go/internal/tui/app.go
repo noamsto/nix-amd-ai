@@ -1,6 +1,9 @@
 package tui
 
 import (
+	"context"
+	"fmt"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
@@ -41,6 +44,25 @@ type model struct {
 	modelPicker      modelPicker
 	selectedModels   []string   // IDs chosen on the model picker screen
 	paramsForm       paramsForm // editable run-parameter form (screenParams)
+
+	// Live run state (screenRun). Populated by startRun.
+	run runState
+
+	// Seams for testing. nil values fall back to the real implementations:
+	//   runBench → defaultRunBench (spawns llama-server / hits lemonade)
+	//   grbmFunc → defaultGRBM (reads real GPU)
+	// Tests inject fakes so no test touches hardware or the network.
+	runBench func(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg
+	grbmFunc func() float64
+}
+
+// baseURL returns the configured lemonade base URL, defaulting to the standard
+// local endpoint (matches the model picker's default).
+func (m model) baseURL() string {
+	if m.cfg.BaseURL != "" {
+		return m.cfg.BaseURL
+	}
+	return "http://localhost:13305"
 }
 
 // New returns an initialised tea.Model starting on the Hardware screen.
@@ -78,6 +100,12 @@ func (m model) lemondService() string {
 
 // Update handles navigation keys and delegates everything else.
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Live-run messages (progress/result/tick) are routed first so they're
+	// handled regardless of which screen flag is set when they arrive.
+	if updated, cmd, handled := m.handleRunMsg(msg); handled {
+		return updated, cmd
+	}
+
 	switch msg := msg.(type) {
 	case preflightResultsMsg:
 		m.preflightResults = msg.results
@@ -181,6 +209,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return handleParamsKey(m, msg)
 		}
 
+		// Run screen: q/Ctrl+C abort, Esc cancels back to params.
+		if m.current == screenRun {
+			return m.handleRunKey(msg)
+		}
+
 		switch msg.String() {
 		case "enter":
 			if m.current < screenLast {
@@ -223,16 +256,28 @@ func (m model) View() tea.View {
 	case screenParams:
 		s = renderParamsScreen(m.paramsForm)
 	case screenRun:
-		s = renderRun()
+		s = renderRunScreen(m.run)
 	case screenResults:
-		s = renderResults()
+		s = renderResults(m.run.results, m.run.err)
 	default:
 		s = renderHWPanel(m.info)
 	}
 	return tea.NewView(s)
 }
 
-// --- per-screen stubs (real implementations come in later tasks) ---
+// --- results stub (5.4b builds the real table + export) ---
 
-func renderRun() string     { return "Run — benchmark in progress\n" }
-func renderResults() string { return "Results — summary & throughput\n" }
+// renderResults is a placeholder until Task 5.4b. It confirms the run finished
+// and how many units were measured (or surfaces the error).
+func renderResults(res runResults, err error) string {
+	if err != nil {
+		return panelStyle.Render(
+			headingStyle.Render("Results") + "\n\n" +
+				hintStyle.Render("Run failed: "+err.Error()),
+		)
+	}
+	return panelStyle.Render(
+		headingStyle.Render("Results") + "\n\n" +
+			valueStyle.Render(fmt.Sprintf("Done — %d results", len(res.Units))),
+	)
+}
