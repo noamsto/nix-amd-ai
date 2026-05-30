@@ -39,16 +39,14 @@ func TestParseMemTotalGiB_Empty(t *testing.T) {
 	}
 }
 
-// TestParseAmdgpuTop checks the captured amdgpu_top fixture: arch must be non-empty
-// and start with "gfx".
+// TestParseAmdgpuTop checks the captured amdgpu_top fixture. This is a stable
+// real capture from the target box (Radeon 890M / Strix Point), so we pin the
+// exact arch as a regression anchor.
 func TestParseAmdgpuTop(t *testing.T) {
 	data := readFixture(t, "amdgpu_top.json")
 	grbm, arch := parseAmdgpuTop(data)
-	if arch == "" {
-		t.Error("parseAmdgpuTop: arch is empty")
-	}
-	if len(arch) < 3 || arch[:3] != "gfx" {
-		t.Errorf("parseAmdgpuTop: arch = %q; want prefix 'gfx'", arch)
+	if arch != "gfx1150" {
+		t.Errorf("parseAmdgpuTop: arch = %q; want gfx1150", arch)
 	}
 	// GRBM may be 0 (GPU idle) — just check it's not negative.
 	if grbm < 0 {
@@ -109,15 +107,17 @@ func TestParseBytesFile_Empty(t *testing.T) {
 	}
 }
 
-// TestParseDmidecodeMemory checks the captured dmidecode fixture (DDR5, 5600 MT/s).
+// TestParseDmidecodeMemory checks the captured dmidecode fixture. This is a
+// stable real capture (2x 32 GiB Samsung DDR5-5600 SO-DIMMs), so we pin the
+// exact values as a regression anchor.
 func TestParseDmidecodeMemory(t *testing.T) {
 	data := readFixture(t, "dmidecode_memory.txt")
 	ramType, speedMTs := parseDmidecodeMemory(data)
-	if ramType == "" {
-		t.Error("parseDmidecodeMemory: ramType is empty")
+	if ramType != "DDR5" {
+		t.Errorf("parseDmidecodeMemory: ramType = %q; want DDR5", ramType)
 	}
-	if speedMTs == 0 {
-		t.Error("parseDmidecodeMemory: speedMTs is 0")
+	if speedMTs != 5600 {
+		t.Errorf("parseDmidecodeMemory: speedMTs = %d; want 5600", speedMTs)
 	}
 	t.Logf("RAMType=%q SpeedMTs=%d", ramType, speedMTs)
 }
@@ -163,6 +163,28 @@ Memory Device
 	}
 }
 
+// TestParseDmidecodeMemory_EmptySlot ensures an unpopulated DIMM slot ("No
+// Module Installed") listed before a populated one is skipped, not reported.
+func TestParseDmidecodeMemory_EmptySlot(t *testing.T) {
+	input := []byte(`Handle 0x0009, DMI type 17, 92 bytes
+Memory Device
+	Type: No Module Installed
+	Speed: Unknown
+Handle 0x000C, DMI type 17, 92 bytes
+Memory Device
+	Type: DDR5
+	Speed: 5600 MT/s
+	Configured Memory Speed: 5600 MT/s
+`)
+	ramType, speedMTs := parseDmidecodeMemory(input)
+	if ramType != "DDR5" {
+		t.Errorf("ramType = %q; want DDR5 (empty slot must be skipped)", ramType)
+	}
+	if speedMTs != 5600 {
+		t.Errorf("speedMTs = %d; want 5600", speedMTs)
+	}
+}
+
 // TestDetect_Smoke calls Detect on the real box and asserts basic liveness.
 // Run with -short to skip (but it should pass on the target machine).
 func TestDetect_Smoke(t *testing.T) {
@@ -172,6 +194,15 @@ func TestDetect_Smoke(t *testing.T) {
 	info := Detect()
 	if info.RAMGiB <= 0 {
 		t.Errorf("Detect: RAMGiB = %v; want > 0", info.RAMGiB)
+	}
+	if info.GfxArch == "" {
+		t.Error("Detect: GfxArch is empty")
+	}
+	if info.VRAMBytes == 0 {
+		t.Error("Detect: VRAMBytes is 0")
+	}
+	if info.GTTBytes == 0 {
+		t.Error("Detect: GTTBytes is 0")
 	}
 	t.Logf("Detect: %+v", info)
 }

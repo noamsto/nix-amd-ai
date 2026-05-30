@@ -95,6 +95,8 @@ func parseAmdgpuTop(data []byte) (grbmBusyPct float64, arch string) {
 	}
 
 	// ASIC Name is "GFX1150/Strix Point" → take part before "/" and lowercase.
+	// slash > 0 (not >= 0): a leading slash would yield an empty arch, so treat
+	// "/Foo" as having no parseable arch prefix and fall through to the else.
 	asic := dev.Info.ASICName
 	if slash := strings.IndexByte(asic, '/'); slash > 0 {
 		arch = strings.ToLower(asic[:slash])
@@ -149,7 +151,7 @@ func parseDmidecodeMemory(data []byte) (ramType string, speedMTs int) {
 		// "Type: DDR5" — skip "Type Detail:" and "Error Correction Type:"
 		if strings.HasPrefix(trimmed, "Type:") && !strings.HasPrefix(trimmed, "Type Detail:") {
 			val := strings.TrimSpace(strings.TrimPrefix(trimmed, "Type:"))
-			if val != "" && val != "Unknown" && val != "Other" && ramType == "" {
+			if val != "" && val != "Unknown" && val != "Other" && val != "No Module Installed" && ramType == "" {
 				ramType = val
 			}
 		}
@@ -224,6 +226,7 @@ func runAmdgpuTop() (grbmBusyPct float64, arch string) {
 	if err != nil {
 		return 0, ""
 	}
+	defer stdout.Close()
 	if err := cmd.Start(); err != nil {
 		return 0, ""
 	}
