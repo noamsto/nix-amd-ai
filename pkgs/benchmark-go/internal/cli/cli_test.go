@@ -3,6 +3,8 @@ package cli
 import (
 	"strings"
 	"testing"
+
+	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
 )
 
 // ---------------------------------------------------------------------------
@@ -209,6 +211,39 @@ func TestParseFlags_modelIDs(t *testing.T) {
 	}
 	if len(o.ModelIDs) != 2 || o.ModelIDs[0] != "ModelA" || o.ModelIDs[1] != "ModelB" {
 		t.Errorf("ModelIDs = %v, want [ModelA ModelB]", o.ModelIDs)
+	}
+}
+
+// ---------------------------------------------------------------------------
+// formatPreflightLine
+// ---------------------------------------------------------------------------
+
+func TestFormatPreflightLine_pass(t *testing.T) {
+	r := preflight.Result{Name: "gpu-busy", Status: preflight.Pass}
+	if got := formatPreflightLine(r); got != "" {
+		t.Errorf("Pass result: got %q, want empty string", got)
+	}
+}
+
+func TestFormatPreflightLine_warn(t *testing.T) {
+	r := preflight.Result{Name: "power", Status: preflight.Warn, Reason: "not in performance mode"}
+	got := formatPreflightLine(r)
+	if !strings.HasPrefix(got, "preflight: WARNING:") {
+		t.Errorf("Warn result: got %q, want prefix 'preflight: WARNING:'", got)
+	}
+	if !strings.Contains(got, "not in performance mode") {
+		t.Errorf("Warn result: reason missing from %q", got)
+	}
+}
+
+func TestFormatPreflightLine_fail(t *testing.T) {
+	r := preflight.Result{Name: "gpu-busy", Status: preflight.Fail, Reason: "GPU busy: 42%"}
+	got := formatPreflightLine(r)
+	if !strings.HasPrefix(got, "preflight: FAIL:") {
+		t.Errorf("Fail result: got %q, want prefix 'preflight: FAIL:'", got)
+	}
+	if !strings.Contains(got, "GPU busy: 42%") {
+		t.Errorf("Fail result: reason missing from %q", got)
 	}
 }
 

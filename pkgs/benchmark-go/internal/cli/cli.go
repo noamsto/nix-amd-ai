@@ -9,7 +9,9 @@ import (
 	"strings"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/bench"
+	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/models"
+	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
 	"golang.org/x/term"
 )
 
@@ -157,9 +159,30 @@ func runTUI(_ opts) int {
 	return 2
 }
 
+// formatPreflightLine formats a single preflight result as a stderr warning line.
+// Only Warn and Fail results are non-empty; Pass returns "".
+func formatPreflightLine(r preflight.Result) string {
+	switch r.Status {
+	case preflight.Warn:
+		return fmt.Sprintf("preflight: WARNING: %s", r.Reason)
+	case preflight.Fail:
+		return fmt.Sprintf("preflight: FAIL: %s", r.Reason)
+	default:
+		return ""
+	}
+}
+
 // runHeadless drives the real benchmark calls and prints a markdown table.
 // Mirrors Python's main() / run_benchmarks().
 func runHeadless(o opts) int {
+	// Preflight: detect GPU/power/service interference and warn. Never block,
+	// never prompt, never call a Fix in headless mode (that is Phase 5 / TUI).
+	for _, r := range preflight.Run(hw.Detect(), o.LemondService) {
+		if line := formatPreflightLine(r); line != "" {
+			fmt.Fprintln(os.Stderr, line)
+		}
+	}
+
 	if o.MTPAb != "" {
 		return runHeadlessMTPAB(o)
 	}
