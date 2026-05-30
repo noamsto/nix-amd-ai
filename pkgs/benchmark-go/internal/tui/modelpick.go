@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strings"
 	"time"
 
@@ -48,6 +49,7 @@ type modelPicker struct {
 	loading       bool
 	err           error
 	needSelection bool   // set when Enter is pressed with no models selected
+	needPull      bool   // set when Enter is pressed with not-downloaded selections
 	baseURL       string // lemonade endpoint, for error messages + start/retry
 
 	// fetchModels is a test seam to avoid real network calls.
@@ -72,6 +74,46 @@ func (p *modelPicker) selectedIDs() []string {
 		}
 	}
 	return out
+}
+
+// pendingPullRows returns selected rows that aren't downloaded yet.
+func (p *modelPicker) pendingPullRows() []modelRow {
+	var out []modelRow
+	for _, r := range p.rows {
+		if r.selected && !r.downloaded {
+			out = append(out, r)
+		}
+	}
+	return out
+}
+
+// pendingPullIDs returns the IDs of selected-but-not-downloaded rows.
+func (p *modelPicker) pendingPullIDs() []string {
+	rows := p.pendingPullRows()
+	out := make([]string, len(rows))
+	for i, r := range rows {
+		out[i] = r.id
+	}
+	return out
+}
+
+// modelsPulledMsg carries the outcome of a `lemonade pull` (run via tea.Exec).
+type modelsPulledMsg struct{ err error }
+
+// pullModelsExec builds a command that pulls each model in turn via the
+// lemonade CLI. Run via tea.ExecProcess so lemonade's own progress bar shows in
+// the handed-over terminal. `&&` stops at the first failure.
+func pullModelsExec(ids []string) *exec.Cmd {
+	parts := make([]string, len(ids))
+	for i, id := range ids {
+		parts[i] = "lemonade pull " + shellSingleQuote(id)
+	}
+	return exec.Command("sh", "-c", strings.Join(parts, " && ")) //nolint:gosec
+}
+
+// shellSingleQuote single-quotes s for safe use in an sh -c string.
+func shellSingleQuote(s string) string {
+	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
 // enterModelScreen resets picker state and returns the load Cmd.
@@ -384,6 +426,28 @@ func renderModelScreen(p *modelPicker, st styles) string {
 	}
 
 	b.WriteString("\n" + st.hint.Render("⚡ recommended · 🔥 hot · ⬇ downloadable") + "\n")
+
+	// Confirm prompt: selected models that need downloading first.
+	if p.needPull {
+		pending := p.pendingPullRows()
+		names := make([]string, len(pending))
+		var totalGiB float64
+		for i, r := range pending {
+			names[i] = r.id
+			totalGiB += r.totalGiB
+		}
+		sizeNote := ""
+		if totalGiB > 0 {
+			sizeNote = fmt.Sprintf(" (~%.1f GiB)", totalGiB)
+		}
+		b.WriteString("\n" + st.warn.Render(fmt.Sprintf(
+			"%d model(s) not downloaded: %s%s", len(pending), strings.Join(names, ", "), sizeNote)) + "\n")
+		b.WriteString(keybar(st,
+			[2]string{"p/Enter", "download & continue"},
+			[2]string{"Esc", "cancel"},
+		))
+		return titledPanel(st, "Select Models", b.String(), 0)
+	}
 
 	if p.needSelection {
 		b.WriteString("\n" + st.warn.Render("select at least one model (space to toggle)") + "\n")

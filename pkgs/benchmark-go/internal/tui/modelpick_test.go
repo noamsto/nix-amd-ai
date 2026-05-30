@@ -581,6 +581,7 @@ func TestModelEnterGuardsEmptySelection(t *testing.T) {
 		m := model{current: screenModel}
 		m.modelPicker.rows = append([]modelRow(nil), rows...)
 		m.modelPicker.rows[1].selected = true
+		m.modelPicker.rows[1].downloaded = true // on disk → no pull needed, advances
 
 		next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 		nm := next.(model)
@@ -636,3 +637,80 @@ func TestSpaceKeyTogglesViaUpdate(t *testing.T) {
 
 // Compile-time check: model implements tea.Model.
 var _ tea.Model = model{}
+
+// --- pull-on-demand for not-downloaded selections ---
+
+func TestPendingPullIDs(t *testing.T) {
+	p := &modelPicker{rows: []modelRow{
+		{id: "A", selected: true, downloaded: true},
+		{id: "B", selected: true, downloaded: false, totalGiB: 2.5, sizeKnown: true},
+		{id: "C", selected: false, downloaded: false},
+	}}
+	got := p.pendingPullIDs()
+	if len(got) != 1 || got[0] != "B" {
+		t.Fatalf("pendingPullIDs = %v; want [B]", got)
+	}
+}
+
+func TestEnterWithUndownloadedSetsNeedPull(t *testing.T) {
+	m := model{current: screenModel}
+	m.modelPicker.rows = []modelRow{
+		{id: "B", selected: true, downloaded: false, totalGiB: 2.5, sizeKnown: true},
+	}
+	m2 := send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	if !m2.modelPicker.needPull {
+		t.Fatal("Enter with a not-downloaded selection should set needPull")
+	}
+	if m2.current != screenModel {
+		t.Fatalf("should not advance past model screen; current = %d", m2.current)
+	}
+}
+
+func TestEnterAllDownloadedAdvances(t *testing.T) {
+	m := model{current: screenModel}
+	m.modelPicker.rows = []modelRow{
+		{id: "A", selected: true, downloaded: true, totalGiB: 4, sizeKnown: true},
+	}
+	m2 := send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	if m2.modelPicker.needPull {
+		t.Error("all-downloaded selection should not set needPull")
+	}
+	if m2.current != screenParams {
+		t.Errorf("should advance to params; current = %d", m2.current)
+	}
+}
+
+func TestNeedPullPullKeyReturnsCmd(t *testing.T) {
+	m := model{current: screenModel}
+	m.modelPicker.rows = []modelRow{{id: "B", selected: true, downloaded: false}}
+	m.modelPicker.needPull = true
+	next, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
+	if next.(model).modelPicker.needPull {
+		t.Error("pressing p should clear needPull")
+	}
+	if cmd == nil {
+		t.Error("pressing p should return a pull Cmd")
+	}
+}
+
+func TestNeedPullEscCancels(t *testing.T) {
+	m := model{current: screenModel}
+	m.modelPicker.rows = []modelRow{{id: "B", selected: true, downloaded: false}}
+	m.modelPicker.needPull = true
+	m2 := send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
+	if m2.modelPicker.needPull {
+		t.Error("Esc should cancel needPull")
+	}
+	if m2.current != screenModel {
+		t.Errorf("Esc on needPull should stay on model screen; got %d", m2.current)
+	}
+}
+
+func TestShellSingleQuote(t *testing.T) {
+	if got := shellSingleQuote("Qwen3.5-4B-MTP-GGUF"); got != "'Qwen3.5-4B-MTP-GGUF'" {
+		t.Errorf("shellSingleQuote = %q", got)
+	}
+	if got := shellSingleQuote("a'b"); got != `'a'\''b'` {
+		t.Errorf("shellSingleQuote escape = %q", got)
+	}
+}

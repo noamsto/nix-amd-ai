@@ -180,6 +180,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, waitAndFetchModelsCmd(&m.modelPicker, m.baseURL())
 
+	case modelsPulledMsg:
+		// Outcome of the download-and-continue action. On success the GGUFs are
+		// on disk, so proceed to params with the original selection.
+		m.modelPicker.loading = false
+		if msg.err != nil {
+			m.modelPicker.err = fmt.Errorf("download failed: %w", msg.err)
+			return m, nil
+		}
+		m.selectedModels = m.modelPicker.selectedIDs()
+		m.current = screenParams
+		enterParamsScreen(&m.paramsForm, largestSelectedGiB(&m.modelPicker))
+		return m, nil
+
 	case tea.KeyPressMsg:
 		// Screen-specific key handling for preflight fixers.
 		if m.current == screenPreflight && m.preflightLoaded {
@@ -235,6 +248,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					return m, enterModelScreen(&m.modelPicker, m.cfg.BaseURL)
 				}
 			}
+
+			// Download-confirm prompt: selected models that aren't on disk yet.
+			if m.modelPicker.needPull {
+				switch msg.String() {
+				case "p", "enter":
+					m.modelPicker.needPull = false
+					m.modelPicker.loading = true
+					cmd := pullModelsExec(m.modelPicker.pendingPullIDs())
+					return m, tea.ExecProcess(cmd, func(err error) tea.Msg {
+						return modelsPulledMsg{err: err}
+					})
+				case "esc":
+					m.modelPicker.needPull = false
+					return m, nil
+				}
+				return m, nil // swallow other keys while confirming
+			}
 			switch msg.String() {
 			case "up", "k":
 				if m.modelPicker.cursor > 0 {
@@ -255,6 +285,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					// Don't advance with an empty set — that would silently
 					// "benchmark 0 models" once 5.4 wires real bench calls.
 					m.modelPicker.needSelection = true
+					return m, nil
+				}
+				// If any selected model isn't on disk, confirm the download
+				// first (the run needs the GGUF locally) instead of failing late.
+				if len(m.modelPicker.pendingPullIDs()) > 0 {
+					m.modelPicker.needPull = true
 					return m, nil
 				}
 				m.selectedModels = selected
