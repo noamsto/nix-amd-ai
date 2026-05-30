@@ -3,6 +3,8 @@ package tui
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -63,6 +65,15 @@ func (m model) baseURL() string {
 		return m.cfg.BaseURL
 	}
 	return "http://localhost:13305"
+}
+
+// configPath returns the configured lemonade config.json path, defaulting to
+// the standard cache location (matches the CLI's --config-path default).
+func (m model) configPath() string {
+	if m.cfg.ConfigPath != "" {
+		return m.cfg.ConfigPath
+	}
+	return filepath.Join(os.Getenv("HOME"), ".cache", "lemonade", "config.json")
 }
 
 // New returns an initialised tea.Model starting on the Hardware screen.

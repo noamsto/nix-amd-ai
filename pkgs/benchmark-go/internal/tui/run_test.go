@@ -188,5 +188,109 @@ func TestRunScreenHeaderRenders(t *testing.T) {
 	}, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 }
 
+// TestAbortDropsLateProgress verifies that once a run is aborted, a late
+// runProgressMsg is dropped: it must not mutate m.run.units.
+func TestAbortDropsLateProgress(t *testing.T) {
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 0 })
+	m.run = runState{active: true, aborted: true, units: map[string]*runUnitProgress{}}
+
+	tm, _, handled := m.handleRunMsg(runProgressMsg{specKey: "x", iter: 1, total: 3, decodeTPS: 9})
+	if !handled {
+		t.Fatal("runProgressMsg not handled")
+	}
+	if got := tm.(model); len(got.run.units) != 0 {
+		t.Errorf("aborted run recorded %d units; want 0 (late progress dropped)", len(got.run.units))
+	}
+}
+
+// TestAbortDropsLateResult verifies that a late runResultMsg after abort does
+// not navigate to screenResults or store the cancelled result.
+func TestAbortDropsLateResult(t *testing.T) {
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 0 })
+	m.current = screenParams // user already went back via Esc
+	m.run = runState{aborted: true, units: map[string]*runUnitProgress{}}
+
+	tm, cmd, handled := m.handleRunMsg(runResultMsg{results: runResults{Units: []runUnitResult{{Model: "m"}}}})
+	if !handled {
+		t.Fatal("runResultMsg not handled")
+	}
+	got := tm.(model)
+	if got.current != screenParams {
+		t.Errorf("aborted late result navigated to %v; want it to stay on screenParams", got.current)
+	}
+	if len(got.run.results.Units) != 0 {
+		t.Errorf("aborted late result stored %d units; want 0", len(got.run.results.Units))
+	}
+	if cmd != nil {
+		t.Error("aborted late result re-issued a read Cmd; want nil")
+	}
+}
+
+// TestEscAbortsRun verifies Esc mid-run cancels the context, marks aborted, and
+// returns to the params screen.
+func TestEscAbortsRun(t *testing.T) {
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 0 })
+	canceled := false
+	m.run = runState{active: true, cancel: func() { canceled = true }, units: map[string]*runUnitProgress{}}
+
+	tm, _ := m.handleRunKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	got := tm.(model)
+	if !canceled {
+		t.Error("Esc did not cancel the run context")
+	}
+	if !got.run.aborted {
+		t.Error("Esc did not set aborted")
+	}
+	if got.current != screenParams {
+		t.Errorf("Esc left current = %v; want screenParams", got.current)
+	}
+}
+
+// TestSendMsgDropsOnCancel verifies the goroutine's send cannot block when the
+// reader is gone and the channel buffer is full, once ctx is cancelled.
+func TestSendMsgDropsOnCancel(t *testing.T) {
+	ch := make(chan tea.Msg) // unbuffered, no reader → a plain send would block
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	done := make(chan struct{})
+	go func() {
+		sendMsg(ctx, ch, runProgressMsg{specKey: "x"})
+		close(done)
+	}()
+	select {
+	case <-done:
+		// Took the ctx.Done() branch — no block.
+	case <-time.After(2 * time.Second):
+		t.Fatal("sendMsg blocked on a full channel after ctx cancel")
+	}
+}
+
+// TestBackendABDispatch verifies ModeBackend routes to runBackendABLive (not the
+// HTTP default). With an empty backend list it returns an error result without
+// touching any system command, proving the dispatch reached the A/B path.
+func TestBackendABDispatch(t *testing.T) {
+	req := runRequest{mode: ModeBackend, models: []string{"m"}, params: RunParams{}}
+	ch := make(chan tea.Msg, 1)
+	msg := defaultRunBench(context.Background(), req, ch)
+	res, ok := msg.(runResultMsg)
+	if !ok {
+		t.Fatalf("got %T, want runResultMsg", msg)
+	}
+	if res.err == nil {
+		t.Error("expected error from runBackendABLive with empty backend list")
+	}
+}
+
+// TestHTTPKey covers the per-unit progress key builder.
+func TestHTTPKey(t *testing.T) {
+	if got := httpKey("m", ""); got != "m" {
+		t.Errorf("httpKey(m, '') = %q, want m", got)
+	}
+	if got := httpKey("m", "rocm"); got != "m|rocm" {
+		t.Errorf("httpKey(m, rocm) = %q, want m|rocm", got)
+	}
+}
+
 // testHWInfo is a minimal hw.Info for white-box tests.
 func testHWInfo() hw.Info { return hw.Info{GfxArch: "gfx1150"} }

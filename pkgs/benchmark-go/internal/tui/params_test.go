@@ -244,6 +244,34 @@ func TestParamsTypingUpdatesCtx(t *testing.T) {
 	}
 }
 
+func TestParamsIntFieldCapsLength(t *testing.T) {
+	f := paramsForm{focused: fieldCtx} // empty ctx
+	// Type more than maxIntFieldDigits digits; the field must cap.
+	for range maxIntFieldDigits + 5 {
+		updateParamsForm(&f, "9")
+	}
+	if len(f.ctx) != maxIntFieldDigits {
+		t.Errorf("ctx length = %d; want capped at %d", len(f.ctx), maxIntFieldDigits)
+	}
+}
+
+func TestParamsBackendsRejectsSlashAndDot(t *testing.T) {
+	f := paramsForm{focused: fieldBackends, backends: ""}
+	for _, ch := range "rocm/vulkan.x_y" {
+		updateParamsForm(&f, string(ch))
+	}
+	// Slash, dot, underscore must be dropped; letters kept.
+	if f.backends != "rocmvulkanxy" {
+		t.Errorf("backends = %q; want rocmvulkanxy (/, ., _ rejected)", f.backends)
+	}
+	// Comma and hyphen are still accepted.
+	updateParamsForm(&f, ",")
+	updateParamsForm(&f, "-")
+	if f.backends != "rocmvulkanxy,-" {
+		t.Errorf("backends = %q; want rocmvulkanxy,- (comma+hyphen kept)", f.backends)
+	}
+}
+
 func TestParamsEnterAdvancesToScreenRun(t *testing.T) {
 	m := makeParamsModel()
 	m = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})

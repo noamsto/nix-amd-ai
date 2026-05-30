@@ -157,16 +157,23 @@ func updateParamsForm(f *paramsForm, key string) (consumed bool) {
 				if ch >= '0' && ch <= '9' {
 					switch f.focused {
 					case fieldCtx:
-						f.ctx += key
+						if len(f.ctx) < maxIntFieldDigits {
+							f.ctx += key
+						}
 					case fieldRepeat:
-						f.repeat += key
+						if len(f.repeat) < maxIntFieldDigits {
+							f.repeat += key
+						}
 					case fieldWarmup:
-						f.warmup += key
+						if len(f.warmup) < maxIntFieldDigits {
+							f.warmup += key
+						}
 					}
 					return true
 				}
 			case fieldBackends:
-				// Accept letters, digits, comma, hyphen, underscore, dot, slash.
+				// Accept letters, digits, comma, hyphen only — so a typo like
+				// "rocm/vulkan" can't collapse into one bogus backend name.
 				if isBackendChar(ch) {
 					f.backends += key
 					return true
@@ -177,12 +184,17 @@ func updateParamsForm(f *paramsForm, key string) (consumed bool) {
 	return false
 }
 
-// isBackendChar returns true for characters valid in a backends string.
+// maxIntFieldDigits caps the length of the numeric form fields (ctx/repeat/
+// warmup) so input can't overflow or become nonsense (e.g. 9_999_999 ctx).
+const maxIntFieldDigits = 7
+
+// isBackendChar returns true for characters valid in a backends string:
+// letters, digits, comma (separator), and hyphen (e.g. "draft-mtp").
 func isBackendChar(ch byte) bool {
 	return (ch >= 'a' && ch <= 'z') ||
 		(ch >= 'A' && ch <= 'Z') ||
 		(ch >= '0' && ch <= '9') ||
-		ch == ',' || ch == '-' || ch == '_' || ch == '.' || ch == '/'
+		ch == ',' || ch == '-'
 }
 
 // deleteLastChar removes the last UTF-8 character from s.

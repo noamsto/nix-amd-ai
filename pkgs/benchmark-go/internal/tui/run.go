@@ -3,6 +3,9 @@ package tui
 import (
 	"context"
 	"fmt"
+	"io"
+	"os"
+	"strings"
 	"time"
 
 	"charm.land/bubbles/v2/progress"
@@ -15,17 +18,30 @@ import (
 // grbmTickInterval is how often the live GPU% readout polls GRBM during a run.
 const grbmTickInterval = time.Second
 
+// lemondReadyTimeout bounds how long runBackendABLive waits for lemond to come
+// back after a restart (matches the CLI's 60s).
+const lemondReadyTimeout = 60 * time.Second
+
+// stderrSink is where the runner goroutine logs best-effort config-restore
+// failures (rare). A var so tests can redirect it and assert on the output.
+var stderrSink io.Writer = os.Stderr
+
 // --- request / progress / result message shapes (the goroutine→Cmd bridge) ---
 
 // runRequest is the immutable description of the work to run, derived from the
 // model's mode/selection/params when entering screenRun.
 type runRequest struct {
-	mode     BenchMode
-	models   []string
-	params   RunParams
-	baseURL  string
-	promptTk int
-	genTk    int
+	mode    BenchMode
+	models  []string
+	params  RunParams
+	baseURL string
+	// configPath / lemondService / noRestart drive the Backend A/B switch
+	// (mirrors the CLI's --config-path / --lemond-service / --no-restart).
+	configPath    string
+	lemondService string
+	noRestart     bool
+	promptTk      int
+	genTk         int
 }
 
 // runProgressMsg is pushed onto the progress channel after each measured
@@ -85,6 +101,7 @@ type runResults struct {
 type runState struct {
 	active   bool
 	done     bool
+	aborted  bool // set on Esc/quit; makes handleRunMsg drop late goroutine output
 	err      error
 	results  runResults
 	grbmPct  float64
@@ -114,12 +131,14 @@ type runUnitProgress struct {
 // screenRun.
 func (m *model) startRun() tea.Cmd {
 	req := runRequest{
-		mode:     m.selectedMode,
-		models:   m.selectedModels,
-		params:   m.paramsForm.runParams(),
-		baseURL:  m.baseURL(),
-		promptTk: defaultPromptTokens,
-		genTk:    defaultGenTokens,
+		mode:          m.selectedMode,
+		models:        m.selectedModels,
+		params:        m.paramsForm.runParams(),
+		baseURL:       m.baseURL(),
+		configPath:    m.configPath(),
+		lemondService: m.lemondService(),
+		promptTk:      defaultPromptTokens,
+		genTk:         defaultGenTokens,
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -140,12 +159,13 @@ func (m *model) startRun() tea.Cmd {
 
 	// The goroutine sends progress messages on ch as they arrive, then sends a
 	// single runResultMsg and returns. It never closes ch (the model holds the
-	// only reader; closing would race a late progress send). The buffered
-	// channel + ctx cancellation guarantee the goroutine cannot block forever:
-	// on abort we cancel ctx (bench stops) and the goroutine drains to its
-	// final send into the 64-deep buffer, then exits — no leak.
+	// only reader; closing would race a late progress send). It cannot block
+	// forever: every send (progress and the final result) is a non-blocking
+	// select against ctx.Done() (see sendMsg), so once we cancel ctx on abort —
+	// even if the reader stopped on tea.Quit and the 64-deep buffer is full —
+	// the goroutine takes the ctx.Done() branch and exits. No leak.
 	go func() {
-		ch <- runner(ctx, req, ch)
+		sendMsg(ctx, ch, runner(ctx, req, ch))
 	}()
 
 	return tea.Batch(waitForRunMsg(ch), grbmTickCmd(m.grbmFunc))
@@ -159,6 +179,17 @@ func (m *model) startRun() tea.Cmd {
 func waitForRunMsg(ch <-chan tea.Msg) tea.Cmd {
 	return func() tea.Msg {
 		return <-ch
+	}
+}
+
+// sendMsg delivers msg to ch unless ctx is already (or becomes) cancelled, in
+// which case it drops the message and returns. This is what keeps the runner
+// goroutine from blocking forever on a full channel after an abort: the UI may
+// have stopped reading (tea.Quit), but cancelling ctx unblocks the send.
+func sendMsg(ctx context.Context, ch chan<- tea.Msg, msg tea.Msg) {
+	select {
+	case ch <- msg:
+	case <-ctx.Done():
 	}
 }
 
@@ -198,15 +229,21 @@ func (m model) handleRunKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c", "q":
 		// Abort: cancel the runner's context (bench stops cleanly) and quit.
+		// Mark aborted so any in-flight goroutine output is dropped.
+		m.run.aborted = true
+		m.run.active = false
 		if m.run.cancel != nil {
 			m.run.cancel()
 		}
 		return m, tea.Quit
 	case "esc":
-		// Esc aborts mid-run (same as q-without-quit): cancel and go back. After
-		// completion, Esc is harmless (run already done) and returns to params.
-		if m.run.active && !m.run.done && m.run.cancel != nil {
-			m.run.cancel()
+		// Esc aborts mid-run (cancel + back to params). After completion it's a
+		// plain back-navigation (run already done).
+		if m.run.active && !m.run.done {
+			m.run.aborted = true
+			if m.run.cancel != nil {
+				m.run.cancel()
+			}
 		}
 		m.run.active = false
 		m.current = screenParams
@@ -216,14 +253,26 @@ func (m model) handleRunKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 // handleRunMsg processes progress/result/tick messages while a run is in flight.
+//
+// Once a run is aborted, late goroutine output (progress that was already in
+// flight, or the terminal result the cancelled runner still emits) is dropped:
+// it must not re-navigate to screenResults or mutate m.run.units after the user
+// has left the run screen.
 func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 	switch msg := msg.(type) {
 	case runProgressMsg:
+		if m.run.aborted {
+			return m, nil, true
+		}
 		m.run.applyProgress(msg)
 		// Re-issue the listen Cmd to read the next message off the channel.
 		return m, waitForRunMsg(m.run.ch), true
 
 	case runResultMsg:
+		if m.run.aborted {
+			// Stop reading; do not transition or store the cancelled result.
+			return m, nil, true
+		}
 		m.run.done = true
 		m.run.active = false
 		m.run.err = msg.err
@@ -259,6 +308,8 @@ func defaultRunBench(ctx context.Context, req runRequest, progress chan<- tea.Ms
 	switch req.mode {
 	case ModeMTP:
 		return runMTPLive(ctx, req, progress)
+	case ModeBackend:
+		return runBackendABLive(ctx, req, progress)
 	default:
 		return runHTTPLive(ctx, req, progress)
 	}
@@ -287,16 +338,16 @@ func runMTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) te
 				spec := specLabel(specType)
 				key := mtpKey(modelID, backend, spec)
 				acc[key] = append(acc[key], tps)
-				progress <- runProgressMsg{
+				sendMsg(ctx, progress, runProgressMsg{
 					specKey:   key,
 					label:     fmt.Sprintf("%s [%s] MTP %s", modelID, backend, spec),
 					iter:      iter,
 					total:     req.params.Repeat,
 					decodeTPS: tps,
-				}
+				})
 			},
 		}
-		abResults, err := bench.RunMTPAB(opts)
+		abResults, err := bench.RunMTPAB(ctx, opts)
 		if err != nil {
 			return runResultMsg{results: res, err: err}
 		}
@@ -308,18 +359,100 @@ func runMTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) te
 	return runResultMsg{results: res}
 }
 
-// runHTTPLive benchmarks each selected model via the lemonade HTTP server,
-// streaming per-iteration progress. Used for HTTP and Backend A/B modes.
+// runHTTPLive benchmarks each selected model via the lemonade HTTP server as
+// currently configured (no backend switching), streaming per-iteration
+// progress. Backend is left "" on every unit.
 func runHTTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg {
 	var res runResults
 	res.Mode = req.mode
 
-	for _, modelID := range req.models {
+	units, err := benchmarkModelsLive(ctx, req, "", progress)
+	res.Units = units
+	if err != nil {
+		return runResultMsg{results: res, err: err}
+	}
+	return runResultMsg{results: res}
+}
+
+// runBackendABLive runs a real rocm-vs-vulkan A/B: for each backend it rewrites
+// lemonade's config, restarts lemond, waits for it to come back, then
+// benchmarks every selected model against that backend and tags the units with
+// it. The original backend is restored (and lemond restarted) on every return
+// path via the deferred cleanup. Mirrors cli.runHeadlessLemonade's backend
+// loop, but sweeps multiple backends in one run.
+func runBackendABLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg {
+	var res runResults
+	res.Mode = req.mode
+
+	backends := req.params.Backends
+	if len(backends) == 0 {
+		return runResultMsg{results: res, err: fmt.Errorf("Backend A/B: empty backend list")}
+	}
+
+	// Capture the current backend once, before the first switch, so we restore
+	// to the real pre-run value rather than the last backend we set.
+	origBackend, err := bench.SetLlamacppBackend(req.configPath, backends[0])
+	if err != nil {
+		return runResultMsg{results: res, err: fmt.Errorf("writing lemonade config: %w", err)}
+	}
+	// Single restore site, armed the moment the config is first written: runs on
+	// success, error, or abort. Restore is best-effort — its failure must not
+	// mask the benchmark error/result, so we only log to stderr.
+	defer func() {
+		if rErr := bench.RestoreLlamacppBackend(req.configPath, origBackend); rErr != nil {
+			fmt.Fprintf(stderrSink, "WARNING: failed to restore lemonade config: %v\n", rErr)
+		}
+		if !req.noRestart {
+			if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
+				fmt.Fprintf(stderrSink, "WARNING: failed to restart lemond during cleanup: %v\n", rErr)
+			}
+		}
+	}()
+
+	for i, backend := range backends {
 		if ctx.Err() != nil {
 			return runResultMsg{results: res, err: ctx.Err()}
 		}
+		// backends[0] is already written above; switch for the rest.
+		if i > 0 {
+			if _, sErr := bench.SetLlamacppBackend(req.configPath, backend); sErr != nil {
+				return runResultMsg{results: res, err: fmt.Errorf("[%s] writing config: %w", backend, sErr)}
+			}
+		}
+		if !req.noRestart {
+			if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
+				return runResultMsg{results: res, err: fmt.Errorf("[%s] restart lemond: %w", backend, rErr)}
+			}
+			if wErr := bench.WaitForLemond(req.baseURL, lemondReadyTimeout); wErr != nil {
+				return runResultMsg{results: res, err: fmt.Errorf("[%s] waiting for lemond: %w", backend, wErr)}
+			}
+		}
+
+		units, bErr := benchmarkModelsLive(ctx, req, backend, progress)
+		res.Units = append(res.Units, units...)
+		if bErr != nil {
+			return runResultMsg{results: res, err: bErr}
+		}
+	}
+	return runResultMsg{results: res}
+}
+
+// benchmarkModelsLive benchmarks every model in req against the currently
+// configured server, streaming per-iteration progress and recording one unit
+// per model tagged with backend (which is "" for plain HTTP). On error it
+// returns the units accumulated so far plus the error.
+func benchmarkModelsLive(ctx context.Context, req runRequest, backend string, progress chan<- tea.Msg) ([]runUnitResult, error) {
+	var units []runUnitResult
+	for _, modelID := range req.models {
+		if ctx.Err() != nil {
+			return units, ctx.Err()
+		}
 		var samples []float64
-		key := modelID
+		key := httpKey(modelID, backend)
+		label := modelID
+		if backend != "" {
+			label = fmt.Sprintf("%s [%s]", modelID, backend)
+		}
 		opts := bench.BenchmarkModelOpts{
 			BaseURL:      req.baseURL,
 			ModelID:      modelID,
@@ -329,28 +462,37 @@ func runHTTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) t
 			Repeat:       req.params.Repeat,
 			OnIteration: func(iter int, tps float64) {
 				samples = append(samples, tps)
-				progress <- runProgressMsg{
+				sendMsg(ctx, progress, runProgressMsg{
 					specKey:   key,
-					label:     modelID,
+					label:     label,
 					iter:      iter,
 					total:     req.params.Repeat,
 					decodeTPS: tps,
-				}
+				})
 			},
 		}
-		r, err := bench.BenchmarkModel(opts)
+		r, err := bench.BenchmarkModel(ctx, opts)
 		if err != nil {
-			return runResultMsg{results: res, err: err}
+			return units, err
 		}
-		res.Units = append(res.Units, runUnitResult{
+		units = append(units, runUnitResult{
 			Model:    modelID,
+			Backend:  backend,
 			Samples:  samples,
 			MeanTPS:  r.MeanTPS,
 			StdevTPS: r.StdevTPS,
 			MeanTTFT: r.MeanTTFT,
 		})
 	}
-	return runResultMsg{results: res}
+	return units, nil
+}
+
+// httpKey builds the per-unit progress key for HTTP / Backend A/B modes.
+func httpKey(model, backend string) string {
+	if backend == "" {
+		return model
+	}
+	return model + "|" + backend
 }
 
 // specLabel maps bench's spec-type to the compact UI label.
@@ -396,14 +538,13 @@ func renderRunningStat(samples []float64) string {
 
 // renderRunScreen renders the live run panel.
 func renderRunScreen(s runState) string {
-	var b []byte
-	out := func(str string) { b = append(b, str...) }
+	var b strings.Builder
 
-	out(headingStyle.Render("Running Benchmark") + "\n\n")
-	out(valueStyle.Render(fmt.Sprintf("GPU: %.0f%%", s.grbmPct)) + "\n\n")
+	b.WriteString(headingStyle.Render("Running Benchmark") + "\n\n")
+	b.WriteString(valueStyle.Render(fmt.Sprintf("GPU: %.0f%%", s.grbmPct)) + "\n\n")
 
 	if len(s.order) == 0 {
-		out(hintStyle.Render("Starting…") + "\n")
+		b.WriteString(hintStyle.Render("Starting…") + "\n")
 	}
 
 	for _, key := range s.order {
@@ -416,11 +557,11 @@ func renderRunScreen(s runState) string {
 			}
 		}
 		bar := s.progress.ViewAs(frac)
-		out(labelStyle.Render(u.label) + "\n")
-		out(fmt.Sprintf("  %s  %d/%d\n", bar, u.iter, u.total))
-		out("  " + hintStyle.Render(renderRunningStat(u.samples)+" tok/s") + "\n\n")
+		b.WriteString(labelStyle.Render(u.label) + "\n")
+		b.WriteString(fmt.Sprintf("  %s  %d/%d\n", bar, u.iter, u.total))
+		b.WriteString("  " + hintStyle.Render(renderRunningStat(u.samples)+" tok/s") + "\n\n")
 	}
 
-	out("\n" + labelStyle.Render("q/Ctrl+C abort"))
-	return panelStyle.Render(string(b))
+	b.WriteString("\n" + labelStyle.Render("q/Ctrl+C abort"))
+	return panelStyle.Render(b.String())
 }
