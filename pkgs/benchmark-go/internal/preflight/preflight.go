@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,20 @@ const (
 	Warn
 	Fail
 )
+
+// String renders the status as a name for logs and test failure output.
+func (s Status) String() string {
+	switch s {
+	case Pass:
+		return "Pass"
+	case Warn:
+		return "Warn"
+	case Fail:
+		return "Fail"
+	default:
+		return fmt.Sprintf("Status(%d)", int(s))
+	}
+}
 
 // Result is the outcome of a single preflight check.
 type Result struct {
@@ -128,9 +143,12 @@ func classifyCompetingPorts(listeners []Listener) Result {
 // Pure parser — unit-tested against a captured ss -ltnp sample.
 // ---------------------------------------------------------------------------
 
-// parseSSOutput parses the stdout of `ss -ltnp` and returns the listening TCP
-// sockets that have a known process name. Lines without a users:((...)) column
-// are skipped (no process info = not relevant to interference detection).
+// parseSSOutput parses the stdout of `ss -ltnp` and returns every listening TCP
+// socket. The owning process name is extracted from the users:((...)) column
+// when present; when absent (e.g. ss run without sudo cannot see the PID) the
+// Listener is still emitted with Proc=="" so a watched port held by an
+// unknown owner is not silently dropped. classifyCompetingPorts filters to the
+// watched-port set, so unknown-owner sockets on unwatched ports add no noise.
 //
 // Expected format (header line is skipped):
 //
@@ -174,11 +192,9 @@ func parseSSOutput(output string) []Listener {
 				procName = after[:end]
 			}
 		}
-		if procName == "" {
-			// No process info — skip; we can't classify it.
-			continue
-		}
 
+		// Emit even when procName=="" (ss without sudo hides the PID): a
+		// watched port with an unknown owner must still be flagged.
 		out = append(out, Listener{Port: port, Proc: procName})
 	}
 	return out
@@ -217,27 +233,39 @@ func stopLemond(service string) func() error {
 }
 
 // setPerformance returns a fixer that switches the CPU to performance mode.
-// Writes to two sysfs knobs:
-//   - /sys/firmware/acpi/platform_profile → "performance"
-//   - /sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference → "performance"
+// Writes "performance" to:
+//   - /sys/firmware/acpi/platform_profile (single system-wide knob)
+//   - every core's energy_performance_preference
+//     (/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference)
 //
-// Both writes use sudo tee so no special binary capability is required.
+// EPP is per-core: writing only cpu0 leaves the other cores at their old EPP,
+// which is fragile and may not reflect as a real performance switch. We write
+// every core. All writes use sudo tee so no special binary capability is
+// required.
 func setPerformance() func() error {
 	return func() error {
-		knobs := []string{
-			"/sys/firmware/acpi/platform_profile",
-			"/sys/devices/system/cpu/cpu0/cpufreq/energy_performance_preference",
+		if err := writeSysfsPerformance("/sys/firmware/acpi/platform_profile"); err != nil {
+			return err
 		}
-		for _, path := range knobs {
-			cmd := exec.Command("sudo", "tee", path)
-			cmd.Stdin = strings.NewReader("performance")
-			cmd.Stdout = os.Stdout
-			if err := cmd.Run(); err != nil {
-				return fmt.Errorf("writing %s: %w", path, err)
+		eppKnobs, _ := filepath.Glob("/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference")
+		for _, path := range eppKnobs {
+			if err := writeSysfsPerformance(path); err != nil {
+				return err
 			}
 		}
 		return nil
 	}
+}
+
+// writeSysfsPerformance writes "performance" to a sysfs path via sudo tee.
+func writeSysfsPerformance(path string) error {
+	cmd := exec.Command("sudo", "tee", path)
+	cmd.Stdin = strings.NewReader("performance")
+	cmd.Stdout = os.Stdout
+	if err := cmd.Run(); err != nil {
+		return fmt.Errorf("writing %s: %w", path, err)
+	}
+	return nil
 }
 
 // ---------------------------------------------------------------------------

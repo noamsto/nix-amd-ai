@@ -2,8 +2,26 @@ package preflight
 
 import (
 	"os"
+	"strings"
 	"testing"
 )
+
+// ---------------------------------------------------------------------------
+// Status.String
+// ---------------------------------------------------------------------------
+
+func TestStatusString(t *testing.T) {
+	cases := map[Status]string{
+		Pass: "Pass",
+		Warn: "Warn",
+		Fail: "Fail",
+	}
+	for s, want := range cases {
+		if got := s.String(); got != want {
+			t.Errorf("Status(%d).String() = %q, want %q", int(s), got, want)
+		}
+	}
+}
 
 // ---------------------------------------------------------------------------
 // classifyGPU
@@ -240,11 +258,58 @@ func TestParseSSOutput_headerOnly(t *testing.T) {
 }
 
 func TestParseSSOutput_noProcessColumn(t *testing.T) {
-	// Lines without users:((…)) should be skipped.
+	// Lines without users:((…)) are still emitted, with Proc=="" (ss without
+	// sudo hides PIDs). classifyCompetingPorts filters unwatched ports, so this
+	// adds no noise for ordinary services like cups on :631.
 	input := "LISTEN 0 4096 127.0.0.1:631 0.0.0.0:*\n"
 	listeners := parseSSOutput(input)
-	if len(listeners) != 0 {
-		t.Errorf("no process column: got %v, want empty", listeners)
+	if len(listeners) != 1 {
+		t.Fatalf("no process column: got %v, want 1 listener with empty Proc", listeners)
+	}
+	if listeners[0].Port != 631 || listeners[0].Proc != "" {
+		t.Errorf("listeners[0] = %+v, want {631, \"\"}", listeners[0])
+	}
+}
+
+// TestParseSSOutput_watchedPortNoOwner is the key regression for issue #2: a
+// process-less LISTEN line on a watched port (8001) must still warn.
+func TestParseSSOutput_watchedPortNoOwner(t *testing.T) {
+	input := "LISTEN 0 512 127.0.0.1:8001 0.0.0.0:*\n"
+	listeners := parseSSOutput(input)
+	if len(listeners) != 1 {
+		t.Fatalf("got %v, want 1 listener", listeners)
+	}
+	r := classifyCompetingPorts(listeners)
+	if r.Status != Warn {
+		t.Errorf("unknown owner on :8001: Status = %v, want Warn", r.Status)
+	}
+	if !strings.Contains(r.Reason, "unknown") {
+		t.Errorf("reason should mention 'unknown', got %q", r.Reason)
+	}
+}
+
+// TestParseSSOutput_ipv6Bracket pins port extraction from the IPv6 bracket
+// form so a fixture regen can't silently drop coverage.
+func TestParseSSOutput_ipv6Bracket(t *testing.T) {
+	input := `LISTEN 0 5 [::1]:13305 [::]:* users:(("lemond",pid=3988,fd=9))`
+	listeners := parseSSOutput(input)
+	if len(listeners) != 1 {
+		t.Fatalf("got %v, want 1 listener", listeners)
+	}
+	if listeners[0].Port != 13305 || listeners[0].Proc != "lemond" {
+		t.Errorf("listeners[0] = %+v, want {13305, lemond}", listeners[0])
+	}
+}
+
+// TestParseSSOutput_wildcard pins port extraction from the wildcard form *:PORT.
+func TestParseSSOutput_wildcard(t *testing.T) {
+	input := `LISTEN 0 10 *:1716 *:* users:((".valent-wrapped",pid=8731,fd=11))`
+	listeners := parseSSOutput(input)
+	if len(listeners) != 1 {
+		t.Fatalf("got %v, want 1 listener", listeners)
+	}
+	if listeners[0].Port != 1716 || listeners[0].Proc != ".valent-wrapped" {
+		t.Errorf("listeners[0] = %+v, want {1716, .valent-wrapped}", listeners[0])
 	}
 }
 
