@@ -216,7 +216,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.modelPicker.cursor++
 				}
 				return m, nil
-			case " ":
+			case " ", "space":
 				m.modelPicker.toggleSelected()
 				return m, nil
 			case "enter":

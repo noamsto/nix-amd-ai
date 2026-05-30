@@ -551,5 +551,45 @@ func TestModelEnterGuardsEmptySelection(t *testing.T) {
 	})
 }
 
+// TestSpaceKeyTogglesViaUpdate confirms that a real bubbletea v2 space
+// KeyPressMsg (whose String() returns "space", not " ") toggles selection
+// through the full Update path. The previous case " ": handler never matched,
+// so this test fails without the "space" case in app.go.
+func TestSpaceKeyTogglesViaUpdate(t *testing.T) {
+	// Guard: document the v2 key-string contract that motivates the fix.
+	if got := (tea.KeyPressMsg{Code: ' ', Text: " "}).String(); got != "space" {
+		t.Fatalf("bubbletea v2 contract changed: space key String() = %q, want %q", got, "space")
+	}
+
+	rows := []modelRow{
+		{id: "alpha"},
+		{id: "beta"},
+	}
+	m := model{current: screenModel}
+	m.modelPicker.rows = append([]modelRow(nil), rows...)
+	m.modelPicker.needSelection = true
+
+	spaceKey := tea.KeyPressMsg{Code: ' ', Text: " "}
+
+	// First space: alpha (cursor=0) should become selected, needSelection cleared.
+	next, _ := m.Update(spaceKey)
+	nm := next.(model)
+	if !nm.modelPicker.rows[0].selected {
+		t.Error("first space: rows[0] should be selected")
+	}
+	if nm.modelPicker.needSelection {
+		// toggleSelected clears needSelection indirectly by making a valid selection.
+		// If this fails it means the key wasn't handled at all.
+		t.Error("needSelection should clear after a successful toggle")
+	}
+
+	// Second space: deselects.
+	next2, _ := nm.Update(spaceKey)
+	nm2 := next2.(model)
+	if nm2.modelPicker.rows[0].selected {
+		t.Error("second space: rows[0] should be deselected")
+	}
+}
+
 // Compile-time check: model implements tea.Model.
 var _ tea.Model = model{}
