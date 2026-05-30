@@ -55,11 +55,9 @@ type model struct {
 	// Seams for testing. nil values fall back to the real implementations:
 	//   runBench → defaultRunBench (spawns llama-server / hits lemonade)
 	//   grbmFunc → defaultGRBM (reads real GPU)
-	//   sizeOf   → resolveModelSizeGiB (stat the GGUF file)
 	// Tests inject fakes so no test touches hardware or the network.
 	runBench func(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg
 	grbmFunc func() float64
-	sizeOf   func(id string) (float64, bool)
 }
 
 // baseURL returns the configured lemonade base URL, defaulting to the standard
@@ -281,7 +279,7 @@ func (m model) View() tea.View {
 	case screenRun:
 		s = renderRunScreen(m.run)
 	case screenResults:
-		s = renderResults(m.run.results, m.run.err, m.results, m.info, m.sizeOf)
+		s = renderResults(m.run.results, m.run.err, m.results, m.info, nil)
 	default:
 		s = renderHWPanel(m.info)
 	}
