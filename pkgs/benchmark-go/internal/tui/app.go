@@ -2,7 +2,9 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -108,6 +110,15 @@ func runPreflightCmd(info hw.Info, service string) tea.Cmd {
 	}
 }
 
+// runFixCmd runs a preflight fix command via tea.ExecProcess: bubbletea releases
+// the terminal so a sudo password/fingerprint prompt works, then restores the
+// alt-screen. On completion it emits fixDoneMsg, which re-runs preflight.
+func runFixCmd(cmd *exec.Cmd) tea.Cmd {
+	return tea.ExecProcess(cmd, func(err error) tea.Msg {
+		return fixDoneMsg{err: err}
+	})
+}
+
 // lemondService returns the configured service name, defaulting to "lemond.service".
 func (m model) lemondService() string {
 	if m.cfg.LemondService != "" {
@@ -159,28 +170,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Re-run preflight after any fix attempt (error or success).
 		return m, runPreflightCmd(m.info, m.lemondService())
 
+	case lemondStartedMsg:
+		// Outcome of the model-screen "start lemonade" action. On success, wait
+		// for the API then re-fetch; on failure, surface it on the picker.
+		if msg.err != nil {
+			m.modelPicker.loading = false
+			m.modelPicker.err = fmt.Errorf("start lemond: %w", msg.err)
+			return m, nil
+		}
+		return m, waitAndFetchModelsCmd(&m.modelPicker, m.baseURL())
+
 	case tea.KeyPressMsg:
 		// Screen-specific key handling for preflight fixers.
 		if m.current == screenPreflight && m.preflightLoaded {
 			switch msg.String() {
 			case "s":
-				// Stop lemond — only if the lemond result has a Fix.
+				// Start lemond — only if the lemond result has a fix command.
 				for _, r := range m.preflightResults {
-					if isLemondResult(r) && r.Fix != nil {
-						fix := r.Fix
-						return m, func() tea.Msg {
-							return fixDoneMsg{err: fix()}
-						}
+					if isLemondResult(r) && r.FixCmd != nil {
+						return m, runFixCmd(r.FixCmd())
 					}
 				}
 			case "p":
-				// Set performance mode — only if the power result has a Fix.
+				// Set performance mode — only if the power result has a fix command.
 				for _, r := range m.preflightResults {
-					if isPowerResult(r) && r.Fix != nil {
-						fix := r.Fix
-						return m, func() tea.Msg {
-							return fixDoneMsg{err: fix()}
-						}
+					if isPowerResult(r) && r.FixCmd != nil {
+						return m, runFixCmd(r.FixCmd())
 					}
 				}
 			}
@@ -206,6 +221,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		if m.current == screenModel {
+			// On a fetch error, offer to start lemonade or retry the fetch.
+			if m.modelPicker.err != nil {
+				switch msg.String() {
+				case "s":
+					m.modelPicker.err = nil
+					m.modelPicker.loading = true
+					cmd := exec.Command("sudo", "systemctl", "restart", m.lemondService()) //nolint:gosec
+					return m, tea.ExecProcess(cmd, func(err error) tea.Msg {
+						return lemondStartedMsg{err: err}
+					})
+				case "r":
+					return m, enterModelScreen(&m.modelPicker, m.cfg.BaseURL)
+				}
+			}
 			switch msg.String() {
 			case "up", "k":
 				if m.modelPicker.cursor > 0 {

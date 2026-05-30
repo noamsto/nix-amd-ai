@@ -42,12 +42,12 @@ func renderPreflightLine(r preflight.Result, st styles) string {
 
 	// Append inline key hint for fixable results.
 	// Key mapping is name-based (documented here):
-	//   lemond   → [s] stop lemond
+	//   lemond   → [s] start lemond
 	//   power    → [p] set performance
-	if r.Fix != nil {
+	if r.FixCmd != nil {
 		switch {
 		case isLemondResult(r):
-			line += "  " + st.accent.Render("[s]") + st.hint.Render(" stop lemond")
+			line += "  " + st.accent.Render("[s]") + st.hint.Render(" start lemond")
 		case isPowerResult(r):
 			line += "  " + st.accent.Render("[p]") + st.hint.Render(" set performance")
 		}

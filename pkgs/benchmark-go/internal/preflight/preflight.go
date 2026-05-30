@@ -6,9 +6,7 @@ package preflight
 
 import (
 	"bufio"
-	"bytes"
 	"fmt"
-	"io"
 	"os/exec"
 	"path/filepath"
 	"strconv"
@@ -42,9 +40,12 @@ type Result struct {
 	Name   string
 	Status Status
 	Reason string
-	// Fix is non-nil when the issue can be remediated automatically.
-	// Headless mode NEVER calls Fix; it is reserved for the interactive TUI (Phase 5).
-	Fix func() error
+	// FixCmd builds the command that remediates the issue, or nil when there is
+	// none. The TUI runs it via tea.ExecProcess so any sudo auth prompt
+	// (password / fingerprint) gets the real terminal instead of corrupting the
+	// alt-screen. Headless mode never invokes it. It is a builder (not a built
+	// *exec.Cmd) because an exec.Cmd is single-use.
+	FixCmd func() *exec.Cmd
 }
 
 type Listener struct {
@@ -84,22 +85,26 @@ func classifyPower(onAC, performance bool) Result {
 			Name:   "power",
 			Status: Warn,
 			Reason: "not in performance mode",
-			Fix:    setPerformance(),
+			FixCmd: setPerformanceCmd(),
 		}
 	}
 	return Result{Name: "power", Status: Pass}
 }
 
+// classifyLemond: lemond being UP is what we want — the model picker and HTTP
+// bench both need its API, and a loaded model on the GPU is freed automatically
+// by the run's evacuation guardrail (gentle unload, no sudo). So the actionable
+// problem is lemond being DOWN, which is what we warn on (with a start fixer).
 func classifyLemond(service, activeState string) Result {
 	if activeState == "active" {
-		return Result{
-			Name:   "lemond",
-			Status: Warn,
-			Reason: "lemond is serving; may hold a model on the GPU",
-			Fix:    stopLemond(service),
-		}
+		return Result{Name: "lemond", Status: Pass, Reason: "lemond serving"}
 	}
-	return Result{Name: "lemond", Status: Pass}
+	return Result{
+		Name:   "lemond",
+		Status: Warn,
+		Reason: "lemond not running — needed to list models and serve HTTP bench",
+		FixCmd: startLemondCmd(service),
+	}
 }
 
 // watchedPorts is the set of ports we consider "competing" (i.e. likely GPU
@@ -206,72 +211,33 @@ func listListeners() []Listener {
 }
 
 // ---------------------------------------------------------------------------
-// Fixers — return a func() error; called only from the interactive TUI (Phase 5).
+// Fixers — build the *exec.Cmd to remediate. The TUI runs them via
+// tea.ExecProcess (terminal handed over), so a sudo prompt works cleanly.
 // ---------------------------------------------------------------------------
 
-// stopLemond returns a fixer that stops the given systemd service via sudo.
-// Stdout/Stderr are not wired to os.Stdout: the interactive TUI invokes this
-// fixer while bubbletea owns the terminal, so any child output would corrupt
-// the render. systemctl stop is quiet on success; stderr is captured into the
-// returned error.
-func stopLemond(service string) func() error {
-	return func() error {
-		cmd := exec.Command("sudo", "systemctl", "stop", service)
-		var stderr bytes.Buffer
-		cmd.Stdout = io.Discard
-		cmd.Stderr = &stderr
-		if err := cmd.Run(); err != nil {
-			if msg := strings.TrimSpace(stderr.String()); msg != "" {
-				return fmt.Errorf("stopping %s: %w: %s", service, err, msg)
-			}
-			return fmt.Errorf("stopping %s: %w", service, err)
-		}
-		return nil
+// startLemondCmd builds the command to (re)start the lemond service. `restart`
+// (not `start`) so it also recovers a failed unit. Needs sudo for the system
+// unit.
+func startLemondCmd(service string) func() *exec.Cmd {
+	return func() *exec.Cmd {
+		return exec.Command("sudo", "systemctl", "restart", service) //nolint:gosec
 	}
 }
 
-// setPerformance returns a fixer that switches the CPU to performance mode.
-// Writes "performance" to:
-//   - /sys/firmware/acpi/platform_profile (single system-wide knob)
-//   - every core's energy_performance_preference
-//     (/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference)
-//
-// EPP is per-core: writing only cpu0 leaves the other cores at their old EPP,
-// which is fragile and may not reflect as a real performance switch. We write
-// every core. All writes use sudo tee so no special binary capability is
-// required.
-func setPerformance() func() error {
-	return func() error {
-		if err := writeSysfsPerformance("/sys/firmware/acpi/platform_profile"); err != nil {
-			return err
-		}
+// setPerformanceCmd builds one command that switches the CPU to performance
+// mode: writes "performance" to the ACPI platform profile and EVERY core's EPP
+// knob. EPP is per-core, so writing only cpu0 is fragile — we write them all.
+// Bundled into a single `sudo sh -c` so there is exactly one auth prompt.
+func setPerformanceCmd() func() *exec.Cmd {
+	return func() *exec.Cmd {
+		var sb strings.Builder
+		sb.WriteString("echo performance > /sys/firmware/acpi/platform_profile")
 		eppKnobs, _ := filepath.Glob("/sys/devices/system/cpu/cpu*/cpufreq/energy_performance_preference")
-		for _, path := range eppKnobs {
-			if err := writeSysfsPerformance(path); err != nil {
-				return err
-			}
+		for _, p := range eppKnobs {
+			fmt.Fprintf(&sb, "; echo performance > %s", p)
 		}
-		return nil
+		return exec.Command("sudo", "sh", "-c", sb.String()) //nolint:gosec
 	}
-}
-
-// writeSysfsPerformance writes "performance" to a sysfs path via sudo tee.
-// Stdout is discarded (NOT os.Stdout): tee echoes its input, which would
-// scribble over the bubbletea render when the TUI invokes this fixer. Stderr
-// is captured and folded into the returned error.
-func writeSysfsPerformance(path string) error {
-	cmd := exec.Command("sudo", "tee", path)
-	cmd.Stdin = strings.NewReader("performance")
-	cmd.Stdout = io.Discard
-	var stderr bytes.Buffer
-	cmd.Stderr = &stderr
-	if err := cmd.Run(); err != nil {
-		if msg := strings.TrimSpace(stderr.String()); msg != "" {
-			return fmt.Errorf("writing %s: %w: %s", path, err, msg)
-		}
-		return fmt.Errorf("writing %s: %w", path, err)
-	}
-	return nil
 }
 
 // ---------------------------------------------------------------------------
@@ -279,7 +245,7 @@ func writeSysfsPerformance(path string) error {
 // ---------------------------------------------------------------------------
 
 // Run performs all preflight checks and returns the ordered results.
-// Fix fields are populated but NEVER called here — callers decide whether to invoke.
+// FixCmd builders are populated but NEVER run here — callers decide whether to invoke.
 func Run(info hw.Info, service string) []Result {
 	return []Result{
 		classifyGPU(info.GRBMBusyPct),

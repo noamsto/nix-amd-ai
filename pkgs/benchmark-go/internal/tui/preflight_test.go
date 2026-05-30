@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"os/exec"
 	"strings"
 	"testing"
 
@@ -8,6 +9,9 @@ import (
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
 )
+
+// trueCmd is a harmless fix-command builder for tests.
+func trueCmd() func() *exec.Cmd { return func() *exec.Cmd { return exec.Command("true") } }
 
 // ---------------------------------------------------------------------------
 // Pure unit tests for renderPreflightLine
@@ -20,7 +24,6 @@ func TestRenderPreflightLinePass(t *testing.T) {
 	if !strings.Contains(out, "✓") {
 		t.Errorf("Pass result: expected '✓'; got %q", out)
 	}
-	// No key hint on a passing result.
 	if strings.Contains(out, "[s]") || strings.Contains(out, "[p]") {
 		t.Errorf("Pass result: unexpected key hint in %q", out)
 	}
@@ -30,8 +33,8 @@ func TestRenderPreflightLineWarnLemond(t *testing.T) {
 	r := preflight.Result{
 		Name:   "lemond",
 		Status: preflight.Warn,
-		Reason: "lemond is serving; may hold a model on the GPU",
-		Fix:    func() error { return nil },
+		Reason: "lemond not running — needed to list models",
+		FixCmd: trueCmd(),
 	}
 	out := renderPreflightLine(r, newStyles(true))
 
@@ -48,7 +51,7 @@ func TestRenderPreflightLineWarnPower(t *testing.T) {
 		Name:   "power",
 		Status: preflight.Warn,
 		Reason: "not in performance mode",
-		Fix:    func() error { return nil },
+		FixCmd: trueCmd(),
 	}
 	out := renderPreflightLine(r, newStyles(true))
 
@@ -74,12 +77,12 @@ func TestRenderPreflightLineFail(t *testing.T) {
 }
 
 func TestRenderPreflightLineWarnNoFix(t *testing.T) {
-	// Warn without Fix → no key hint.
+	// Warn without a fix command → no key hint.
 	r := preflight.Result{
 		Name:   "competing-port",
 		Status: preflight.Warn,
 		Reason: "port 11434 held by ollama",
-		Fix:    nil,
+		FixCmd: nil,
 	}
 	out := renderPreflightLine(r, newStyles(true))
 
@@ -87,89 +90,61 @@ func TestRenderPreflightLineWarnNoFix(t *testing.T) {
 		t.Errorf("Warn result: expected '⚠'; got %q", out)
 	}
 	if strings.Contains(out, "[s]") || strings.Contains(out, "[p]") {
-		t.Errorf("Warn without Fix: unexpected key hint in %q", out)
+		t.Errorf("Warn without fix: unexpected key hint in %q", out)
 	}
 }
 
 // ---------------------------------------------------------------------------
-// Fixer-only-on-keypress invariant test
+// Fixer-only-on-keypress invariant
 //
-// This is the critical correctness test: a Fix closure must NEVER be called
-// during rendering, only when the user explicitly presses the fixer key.
-// We verify this by:
-//  1. Constructing a model with a preloaded preflight result that has a Fix
-//     closure incrementing a counter.
-//  2. Calling View() (render) — counter must remain 0.
-//  3. Sending the fixer key via Update — counter still 0 (Cmd not yet run).
-//  4. Invoking the returned tea.Cmd — counter becomes 1.
-//  5. Calling View() again — counter still 1.
+// The fix command must NEVER be built during rendering — only when the user
+// presses the fixer key (and even then it is handed to tea.ExecProcess, not run
+// in-process). We verify by counting builder invocations.
 // ---------------------------------------------------------------------------
 
 func TestFixerOnlyOnKeypress(t *testing.T) {
-	fixCalled := 0
+	built := 0
 	fakeResult := preflight.Result{
 		Name:   "lemond",
 		Status: preflight.Warn,
-		Reason: "lemond is serving",
-		Fix: func() error {
-			fixCalled++
-			return nil
-		},
+		Reason: "lemond not running",
+		FixCmd: func() *exec.Cmd { built++; return exec.Command("true") },
 	}
 
-	// Build a model in the preflight screen with the result pre-loaded.
 	m := model{
 		current:          screenPreflight,
 		preflightResults: []preflight.Result{fakeResult},
 		preflightLoaded:  true,
 	}
 
-	// Render must NOT call Fix.
 	_ = m.View()
-	if fixCalled != 0 {
-		t.Fatalf("Fix called %d time(s) during View(); must be 0", fixCalled)
+	if built != 0 {
+		t.Fatalf("FixCmd built %d time(s) during View(); must be 0", built)
 	}
 
-	// Send 's' key — must produce a non-nil Cmd without calling Fix inline.
-	keyMsg := tea.KeyPressMsg{Code: 's', Text: "s"}
-	newModel, cmd := m.Update(keyMsg)
-	_ = newModel
-	if fixCalled != 0 {
-		t.Fatalf("Fix called %d time(s) during Update('s'); must be 0 (Cmd not yet invoked)", fixCalled)
-	}
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	if cmd == nil {
-		t.Fatal("Update('s') returned nil Cmd; expected a Cmd that invokes Fix")
+		t.Fatal("Update('s') returned nil Cmd; expected a tea.ExecProcess Cmd")
+	}
+	// Building the command to hand to tea.ExecProcess is expected; the command
+	// itself is not executed here (only the bubbletea runtime runs it).
+	if built != 1 {
+		t.Fatalf("FixCmd built %d time(s) on keypress; want 1", built)
 	}
 
-	// Invoke the returned Cmd (simulates bubbletea runtime).
-	msg := cmd()
-	if fixCalled != 1 {
-		t.Fatalf("Fix called %d time(s) after Cmd(); expected exactly 1", fixCalled)
-	}
-
-	// The Cmd should return a fixDoneMsg.
-	if _, ok := msg.(fixDoneMsg); !ok {
-		t.Errorf("Cmd returned %T; expected fixDoneMsg", msg)
-	}
-
-	// Render again — Fix must not have been called a second time.
 	_ = m.View()
-	if fixCalled != 1 {
-		t.Fatalf("Fix called %d time(s) after second View(); expected still 1", fixCalled)
+	if built != 1 {
+		t.Fatalf("FixCmd built again during second View(); want still 1, got %d", built)
 	}
 }
 
-// TestFixerPowerKeyOnlyOnKeypress mirrors the above for the 'p' (power) key.
 func TestFixerPowerKeyOnlyOnKeypress(t *testing.T) {
-	fixCalled := 0
+	built := 0
 	fakeResult := preflight.Result{
 		Name:   "power",
 		Status: preflight.Warn,
 		Reason: "not in performance mode",
-		Fix: func() error {
-			fixCalled++
-			return nil
-		},
+		FixCmd: func() *exec.Cmd { built++; return exec.Command("true") },
 	}
 
 	m := model{
@@ -179,36 +154,27 @@ func TestFixerPowerKeyOnlyOnKeypress(t *testing.T) {
 	}
 
 	_ = m.View()
-	if fixCalled != 0 {
-		t.Fatalf("Fix called during View(); must be 0")
+	if built != 0 {
+		t.Fatalf("FixCmd built during View(); must be 0")
 	}
 
-	keyMsg := tea.KeyPressMsg{Code: 'p', Text: "p"}
-	_, cmd := m.Update(keyMsg)
-	if fixCalled != 0 {
-		t.Fatalf("Fix called during Update('p'); must be 0")
-	}
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'p', Text: "p"})
 	if cmd == nil {
 		t.Fatal("Update('p') returned nil Cmd")
 	}
-
-	_ = cmd()
-	if fixCalled != 1 {
-		t.Fatalf("Fix called %d time(s) after Cmd(); expected 1", fixCalled)
+	if built != 1 {
+		t.Fatalf("FixCmd built %d time(s) on keypress; want 1", built)
 	}
 }
 
-// TestFixerKeyIgnoredOnOtherScreens asserts that pressing 's' on a non-preflight
-// screen does NOT trigger any Fix.
+// TestFixerKeyIgnoredOnOtherScreens asserts pressing 's' off the preflight
+// screen triggers nothing.
 func TestFixerKeyIgnoredOnOtherScreens(t *testing.T) {
-	fixCalled := 0
+	built := 0
 	fakeResult := preflight.Result{
 		Name:   "lemond",
 		Status: preflight.Warn,
-		Fix: func() error {
-			fixCalled++
-			return nil
-		},
+		FixCmd: func() *exec.Cmd { built++; return exec.Command("true") },
 	}
 
 	m := model{
@@ -217,25 +183,22 @@ func TestFixerKeyIgnoredOnOtherScreens(t *testing.T) {
 		preflightLoaded:  true,
 	}
 
-	keyMsg := tea.KeyPressMsg{Code: 's', Text: "s"}
-	_, cmd := m.Update(keyMsg)
-	// A non-nil Cmd on a non-preflight screen is itself the failure: the fixer
-	// key must be inert outside screenPreflight.
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	if cmd != nil {
 		t.Fatalf("Update('s') on non-preflight screen returned non-nil Cmd")
 	}
-	if fixCalled != 0 {
-		t.Fatalf("Fix called on non-preflight screen; must be 0")
+	if built != 0 {
+		t.Fatalf("FixCmd built on non-preflight screen; must be 0")
 	}
 }
 
-// TestFixerNotCalledWhenNoFix ensures pressing 's' when the lemond result has
-// no Fix (already stopped / passing) produces no Cmd.
+// TestFixerNotCalledWhenNoFix ensures pressing 's' with no fix command produces
+// no Cmd.
 func TestFixerNotCalledWhenNoFix(t *testing.T) {
 	r := preflight.Result{
 		Name:   "lemond",
 		Status: preflight.Pass,
-		Fix:    nil, // no fixer — already clean
+		FixCmd: nil, // up and serving — nothing to fix
 	}
 
 	m := model{
@@ -244,9 +207,8 @@ func TestFixerNotCalledWhenNoFix(t *testing.T) {
 		preflightLoaded:  true,
 	}
 
-	keyMsg := tea.KeyPressMsg{Code: 's', Text: "s"}
-	_, cmd := m.Update(keyMsg)
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 's', Text: "s"})
 	if cmd != nil {
-		t.Fatalf("Update('s') on result with nil Fix returned non-nil Cmd")
+		t.Fatalf("Update('s') on result with nil FixCmd returned non-nil Cmd")
 	}
 }

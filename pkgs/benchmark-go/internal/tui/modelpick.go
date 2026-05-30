@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -46,7 +47,8 @@ type modelPicker struct {
 	cursor        int
 	loading       bool
 	err           error
-	needSelection bool // set when Enter is pressed with no models selected
+	needSelection bool   // set when Enter is pressed with no models selected
+	baseURL       string // lemonade endpoint, for error messages + start/retry
 
 	// fetchModels is a test seam to avoid real network calls.
 	fetchModels func(baseURL string) ([]models.Model, error)
@@ -86,12 +88,67 @@ func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	if baseURL == "" {
 		baseURL = "http://localhost:13305"
 	}
+	p.baseURL = baseURL
 	url := baseURL
 
 	return func() tea.Msg {
 		list, err := fetch(url)
 		return modelsLoadedMsg{models: list, err: err}
 	}
+}
+
+// lemondStartedMsg carries the outcome of the model-screen "start lemonade"
+// action (a tea.ExecProcess'd `sudo systemctl restart`).
+type lemondStartedMsg struct{ err error }
+
+// waitAndFetchModelsCmd waits for lemond to answer (after a start) then
+// re-fetches the model list. Result flows back as modelsLoadedMsg so the normal
+// load handling applies.
+func waitAndFetchModelsCmd(p *modelPicker, baseURL string) tea.Cmd {
+	fetch := p.fetchModels
+	if fetch == nil {
+		fetch = models.Fetch
+	}
+	if baseURL == "" {
+		baseURL = "http://localhost:13305"
+	}
+	p.baseURL = baseURL
+	return func() tea.Msg {
+		if err := bench.WaitForLemond(baseURL, lemondStartTimeout); err != nil {
+			return modelsLoadedMsg{err: err}
+		}
+		list, err := fetch(baseURL)
+		return modelsLoadedMsg{models: list, err: err}
+	}
+}
+
+// lemondStartTimeout bounds the wait for lemond to answer after a start.
+const lemondStartTimeout = 60 * time.Second
+
+// isUnreachableErr reports whether err looks like "lemonade isn't up" rather
+// than a protocol/HTTP error — so the picker can show actionable guidance.
+func isUnreachableErr(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	for _, s := range []string{"connection refused", "no such host", "dial tcp", "connect:"} {
+		if strings.Contains(msg, s) {
+			return true
+		}
+	}
+	return false
+}
+
+// fetchErrorLines renders the fetch error as friendly, width-bounded lines.
+func fetchErrorLines(err error, baseURL string) []string {
+	if isUnreachableErr(err) {
+		return []string{
+			"Can't reach lemonade at " + baseURL + ".",
+			"The lemond service isn't responding — it may be stopped.",
+		}
+	}
+	return []string{truncate("Error fetching models: "+err.Error(), maxRuleWidth)}
 }
 
 // resolveModelSizeGiBByID returns the GGUF file size in GiB for a model display id.
@@ -299,8 +356,14 @@ func renderModelScreen(p *modelPicker, st styles) string {
 	}
 
 	if p.err != nil {
-		b.WriteString(st.fail.Render("Error: "+p.err.Error()) + "\n")
-		b.WriteString("\n" + keybar(st, [2]string{"Esc", "← back"}))
+		for _, line := range fetchErrorLines(p.err, p.baseURL) {
+			b.WriteString(st.fail.Render(line) + "\n")
+		}
+		b.WriteString("\n" + keybar(st,
+			[2]string{"s", "start lemonade"},
+			[2]string{"r", "retry"},
+			[2]string{"Esc", "← back"},
+		))
 		return titledPanel(st, "Select Models", b.String(), 0)
 	}
 

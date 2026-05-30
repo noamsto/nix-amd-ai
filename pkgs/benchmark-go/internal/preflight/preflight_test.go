@@ -47,7 +47,7 @@ func TestClassifyGPU_fail(t *testing.T) {
 	if r.Status != Fail {
 		t.Errorf("classifyGPU(42).Status = %v, want Fail", r.Status)
 	}
-	if r.Fix != nil {
+	if r.FixCmd != nil {
 		t.Error("classifyGPU should have no fixer (can't free someone else's GPU work)")
 	}
 	if r.Reason == "" {
@@ -71,7 +71,7 @@ func TestClassifyPower_pass(t *testing.T) {
 	if r.Status != Pass {
 		t.Errorf("classifyPower(AC=true, perf=true).Status = %v, want Pass", r.Status)
 	}
-	if r.Fix != nil {
+	if r.FixCmd != nil {
 		t.Error("Pass result should not have a Fix")
 	}
 }
@@ -82,7 +82,7 @@ func TestClassifyPower_warnBattery(t *testing.T) {
 		t.Errorf("classifyPower(AC=false, perf=false).Status = %v, want Warn", r.Status)
 	}
 	// No fixer: can't plug in the cable automatically.
-	if r.Fix != nil {
+	if r.FixCmd != nil {
 		t.Error("battery warning should have no fixer")
 	}
 }
@@ -92,7 +92,7 @@ func TestClassifyPower_warnNotPerformance(t *testing.T) {
 	if r.Status != Warn {
 		t.Errorf("classifyPower(AC=true, perf=false).Status = %v, want Warn", r.Status)
 	}
-	if r.Fix == nil {
+	if r.FixCmd == nil {
 		t.Error("AC + non-performance should provide a Fix")
 	}
 }
@@ -109,25 +109,30 @@ func TestClassifyPower_warnBatteryPerformance(t *testing.T) {
 // classifyLemond
 // ---------------------------------------------------------------------------
 
-func TestClassifyLemond_pass(t *testing.T) {
-	for _, state := range []string{"inactive", "failed", "unknown", ""} {
-		r := classifyLemond("lemond.service", state)
-		if r.Status != Pass {
-			t.Errorf("classifyLemond(%q).Status = %v, want Pass", state, r.Status)
-		}
+// Flipped semantics: lemond UP is good (Pass, no fixer); lemond DOWN is the
+// actionable problem (Warn + a start fixer).
+func TestClassifyLemond_passWhenActive(t *testing.T) {
+	r := classifyLemond("lemond.service", "active")
+	if r.Status != Pass {
+		t.Errorf("classifyLemond(active).Status = %v, want Pass", r.Status)
+	}
+	if r.FixCmd != nil {
+		t.Error("classifyLemond(active) should have no fixer")
 	}
 }
 
-func TestClassifyLemond_warnActive(t *testing.T) {
-	r := classifyLemond("lemond.service", "active")
-	if r.Status != Warn {
-		t.Errorf("classifyLemond(active).Status = %v, want Warn", r.Status)
-	}
-	if r.Fix == nil {
-		t.Error("classifyLemond(active).Fix should be non-nil")
-	}
-	if r.Reason == "" {
-		t.Error("classifyLemond(active).Reason should be non-empty")
+func TestClassifyLemond_warnWhenDown(t *testing.T) {
+	for _, state := range []string{"inactive", "failed", "unknown", ""} {
+		r := classifyLemond("lemond.service", state)
+		if r.Status != Warn {
+			t.Errorf("classifyLemond(%q).Status = %v, want Warn", state, r.Status)
+		}
+		if r.FixCmd == nil {
+			t.Errorf("classifyLemond(%q).FixCmd should be non-nil (start fixer)", state)
+		}
+		if r.Reason == "" {
+			t.Errorf("classifyLemond(%q).Reason should be non-empty", state)
+		}
 	}
 }
 
@@ -162,7 +167,7 @@ func TestClassifyCompetingPorts_kokoOnWatchedPort(t *testing.T) {
 	if r.Status != Warn {
 		t.Errorf("llama-server on :8001: Status = %v, want Warn", r.Status)
 	}
-	if r.Fix != nil {
+	if r.FixCmd != nil {
 		t.Error("competing port should have no fixer (don't kill user processes)")
 	}
 	if r.Reason == "" {
