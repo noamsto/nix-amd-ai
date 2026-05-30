@@ -1249,7 +1249,7 @@ type Params struct {
 // to avoid the known GPU hang. Never enables rocWMMA.
 func RecommendParams(modelGiB float64) Params {
 	batch := 512
-	if modelGiB > 10 {
+	if modelGiB >= 8 {
 		batch = 256
 	}
 	return Params{NGL: 999, Batch: batch, UBatch: 256, Ctx: 2048, Parallel: 1, FlashAttn: true, RocWMMA: false}

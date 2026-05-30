@@ -12,9 +12,16 @@ const (
 )
 
 // DecodeCeilingTPS returns the bandwidth-bound decode ceiling in tokens/second.
-// Formula: bandwidth(GB/s) / activeGB — every weight is read once per token
-// for a dense model, so activeGB ≈ model size in GB.
-func DecodeCeilingTPS(bandwidthGBs, activeGB float64) float64 {
+// bandwidthGBs is decimal GB/s; activeGiB is the model's active size in binary
+// GiB (every weight read once per token for a dense model). The GiB→GB
+// conversion (×1.073741824) is applied internally so the ratio is
+// unit-consistent — skipping it inflates the ceiling ~7.4%.
+// Returns 0 for activeGiB <= 0 (divide-by-zero guard).
+func DecodeCeilingTPS(bandwidthGBs, activeGiB float64) float64 {
+	if activeGiB <= 0 {
+		return 0
+	}
+	activeGB := activeGiB * (1 << 30) / 1e9
 	return bandwidthGBs / activeGB
 }
 
@@ -22,6 +29,9 @@ func DecodeCeilingTPS(bandwidthGBs, activeGB float64) float64 {
 // >budget → Spills; >=90% of budget → Tight; else Fits.
 // Boundary: modelGiB == budgetGiB → Tight (not Spills).
 func FitClass(modelGiB, budgetGiB float64) FitState {
+	if budgetGiB <= 0 {
+		return Spills
+	}
 	if modelGiB > budgetGiB {
 		return Spills
 	}
@@ -35,7 +45,7 @@ func FitClass(modelGiB, budgetGiB float64) FitState {
 // Strix Point DDR5-5600 dual-channel: 5600 MT/s * 8 bytes * 2 channels / 1000 = 89.6 GB/s.
 const ddr5Fallback = 89.6
 
-// BandwidthGBs derives memory bandwidth in GB/s from RAM type and speed.
+// BandwidthGBs derives memory bandwidth in decimal GB/s from RAM type and speed.
 // DDR5/LPDDR5/LPDDR5X dual-channel formula: speedMTs * 8 * 2 / 1000 GB/s.
 // When ramType is empty or speedMTs <= 0, falls back to ddr5Fallback (89.6)
 // and returns estimated=true.
@@ -58,8 +68,8 @@ type Params struct {
 	RocWMMA   bool // always false on gfx1150 (local regression, -42% pp4096)
 }
 
-// largeBatchCutoffGiB is the model size threshold above which batch is reduced
-// to 256 (anti-hang) instead of 512.
+// largeBatchCutoffGiB: models at/above this size start at batch 256 (anti-hang).
+// 8 GiB is chosen over a looser 10 GiB so ~8-10 GiB models also get the safer batch.
 const largeBatchCutoffGiB = 8.0
 
 // RecommendParams returns gfx1150 defaults for a model of the given size.

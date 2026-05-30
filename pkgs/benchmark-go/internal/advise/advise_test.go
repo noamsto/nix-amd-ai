@@ -6,11 +6,19 @@ import (
 )
 
 func TestDecodeCeilingTPS(t *testing.T) {
-	// 89.6 GB/s / 15.7 GB ≈ 5.707 TPS
+	// bandwidth is decimal GB/s, model size is GiB. Converted internally:
+	// 89.6 / (15.7 * 1.073741824) ≈ 5.32 TPS
 	got := DecodeCeilingTPS(89.6, 15.7)
-	want := 89.6 / 15.7
-	if math.Abs(got-want) > 0.3 {
-		t.Errorf("DecodeCeilingTPS(89.6, 15.7) = %.3f; want ~%.3f (±0.3)", got, want)
+	want := 89.6 / (15.7 * 1.073741824)
+	if math.Abs(got-want) > 0.05 {
+		t.Errorf("DecodeCeilingTPS(89.6, 15.7) = %.3f; want ~%.3f (±0.05)", got, want)
+	}
+}
+
+func TestDecodeCeilingTPS_ZeroActive(t *testing.T) {
+	// Divide-by-zero guard: activeGiB <= 0 returns 0, not +Inf.
+	if got := DecodeCeilingTPS(89.6, 0); got != 0 {
+		t.Errorf("DecodeCeilingTPS(89.6, 0) = %v; want 0", got)
 	}
 }
 
@@ -30,6 +38,8 @@ func TestFitClass(t *testing.T) {
 		{"exact boundary at 90pct", 27 * 0.9, 27, Tight},
 		// Just under 90% → Fits
 		{"just under 90pct", 27*0.9 - 0.01, 27, Fits},
+		// Defensive: zero/negative budget → Spills
+		{"zero budget", 15.7, 0, Spills},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -59,6 +69,16 @@ func TestBandwidthGBs(t *testing.T) {
 		}
 		if !estimated {
 			t.Error("BandwidthGBs('', 0): estimated should be true")
+		}
+	})
+
+	t.Run("known type but zero speed falls back to estimated", func(t *testing.T) {
+		gbps, estimated := BandwidthGBs("DDR5", 0)
+		if math.Abs(gbps-89.6) > 0.1 {
+			t.Errorf("BandwidthGBs(DDR5, 0) = %.2f; want 89.6 (±0.1)", gbps)
+		}
+		if !estimated {
+			t.Error("BandwidthGBs(DDR5, 0): estimated should be true")
 		}
 	})
 }
@@ -98,13 +118,20 @@ func TestRecommendParams(t *testing.T) {
 			t.Error("RecommendParams(4.0).RocWMMA must always be false")
 		}
 	})
+
+	// 9.0 GiB is >= 8 GiB cutoff but < the old plan's 10 GiB; pins the 8 GiB choice.
+	t.Run("9 GiB model crosses 8 GiB cutoff -> batch 256", func(t *testing.T) {
+		if p := RecommendParams(9.0); p.Batch != 256 {
+			t.Errorf("RecommendParams(9.0).Batch = %d; want 256", p.Batch)
+		}
+	})
 }
 
 func TestBudgetGiB(t *testing.T) {
-	// 29292957696 bytes / 1024^3 ≈ 27.29 GiB
+	// 29292957696 bytes / 1024^3 = exactly 27.28125 GiB
 	got := BudgetGiB(29292957696)
 	want := 29292957696.0 / (1024 * 1024 * 1024)
-	if math.Abs(got-want) > 0.1 {
-		t.Errorf("BudgetGiB(29292957696) = %.3f; want %.3f (±0.1)", got, want)
+	if math.Abs(got-want) > 1e-9 {
+		t.Errorf("BudgetGiB(29292957696) = %.10f; want %.10f", got, want)
 	}
 }
