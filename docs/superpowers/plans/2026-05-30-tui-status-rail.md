@@ -448,7 +448,114 @@ git commit -m "refactor(tui): drop run-screen GRBM tick — rail is the single G
 
 ---
 
-## Task 4: Whole-flake verification + manual smoke
+## Task 4: Adaptive light/dark theming (legible on both terminal backgrounds)
+
+Detect the terminal background (Charm v2: `tea.RequestBackgroundColor` → `tea.BackgroundColorMsg.IsDark()`) and resolve all TUI colors through `lipgloss.LightDark(isDark)` so nothing washes out on a light terminal (today `value` is `Color("255")` near-white — invisible on white). Model-held `styles` struct, per Charm's own documented pattern.
+
+**Files:**
+- Create: `pkgs/benchmark-go/internal/tui/theme.go`, `theme_test.go`
+- Modify: `app.go` (model `styles` field; `New` defaults; `Init` also requests bg; `Update` handles `BackgroundColorMsg`; thread `m.styles` into render calls in `View`)
+- Modify: `hwpanel.go`, `preflight.go`, `rail.go`, `run.go`, `results.go`, `mode.go`, `modelpick.go`, `params.go` — replace the package-level style vars with the passed-in `styles`, then DELETE the old vars.
+
+- [ ] **Step 1: Write the failing test**
+
+`theme_test.go`:
+```go
+package tui
+
+import "testing"
+
+func TestNewStylesLightDarkDiffer(t *testing.T) {
+	light := newStyles(false)
+	dark := newStyles(true)
+	// Same input must render differently (different color codes) on light vs dark.
+	if light.value.Render("x") == dark.value.Render("x") {
+		t.Fatal("value style should differ between light and dark")
+	}
+	if light.pass.Render("ok") == dark.pass.Render("ok") {
+		t.Fatal("pass style should differ between light and dark")
+	}
+}
+
+func TestBackgroundColorMsgSetsStyles(t *testing.T) {
+	m := New(hwInfoForTest(), Config{}).(model)
+	// dark bg → dark styles; assert Update stores a styles set that renders like newStyles(true)
+	next, _ := m.Update(darkBackgroundMsg())
+	if next.(model).styles.value.Render("x") != newStyles(true).value.Render("x") {
+		t.Fatal("dark background should select dark styles")
+	}
+}
+```
+Provide `hwInfoForTest()` (any `hw.Info`) and `darkBackgroundMsg()` returning a `tea.BackgroundColorMsg` whose `IsDark()` is true — construct it from a dark `color.Color` (e.g. black). Confirm how to build one via `go doc charm.land/bubbletea/v2 BackgroundColorMsg` (it embeds `color.Color`); if constructing a dark msg is awkward, instead unit-test only `TestNewStylesLightDarkDiffer` and test the Update wiring by directly asserting `newStyles(true)` vs `newStyles(false)` selection logic in a small helper. Don't force a brittle construction.
+
+- [ ] **Step 2: Run to verify it fails**
+
+Run: `nix shell nixpkgs#go nixpkgs#gcc --command go test ./internal/tui/ -run 'NewStyles|BackgroundColor' -v`
+Expected: FAIL — `newStyles`/`styles` undefined.
+
+- [ ] **Step 3: Implement `theme.go`**
+
+```go
+package tui
+
+import "charm.land/lipgloss/v2"
+
+// styles holds every themed style, resolved for the detected terminal background.
+type styles struct {
+	panel, heading, label, value, warnValue, pass, warn, fail, hint, rail lipgloss.Style
+}
+
+// newStyles resolves colors for a light or dark terminal. Light variants are
+// darker (contrast on white); dark variants keep the original bright values.
+func newStyles(isDark bool) styles {
+	ld := lipgloss.LightDark(isDark)
+	c := func(light, dark string) lipgloss.Style {
+		return lipgloss.NewStyle().Foreground(ld(lipgloss.Color(light), lipgloss.Color(dark)))
+	}
+	return styles{
+		panel: lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).
+			BorderForeground(ld(lipgloss.Color("61"), lipgloss.Color("62"))).Padding(0, 1),
+		heading:   lipgloss.NewStyle().Bold(true).Foreground(ld(lipgloss.Color("90"), lipgloss.Color("212"))),
+		label:     c("240", "241"),
+		value:     c("236", "255"),
+		warnValue: c("130", "214"),
+		pass:      c("28", "46"),
+		warn:      c("130", "214"),
+		fail:      c("160", "196"),
+		hint:      c("244", "245"),
+		rail:      lipgloss.NewStyle().Faint(true),
+	}
+}
+```
+> IMPORTANT: copy each EXISTING style's non-color attributes verbatim (e.g. `panelStyle`'s real border type/padding, any `Bold`) — only the COLORS become `ld(light, dark)` pairs. Inspect the current `hwpanel.go`/`preflight.go`/`rail.go` definitions and preserve their structure.
+
+- [ ] **Step 4: Wire detection + thread styles (app.go + render funcs)**
+
+In `app.go`: add `styles styles` to `model`; in `New` set `styles: newStyles(true)` (dark default until detected); change `Init` to `return tea.Batch(railTickCmd(m.railGRBM), tea.RequestBackgroundColor())`; add `Update` case `tea.BackgroundColorMsg` → `m.styles = newStyles(msg.IsDark()); return m, nil`.
+
+Thread `m.styles` into every render function that uses a themed style. Each such render func gains a `st styles` parameter (passed from `View`); replace `passStyle`→`st.pass`, `valueStyle`→`st.value`, `railStyle`→`st.rail`, `headingStyle`→`st.heading`, etc. across `hwpanel.go`/`preflight.go`/`rail.go`/`run.go`/`results.go`/`mode.go`/`modelpick.go`/`params.go`. Then DELETE the old package-level style vars. Update `renderRail`'s signature to take `st styles` (use `st.rail`) and update its Task-2 call site + rail tests (pass `newStyles(true)`).
+
+- [ ] **Step 5: Fix up tests + run**
+
+Update any render tests that referenced removed package-level vars or now-changed signatures (pass `newStyles(true)`). Then:
+```
+nix shell nixpkgs#go nixpkgs#gcc --command go test -race ./internal/tui/
+nix shell nixpkgs#go nixpkgs#gcc --command go vet ./...
+nix shell nixpkgs#go --command gofmt -l internal/tui/
+nix shell nixpkgs#go nixpkgs#gcc --command go build ./...
+```
+Expected: all green, no remaining package-level style vars, gofmt clean.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add pkgs/benchmark-go/internal/tui/
+git commit -m "feat(tui): adaptive light/dark theming via terminal background detection"
+```
+
+---
+
+## Task 5: Whole-flake verification + manual smoke
 
 **Files:** none (verification)
 
@@ -464,7 +571,7 @@ Expected: binary builds; flake checks pass.
 
 - [ ] **Step 3: Manual smoke (rail visible)**
 
-Run: `nix run .#benchmark` in an interactive terminal. Confirm the status rail (e.g. `gfx1150 · …GB GTT · GPU N% … · AC perf … · preflight …`) shows at the top of the hardware panel AND remains visible after pressing Enter to the preflight screen. Press `q` to quit. (Can't be fully automated; eyeball it.)
+Run: `nix run .#benchmark` in an interactive terminal. Confirm the status rail (e.g. `gfx1150 · …GB GTT · GPU N% … · AC perf … · preflight …`) shows at the top of the hardware panel AND remains visible after pressing Enter to the preflight screen. Press `q` to quit. (Can't be fully automated; eyeball it.) **Then run it once in a LIGHT-background terminal and once in a DARK one** and confirm every element (rail, panel values, preflight ✓/⚠/✗ glyphs) stays legible on both — this validates Task 4's adaptive theming.
 
 - [ ] **Step 4: Commit any final fmt nits** (if `gofmt -l .` non-empty, fix + commit).
 
