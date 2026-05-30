@@ -161,6 +161,9 @@ func TestParseFlags_defaults(t *testing.T) {
 	if o.MTPAbBackends != "rocm,vulkan" {
 		t.Errorf("MTPAbBackends = %q, want rocm,vulkan", o.MTPAbBackends)
 	}
+	if o.CtxSize != 2048 {
+		t.Errorf("CtxSize = %d, want 2048", o.CtxSize)
+	}
 }
 
 func TestParseFlags_mtpAbMutualExclusion(t *testing.T) {

@@ -50,6 +50,17 @@ func TestParseModels_bareArray(t *testing.T) {
 	}
 }
 
+func TestParseModels_nullData(t *testing.T) {
+	// `{"data": null}` is an envelope with no models, not an error.
+	ms, err := ParseModels([]byte(`{"data":null,"object":"list"}`))
+	if err != nil {
+		t.Fatalf("ParseModels null data error: %v", err)
+	}
+	if len(ms) != 0 {
+		t.Errorf("want 0 models, got %d", len(ms))
+	}
+}
+
 func TestParseModels_idFallback(t *testing.T) {
 	// id absent → model_name used
 	raw := `{"data":[{"model_name":"FallbackModel","downloaded":false}]}`

@@ -112,7 +112,7 @@ func NewLlamaServer(argv []string, port int) *LlamaServer {
 func (s *LlamaServer) Start() error {
 	s.stderr = new(bytes.Buffer)
 	s.cmd = exec.Command(s.Argv[0], s.Argv[1:]...) //nolint:gosec
-	s.cmd.Stdout = nil                              // DEVNULL
+	s.cmd.Stdout = nil                             // DEVNULL
 	s.cmd.Stderr = s.stderr
 
 	if err := s.cmd.Start(); err != nil {

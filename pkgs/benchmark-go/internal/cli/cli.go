@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"errors"
 	"flag"
 	"fmt"
 	"os"
@@ -46,10 +47,9 @@ type opts struct {
 }
 
 // parseFlags parses args[1:] into opts. Returns (o, nil) on success,
-// (opts{}, errHelp) when --help/-h is seen, and (opts{}, err) on parse error.
-// On mutual-exclusion violation it returns an error (callers print + exit 2).
-var errHelp = flag.ErrHelp
-
+// (opts{}, flag.ErrHelp) when --help/-h is seen, and (opts{}, err) on parse
+// error. On mutual-exclusion violation it returns an error (callers print +
+// exit 2).
 func parseFlags(args []string) (opts, error) {
 	fs := flag.NewFlagSet("benchmark", flag.ContinueOnError)
 	fs.Usage = func() {
@@ -130,28 +130,31 @@ func parseFlags(args []string) (opts, error) {
 //   - 0  all models passed min-decode-tps threshold (or MTP A/B ok)
 //   - 1  one or more models below min-decode-tps (CPU-fallback gate)
 //   - 2  hard error: server unreachable, model not found/downloaded,
-//        device not ready, or bad arguments
+//     device not ready, or bad arguments
 func Run(args []string) int {
 	o, err := parseFlags(args)
 	if err != nil {
-		if err == errHelp {
+		if errors.Is(err, flag.ErrHelp) {
 			return 0
 		}
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		return 2
 	}
 
-	interactive := !o.NoTUI && term.IsTerminal(int(os.Stdin.Fd()))
+	// Detect a TTY on stdout, not stdin: `benchmark | tee log` leaves stdin a
+	// TTY but stdout a pipe, and should print markdown rather than launch the TUI.
+	interactive := !o.NoTUI && term.IsTerminal(int(os.Stdout.Fd()))
 	if interactive {
 		return runTUI(o)
 	}
 	return runHeadless(o)
 }
 
-// runTUI is a Phase 5 stub.
+// runTUI is a Phase 5 stub. Returns 2 (not 0) so scripts don't read the
+// not-yet-implemented interactive path as success.
 func runTUI(_ opts) int {
 	fmt.Fprintln(os.Stderr, "interactive TUI not yet implemented; use --no-tui")
-	return 0
+	return 2
 }
 
 // runHeadless drives the real benchmark calls and prints a markdown table.
@@ -186,7 +189,7 @@ func runHeadlessMTPAB(o opts) int {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		// exit 1 for MTP-head-absent (mirrors Python's sys.exit(1) in run_mtp_ab)
-		if strings.Contains(err.Error(), "no MTP head") {
+		if errors.Is(err, bench.ErrNoMTPHead) {
 			return 1
 		}
 		return 2
@@ -220,16 +223,37 @@ func runHeadlessLemonade(o opts) int {
 		len(o.ModelIDs), baseURL)
 
 	// --- Backend switch: rewrite lemonade config + restart lemond ---
-	// Mirrors Python's try/finally block in main().
+	// Mirrors Python's try/finally block in main(). The deferred restore is the
+	// single restore site: registered the moment the config is written, it runs
+	// on every return path (success, below-threshold, or pre-benchmark failure)
+	// with no ordering dependency on later code.
 	prevBackend := ""
 	backendForced := false
+	defer func() {
+		if !backendForced {
+			return
+		}
+		if err := bench.RestoreLlamacppBackend(o.ConfigPath, prevBackend); err != nil {
+			fmt.Fprintf(os.Stderr, "WARNING: failed to restore lemonade config: %v\n", err)
+		} else {
+			fmt.Fprintf(os.Stderr, "  Restored llamacpp.backend to %q\n", prevBackend)
+		}
+		if !o.NoRestart {
+			if err := bench.RestartLemond(o.LemondService); err != nil {
+				fmt.Fprintf(os.Stderr, "WARNING: failed to restart lemond during cleanup: %v\n", err)
+			}
+		}
+	}()
+
 	if o.Backend != "" {
 		var err error
 		prevBackend, err = bench.SetLlamacppBackend(o.ConfigPath, o.Backend)
 		if err != nil {
+			// Config was not written → nothing to restore; defer stays a no-op.
 			fmt.Fprintf(os.Stderr, "ERROR: writing lemonade config: %v\n", err)
 			return 2
 		}
+		// Config written: arm the deferred restore for all subsequent returns.
 		backendForced = true
 		fmt.Fprintf(os.Stderr, "  Forced llamacpp.backend = %q (was %q) in %s\n",
 			o.Backend, prevBackend, o.ConfigPath)
@@ -237,32 +261,14 @@ func runHeadlessLemonade(o opts) int {
 		if !o.NoRestart {
 			if err := bench.RestartLemond(o.LemondService); err != nil {
 				fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-				_ = bench.RestoreLlamacppBackend(o.ConfigPath, prevBackend)
 				return 2
 			}
 			if err := bench.WaitForLemond(baseURL, 60e9); err != nil { // 60s
 				fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
-				_ = bench.RestoreLlamacppBackend(o.ConfigPath, prevBackend)
 				return 2
 			}
 		}
 	}
-
-	// Restore config on exit regardless of outcome.
-	defer func() {
-		if backendForced {
-			if err := bench.RestoreLlamacppBackend(o.ConfigPath, prevBackend); err != nil {
-				fmt.Fprintf(os.Stderr, "WARNING: failed to restore lemonade config: %v\n", err)
-			} else {
-				fmt.Fprintf(os.Stderr, "  Restored llamacpp.backend to %q\n", prevBackend)
-			}
-			if !o.NoRestart {
-				if err := bench.RestartLemond(o.LemondService); err != nil {
-					fmt.Fprintf(os.Stderr, "WARNING: failed to restart lemond during cleanup: %v\n", err)
-				}
-			}
-		}
-	}()
 
 	// --- Step 1: validate models exist and are downloaded ---
 	// Mirrors Python's check_models().
@@ -277,8 +283,8 @@ func runHeadlessLemonade(o opts) int {
 		modelMap[m.ID] = m
 	}
 
-	notFound := []string{}
-	notDownloaded := []string{}
+	var notFound []string
+	var notDownloaded []string
 	for _, mid := range o.ModelIDs {
 		m, ok := modelMap[mid]
 		if !ok {
@@ -315,8 +321,8 @@ func runHeadlessLemonade(o opts) int {
 	}
 
 	// --- Step 2: benchmark each model ---
-	rows := []Row{}
-	belowThreshold := []string{}
+	var rows []Row
+	var belowThreshold []string
 
 	for _, mid := range o.ModelIDs {
 		recipe := modelRecipe(mid)

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -30,13 +31,13 @@ type modelsEnvelope struct {
 // rawModel is the full JSON shape; we map to Model after parsing to apply
 // the id-fallback logic that Python uses (id → model_name → name).
 type rawModel struct {
-	ID          string   `json:"id"`
-	ModelName   string   `json:"model_name"`
-	Name        string   `json:"name"`
-	Downloaded  bool     `json:"downloaded"`
-	Labels      []string `json:"labels"`
-	Recipe      string   `json:"recipe"`
-	Backend     string   `json:"backend"` // fallback for recipe
+	ID         string   `json:"id"`
+	ModelName  string   `json:"model_name"`
+	Name       string   `json:"name"`
+	Downloaded bool     `json:"downloaded"`
+	Labels     []string `json:"labels"`
+	Recipe     string   `json:"recipe"`
+	Backend    string   `json:"backend"` // fallback for recipe
 }
 
 // ParseModels decodes the /api/v1/models response body into a []Model.
@@ -48,12 +49,17 @@ type rawModel struct {
 //	else:
 //	    models_list = response
 func ParseModels(data []byte) ([]Model, error) {
-	// Try the dict envelope first.
-	var env modelsEnvelope
-	if err := json.Unmarshal(data, &env); err == nil && env.Data != nil {
+	// Disambiguate by the first non-space byte: '{' is the envelope (so
+	// `"data": null` correctly yields an empty list), '[' is a bare array.
+	trimmed := bytes.TrimSpace(data)
+	if len(trimmed) > 0 && trimmed[0] == '{' {
+		var env modelsEnvelope
+		if err := json.Unmarshal(data, &env); err != nil {
+			return nil, fmt.Errorf("models.ParseModels: %w", err)
+		}
 		return convertModels(env.Data), nil
 	}
-	// Fall back to a bare array.
+
 	var raws []rawModel
 	if err := json.Unmarshal(data, &raws); err != nil {
 		return nil, fmt.Errorf("models.ParseModels: %w", err)

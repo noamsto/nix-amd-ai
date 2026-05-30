@@ -17,13 +17,13 @@ func flagValue(args []string, flag string) (string, bool) {
 
 func TestBuildLlamaServerArgs_DraftMTP(t *testing.T) {
 	sa := ServerArgs{
-		BinPath:    "/nix/store/abc/bin/llama-server",
-		ModelPath:  "/tmp/model.gguf",
-		Port:       18080,
-		Device:     "Vulkan0",
-		SpecType:   "draft-mtp",
-		NGL:        99,
-		Ctx:        4096,
+		BinPath:   "/nix/store/abc/bin/llama-server",
+		ModelPath: "/tmp/model.gguf",
+		Port:      18080,
+		Device:    "Vulkan0",
+		SpecType:  "draft-mtp",
+		NGL:       99,
+		Ctx:       4096,
 	}
 	args := BuildLlamaServerArgs(sa)
 

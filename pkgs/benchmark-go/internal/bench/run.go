@@ -3,6 +3,7 @@ package bench
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -12,6 +13,11 @@ import (
 	"strings"
 	"time"
 )
+
+// ErrNoMTPHead is returned by RunMTPAB when llama-server rejects
+// --spec-type draft-mtp because the model has no MTP draft head. Callers
+// match it with errors.Is to map to exit code 1 (mirrors Python's sys.exit(1)).
+var ErrNoMTPHead = errors.New("no MTP head")
 
 // completionHTTPTimeout bounds streaming completion and model-load requests.
 // Shared by runOneCompletion and LoadModel so they cannot silently diverge.
@@ -407,8 +413,8 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 					msg := startErr.Error()
 					if specType == "draft-mtp" && strings.Contains(strings.ToLower(msg), "mtp") {
 						return nil, fmt.Errorf(
-							"model %q has no MTP head (--spec-type draft-mtp rejected by llama-server)."+
-								" Pick an MTP-labeled model", o.ModelID,
+							"%w: model %q rejected --spec-type draft-mtp (pick an MTP-labeled model)",
+							ErrNoMTPHead, o.ModelID,
 						)
 					}
 					return nil, fmt.Errorf("[%s] spec=%s server start: %w", backend, specType, startErr)
