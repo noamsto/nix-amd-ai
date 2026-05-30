@@ -251,6 +251,15 @@ func runAmdgpuTop() (grbmBusyPct float64, arch string) {
 	return parseAmdgpuTop(line)
 }
 
+// GRBMBusyPct returns the live GPU Graphics Pipe busy percentage from a
+// single amdgpu_top sample. Returns 0 on any error; never panics.
+// It does NOT read dmidecode, sysfs, or /proc/meminfo — safe to call during
+// a measured benchmark run without perturbing the workload.
+func GRBMBusyPct() float64 {
+	pct, _ := runAmdgpuTop()
+	return pct
+}
+
 // Detect reads host hardware and returns an Info struct.
 // It never panics and degrades gracefully when any source is unavailable.
 func Detect() Info {

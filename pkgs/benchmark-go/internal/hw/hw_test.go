@@ -185,6 +185,18 @@ Memory Device
 	}
 }
 
+// TestGRBMBusyPct_NoError verifies that GRBMBusyPct returns without panic and
+// never returns a negative value. It exercises the same amdgpu_top/parse path
+// as parseAmdgpuTop (covered by the fixture tests above) but via the exported
+// entry point used by the TUI's GRBM ticker.
+func TestGRBMBusyPct_NoError(t *testing.T) {
+	got := GRBMBusyPct()
+	if got < 0 {
+		t.Errorf("GRBMBusyPct() = %v; want >= 0", got)
+	}
+	t.Logf("GRBMBusyPct() = %.1f%%", got)
+}
+
 // TestDetect_Smoke calls Detect on the real box and asserts basic liveness.
 // Run with -short to skip (but it should pass on the target machine).
 func TestDetect_Smoke(t *testing.T) {

@@ -35,11 +35,10 @@ type runRequest struct {
 	models  []string
 	params  RunParams
 	baseURL string
-	// configPath / lemondService / noRestart drive the Backend A/B switch
-	// (mirrors the CLI's --config-path / --lemond-service / --no-restart).
+	// configPath / lemondService drive the Backend A/B switch
+	// (mirrors the CLI's --config-path / --lemond-service).
 	configPath    string
 	lemondService string
-	noRestart     bool
 	promptTk      int
 	genTk         int
 }
@@ -206,7 +205,9 @@ func grbmTickCmd(grbm func() float64) tea.Cmd {
 }
 
 // defaultGRBM reads the live GPU GRBM busy percentage from hardware.
-func defaultGRBM() float64 { return hw.Detect().GRBMBusyPct }
+// Uses hw.GRBMBusyPct (amdgpu_top only — no dmidecode or sysfs) to avoid
+// perturbing the benchmark workload.
+func defaultGRBM() float64 { return hw.GRBMBusyPct() }
 
 // applyProgress records one measured iteration into run state.
 func (s *runState) applyProgress(msg runProgressMsg) {
@@ -386,7 +387,7 @@ func runBackendABLive(ctx context.Context, req runRequest, progress chan<- tea.M
 
 	backends := req.params.Backends
 	if len(backends) == 0 {
-		return runResultMsg{results: res, err: fmt.Errorf("Backend A/B: empty backend list")}
+		return runResultMsg{results: res, err: fmt.Errorf("backend A/B: empty backend list")}
 	}
 
 	// Capture the current backend once, before the first switch, so we restore
@@ -402,10 +403,9 @@ func runBackendABLive(ctx context.Context, req runRequest, progress chan<- tea.M
 		if rErr := bench.RestoreLlamacppBackend(req.configPath, origBackend); rErr != nil {
 			fmt.Fprintf(stderrSink, "WARNING: failed to restore lemonade config: %v\n", rErr)
 		}
-		if !req.noRestart {
-			if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
-				fmt.Fprintf(stderrSink, "WARNING: failed to restart lemond during cleanup: %v\n", rErr)
-			}
+		// TUI always restarts lemond on cleanup.
+		if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
+			fmt.Fprintf(stderrSink, "WARNING: failed to restart lemond during cleanup: %v\n", rErr)
 		}
 	}()
 
@@ -419,13 +419,12 @@ func runBackendABLive(ctx context.Context, req runRequest, progress chan<- tea.M
 				return runResultMsg{results: res, err: fmt.Errorf("[%s] writing config: %w", backend, sErr)}
 			}
 		}
-		if !req.noRestart {
-			if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
-				return runResultMsg{results: res, err: fmt.Errorf("[%s] restart lemond: %w", backend, rErr)}
-			}
-			if wErr := bench.WaitForLemond(req.baseURL, lemondReadyTimeout); wErr != nil {
-				return runResultMsg{results: res, err: fmt.Errorf("[%s] waiting for lemond: %w", backend, wErr)}
-			}
+		// TUI always restarts lemond between backends.
+		if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
+			return runResultMsg{results: res, err: fmt.Errorf("[%s] restart lemond: %w", backend, rErr)}
+		}
+		if wErr := bench.WaitForLemond(req.baseURL, lemondReadyTimeout); wErr != nil {
+			return runResultMsg{results: res, err: fmt.Errorf("[%s] waiting for lemond: %w", backend, wErr)}
 		}
 
 		units, bErr := benchmarkModelsLive(ctx, req, backend, progress)
