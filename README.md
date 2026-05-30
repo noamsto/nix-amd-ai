@@ -126,6 +126,12 @@ If `lemonade backends` reports a backend as `installed` but benchmarks report <5
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
 
+## Troubleshooting
+
+### `amdxdna ... aie2_get_info: Not supported request parameter N` in dmesg/journald
+
+Harmless. `aie2_get_info` handles the NPU's `GET_INFO` ioctl, and the mainline `amdxdna` driver implements only a subset of query types (AIE status/version/metadata, clock, hw-contexts). When userspace (`xrt-smi`, a system monitor, or the lemonade/FastFlowLM init path) probes a power/sensor/telemetry param the driver doesn't implement yet, it returns `-EOPNOTSUPP` and logs that `*ERROR*` line — often on a timer, so it repeats. NPU inference is unaffected. Upstream is filling in the missing queries (power reporting ~Linux 7.1, hwmon exposure tracked in [xdna-driver#323](https://github.com/amd/xdna-driver/issues/323)); a newer kernel makes the line disappear.
+
 ## GAIA agent framework
 
 [AMD GAIA](https://github.com/amd/gaia) is a Python agent framework that uses lemond as its inference backend (Email Triage / Code / Jira / Blender / RAG / MCP agents, plus a built-in web UI). Upstream targets pip / electron installers, neither of which fits a NixOS host cleanly, and the Python dependency tree is large and fast-moving (weekly-ish releases, torch + transformers + ~60 transitive deps). The flake therefore ships a thin `uvx` wrapper rather than a from-source Nix build:
