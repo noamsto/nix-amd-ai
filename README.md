@@ -236,9 +236,9 @@ Launches a full-screen TUI that walks through:
 2. **Preflight check** — detects interference (competing GPU processes, battery power); consent-gated fixers where possible
 3. **Mode picker** — single backend, A/B comparison, or MTP on/off
 4. **Model picker** — lists downloaded lemonade models annotated with VRAM fit and predicted throughput ceiling
-5. **Params form** — repeat count, warmup, context size, min-decode-tps threshold
+5. **Params form** — context size, repeat, warmup, backends
 6. **Live run** — streaming progress with GPU% utilisation
-7. **Results** — measured vs predicted, markdown export, log written to `~/.cache/lemonade/bench-logs/`
+7. **Results** — measured vs predicted, markdown export, log written to `bench-logs-<topic>-<date>/` (cwd-relative)
 
 For trustworthy numbers: run with an idle GPU and on AC power (the preflight guard will prompt if either condition isn't met).
 
