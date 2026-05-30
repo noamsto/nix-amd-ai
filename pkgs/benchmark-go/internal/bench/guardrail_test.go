@@ -40,14 +40,14 @@ func TestEnsureGPUMem(t *testing.T) {
 
 	t.Run("zero model size is a no-op", func(t *testing.T) {
 		called := false
-		err := ensureGPUMem(0, func() (uint64, bool) { called = true; return 0, true }, nil, io.Discard)
+		err := ensureGPUMem(0, func() (uint64, bool) { called = true; return 0, true }, nil, io.Discard, nil)
 		if err != nil || called {
 			t.Fatalf("expected no-op, got err=%v memFreeCalled=%v", err, called)
 		}
 	})
 
 	t.Run("unmeasurable memory fails open", func(t *testing.T) {
-		err := ensureGPUMem(model, func() (uint64, bool) { return 0, false }, nil, io.Discard)
+		err := ensureGPUMem(model, func() (uint64, bool) { return 0, false }, nil, io.Discard, nil)
 		if err != nil {
 			t.Fatalf("expected fail-open nil, got %v", err)
 		}
@@ -56,7 +56,7 @@ func TestEnsureGPUMem(t *testing.T) {
 	t.Run("ample free does not evacuate", func(t *testing.T) {
 		evac := false
 		err := ensureGPUMem(model, func() (uint64, bool) { return 26 * giBUnit, true },
-			func() error { evac = true; return nil }, io.Discard)
+			func() error { evac = true; return nil }, io.Discard, nil)
 		if err != nil || evac {
 			t.Fatalf("expected no evacuation, got err=%v evac=%v", err, evac)
 		}
@@ -73,7 +73,7 @@ func TestEnsureGPUMem(t *testing.T) {
 			}
 			return 26 * giBUnit, true
 		}
-		err := ensureGPUMem(model, memFree, func() error { evac++; return nil }, io.Discard)
+		err := ensureGPUMem(model, memFree, func() error { evac++; return nil }, io.Discard, nil)
 		if err != nil {
 			t.Fatalf("expected success after evacuation, got %v", err)
 		}
@@ -84,7 +84,7 @@ func TestEnsureGPUMem(t *testing.T) {
 
 	t.Run("evacuation does not free enough → actionable error", func(t *testing.T) {
 		err := ensureGPUMem(model, func() (uint64, bool) { return 11 * giBUnit, true },
-			func() error { return nil }, io.Discard)
+			func() error { return nil }, io.Discard, nil)
 		if err == nil || !strings.Contains(err.Error(), "insufficient free GPU memory") {
 			t.Fatalf("expected actionable error, got %v", err)
 		}
@@ -92,14 +92,14 @@ func TestEnsureGPUMem(t *testing.T) {
 
 	t.Run("evacuation error still yields actionable error", func(t *testing.T) {
 		err := ensureGPUMem(model, func() (uint64, bool) { return 11 * giBUnit, true },
-			func() error { return fmt.Errorf("boom") }, io.Discard)
+			func() error { return fmt.Errorf("boom") }, io.Discard, nil)
 		if err == nil || !strings.Contains(err.Error(), "insufficient free GPU memory") {
 			t.Fatalf("expected actionable error after failed evacuate, got %v", err)
 		}
 	})
 
 	t.Run("no evacuator → fails fast", func(t *testing.T) {
-		err := ensureGPUMem(model, func() (uint64, bool) { return 11 * giBUnit, true }, nil, io.Discard)
+		err := ensureGPUMem(model, func() (uint64, bool) { return 11 * giBUnit, true }, nil, io.Discard, nil)
 		if err == nil || !strings.Contains(err.Error(), "insufficient free GPU memory") {
 			t.Fatalf("expected fail-fast error, got %v", err)
 		}

@@ -51,6 +51,15 @@ type runProgressMsg struct {
 	decodeTPS float64 // this iteration's decode t/s
 }
 
+// runStatusMsg reports the current activity for a unit during otherwise-silent
+// phases (loading model, warming up, …), so the run screen isn't blank while a
+// server loads or warms up. specKey/label match runProgressMsg.
+type runStatusMsg struct {
+	specKey string
+	label   string
+	status  string
+}
+
 // runResultMsg is the single terminal message: the run finished (or errored).
 // It carries the completed results for the results screen to consume.
 type runResultMsg struct {
@@ -116,6 +125,7 @@ type runUnitProgress struct {
 	iter    int
 	total   int
 	samples []float64
+	status  string // current activity ("loading model", "warming up", …)
 }
 
 // startRun initialises run state and returns the command that kicks off the
@@ -203,6 +213,22 @@ func (s *runState) applyProgress(msg runProgressMsg) {
 	u.samples = append(u.samples, msg.decodeTPS)
 }
 
+// applyStatus records the current activity for a unit, creating it if the first
+// thing we hear about a unit is a status (e.g. "loading model" before any
+// measured iteration).
+func (s *runState) applyStatus(msg runStatusMsg) {
+	u, ok := s.units[msg.specKey]
+	if !ok {
+		u = &runUnitProgress{label: msg.label}
+		s.units[msg.specKey] = u
+		s.order = append(s.order, msg.specKey)
+	}
+	if msg.label != "" {
+		u.label = msg.label
+	}
+	u.status = msg.status
+}
+
 // handleRunKey processes key presses while on screenRun.
 func (m model) handleRunKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
@@ -259,6 +285,16 @@ func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 		var cmd tea.Cmd
 		m.run.spin, cmd = m.run.spin.Update(msg)
 		return m, cmd, true
+
+	case runStatusMsg:
+		if m.run.quitting {
+			return m, waitForRunMsg(m.run.ch), true
+		}
+		if m.run.aborted {
+			return m, nil, true
+		}
+		m.run.applyStatus(msg)
+		return m, waitForRunMsg(m.run.ch), true
 
 	case runProgressMsg:
 		if m.run.quitting {
@@ -346,6 +382,14 @@ func runMTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) te
 					iter:      iter,
 					total:     req.params.Repeat,
 					decodeTPS: tps,
+				})
+			},
+			OnStatus: func(backend, specType, status string) {
+				spec := specLabel(specType)
+				sendMsg(ctx, progress, runStatusMsg{
+					specKey: mtpKey(modelID, backend, spec),
+					label:   fmt.Sprintf("%s [%s] MTP %s", modelID, backend, spec),
+					status:  status,
 				})
 			},
 		}
@@ -543,22 +587,31 @@ func renderRunScreen(s runState, st styles) string {
 
 	for _, key := range s.order {
 		u := s.units[key]
-		frac := 0.0
-		if u.total > 0 {
-			frac = float64(u.iter) / float64(u.total)
+		done := u.total > 0 && u.iter >= u.total
+		measuring := u.total > 0 && (u.iter > 0 || len(u.samples) > 0)
+
+		// Per-unit marker: ✓ when complete, live spinner while in flight.
+		marker := s.spin.View()
+		if done {
+			marker = st.pass.Render("✓")
+		}
+		line := marker + " " + st.value.Render(u.label)
+		// While not yet measuring, show the current phase ("loading model",
+		// "warming up", …) so idle time isn't a blank screen.
+		if u.status != "" && !measuring && !done {
+			line += "  " + st.hint.Render("· "+u.status+"…")
+		}
+		b.WriteString(line + "\n")
+
+		if measuring {
+			frac := float64(u.iter) / float64(u.total)
 			if frac > 1 {
 				frac = 1
 			}
+			b.WriteString(fmt.Sprintf("    %s  %s\n", s.progress.ViewAs(frac), st.label.Render(fmt.Sprintf("%d/%d", u.iter, u.total))))
+			b.WriteString("    " + st.accent.Render(renderRunningStat(u.samples)) + st.hint.Render(" tok/s") + "\n")
 		}
-		// Per-unit status: ✓ when complete, live spinner while in flight.
-		marker := s.spin.View()
-		if u.total > 0 && u.iter >= u.total {
-			marker = st.pass.Render("✓")
-		}
-		bar := s.progress.ViewAs(frac)
-		b.WriteString(marker + " " + st.value.Render(u.label) + "\n")
-		b.WriteString(fmt.Sprintf("    %s  %s\n", bar, st.label.Render(fmt.Sprintf("%d/%d", u.iter, u.total))))
-		b.WriteString("    " + st.accent.Render(renderRunningStat(u.samples)) + st.hint.Render(" tok/s") + "\n\n")
+		b.WriteString("\n")
 	}
 
 	b.WriteString(keybar(st, [2]string{"q/Ctrl+C", "abort"}))

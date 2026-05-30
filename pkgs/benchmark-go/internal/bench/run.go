@@ -57,6 +57,10 @@ type MeasureOpts struct {
 	// iteration with the 1-based index and the iteration's decode t/s. Skipped
 	// no-token iterations do not fire it. Nil-safe: nil means no callback.
 	OnIteration func(iter int, decodeTPS float64)
+	// OnPhase, if non-nil, fires at the start of the warmup and measure phases
+	// ("warming up" / "measuring") so a UI can show what's happening during the
+	// otherwise-silent warmup. Nil-safe.
+	OnPhase func(phase string)
 }
 
 // MeasureResult holds per-iteration samples from a measurement run.
@@ -201,6 +205,9 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 	}
 
 	lw := logWriter(o.LogW)
+	if o.Warmup > 0 && o.OnPhase != nil {
+		o.OnPhase("warming up")
+	}
 	if o.PhaseLog {
 		fmt.Fprintf(lw, "  Warming up (%d iteration(s))...\n", o.Warmup)
 	}
@@ -211,6 +218,9 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 		runOneCompletion(ctx, baseURL, path, opts)
 	}
 
+	if o.OnPhase != nil {
+		o.OnPhase("measuring")
+	}
 	if o.PhaseLog {
 		fmt.Fprintf(lw, "  Measuring (%d iteration(s))...\n", o.Repeat)
 	}
@@ -308,6 +318,11 @@ type MTPABOpts struct {
 	// backend, spec type ("none" | "draft-mtp"), the 1-based iteration index,
 	// and the iteration's decode t/s. Lets a TUI stream per-iteration progress.
 	OnIteration func(backend, specType string, iter int, decodeTPS float64)
+	// OnStatus, if non-nil, reports the current activity for a (backend,
+	// specType) unit during otherwise-silent phases: "freeing GPU memory",
+	// "loading model", "warming up", "measuring". Lets a UI show what's
+	// happening between measured iterations. Nil-safe.
+	OnStatus func(backend, specType, status string)
 	// BaseURL is the lemonade server (scheme+host+port). Used only to evacuate a
 	// lemonade-held model when the GPU-memory guardrail trips. "" disables it.
 	BaseURL string
@@ -335,7 +350,7 @@ const (
 // returning an actionable error only if the GPU is still too full afterward.
 // Fails open (nil) when free memory can't be measured — the server's stderr
 // tail then surfaces in any readiness-timeout error.
-func ensureGPUMem(modelBytes uint64, memFree func() (uint64, bool), evacuate func() error, lw io.Writer) error {
+func ensureGPUMem(modelBytes uint64, memFree func() (uint64, bool), evacuate func() error, lw io.Writer, onEvacuate func()) error {
 	if modelBytes == 0 || memFree == nil {
 		return nil
 	}
@@ -348,6 +363,9 @@ func ensureGPUMem(modelBytes uint64, memFree func() (uint64, bool), evacuate fun
 	}
 
 	if evacuate != nil {
+		if onEvacuate != nil {
+			onEvacuate()
+		}
 		fmt.Fprintf(lw, "  GPU low on free memory (%.1f GiB); evacuating loaded model…\n", giB(free))
 		if err := evacuate(); err != nil {
 			fmt.Fprintf(lw, "  WARNING: evacuate failed: %v\n", err)
@@ -531,6 +549,11 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			// before the loop moves to the next spec or returns.
 			tps, err := func() (*float64, error) {
 				fmt.Fprintf(lw, "\n[%s] --spec-type %s\n", backend, specType)
+				emit := func(status string) {
+					if o.OnStatus != nil {
+						o.OnStatus(backend, specType, status)
+					}
+				}
 
 				port, err := FindFreePort()
 				if err != nil {
@@ -540,10 +563,11 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 				// Guardrail: ensure the GPU can hold the model (evacuating a
 				// lemonade-held model if needed) instead of spawning a server
 				// that hangs until the 5m readiness timeout. Re-checked per spec.
-				if memErr := ensureGPUMem(modelBytes, memFree, evacuate, lw); memErr != nil {
+				if memErr := ensureGPUMem(modelBytes, memFree, evacuate, lw, func() { emit("freeing GPU memory") }); memErr != nil {
 					return nil, fmt.Errorf("[%s] spec=%s: %w", backend, specType, memErr)
 				}
 
+				emit("loading model")
 				argv := BuildLlamaServerArgs(ServerArgs{
 					BinPath:   binPath,
 					ModelPath: gguf,
@@ -600,6 +624,9 @@ func measureOneSpec(ctx context.Context, srv *LlamaServer, o MTPABOpts, backend,
 		mo.OnIteration = func(iter int, decodeTPS float64) {
 			o.OnIteration(backend, specType, iter, decodeTPS)
 		}
+	}
+	if o.OnStatus != nil {
+		mo.OnPhase = func(phase string) { o.OnStatus(backend, specType, phase) }
 	}
 	r := MeasureSpec(ctx, srv.BaseURL, "/v1/completions", "default", mo)
 	if len(r.DecodeTPS) == 0 {
