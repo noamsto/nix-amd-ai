@@ -187,42 +187,42 @@ func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(id string)
 	return rows
 }
 
-func renderModelScreen(p *modelPicker) string {
+func renderModelScreen(p *modelPicker, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(headingStyle.Render("Select Models") + "\n\n")
+	b.WriteString(st.heading.Render("Select Models") + "\n\n")
 
 	if p.loading {
-		b.WriteString(hintStyle.Render("Loading models from lemonade…") + "\n")
-		return panelStyle.Render(b.String())
+		b.WriteString(st.hint.Render("Loading models from lemonade…") + "\n")
+		return st.panel.Render(b.String())
 	}
 
 	if p.err != nil {
-		b.WriteString(failStyle.Render("Error: "+p.err.Error()) + "\n")
-		b.WriteString("\n" + labelStyle.Render("Esc ← back"))
-		return panelStyle.Render(b.String())
+		b.WriteString(st.fail.Render("Error: "+p.err.Error()) + "\n")
+		b.WriteString("\n" + st.label.Render("Esc ← back"))
+		return st.panel.Render(b.String())
 	}
 
 	if len(p.rows) == 0 {
-		b.WriteString(hintStyle.Render("No downloaded models found.") + "\n")
-		b.WriteString("\n" + labelStyle.Render("Esc ← back"))
-		return panelStyle.Render(b.String())
+		b.WriteString(st.hint.Render("No downloaded models found.") + "\n")
+		b.WriteString("\n" + st.label.Render("Esc ← back"))
+		return st.panel.Render(b.String())
 	}
 
 	for i, r := range p.rows {
 		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected)
 		if i == p.cursor {
-			b.WriteString(valueStyle.Render("> "+line) + "\n")
+			b.WriteString(st.value.Render("> "+line) + "\n")
 		} else {
-			b.WriteString("  " + labelStyle.Render(line) + "\n")
+			b.WriteString("  " + st.label.Render(line) + "\n")
 		}
 	}
 
 	if p.needSelection {
-		b.WriteString("\n" + warnStyle.Render("select at least one model (space to toggle)") + "\n")
+		b.WriteString("\n" + st.warn.Render("select at least one model (space to toggle)") + "\n")
 	}
 
-	b.WriteString("\n" + labelStyle.Render("↑/↓ move   Space toggle   Enter → continue   Esc ← back"))
+	b.WriteString("\n" + st.label.Render("↑/↓ move   Space toggle   Enter → continue   Esc ← back"))
 
-	return panelStyle.Render(b.String())
+	return st.panel.Render(b.String())
 }

@@ -33,25 +33,25 @@ type modePicker struct {
 }
 
 // renderModeScreen renders the mode selection panel.
-func renderModeScreen(p modePicker) string {
+func renderModeScreen(p modePicker, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(headingStyle.Render("Select Benchmark Mode") + "\n\n")
+	b.WriteString(st.heading.Render("Select Benchmark Mode") + "\n\n")
 
 	for i, item := range modeItems {
 		prefix := "  "
 		label := item.label
 		if i == p.cursor {
 			prefix = "> "
-			label = valueStyle.Render(label)
+			label = st.value.Render(label)
 		} else {
-			label = labelStyle.Render(label)
+			label = st.label.Render(label)
 		}
 		b.WriteString(fmt.Sprintf("%s%s\n", prefix, label))
-		b.WriteString(fmt.Sprintf("    %s\n", hintStyle.Render(item.desc)))
+		b.WriteString(fmt.Sprintf("    %s\n", st.hint.Render(item.desc)))
 	}
 
-	b.WriteString("\n" + labelStyle.Render("↑/↓ move   Enter → select   Esc ← back"))
+	b.WriteString("\n" + st.label.Render("↑/↓ move   Enter → select   Esc ← back"))
 
-	return panelStyle.Render(b.String())
+	return st.panel.Render(b.String())
 }

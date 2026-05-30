@@ -67,7 +67,7 @@ func TestParseIntField_BackspaceSimulation(t *testing.T) {
 
 func TestRenderParamsField(t *testing.T) {
 	t.Run("focused field has cursor", func(t *testing.T) {
-		out := renderParamsField("Ctx:", "2048", true, false)
+		out := renderParamsField("Ctx:", "2048", true, false, newStyles(true))
 		if !strings.Contains(out, "> ") {
 			t.Errorf("focused field should contain '> ', got %q", out)
 		}
@@ -80,21 +80,21 @@ func TestRenderParamsField(t *testing.T) {
 	})
 
 	t.Run("unfocused field has no cursor", func(t *testing.T) {
-		out := renderParamsField("Repeat:", "3", false, false)
+		out := renderParamsField("Repeat:", "3", false, false, newStyles(true))
 		if strings.Contains(out, "> ") {
 			t.Errorf("unfocused field should not have '> ', got %q", out)
 		}
 	})
 
 	t.Run("suggested field shows hint", func(t *testing.T) {
-		out := renderParamsField("Ctx:", "2048", true, true)
+		out := renderParamsField("Ctx:", "2048", true, true, newStyles(true))
 		if !strings.Contains(out, "suggested") {
 			t.Errorf("suggested field should show hint, got %q", out)
 		}
 	})
 
 	t.Run("non-suggested field has no hint", func(t *testing.T) {
-		out := renderParamsField("Repeat:", "3", false, false)
+		out := renderParamsField("Repeat:", "3", false, false, newStyles(true))
 		if strings.Contains(out, "suggested") {
 			t.Errorf("non-suggested field should not show hint, got %q", out)
 		}

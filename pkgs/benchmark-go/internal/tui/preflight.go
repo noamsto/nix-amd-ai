@@ -3,16 +3,7 @@ package tui
 import (
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
-)
-
-var (
-	passStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("46"))  // green
-	warnStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("214")) // orange
-	failStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196")) // red
-	hintStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("245")) // dim grey
 )
 
 // isLemondResult returns true when a Result belongs to the lemond check.
@@ -30,15 +21,15 @@ func isPowerResult(r preflight.Result) bool {
 // renderPreflightLine renders a single preflight Result as a display line.
 // Format: <glyph> <name>  <reason>  [key hint if fixable]
 // Pure function — safe to unit-test without bubbletea.
-func renderPreflightLine(r preflight.Result) string {
+func renderPreflightLine(r preflight.Result, st styles) string {
 	var glyphRender string
 	switch r.Status {
 	case preflight.Pass:
-		glyphRender = passStyle.Render("✓")
+		glyphRender = st.pass.Render("✓")
 	case preflight.Warn:
-		glyphRender = warnStyle.Render("⚠")
+		glyphRender = st.warn.Render("⚠")
 	case preflight.Fail:
-		glyphRender = failStyle.Render("✗")
+		glyphRender = st.fail.Render("✗")
 	default:
 		glyphRender = "?"
 	}
@@ -46,7 +37,7 @@ func renderPreflightLine(r preflight.Result) string {
 	line := glyphRender + "  " + r.Name
 
 	if r.Reason != "" {
-		line += "  " + hintStyle.Render(r.Reason)
+		line += "  " + st.hint.Render(r.Reason)
 	}
 
 	// Append inline key hint for fixable results.
@@ -56,9 +47,9 @@ func renderPreflightLine(r preflight.Result) string {
 	if r.Fix != nil {
 		switch {
 		case isLemondResult(r):
-			line += "  " + hintStyle.Render("[s] stop lemond")
+			line += "  " + st.hint.Render("[s] stop lemond")
 		case isPowerResult(r):
-			line += "  " + hintStyle.Render("[p] set performance")
+			line += "  " + st.hint.Render("[p] set performance")
 		}
 	}
 
@@ -67,22 +58,22 @@ func renderPreflightLine(r preflight.Result) string {
 
 // renderPreflightScreen renders the preflight checklist panel.
 // results may be nil when loading hasn't completed yet.
-func renderPreflightScreen(results []preflight.Result, loaded bool) string {
+func renderPreflightScreen(results []preflight.Result, loaded bool, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(headingStyle.Render("Preflight") + "\n\n")
+	b.WriteString(st.heading.Render("Preflight") + "\n\n")
 
 	if !loaded {
-		b.WriteString(hintStyle.Render("Checking environment…") + "\n")
+		b.WriteString(st.hint.Render("Checking environment…") + "\n")
 	} else if len(results) == 0 {
-		b.WriteString(hintStyle.Render("No checks ran.") + "\n")
+		b.WriteString(st.hint.Render("No checks ran.") + "\n")
 	} else {
 		for _, r := range results {
-			b.WriteString(renderPreflightLine(r) + "\n")
+			b.WriteString(renderPreflightLine(r, st) + "\n")
 		}
 	}
 
-	b.WriteString("\n" + labelStyle.Render("Enter → continue   Esc ← back"))
+	b.WriteString("\n" + st.label.Render("Enter → continue   Esc ← back"))
 
-	return panelStyle.Render(b.String())
+	return st.panel.Render(b.String())
 }

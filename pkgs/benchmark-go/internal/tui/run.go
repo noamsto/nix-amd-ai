@@ -494,13 +494,13 @@ func renderRunningStat(samples []float64) string {
 }
 
 // renderRunScreen renders the live run panel.
-func renderRunScreen(s runState) string {
+func renderRunScreen(s runState, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(headingStyle.Render("Running Benchmark") + "\n\n")
+	b.WriteString(st.heading.Render("Running Benchmark") + "\n\n")
 
 	if len(s.order) == 0 {
-		b.WriteString(hintStyle.Render("Starting…") + "\n")
+		b.WriteString(st.hint.Render("Starting…") + "\n")
 	}
 
 	for _, key := range s.order {
@@ -513,11 +513,11 @@ func renderRunScreen(s runState) string {
 			}
 		}
 		bar := s.progress.ViewAs(frac)
-		b.WriteString(labelStyle.Render(u.label) + "\n")
+		b.WriteString(st.label.Render(u.label) + "\n")
 		b.WriteString(fmt.Sprintf("  %s  %d/%d\n", bar, u.iter, u.total))
-		b.WriteString("  " + hintStyle.Render(renderRunningStat(u.samples)+" tok/s") + "\n\n")
+		b.WriteString("  " + st.hint.Render(renderRunningStat(u.samples)+" tok/s") + "\n\n")
 	}
 
-	b.WriteString("\n" + labelStyle.Render("q/Ctrl+C abort"))
-	return panelStyle.Render(b.String())
+	b.WriteString("\n" + st.label.Render("q/Ctrl+C abort"))
+	return st.panel.Render(b.String())
 }

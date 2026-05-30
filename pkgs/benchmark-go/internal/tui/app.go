@@ -58,6 +58,9 @@ type model struct {
 	width    int
 	railGRBM func() float64 // nil → defaultRailGRBM
 
+	// Theme — updated on BackgroundColorMsg.
+	st styles
+
 	// Seams for testing. nil falls back to the real implementation:
 	//   runBench → defaultRunBench (spawns llama-server / hits lemonade)
 	// Tests inject a fake so no test touches hardware or the network.
@@ -80,11 +83,14 @@ func (m model) configPath() string {
 
 // New returns an initialised tea.Model starting on the Hardware screen.
 func New(info hw.Info, cfg Config) tea.Model {
-	return model{current: screenHW, info: info, cfg: cfg}
+	return model{current: screenHW, info: info, cfg: cfg, st: newStyles(true)}
 }
 
-// Init satisfies tea.Model; starts the rail GPU ticker.
-func (m model) Init() tea.Cmd { return railTickCmd(m.railGRBM) }
+// Init satisfies tea.Model; starts the rail GPU ticker and requests terminal background color.
+func (m model) Init() tea.Cmd {
+	bgCmd := func() tea.Msg { return tea.RequestBackgroundColor() }
+	return tea.Batch(railTickCmd(m.railGRBM), bgCmd)
+}
 
 // preflightResultsMsg carries the results of a preflight.Run call.
 type preflightResultsMsg struct {
@@ -119,6 +125,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case tea.BackgroundColorMsg:
+		m.st = newStyles(msg.IsDark())
+		return m, nil
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		return m, nil
@@ -266,26 +276,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) View() tea.View {
+	st := m.st
 	var s string
 	switch m.current {
 	case screenHW:
-		s = renderHWPanel(m.info)
+		s = renderHWPanel(m.info, st)
 	case screenPreflight:
-		s = renderPreflightScreen(m.preflightResults, m.preflightLoaded)
+		s = renderPreflightScreen(m.preflightResults, m.preflightLoaded, st)
 	case screenMode:
-		s = renderModeScreen(m.modePicker)
+		s = renderModeScreen(m.modePicker, st)
 	case screenModel:
-		s = renderModelScreen(&m.modelPicker)
+		s = renderModelScreen(&m.modelPicker, st)
 	case screenParams:
-		s = renderParamsScreen(m.paramsForm)
+		s = renderParamsScreen(m.paramsForm, st)
 	case screenRun:
-		s = renderRunScreen(m.run)
+		s = renderRunScreen(m.run, st)
 	case screenResults:
-		s = renderResults(m.run.results, m.run.err, m.results, m.info, nil)
+		s = renderResults(m.run.results, m.run.err, m.results, m.info, nil, st)
 	default:
-		s = renderHWPanel(m.info)
+		s = renderHWPanel(m.info, st)
 	}
-	rail := renderRail(m.info, m.rail, m.width)
+	rail := renderRail(m.info, m.rail, m.width, st)
 	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, rail, s))
 	v.AltScreen = true
 	return v

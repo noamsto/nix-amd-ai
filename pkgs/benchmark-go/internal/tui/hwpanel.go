@@ -4,81 +4,59 @@ import (
 	"fmt"
 	"strings"
 
-	"charm.land/lipgloss/v2"
-
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 )
 
-var (
-	panelStyle = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
-			Padding(0, 1)
-
-	headingStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("212"))
-
-	labelStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("241"))
-
-	valueStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("255"))
-
-	warnValueStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color("214"))
-)
-
 // renderHWPanel renders a lipgloss-bordered box with detected hardware info.
-func renderHWPanel(info hw.Info) string {
+func renderHWPanel(info hw.Info, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(headingStyle.Render("Hardware") + "\n\n")
+	b.WriteString(st.heading.Render("Hardware") + "\n\n")
 
 	// GPU arch
 	arch := info.GfxArch
 	if arch == "" {
 		arch = "unknown"
 	}
-	b.WriteString(labelStyle.Render("GPU arch:  ") + valueStyle.Render(arch) + "\n")
+	b.WriteString(st.label.Render("GPU arch:  ") + st.value.Render(arch) + "\n")
 
 	// RAM: total GiB + type/speed (or a note when type is unknown)
 	ramLine := fmt.Sprintf("%.1f GiB", info.RAMGiB)
 	if info.RAMType == "" {
-		ramLine += "  " + warnValueStyle.Render("(type: unknown — run as root for RAM type)")
+		ramLine += "  " + st.warnValue.Render("(type: unknown — run as root for RAM type)")
 	} else {
 		typeStr := info.RAMType
 		if info.RAMSpeedMTs > 0 {
 			typeStr += fmt.Sprintf(" %d MT/s", info.RAMSpeedMTs)
 		}
-		ramLine += "  " + valueStyle.Render(typeStr)
+		ramLine += "  " + st.value.Render(typeStr)
 	}
-	b.WriteString(labelStyle.Render("RAM:       ") + ramLine + "\n")
+	b.WriteString(st.label.Render("RAM:       ") + ramLine + "\n")
 
 	// VRAM (UMA carveout) in GiB
 	vramGiB := float64(info.VRAMBytes) / (1 << 30)
-	b.WriteString(labelStyle.Render("VRAM:      ") + valueStyle.Render(fmt.Sprintf("%.1f GiB  (UMA carveout)", vramGiB)) + "\n")
+	b.WriteString(st.label.Render("VRAM:      ") + st.value.Render(fmt.Sprintf("%.1f GiB  (UMA carveout)", vramGiB)) + "\n")
 
 	// GTT (usable KV-cache budget) in GiB
 	gttGiB := float64(info.GTTBytes) / (1 << 30)
-	b.WriteString(labelStyle.Render("GTT:       ") + valueStyle.Render(fmt.Sprintf("%.1f GiB  (usable budget)", gttGiB)) + "\n")
+	b.WriteString(st.label.Render("GTT:       ") + st.value.Render(fmt.Sprintf("%.1f GiB  (usable budget)", gttGiB)) + "\n")
 
 	// Power state
-	powerState := powerStateString(info.OnAC, info.Performance)
-	b.WriteString(labelStyle.Render("Power:     ") + powerState + "\n")
+	powerState := powerStateString(info.OnAC, info.Performance, st)
+	b.WriteString(st.label.Render("Power:     ") + powerState + "\n")
 
-	b.WriteString("\n" + labelStyle.Render("Press Enter to continue →"))
+	b.WriteString("\n" + st.label.Render("Press Enter to continue →"))
 
-	return panelStyle.Render(b.String())
+	return st.panel.Render(b.String())
 }
 
 // powerStateString renders a human-readable power state from onAC + performance flags.
-func powerStateString(onAC, performance bool) string {
+func powerStateString(onAC, performance bool, st styles) string {
 	if !onAC {
-		return warnValueStyle.Render("battery  ⚠")
+		return st.warnValue.Render("battery  ⚠")
 	}
 	if performance {
-		return valueStyle.Render("AC  performance")
+		return st.value.Render("AC  performance")
 	}
-	return warnValueStyle.Render("AC  (not performance mode)  ⚠")
+	return st.warnValue.Render("AC  (not performance mode)  ⚠")
 }

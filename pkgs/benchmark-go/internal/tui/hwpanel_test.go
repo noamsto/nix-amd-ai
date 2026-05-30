@@ -18,7 +18,7 @@ func TestRenderHWPanelContainsArch(t *testing.T) {
 		OnAC:        true,
 		Performance: true,
 	}
-	out := renderHWPanel(info)
+	out := renderHWPanel(info, newStyles(true))
 
 	if !strings.Contains(out, "gfx1150") {
 		t.Errorf("expected arch 'gfx1150' in output; got:\n%s", out)
@@ -42,7 +42,7 @@ func TestRenderHWPanelUnknownRAMType(t *testing.T) {
 		VRAMBytes: 8 << 30,
 		GTTBytes:  27 << 30,
 	}
-	out := renderHWPanel(info)
+	out := renderHWPanel(info, newStyles(true))
 
 	if !strings.Contains(out, "unknown") {
 		t.Errorf("expected 'unknown' RAM type hint in output; got:\n%s", out)
@@ -55,7 +55,7 @@ func TestRenderHWPanelVRAMAndGTTValues(t *testing.T) {
 		VRAMBytes: 8 << 30,  // 8 GiB
 		GTTBytes:  27 << 30, // 27 GiB
 	}
-	out := renderHWPanel(info)
+	out := renderHWPanel(info, newStyles(true))
 
 	if !strings.Contains(out, "8.0 GiB") {
 		t.Errorf("expected VRAM '8.0 GiB' in output; got:\n%s", out)
@@ -79,7 +79,7 @@ func TestRenderHWPanelPowerStates(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			info := hw.Info{OnAC: tc.onAC, Performance: tc.performance}
-			out := renderHWPanel(info)
+			out := renderHWPanel(info, newStyles(true))
 			if !strings.Contains(out, tc.want) {
 				t.Errorf("power state: expected %q in output; got:\n%s", tc.want, out)
 			}

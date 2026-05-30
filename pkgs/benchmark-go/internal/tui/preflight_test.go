@@ -15,7 +15,7 @@ import (
 
 func TestRenderPreflightLinePass(t *testing.T) {
 	r := preflight.Result{Name: "gpu-busy", Status: preflight.Pass}
-	out := renderPreflightLine(r)
+	out := renderPreflightLine(r, newStyles(true))
 
 	if !strings.Contains(out, "✓") {
 		t.Errorf("Pass result: expected '✓'; got %q", out)
@@ -33,7 +33,7 @@ func TestRenderPreflightLineWarnLemond(t *testing.T) {
 		Reason: "lemond is serving; may hold a model on the GPU",
 		Fix:    func() error { return nil },
 	}
-	out := renderPreflightLine(r)
+	out := renderPreflightLine(r, newStyles(true))
 
 	if !strings.Contains(out, "⚠") {
 		t.Errorf("Warn result: expected '⚠'; got %q", out)
@@ -50,7 +50,7 @@ func TestRenderPreflightLineWarnPower(t *testing.T) {
 		Reason: "not in performance mode",
 		Fix:    func() error { return nil },
 	}
-	out := renderPreflightLine(r)
+	out := renderPreflightLine(r, newStyles(true))
 
 	if !strings.Contains(out, "⚠") {
 		t.Errorf("Warn result: expected '⚠'; got %q", out)
@@ -66,7 +66,7 @@ func TestRenderPreflightLineFail(t *testing.T) {
 		Status: preflight.Fail,
 		Reason: "GPU busy: 80%",
 	}
-	out := renderPreflightLine(r)
+	out := renderPreflightLine(r, newStyles(true))
 
 	if !strings.Contains(out, "✗") {
 		t.Errorf("Fail result: expected '✗'; got %q", out)
@@ -81,7 +81,7 @@ func TestRenderPreflightLineWarnNoFix(t *testing.T) {
 		Reason: "port 11434 held by ollama",
 		Fix:    nil,
 	}
-	out := renderPreflightLine(r)
+	out := renderPreflightLine(r, newStyles(true))
 
 	if !strings.Contains(out, "⚠") {
 		t.Errorf("Warn result: expected '⚠'; got %q", out)

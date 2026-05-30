@@ -10,7 +10,7 @@ import (
 func TestModePickerItems(t *testing.T) {
 	// All three mode labels must appear in the rendered output.
 	p := modePicker{cursor: 0}
-	out := renderModeScreen(p)
+	out := renderModeScreen(p, newStyles(true))
 
 	labels := []string{
 		"HTTP bench (via lemonade)",

@@ -123,11 +123,9 @@ func joinFit(segs []string, sep string, width int) string {
 	return result
 }
 
-var railStyle = lipgloss.NewStyle().Faint(true)
-
 // renderRail builds the status rail string for the given hw info and state.
 // width<=0 defaults to 80.
-func renderRail(info hw.Info, st railState, width int) string {
+func renderRail(info hw.Info, st railState, width int, styles styles) string {
 	if width <= 0 {
 		width = defaultRailWidth
 	}
@@ -138,7 +136,7 @@ func renderRail(info hw.Info, st railState, width int) string {
 		railPower(info),
 		railPreflight(st.preflight),
 	}
-	return railStyle.Render(joinFit(segs, " · ", width))
+	return styles.rail.Render(joinFit(segs, " · ", width))
 }
 
 // railTickMsg carries a fresh GPU busy-percent reading.

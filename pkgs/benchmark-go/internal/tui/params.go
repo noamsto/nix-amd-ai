@@ -204,7 +204,7 @@ func deleteLastChar(s string) string {
 
 // renderParamsField renders one field row.
 // focused highlights the current field; suggested adds a subtle hint.
-func renderParamsField(label, value string, focused, suggested bool) string {
+func renderParamsField(label, value string, focused, suggested bool, st styles) string {
 	cursor := "  "
 	if focused {
 		cursor = "> "
@@ -212,33 +212,34 @@ func renderParamsField(label, value string, focused, suggested bool) string {
 
 	var labelRender, valueRender string
 	if focused {
-		labelRender = valueStyle.Render(label)
-		valueRender = valueStyle.Render(value)
+		labelRender = st.value.Render(label)
+		valueRender = st.value.Render(value)
 	} else {
-		labelRender = labelStyle.Render(label)
-		valueRender = labelStyle.Render(value)
+		labelRender = st.label.Render(label)
+		valueRender = st.label.Render(value)
 	}
 
 	line := cursor + labelRender + "  " + valueRender
 
 	if suggested {
-		line += "  " + hintStyle.Render("(suggested)")
+		line += "  " + st.hint.Render("(suggested)")
 	}
 
 	return line
 }
 
 // renderParamsScreen renders the full params form panel.
-func renderParamsScreen(f paramsForm) string {
+func renderParamsScreen(f paramsForm, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(headingStyle.Render("Configure Run Parameters") + "\n\n")
+	b.WriteString(st.heading.Render("Configure Run Parameters") + "\n\n")
 
 	b.WriteString(renderParamsField(
 		"Ctx    (context window):",
 		f.ctx,
 		f.focused == fieldCtx,
 		f.ctxSuggested,
+		st,
 	) + "\n")
 
 	b.WriteString(renderParamsField(
@@ -246,6 +247,7 @@ func renderParamsScreen(f paramsForm) string {
 		f.repeat,
 		f.focused == fieldRepeat,
 		false,
+		st,
 	) + "\n")
 
 	b.WriteString(renderParamsField(
@@ -253,6 +255,7 @@ func renderParamsScreen(f paramsForm) string {
 		f.warmup,
 		f.focused == fieldWarmup,
 		false,
+		st,
 	) + "\n")
 
 	b.WriteString(renderParamsField(
@@ -260,11 +263,12 @@ func renderParamsScreen(f paramsForm) string {
 		f.backends,
 		f.focused == fieldBackends,
 		false,
+		st,
 	) + "\n")
 
-	b.WriteString("\n" + labelStyle.Render("Tab/↓ next   Shift+Tab/↑ prev   Enter → run   Esc ← back"))
+	b.WriteString("\n" + st.label.Render("Tab/↓ next   Shift+Tab/↑ prev   Enter → run   Esc ← back"))
 
-	return panelStyle.Render(b.String())
+	return st.panel.Render(b.String())
 }
 
 // handleParamsKey processes a key press when current == screenParams.

@@ -194,7 +194,7 @@ func TestRenderRailContainsArchNoPanic(t *testing.T) {
 		OnAC:     true,
 	}
 	st := railState{gpuPct: 0}
-	result := renderRail(info, st, 120)
+	result := renderRail(info, st, 120, newStyles(true))
 	if !strings.Contains(result, "gfx1150") {
 		t.Fatalf("renderRail missing 'gfx1150': %q", result)
 	}
