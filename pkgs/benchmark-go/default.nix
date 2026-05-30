@@ -4,6 +4,6 @@ buildGoModule {
   version = "0.1.0";
   src = ./.;
   subPackages = ["cmd/benchmark"];
-  vendorHash = "sha256-76yvZ8MhGnJhkfBALS/MYAeEmkOcLX0VKu1zTtPLhxo=";
+  vendorHash = "sha256-TbdG0y8yLnjSB0RLvlX6CDZeTkgB/6OUvfDkE6qittc=";
   meta.description = "Multi-backend benchmark harness (Go)";
 }
