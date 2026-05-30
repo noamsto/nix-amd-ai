@@ -22,17 +22,23 @@ type modelsLoadedMsg struct {
 
 // modelRow holds display data for one model in the picker.
 type modelRow struct {
-	id         string
-	totalGiB   float64
-	sizeKnown  bool
-	fit        advise.FitState
-	ceilingTPS float64
-	isMoE      bool
-	estimated  bool // bandwidth or size was estimated
-	selected   bool
-	downloaded bool // false → model is available but not yet downloaded
-	suggested  bool // lemonade marks this as a recommended model
+	id          string
+	totalGiB    float64
+	sizeKnown   bool
+	fit         advise.FitState
+	ceilingTPS  float64
+	isMoE       bool
+	estimated   bool // bandwidth or size was estimated
+	selected    bool
+	downloaded  bool // false → model is available but not yet downloaded
+	hot         bool // lemonade "hot" label (community-featured) → 🔥
+	recommended bool // good for THIS hardware: fits comfortably + decent predicted t/s → ⚡
 }
+
+// recommendTPSThreshold is the predicted decode ceiling (t/s) at/above which a
+// comfortably-fitting model is flagged ⚡ "recommended for your hardware"
+// (~interactive reading speed on this iGPU).
+const recommendTPSThreshold = 10.0
 
 // modelPicker holds transient state for the model selection screen.
 type modelPicker struct {
@@ -150,38 +156,15 @@ func padToWidth(s string, w int) string {
 // formatModelRow formats a single model row for display (pure, tested directly).
 // Columns (fixed display width):
 //
-//	[x]  <markers 2>  <id padded/truncated to 32>  <size right-aligned 9>  <fit>  ceil <ceil>  (MoE)
+//	[x]  <id padded/truncated to 32>  <size right-aligned 9>  <fit>  ceil <ceil>  (MoE)  <markers>
 //
-// Markers: column of width 2.
-//
-//	"★ " = suggested
-//	"⬇ " = not downloaded
-//	"  " = neither
-func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitState, ceilingTPS float64, isMoE bool, estimated bool, selected bool, downloaded bool, suggested bool) string {
+// Status markers trail at the END of the row — ⚡ (recommended for this HW),
+// 🔥 (lemonade hot/featured), ⬇ (not downloaded) — so their (emoji) display
+// width can't shift the fixed data columns in any terminal.
+func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitState, ceilingTPS float64, isMoE bool, estimated bool, selected bool, downloaded bool, hot bool, recommended bool) string {
 	check := "[ ]"
 	if selected {
 		check = "[✓]"
-	}
-
-	// Markers slot: fixed 2 display columns.
-	// Priority: suggested (★) shown if suggested; ⬇ shown if not downloaded.
-	// Both can apply simultaneously; show ★ first, ⬇ second, each 1 col wide.
-	var markerA, markerB string
-	if suggested {
-		markerA = "★"
-	} else {
-		markerA = " "
-	}
-	if !downloaded {
-		markerB = "⬇"
-	} else {
-		markerB = " "
-	}
-	markers := markerA + markerB
-	// Ensure markers slot is exactly 2 display columns.
-	mw := lipgloss.Width(markers)
-	if mw < 2 {
-		markers += strings.Repeat(" ", 2-mw)
 	}
 
 	idCol := padToWidth(id, idColumnWidth)
@@ -210,8 +193,23 @@ func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitS
 		moeTag = "  (MoE)"
 	}
 
-	return fmt.Sprintf("%s %s %s  %s  %s  ceil %s%s",
-		check, markers, idCol, sizeStr, glyphPadded, ceilStr, moeTag)
+	var marks []string
+	if recommended {
+		marks = append(marks, "⚡")
+	}
+	if hot {
+		marks = append(marks, "🔥")
+	}
+	if !downloaded {
+		marks = append(marks, "⬇")
+	}
+	markStr := ""
+	if len(marks) > 0 {
+		markStr = "  " + strings.Join(marks, " ")
+	}
+
+	return fmt.Sprintf("%s %s  %s  %s  ceil %s%s%s",
+		check, idCol, sizeStr, glyphPadded, ceilStr, moeTag, markStr)
 }
 
 // hasLabel reports whether the labels slice contains target.
@@ -275,10 +273,13 @@ func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelR
 			isMoE:      isMoE,
 			estimated:  estimated,
 			downloaded: m.Downloaded,
-			// ★ marks "hot"/featured models. The API's `suggested` is true for
-			// nearly the whole catalog (it just means "curated"), so it's useless
-			// as a marker; the "hot" label is the selective featured signal.
-			suggested: hasLabel(m.Labels, "hot"),
+			// 🔥 from the "hot" label (the API's `suggested` is true for nearly the
+			// whole catalog, so it's useless as a marker; "hot" is selective).
+			hot: hasLabel(m.Labels, "hot"),
+			// ⚡ when this fits comfortably AND should run at a decent t/s on this
+			// hardware (predicted ceiling ≥ threshold). A model that only fits
+			// "tight" or spills, or is bandwidth-bound below the threshold, is not.
+			recommended: sizeKnown && fit == advise.Fits && ceilingTPS >= recommendTPSThreshold,
 		}
 		if m.Downloaded {
 			downloaded = append(downloaded, row)
@@ -312,7 +313,7 @@ func renderModelScreen(p *modelPicker, st styles) string {
 	}
 
 	for i, r := range p.rows {
-		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.suggested)
+		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.hot, r.recommended)
 		if i == p.cursor {
 			b.WriteString(st.value.Render("> "+line) + "\n")
 		} else {

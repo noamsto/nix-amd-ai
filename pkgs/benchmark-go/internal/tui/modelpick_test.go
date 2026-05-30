@@ -19,7 +19,7 @@ import (
 // fit glyph, MoE tag, and estimation prefix.
 func TestFormatModelRow_Glyphs(t *testing.T) {
 	t.Run("fits dense no estimate", func(t *testing.T) {
-		out := formatModelRow("MyModel-7B-GGUF", 4.5, true, advise.Fits, 12.3, false, false, false, true, false)
+		out := formatModelRow("MyModel-7B-GGUF", 4.5, true, advise.Fits, 12.3, false, false, false, true, false, false)
 		if !strings.Contains(out, "✅") {
 			t.Errorf("expected ✅ in %q", out)
 		}
@@ -32,7 +32,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 
 	t.Run("spills with estimate and MoE", func(t *testing.T) {
-		out := formatModelRow("Gemma-4-26B-A4B", 15.7, true, advise.Spills, 42.0, true, true, false, true, false)
+		out := formatModelRow("Gemma-4-26B-A4B", 15.7, true, advise.Spills, 42.0, true, true, false, true, false, false)
 		if !strings.Contains(out, "❌") {
 			t.Errorf("expected ❌ in %q", out)
 		}
@@ -45,7 +45,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 
 	t.Run("tight selected", func(t *testing.T) {
-		out := formatModelRow("Model-14B", 8.0, true, advise.Tight, 5.0, false, false, true, true, false)
+		out := formatModelRow("Model-14B", 8.0, true, advise.Tight, 5.0, false, false, true, true, false, false)
 		if !strings.Contains(out, "⚠️") {
 			t.Errorf("expected ⚠️ in %q", out)
 		}
@@ -55,7 +55,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 
 	t.Run("unknown size shows ? glyph not cross", func(t *testing.T) {
-		out := formatModelRow("UnknownModel", 0, false, advise.Fits, 0, false, false, false, true, false)
+		out := formatModelRow("UnknownModel", 0, false, advise.Fits, 0, false, false, false, true, false, false)
 		if strings.Contains(out, "❌") {
 			t.Errorf("unknown-size row must not show ❌ in %q", out)
 		}
@@ -66,7 +66,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 
 	t.Run("unknown size with fit=Spills still shows ? not cross", func(t *testing.T) {
 		// Even if fit field is Spills (stale default), unknown size → neutral glyph.
-		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false, true, false)
+		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false, true, false, false)
 		if strings.Contains(out, "❌") {
 			t.Errorf("unknown-size row must not show ❌ in %q", out)
 		}
@@ -76,43 +76,52 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 }
 
-// TestFormatModelRow_Markers verifies ⬇ and ★ render correctly.
+// TestFormatModelRow_Markers verifies the trailing ⚡ (HW-recommended),
+// 🔥 (hot) and ⬇ (not-downloaded) markers render correctly.
+// Arg order: (id, totalGiB, sizeKnown, fit, ceilingTPS, isMoE, estimated,
+// selected, downloaded, hot, recommended).
 func TestFormatModelRow_Markers(t *testing.T) {
 	t.Run("not-downloaded shows down arrow", func(t *testing.T) {
-		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, false, false)
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, false, false, false)
 		if !strings.Contains(out, "⬇") {
 			t.Errorf("not-downloaded row should contain ⬇ in %q", out)
 		}
 	})
 
 	t.Run("downloaded does not show down arrow", func(t *testing.T) {
-		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false, false)
 		if strings.Contains(out, "⬇") {
 			t.Errorf("downloaded row must not show ⬇ in %q", out)
 		}
 	})
 
-	t.Run("suggested shows star", func(t *testing.T) {
-		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, true)
-		if !strings.Contains(out, "★") {
-			t.Errorf("suggested row should contain ★ in %q", out)
+	t.Run("hot shows fire", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, true, false)
+		if !strings.Contains(out, "🔥") {
+			t.Errorf("hot row should contain 🔥 in %q", out)
 		}
 	})
 
-	t.Run("not suggested does not show star", func(t *testing.T) {
-		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
-		if strings.Contains(out, "★") {
-			t.Errorf("non-suggested row must not show ★ in %q", out)
+	t.Run("not hot does not show fire", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false, false)
+		if strings.Contains(out, "🔥") {
+			t.Errorf("non-hot row must not show 🔥 in %q", out)
 		}
 	})
 
-	t.Run("both markers together", func(t *testing.T) {
-		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, false, true)
-		if !strings.Contains(out, "★") {
-			t.Errorf("expected ★ in %q", out)
+	t.Run("recommended shows bolt", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false, true)
+		if !strings.Contains(out, "⚡") {
+			t.Errorf("recommended row should contain ⚡ in %q", out)
 		}
-		if !strings.Contains(out, "⬇") {
-			t.Errorf("expected ⬇ in %q", out)
+	})
+
+	t.Run("all three markers together", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, false, true, true)
+		for _, want := range []string{"⚡", "🔥", "⬇"} {
+			if !strings.Contains(out, want) {
+				t.Errorf("expected %s in %q", want, out)
+			}
 		}
 	})
 }
@@ -121,8 +130,8 @@ func TestFormatModelRow_Markers(t *testing.T) {
 // produce the size column starting at the same display column.
 // Also verifies that marked vs unmarked rows have the same size column offset.
 func TestFormatModelRow_Alignment(t *testing.T) {
-	short := formatModelRow("A", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
-	long := formatModelRow("A-Very-Long-Model-Name-That-Gets-Truncated-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+	short := formatModelRow("A", 4.5, true, advise.Fits, 10.0, false, false, false, true, false, false)
+	long := formatModelRow("A-Very-Long-Model-Name-That-Gets-Truncated-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false, false)
 
 	// Find the display offset of the size string "4.5 GiB" in each row.
 	findSizeOffset := func(row string) int {
@@ -145,10 +154,10 @@ func TestFormatModelRow_Alignment(t *testing.T) {
 			shortOff, longOff, short, long)
 	}
 
-	// Marker vs no-marker: size column offset must be identical (markers are
-	// fixed-width, so they don't affect the id or size columns).
-	withMarkers := formatModelRow("SomeModel", 4.5, true, advise.Fits, 10.0, false, false, false, false, true)
-	noMarkers := formatModelRow("SomeModel", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+	// Marker vs no-marker: size column offset must be identical (markers TRAIL
+	// at the end of the row, so they can't affect the id or size columns).
+	withMarkers := formatModelRow("SomeModel", 4.5, true, advise.Fits, 10.0, false, false, false, false, false, true)
+	noMarkers := formatModelRow("SomeModel", 4.5, true, advise.Fits, 10.0, false, false, false, true, false, false)
 
 	markedOff := findSizeOffset(withMarkers)
 	plainOff := findSizeOffset(noMarkers)
@@ -322,11 +331,11 @@ func TestBuildModelRows_DownloadedSortedFirst(t *testing.T) {
 	}
 }
 
-// TestBuildModelRows_SuggestedField verifies the suggested field is propagated.
-func TestBuildModelRows_SuggestedField(t *testing.T) {
+// TestBuildModelRows_HotMarker verifies 🔥 comes from the "hot" label, NOT the
+// near-ubiquitous Suggested flag.
+func TestBuildModelRows_HotMarker(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		// ★ must come from the "hot" label, NOT the near-ubiquitous Suggested flag:
 		// hot-model has the hot label but Suggested=false; plain-model has
 		// Suggested=true but no hot label.
 		{ID: "hot-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Labels: []string{"hot"}, Suggested: false},
@@ -340,14 +349,45 @@ func TestBuildModelRows_SuggestedField(t *testing.T) {
 	for _, r := range rows {
 		switch r.id {
 		case "hot-model":
-			if !r.suggested {
-				t.Errorf("hot-model: suggested = false, want true (hot label → ★)")
+			if !r.hot {
+				t.Errorf("hot-model: hot = false, want true (hot label → 🔥)")
 			}
 		case "plain-model":
-			if r.suggested {
-				t.Errorf("plain-model: suggested = true, want false (Suggested flag must not drive ★)")
+			if r.hot {
+				t.Errorf("plain-model: hot = true, want false (Suggested flag must not drive 🔥)")
 			}
 		}
+	}
+}
+
+// TestBuildModelRows_Recommended verifies ⚡ flags models that fit comfortably
+// AND have a decent predicted decode ceiling (≥ recommendTPSThreshold). A
+// fitting-but-slow large model is NOT recommended.
+func TestBuildModelRows_Recommended(t *testing.T) {
+	// No RAMType → BandwidthGBs falls back to ~89.6 GB/s.
+	info := hw.Info{GTTBytes: 27 << 30}
+	fakeList := []models.Model{
+		// ~4.66 GiB → ceiling ~17.9 t/s, fits → recommended.
+		{ID: "small-fast", Downloaded: true, Recipe: "llamacpp", Size: 5.0},
+		// ~18.6 GiB → ceiling ~4.5 t/s (< 10), fits but slow → NOT recommended.
+		{ID: "big-slow", Downloaded: true, Recipe: "llamacpp", Size: 20.0},
+		// ~32.6 GiB → spills the 27 GiB budget → NOT recommended.
+		{ID: "spills", Downloaded: true, Recipe: "llamacpp", Size: 35.0},
+	}
+
+	rows := buildModelRows(fakeList, info, ModeHTTP)
+	got := map[string]bool{}
+	for _, r := range rows {
+		got[r.id] = r.recommended
+	}
+	if !got["small-fast"] {
+		t.Errorf("small-fast: recommended = false, want true (fits + decent t/s)")
+	}
+	if got["big-slow"] {
+		t.Errorf("big-slow: recommended = true, want false (below t/s threshold)")
+	}
+	if got["spills"] {
+		t.Errorf("spills: recommended = true, want false (does not fit)")
 	}
 }
 
@@ -393,7 +433,7 @@ func TestBuildModelRows_UnknownSizeIsNeutral(t *testing.T) {
 		t.Error("sizeKnown should be false")
 	}
 
-	rendered := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.suggested)
+	rendered := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.hot, r.recommended)
 	if strings.Contains(rendered, "❌") {
 		t.Errorf("unknown-size row rendered ❌, want ?: %q", rendered)
 	}
