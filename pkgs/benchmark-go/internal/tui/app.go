@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -273,6 +274,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// stepLabels are the short wizard-step names, indexed by screen.
+var stepLabels = [...]string{
+	screenHW:        "Hardware",
+	screenPreflight: "Preflight",
+	screenMode:      "Mode",
+	screenModel:     "Model",
+	screenParams:    "Params",
+	screenRun:       "Run",
+	screenResults:   "Results",
+}
+
+// renderStepper renders the wizard breadcrumb: completed steps in green, the
+// current step in accent, upcoming steps faint, joined by "▸".
+func renderStepper(current screen, st styles) string {
+	parts := make([]string, 0, len(stepLabels))
+	for i, label := range stepLabels {
+		switch {
+		case screen(i) < current:
+			parts = append(parts, st.stepDone.Render(label))
+		case screen(i) == current:
+			parts = append(parts, st.stepOn.Render(label))
+		default:
+			parts = append(parts, st.stepTodo.Render(label))
+		}
+	}
+	return strings.Join(parts, st.hint.Render(" ▸ "))
+}
+
 func (m model) View() tea.View {
 	st := m.st
 	var s string
@@ -295,7 +324,8 @@ func (m model) View() tea.View {
 		s = renderHWPanel(m.info, st)
 	}
 	rail := renderRail(m.info, m.rail, m.width, st)
-	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, rail, s))
+	stepper := renderStepper(m.current, st)
+	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, rail, stepper, "", s))
 	v.AltScreen = true
 	return v
 }

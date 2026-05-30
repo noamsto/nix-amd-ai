@@ -246,10 +246,9 @@ func (m model) handleLogWritten(msg logWrittenMsg) (tea.Model, tea.Cmd) {
 func renderResults(res runResults, err error, rs resultsState, info hw.Info, sizeOf func(id string) (float64, bool), st styles) string {
 	if err != nil {
 		var b strings.Builder
-		b.WriteString(st.heading.Render("Results") + "\n\n")
 		b.WriteString(st.fail.Render("Run failed: "+err.Error()) + "\n")
-		b.WriteString("\n" + st.label.Render("Esc ← back   q quit"))
-		return st.panel.Render(b.String())
+		b.WriteString("\n" + keybar(st, [2]string{"Esc", "← back"}, [2]string{"q", "quit"}))
+		return titledPanel(st, "Results", b.String(), 0)
 	}
 
 	if rs.showMarkdown {
@@ -261,21 +260,23 @@ func renderResults(res runResults, err error, rs resultsState, info hw.Info, siz
 // renderMarkdownView shows the markdown export as copy-paste text.
 func renderMarkdownView(res runResults, st styles) string {
 	var b strings.Builder
-	b.WriteString(st.heading.Render("Results — Markdown") + "\n\n")
 	b.WriteString(st.value.Render(buildMarkdownExport(res)))
-	b.WriteString("\n" + st.label.Render("m ← table   w write   q quit"))
-	return st.panel.Render(b.String())
+	b.WriteString("\n" + keybar(st,
+		[2]string{"m", "← table"},
+		[2]string{"w", "write"},
+		[2]string{"q", "quit"},
+	))
+	return titledPanel(st, "Results — Markdown", b.String(), 0)
 }
 
 // renderResultsTable renders the lipgloss-styled results table.
 func renderResultsTable(res runResults, info hw.Info, sizeOf func(id string) (float64, bool), logMsg string, logErr bool, st styles) string {
 	var b strings.Builder
-	b.WriteString(st.heading.Render("Results") + "\n\n")
 
 	if len(res.Units) == 0 {
 		b.WriteString(st.hint.Render("No results.") + "\n")
-		b.WriteString("\n" + st.label.Render("Esc ← back   q quit"))
-		return st.panel.Render(b.String())
+		b.WriteString("\n" + keybar(st, [2]string{"Esc", "← back"}, [2]string{"q", "quit"}))
+		return titledPanel(st, "Results", b.String(), 0)
 	}
 
 	rows := buildResultRows(res, info, sizeOf)
@@ -297,8 +298,13 @@ func renderResultsTable(res runResults, info hw.Info, sizeOf func(id string) (fl
 		b.WriteString("\n" + rendered + "\n")
 	}
 
-	b.WriteString("\n" + st.label.Render("m markdown   w write log   Esc ← back   q quit"))
-	return st.panel.Render(b.String())
+	b.WriteString("\n" + keybar(st,
+		[2]string{"m", "markdown"},
+		[2]string{"w", "write log"},
+		[2]string{"Esc", "← back"},
+		[2]string{"q", "quit"},
+	))
+	return titledPanel(st, "Results", b.String(), 0)
 }
 
 // renderHTTPTable renders the HTTP / Backend A/B table.
@@ -306,11 +312,11 @@ func renderResultsTable(res runResults, info hw.Info, sizeOf func(id string) (fl
 func renderHTTPTable(b *strings.Builder, rows []resultRow, omitBackend bool, st styles) {
 	// Header
 	if omitBackend {
-		b.WriteString(st.label.Render(fmt.Sprintf("%-40s  %-14s  %-10s  %-8s", "Model", "Decode (t/s)", "Predicted", "% ceil")) + "\n")
-		b.WriteString(st.label.Render(strings.Repeat("─", 78)) + "\n")
+		b.WriteString(st.accent.Render(fmt.Sprintf("%-40s  %-14s  %-10s  %-8s", "Model", "Decode (t/s)", "Predicted", "% ceil")) + "\n")
+		b.WriteString(st.rule.Render(strings.Repeat("─", 78)) + "\n")
 	} else {
-		b.WriteString(st.label.Render(fmt.Sprintf("%-40s  %-12s  %-14s  %-10s  %-8s", "Model", "Backend", "Decode (t/s)", "Predicted", "% ceil")) + "\n")
-		b.WriteString(st.label.Render(strings.Repeat("─", 92)) + "\n")
+		b.WriteString(st.accent.Render(fmt.Sprintf("%-40s  %-12s  %-14s  %-10s  %-8s", "Model", "Backend", "Decode (t/s)", "Predicted", "% ceil")) + "\n")
+		b.WriteString(st.rule.Render(strings.Repeat("─", 92)) + "\n")
 	}
 
 	for _, r := range rows {
@@ -332,8 +338,8 @@ func renderHTTPTable(b *strings.Builder, rows []resultRow, omitBackend bool, st 
 
 // renderMTPTable renders the MTP A/B table, pairing off/on rows.
 func renderMTPTable(b *strings.Builder, rows []resultRow, st styles) {
-	b.WriteString(st.label.Render(fmt.Sprintf("%-40s  %-8s  %-10s  %-10s  %-10s", "Model [backend]", "Spec", "Decode t/s", "Predicted", "Speedup")) + "\n")
-	b.WriteString(st.label.Render(strings.Repeat("─", 86)) + "\n")
+	b.WriteString(st.accent.Render(fmt.Sprintf("%-40s  %-8s  %-10s  %-10s  %-10s", "Model [backend]", "Spec", "Decode t/s", "Predicted", "Speedup")) + "\n")
+	b.WriteString(st.rule.Render(strings.Repeat("─", 86)) + "\n")
 
 	// Group by (model, backend) and render off then on with speedup on the on-line.
 	type key struct{ model, backend string }
@@ -385,11 +391,16 @@ func renderMTPTable(b *strings.Builder, rows []resultRow, st styles) {
 
 		offLine := fmt.Sprintf("%-40s  %-8s  %-10s  %-10s  %-10s",
 			truncate(label, 40), "off", offTPS, predStr, "")
-		onLine := fmt.Sprintf("%-40s  %-8s  %-10s  %-10s  %-10s",
-			"", "on", onTPS, "", speedupStr)
+		// Speedup is the last column, so coloring it can't shift earlier columns.
+		onPrefix := fmt.Sprintf("%-40s  %-8s  %-10s  %-10s  ", "", "on", onTPS, "")
+		speedupRender := st.hint.Render(speedupStr)
+		if p.off != nil && p.off.MeanTPS != nil && *p.off.MeanTPS > 0 &&
+			p.on != nil && p.on.MeanTPS != nil && *p.on.MeanTPS > *p.off.MeanTPS {
+			speedupRender = st.pass.Render(speedupStr)
+		}
 
 		b.WriteString(st.value.Render(offLine) + "\n")
-		b.WriteString(st.value.Render(onLine) + "\n")
+		b.WriteString(st.value.Render(onPrefix) + speedupRender + "\n")
 	}
 }
 

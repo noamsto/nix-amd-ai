@@ -36,22 +36,23 @@ type modePicker struct {
 func renderModeScreen(p modePicker, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(st.heading.Render("Select Benchmark Mode") + "\n\n")
-
 	for i, item := range modeItems {
-		prefix := "  "
+		focused := i == p.cursor
 		label := item.label
-		if i == p.cursor {
-			prefix = "> "
-			label = st.value.Render(label)
+		if focused {
+			label = st.selected.Render(" " + label + " ")
 		} else {
 			label = st.label.Render(label)
 		}
-		b.WriteString(fmt.Sprintf("%s%s\n", prefix, label))
+		b.WriteString(st.focusBullet(focused) + label + "\n")
 		b.WriteString(fmt.Sprintf("    %s\n", st.hint.Render(item.desc)))
 	}
 
-	b.WriteString("\n" + st.label.Render("↑/↓ move   Enter → select   Esc ← back"))
+	b.WriteString("\n" + keybar(st,
+		[2]string{"↑/↓", "move"},
+		[2]string{"Enter", "select →"},
+		[2]string{"Esc", "← back"},
+	))
 
-	return st.panel.Render(b.String())
+	return titledPanel(st, "Select Benchmark Mode", b.String(), 0)
 }

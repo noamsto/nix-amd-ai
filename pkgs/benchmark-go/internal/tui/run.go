@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"charm.land/bubbles/v2/progress"
+	"charm.land/bubbles/v2/spinner"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/bench"
@@ -96,6 +97,7 @@ type runState struct {
 	err      error
 	results  runResults
 	progress progress.Model
+	spin     spinner.Model
 
 	// units tracks per-unit running samples for the live mean±stdev readout,
 	// keyed by specKey, with insertion order preserved in order.
@@ -135,7 +137,8 @@ func (m *model) startRun() tea.Cmd {
 
 	m.run = runState{
 		active:   true,
-		progress: progress.New(progress.WithWidth(40), progress.WithoutPercentage()),
+		progress: progress.New(progress.WithWidth(40), progress.WithoutPercentage(), progress.WithDefaultBlend()),
+		spin:     spinner.New(spinner.WithSpinner(spinner.Dot)),
 		units:    map[string]*runUnitProgress{},
 		ch:       ch,
 		cancel:   cancel,
@@ -159,7 +162,7 @@ func (m *model) startRun() tea.Cmd {
 		ch <- result
 	}()
 
-	return waitForRunMsg(ch)
+	return tea.Batch(waitForRunMsg(ch), m.run.spin.Tick)
 }
 
 // waitForRunMsg returns a Cmd that blocks on the channel for the next message
@@ -247,6 +250,16 @@ func (m model) handleRunKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 // has already run, so we quit cleanly with tea.Quit.
 func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 	switch msg := msg.(type) {
+	case spinner.TickMsg:
+		// Advance the spinner only while a run is in flight; let it die otherwise
+		// so no stray tick loop survives the run.
+		if !m.run.active || m.run.done {
+			return m, nil, true
+		}
+		var cmd tea.Cmd
+		m.run.spin, cmd = m.run.spin.Update(msg)
+		return m, cmd, true
+
 	case runProgressMsg:
 		if m.run.quitting {
 			// Ignore progress during graceful quit but keep draining the channel
@@ -524,10 +537,8 @@ func renderRunningStat(samples []float64) string {
 func renderRunScreen(s runState, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(st.heading.Render("Running Benchmark") + "\n\n")
-
 	if len(s.order) == 0 {
-		b.WriteString(st.hint.Render("Starting…") + "\n")
+		b.WriteString(s.spin.View() + " " + st.hint.Render("Starting…") + "\n")
 	}
 
 	for _, key := range s.order {
@@ -539,12 +550,17 @@ func renderRunScreen(s runState, st styles) string {
 				frac = 1
 			}
 		}
+		// Per-unit status: ✓ when complete, live spinner while in flight.
+		marker := s.spin.View()
+		if u.total > 0 && u.iter >= u.total {
+			marker = st.pass.Render("✓")
+		}
 		bar := s.progress.ViewAs(frac)
-		b.WriteString(st.label.Render(u.label) + "\n")
-		b.WriteString(fmt.Sprintf("  %s  %d/%d\n", bar, u.iter, u.total))
-		b.WriteString("  " + st.hint.Render(renderRunningStat(u.samples)+" tok/s") + "\n\n")
+		b.WriteString(marker + " " + st.value.Render(u.label) + "\n")
+		b.WriteString(fmt.Sprintf("    %s  %s\n", bar, st.label.Render(fmt.Sprintf("%d/%d", u.iter, u.total))))
+		b.WriteString("    " + st.accent.Render(renderRunningStat(u.samples)) + st.hint.Render(" tok/s") + "\n\n")
 	}
 
-	b.WriteString("\n" + st.label.Render("q/Ctrl+C abort"))
-	return st.panel.Render(b.String())
+	b.WriteString(keybar(st, [2]string{"q/Ctrl+C", "abort"}))
+	return titledPanel(st, "Running Benchmark", b.String(), 0)
 }

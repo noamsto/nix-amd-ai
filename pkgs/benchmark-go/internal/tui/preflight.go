@@ -47,9 +47,9 @@ func renderPreflightLine(r preflight.Result, st styles) string {
 	if r.Fix != nil {
 		switch {
 		case isLemondResult(r):
-			line += "  " + st.hint.Render("[s] stop lemond")
+			line += "  " + st.accent.Render("[s]") + st.hint.Render(" stop lemond")
 		case isPowerResult(r):
-			line += "  " + st.hint.Render("[p] set performance")
+			line += "  " + st.accent.Render("[p]") + st.hint.Render(" set performance")
 		}
 	}
 
@@ -61,8 +61,6 @@ func renderPreflightLine(r preflight.Result, st styles) string {
 func renderPreflightScreen(results []preflight.Result, loaded bool, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(st.heading.Render("Preflight") + "\n\n")
-
 	if !loaded {
 		b.WriteString(st.hint.Render("Checking environment…") + "\n")
 	} else if len(results) == 0 {
@@ -73,7 +71,10 @@ func renderPreflightScreen(results []preflight.Result, loaded bool, st styles) s
 		}
 	}
 
-	b.WriteString("\n" + st.label.Render("Enter → continue   Esc ← back"))
+	b.WriteString("\n" + keybar(st,
+		[2]string{"Enter", "continue →"},
+		[2]string{"Esc", "← back"},
+	))
 
-	return st.panel.Render(b.String())
+	return titledPanel(st, "Preflight", b.String(), 0)
 }

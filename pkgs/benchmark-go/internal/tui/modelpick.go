@@ -293,39 +293,45 @@ func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelR
 func renderModelScreen(p *modelPicker, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(st.heading.Render("Select Models") + "\n\n")
-
 	if p.loading {
 		b.WriteString(st.hint.Render("Loading models from lemonade…") + "\n")
-		return st.panel.Render(b.String())
+		return titledPanel(st, "Select Models", b.String(), 0)
 	}
 
 	if p.err != nil {
 		b.WriteString(st.fail.Render("Error: "+p.err.Error()) + "\n")
-		b.WriteString("\n" + st.label.Render("Esc ← back"))
-		return st.panel.Render(b.String())
+		b.WriteString("\n" + keybar(st, [2]string{"Esc", "← back"}))
+		return titledPanel(st, "Select Models", b.String(), 0)
 	}
 
 	if len(p.rows) == 0 {
 		b.WriteString(st.hint.Render("No models found.") + "\n")
-		b.WriteString("\n" + st.label.Render("Esc ← back"))
-		return st.panel.Render(b.String())
+		b.WriteString("\n" + keybar(st, [2]string{"Esc", "← back"}))
+		return titledPanel(st, "Select Models", b.String(), 0)
 	}
 
 	for i, r := range p.rows {
 		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.hot, r.recommended)
-		if i == p.cursor {
-			b.WriteString(st.value.Render("> "+line) + "\n")
+		focused := i == p.cursor
+		if focused {
+			b.WriteString(st.focusBullet(true) + st.value.Render(line) + "\n")
 		} else {
-			b.WriteString("  " + st.label.Render(line) + "\n")
+			b.WriteString(st.focusBullet(false) + st.label.Render(line) + "\n")
 		}
 	}
+
+	b.WriteString("\n" + st.hint.Render("⚡ recommended · 🔥 hot · ⬇ downloadable") + "\n")
 
 	if p.needSelection {
 		b.WriteString("\n" + st.warn.Render("select at least one model (space to toggle)") + "\n")
 	}
 
-	b.WriteString("\n" + st.label.Render("↑/↓ move   Space toggle   Enter → continue   Esc ← back"))
+	b.WriteString("\n" + keybar(st,
+		[2]string{"↑/↓", "move"},
+		[2]string{"Space", "toggle"},
+		[2]string{"Enter", "continue →"},
+		[2]string{"Esc", "← back"},
+	))
 
-	return st.panel.Render(b.String())
+	return titledPanel(st, "Select Models", b.String(), 0)
 }

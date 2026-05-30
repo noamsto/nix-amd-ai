@@ -11,8 +11,6 @@ import (
 func renderHWPanel(info hw.Info, st styles) string {
 	var b strings.Builder
 
-	b.WriteString(st.heading.Render("Hardware") + "\n\n")
-
 	// GPU arch
 	arch := info.GfxArch
 	if arch == "" {
@@ -45,9 +43,9 @@ func renderHWPanel(info hw.Info, st styles) string {
 	powerState := powerStateString(info.OnAC, info.Performance, st)
 	b.WriteString(st.label.Render("Power:     ") + powerState + "\n")
 
-	b.WriteString("\n" + st.label.Render("Press Enter to continue →"))
+	b.WriteString("\n" + keybar(st, [2]string{"Enter", "continue →"}))
 
-	return st.panel.Render(b.String())
+	return titledPanel(st, "Hardware", b.String(), 0)
 }
 
 // powerStateString renders a human-readable power state from onAC + performance flags.
