@@ -58,12 +58,10 @@ type model struct {
 	width    int
 	railGRBM func() float64 // nil → defaultRailGRBM
 
-	// Seams for testing. nil values fall back to the real implementations:
+	// Seams for testing. nil falls back to the real implementation:
 	//   runBench → defaultRunBench (spawns llama-server / hits lemonade)
-	//   grbmFunc → defaultGRBM (reads real GPU)
-	// Tests inject fakes so no test touches hardware or the network.
+	// Tests inject a fake so no test touches hardware or the network.
 	runBench func(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg
-	grbmFunc func() float64
 }
 
 func (m model) baseURL() string {

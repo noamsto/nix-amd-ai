@@ -12,11 +12,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/bench"
-	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 )
-
-// grbmTickInterval is how often the live GPU% readout polls GRBM during a run.
-const grbmTickInterval = time.Second
 
 // lemondReadyTimeout bounds how long runBackendABLive waits for lemond to come
 // back after a restart (matches the CLI's 60s).
@@ -61,11 +57,6 @@ type runResultMsg struct {
 	err     error
 }
 
-// grbmTickMsg carries a fresh GPU GRBM% reading.
-type grbmTickMsg struct {
-	pct float64
-}
-
 // --- completed-results shape ---
 
 // runUnitResult holds the aggregated outcome of one measured unit. The unit is
@@ -103,7 +94,6 @@ type runState struct {
 	aborted  bool // set on Esc/quit; makes handleRunMsg drop late goroutine output
 	err      error
 	results  runResults
-	grbmPct  float64
 	progress progress.Model
 
 	// units tracks per-unit running samples for the live mean±stdev readout,
@@ -126,8 +116,7 @@ type runUnitProgress struct {
 }
 
 // startRun initialises run state and returns the command that kicks off the
-// runner goroutine and starts listening + the GRBM tick. Called when entering
-// screenRun.
+// runner goroutine and starts listening. Called when entering screenRun.
 func (m *model) startRun() tea.Cmd {
 	req := runRequest{
 		mode:          m.selectedMode,
@@ -167,7 +156,7 @@ func (m *model) startRun() tea.Cmd {
 		sendMsg(ctx, ch, runner(ctx, req, ch))
 	}()
 
-	return tea.Batch(waitForRunMsg(ch), grbmTickCmd(m.grbmFunc))
+	return waitForRunMsg(ch)
 }
 
 // waitForRunMsg returns a Cmd that blocks on the channel for the next message
@@ -191,23 +180,6 @@ func sendMsg(ctx context.Context, ch chan<- tea.Msg, msg tea.Msg) {
 	case <-ctx.Done():
 	}
 }
-
-// grbmTickCmd returns a Cmd that, after grbmTickInterval, reads the GRBM% via
-// grbm (defaulting to a real hw read) and emits a grbmTickMsg.
-func grbmTickCmd(grbm func() float64) tea.Cmd {
-	read := grbm
-	if read == nil {
-		read = defaultGRBM
-	}
-	return tea.Tick(grbmTickInterval, func(time.Time) tea.Msg {
-		return grbmTickMsg{pct: read()}
-	})
-}
-
-// defaultGRBM reads the live GPU GRBM busy percentage from hardware.
-// Uses hw.GRBMBusyPct (amdgpu_top only — no dmidecode or sysfs) to avoid
-// perturbing the benchmark workload.
-func defaultGRBM() float64 { return hw.GRBMBusyPct() }
 
 // applyProgress records one measured iteration into run state.
 func (s *runState) applyProgress(msg runProgressMsg) {
@@ -279,15 +251,6 @@ func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 		m.run.err = msg.err
 		m.run.results = msg.results
 		m.current = screenResults
-		// Stop reading the channel and stop the GRBM tick (no new Cmd).
-		return m, nil, true
-
-	case grbmTickMsg:
-		m.run.grbmPct = msg.pct
-		// Keep ticking only while the run is active.
-		if m.run.active && !m.run.done {
-			return m, grbmTickCmd(m.grbmFunc), true
-		}
 		return m, nil, true
 	}
 	return m, nil, false
@@ -535,7 +498,6 @@ func renderRunScreen(s runState) string {
 	var b strings.Builder
 
 	b.WriteString(headingStyle.Render("Running Benchmark") + "\n\n")
-	b.WriteString(valueStyle.Render(fmt.Sprintf("GPU: %.0f%%", s.grbmPct)) + "\n\n")
 
 	if len(s.order) == 0 {
 		b.WriteString(hintStyle.Render("Starting…") + "\n")

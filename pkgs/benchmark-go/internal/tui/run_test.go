@@ -3,7 +3,6 @@ package tui
 import (
 	"bytes"
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -16,10 +15,8 @@ import (
 // startAndPump sends Enter (which starts the run) and then synchronously pumps
 // the runner's channel through Update — reading one message via waitForRunMsg,
 // feeding it to Update, and repeating until the runResultMsg transitions to
-// screenResults. The GRBM Tick command returned by startRun is intentionally
-// NOT executed (it would block on a real timer); grbm behaviour is covered by
-// dedicated tick tests. This mirrors how bubbletea's loop drains the channel,
-// without spinning the real event loop.
+// screenResults. This mirrors how bubbletea's loop drains the channel, without
+// spinning the real event loop.
 func startAndPump(t *testing.T, m model) model {
 	t.Helper()
 	tm, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
@@ -65,15 +62,14 @@ func fakeRunBench(prog []runProgressMsg, result runResults, runErr error) func(c
 }
 
 // newRunModel builds a model parked on screenParams with an injected fake
-// runner and grbm seam, ready for Enter to start the run.
-func newRunModel(runner func(context.Context, runRequest, chan<- tea.Msg) tea.Msg, grbm func() float64) model {
+// runner, ready for Enter to start the run.
+func newRunModel(runner func(context.Context, runRequest, chan<- tea.Msg) tea.Msg) model {
 	m := New(testHWInfo(), Config{}).(model)
 	m.current = screenParams
 	m.selectedMode = ModeHTTP
 	m.selectedModels = []string{"modelA"}
 	m.paramsForm = defaultParamsForm()
 	m.runBench = runner
-	m.grbmFunc = grbm
 	return m
 }
 
@@ -87,7 +83,7 @@ func TestRunScreenStreamsAndTransitions(t *testing.T) {
 	mean := 11.0
 	want := runResults{Mode: ModeHTTP, Units: []runUnitResult{{Model: "modelA", MeanTPS: &mean}}}
 
-	m := newRunModel(fakeRunBench(prog, want, nil), func() float64 { return 0 })
+	m := newRunModel(fakeRunBench(prog, want, nil))
 
 	// Enter starts the run; drive consumes all channel messages synchronously.
 	m = startAndPump(t, m)
@@ -114,7 +110,7 @@ func TestRunScreenStreamsAndTransitions(t *testing.T) {
 // TestRunScreenStoresError ensures a runner error still transitions and is kept.
 func TestRunScreenStoresError(t *testing.T) {
 	boom := errContext{"boom"}
-	m := newRunModel(fakeRunBench(nil, runResults{}, boom), func() float64 { return 0 })
+	m := newRunModel(fakeRunBench(nil, runResults{}, boom))
 	m = startAndPump(t, m)
 
 	if m.current != screenResults {
@@ -130,41 +126,6 @@ type errContext struct{ s string }
 
 func (e errContext) Error() string { return e.s }
 
-// TestGRBMTickUpdatesReadout asserts the grbmFunc seam feeds the GPU% readout.
-func TestGRBMTickUpdatesReadout(t *testing.T) {
-	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 73 })
-	// Start the run but don't drive the result yet: mark active and inject a tick.
-	m.run = runState{active: true, units: map[string]*runUnitProgress{}}
-	m.grbmFunc = func() float64 { return 73 }
-
-	tm, _, handled := m.handleRunMsg(grbmTickMsg{pct: 73})
-	if !handled {
-		t.Fatal("grbmTickMsg not handled")
-	}
-	updated := tm.(model)
-	if updated.run.grbmPct != 73 {
-		t.Errorf("grbmPct = %v, want 73", updated.run.grbmPct)
-	}
-	// The rendered run screen shows the GPU readout.
-	if got := renderRunScreen(updated.run); !strings.Contains(got, "GPU: 73%") {
-		t.Errorf("render missing GPU readout; got:\n%s", got)
-	}
-}
-
-// TestGRBMTickStopsAfterDone verifies the tick does not re-arm once the run is
-// done (no goroutine/timer leak after completion).
-func TestGRBMTickStopsAfterDone(t *testing.T) {
-	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 5 })
-	m.run = runState{done: true, active: false, units: map[string]*runUnitProgress{}}
-	_, cmd, handled := m.handleRunMsg(grbmTickMsg{pct: 5})
-	if !handled {
-		t.Fatal("tick not handled")
-	}
-	if cmd != nil {
-		t.Error("tick re-armed after run done; expected nil cmd")
-	}
-}
-
 // TestRunScreenHeaderRenders is a teatest integration check: with an injected
 // fake runner that emits one slow-ish progress message, the run screen renders
 // its header and the live GPU readout before completing.
@@ -176,22 +137,24 @@ func TestRunScreenHeaderRenders(t *testing.T) {
 		time.Sleep(150 * time.Millisecond)
 		return runResultMsg{results: runResults{Units: []runUnitResult{{Model: "modelA"}}}}
 	}
-	m := newRunModel(runner, func() float64 { return 0 })
+	m := newRunModel(runner)
 
 	tm := teatest.NewTestModel(t, m, teatest.WithInitialTermSize(120, 40))
 	t.Cleanup(func() { _ = tm.Quit() })
 
 	tm.Send(tea.KeyPressMsg{Code: tea.KeyEnter})
 
+	// GPU% is now in the rail bar above the run screen (format: "GPU 0%"), not in
+	// the run panel itself.
 	teatest.WaitFor(t, tm.Output(), func(out []byte) bool {
-		return bytes.Contains(out, []byte("Running Benchmark")) && bytes.Contains(out, []byte("GPU:"))
+		return bytes.Contains(out, []byte("Running Benchmark")) && bytes.Contains(out, []byte("GPU "))
 	}, teatest.WithDuration(3*time.Second), teatest.WithCheckInterval(10*time.Millisecond))
 }
 
 // TestAbortDropsLateProgress verifies that once a run is aborted, a late
 // runProgressMsg is dropped: it must not mutate m.run.units.
 func TestAbortDropsLateProgress(t *testing.T) {
-	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 0 })
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil))
 	m.run = runState{active: true, aborted: true, units: map[string]*runUnitProgress{}}
 
 	tm, _, handled := m.handleRunMsg(runProgressMsg{specKey: "x", iter: 1, total: 3, decodeTPS: 9})
@@ -206,7 +169,7 @@ func TestAbortDropsLateProgress(t *testing.T) {
 // TestAbortDropsLateResult verifies that a late runResultMsg after abort does
 // not navigate to screenResults or store the cancelled result.
 func TestAbortDropsLateResult(t *testing.T) {
-	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 0 })
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil))
 	m.current = screenParams // user already went back via Esc
 	m.run = runState{aborted: true, units: map[string]*runUnitProgress{}}
 
@@ -229,7 +192,7 @@ func TestAbortDropsLateResult(t *testing.T) {
 // TestEscAbortsRun verifies Esc mid-run cancels the context, marks aborted, and
 // returns to the params screen.
 func TestEscAbortsRun(t *testing.T) {
-	m := newRunModel(fakeRunBench(nil, runResults{}, nil), func() float64 { return 0 })
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil))
 	canceled := false
 	m.run = runState{active: true, cancel: func() { canceled = true }, units: map[string]*runUnitProgress{}}
 
