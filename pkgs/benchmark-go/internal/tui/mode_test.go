@@ -2,6 +2,8 @@ package tui
 
 import (
 	"testing"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 func TestModePickerItems(t *testing.T) {
@@ -23,31 +25,46 @@ func TestModePickerItems(t *testing.T) {
 	}
 }
 
+// TestModePickerCursorMovement drives down/up keys through model.Update so a
+// `<` vs `<=` clamping regression in app.go is actually caught.
 func TestModePickerCursorMovement(t *testing.T) {
-	p := modePicker{cursor: 0}
+	down := tea.KeyPressMsg{Code: tea.KeyDown}
+	up := tea.KeyPressMsg{Code: tea.KeyUp}
 
-	// Initial cursor is 0 (HTTP bench).
-	if p.cursor != 0 {
-		t.Fatalf("initial cursor = %d; want 0", p.cursor)
-	}
-
-	// Simulate down twice.
-	if p.cursor < len(modeItems)-1 {
-		p.cursor++
-	}
-	if p.cursor < len(modeItems)-1 {
-		p.cursor++
-	}
-	if p.cursor != 2 {
-		t.Errorf("after two downs cursor = %d; want 2", p.cursor)
+	send := func(m model, msg tea.Msg) model {
+		next, _ := m.Update(msg)
+		return next.(model)
 	}
 
-	// Cannot go past last item.
-	if p.cursor < len(modeItems)-1 {
-		p.cursor++
+	m := model{current: screenMode}
+	if m.modePicker.cursor != 0 {
+		t.Fatalf("initial cursor = %d; want 0", m.modePicker.cursor)
 	}
-	if p.cursor != 2 {
-		t.Errorf("after third down cursor = %d; want 2 (clamped)", p.cursor)
+
+	// Down twice → cursor 2 (last item, len 3).
+	m = send(m, down)
+	m = send(m, down)
+	if m.modePicker.cursor != 2 {
+		t.Errorf("after two downs cursor = %d; want 2", m.modePicker.cursor)
+	}
+
+	// Down again must clamp at the last index, not overflow.
+	m = send(m, down)
+	if m.modePicker.cursor != len(modeItems)-1 {
+		t.Errorf("after third down cursor = %d; want %d (clamped at bottom)", m.modePicker.cursor, len(modeItems)-1)
+	}
+
+	// Up back to top.
+	m = send(m, up)
+	m = send(m, up)
+	if m.modePicker.cursor != 0 {
+		t.Errorf("after two ups cursor = %d; want 0", m.modePicker.cursor)
+	}
+
+	// Up again must clamp at 0, not go negative.
+	m = send(m, up)
+	if m.modePicker.cursor != 0 {
+		t.Errorf("after extra up cursor = %d; want 0 (clamped at top)", m.modePicker.cursor)
 	}
 }
 

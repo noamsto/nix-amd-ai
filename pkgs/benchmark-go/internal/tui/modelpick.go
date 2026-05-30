@@ -33,10 +33,11 @@ type modelRow struct {
 
 // modelPicker holds transient state for the model selection screen.
 type modelPicker struct {
-	rows    []modelRow
-	cursor  int
-	loading bool
-	err     error
+	rows          []modelRow
+	cursor        int
+	loading       bool
+	err           error
+	needSelection bool // set when Enter is pressed with no models selected
 
 	// test seams: override these to avoid real filesystem / network calls.
 	fetchModels  func(baseURL string) ([]models.Model, error)
@@ -49,6 +50,7 @@ func (p *modelPicker) toggleSelected() {
 		return
 	}
 	p.rows[p.cursor].selected = !p.rows[p.cursor].selected
+	p.needSelection = false // any toggle clears the "select something" hint
 }
 
 // selectedIDs returns the IDs of all selected rows.
@@ -148,18 +150,18 @@ func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(id string)
 	budgetGiB := advise.BudgetGiB(info.GTTBytes)
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)
 
+	sizeOf := sizeFunc
+	if sizeOf == nil {
+		sizeOf = resolveModelSizeGiB
+	}
+
 	rows := make([]modelRow, 0, len(mList))
 	for _, m := range mList {
 		if !m.Downloaded {
 			continue
 		}
 
-		sizeFunc_ := sizeFunc
-		if sizeFunc_ == nil {
-			sizeFunc_ = resolveModelSizeGiB
-		}
-
-		totalGiB, sizeKnown := sizeFunc_(m.ID)
+		totalGiB, sizeKnown := sizeOf(m.ID)
 
 		// fit uses TOTAL size — all expert weights must be resident in GTT.
 		fit := advise.Spills
@@ -221,6 +223,10 @@ func renderModelScreen(p *modelPicker) string {
 		} else {
 			b.WriteString("  " + labelStyle.Render(line) + "\n")
 		}
+	}
+
+	if p.needSelection {
+		b.WriteString("\n" + warnStyle.Render("select at least one model (space to toggle)") + "\n")
 	}
 
 	b.WriteString("\n" + labelStyle.Render("↑/↓ move   Space toggle   Enter → continue   Esc ← back"))

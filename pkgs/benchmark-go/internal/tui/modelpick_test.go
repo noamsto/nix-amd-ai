@@ -223,5 +223,49 @@ func TestModelPickerSpaceAndEnter(t *testing.T) {
 	}
 }
 
+// TestModelEnterGuardsEmptySelection verifies that Enter with no models
+// selected stays on screenModel (and flags needSelection), while Enter with
+// at least one selected advances to screenParams carrying the selected IDs.
+func TestModelEnterGuardsEmptySelection(t *testing.T) {
+	rows := []modelRow{
+		{id: "model-alpha"},
+		{id: "model-beta"},
+	}
+
+	t.Run("empty selection stays on screenModel", func(t *testing.T) {
+		m := model{current: screenModel}
+		m.modelPicker.rows = append([]modelRow(nil), rows...)
+
+		next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		nm := next.(model)
+
+		if nm.current != screenModel {
+			t.Errorf("current = %v; want screenModel (no advance on empty selection)", nm.current)
+		}
+		if !nm.modelPicker.needSelection {
+			t.Error("needSelection should be set after Enter with empty selection")
+		}
+		if len(nm.selectedModels) != 0 {
+			t.Errorf("selectedModels = %v; want empty", nm.selectedModels)
+		}
+	})
+
+	t.Run("non-empty selection advances to screenParams", func(t *testing.T) {
+		m := model{current: screenModel}
+		m.modelPicker.rows = append([]modelRow(nil), rows...)
+		m.modelPicker.rows[1].selected = true
+
+		next, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+		nm := next.(model)
+
+		if nm.current != screenParams {
+			t.Errorf("current = %v; want screenParams", nm.current)
+		}
+		if len(nm.selectedModels) != 1 || nm.selectedModels[0] != "model-beta" {
+			t.Errorf("selectedModels = %v; want [model-beta]", nm.selectedModels)
+		}
+	})
+}
+
 // Compile-time check: model implements tea.Model.
 var _ tea.Model = model{}

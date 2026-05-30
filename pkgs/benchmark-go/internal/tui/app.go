@@ -161,7 +161,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.modelPicker.toggleSelected()
 				return m, nil
 			case "enter":
-				m.selectedModels = m.modelPicker.selectedIDs()
+				selected := m.modelPicker.selectedIDs()
+				if len(selected) == 0 {
+					// Don't advance with an empty set — that would silently
+					// "benchmark 0 models" once 5.4 wires real bench calls.
+					m.modelPicker.needSelection = true
+					return m, nil
+				}
+				m.selectedModels = selected
 				m.current = screenParams
 				return m, nil
 			}
