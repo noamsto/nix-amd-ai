@@ -2,7 +2,6 @@ package tui
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -50,12 +49,17 @@ type model struct {
 	// Live run state (screenRun). Populated by startRun.
 	run runState
 
+	// Results screen state (screenResults). Populated on transition.
+	results resultsState
+
 	// Seams for testing. nil values fall back to the real implementations:
 	//   runBench → defaultRunBench (spawns llama-server / hits lemonade)
 	//   grbmFunc → defaultGRBM (reads real GPU)
+	//   sizeOf   → resolveModelSizeGiB (stat the GGUF file)
 	// Tests inject fakes so no test touches hardware or the network.
 	runBench func(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg
 	grbmFunc func() float64
+	sizeOf   func(id string) (float64, bool)
 }
 
 // baseURL returns the configured lemonade base URL, defaulting to the standard
@@ -118,6 +122,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg := msg.(type) {
+	case logWrittenMsg:
+		return m.handleLogWritten(msg)
+
 	case preflightResultsMsg:
 		m.preflightResults = msg.results
 		m.preflightLoaded = true
@@ -225,6 +232,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.handleRunKey(msg)
 		}
 
+		// Results screen: m markdown toggle, w write log, Esc back, q quit.
+		if m.current == screenResults {
+			return m.handleResultsKey(msg)
+		}
+
 		switch msg.String() {
 		case "enter":
 			if m.current < screenLast {
@@ -269,26 +281,11 @@ func (m model) View() tea.View {
 	case screenRun:
 		s = renderRunScreen(m.run)
 	case screenResults:
-		s = renderResults(m.run.results, m.run.err)
+		s = renderResults(m.run.results, m.run.err, m.results, m.info, m.sizeOf)
 	default:
 		s = renderHWPanel(m.info)
 	}
-	return tea.NewView(s)
-}
-
-// --- results stub (5.4b builds the real table + export) ---
-
-// renderResults is a placeholder until Task 5.4b. It confirms the run finished
-// and how many units were measured (or surfaces the error).
-func renderResults(res runResults, err error) string {
-	if err != nil {
-		return panelStyle.Render(
-			headingStyle.Render("Results") + "\n\n" +
-				hintStyle.Render("Run failed: "+err.Error()),
-		)
-	}
-	return panelStyle.Render(
-		headingStyle.Render("Results") + "\n\n" +
-			valueStyle.Render(fmt.Sprintf("Done — %d results", len(res.Units))),
-	)
+	v := tea.NewView(s)
+	v.AltScreen = true
+	return v
 }

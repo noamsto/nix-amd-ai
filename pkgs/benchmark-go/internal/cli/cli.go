@@ -10,10 +10,13 @@ import (
 	"path/filepath"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/bench"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/models"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/preflight"
+	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/tui"
 	"golang.org/x/term"
 )
 
@@ -154,11 +157,20 @@ func Run(args []string) int {
 	return runHeadless(o)
 }
 
-// runTUI is a Phase 5 stub. Returns 2 (not 0) so scripts don't read the
-// not-yet-implemented interactive path as success.
-func runTUI(_ opts) int {
-	fmt.Fprintln(os.Stderr, "interactive TUI not yet implemented; use --no-tui")
-	return 2
+// runTUI launches the interactive bubbletea TUI.
+func runTUI(o opts) int {
+	info := hw.Detect()
+	cfg := tui.Config{
+		LemondService: o.LemondService,
+		BaseURL:       o.BaseURL,
+		ConfigPath:    o.ConfigPath,
+	}
+	p := tea.NewProgram(tui.New(info, cfg))
+	if _, err := p.Run(); err != nil {
+		fmt.Fprintln(os.Stderr, "tui error:", err)
+		return 1
+	}
+	return 0
 }
 
 // formatPreflightLine formats a single preflight result as a stderr warning line.
