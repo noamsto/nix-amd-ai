@@ -101,7 +101,9 @@ const modelsHTTPTimeout = 10 * time.Second
 
 // Fetch retrieves models from a lemonade server (baseURL = scheme+host+port).
 func Fetch(baseURL string) ([]Model, error) {
-	url := baseURL + "/api/v1/models"
+	// show_all=true returns the full catalog (downloaded + downloadable), not
+	// just installed models — so the picker can surface pullable models too.
+	url := baseURL + "/api/v1/models?show_all=true"
 	client := &http.Client{Timeout: modelsHTTPTimeout}
 	resp, err := client.Get(url) //nolint:noctx
 	if err != nil {
