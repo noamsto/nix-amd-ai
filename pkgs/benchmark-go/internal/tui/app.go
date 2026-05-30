@@ -29,8 +29,8 @@ const screenLast = screenResults
 // Config holds tunable parameters for the TUI (service names, endpoints, paths).
 type Config struct {
 	LemondService string // default "lemond.service"
-	BaseURL       string // default "http://localhost:13305"; consumed in Task 5.3/5.4
-	ConfigPath    string // lemonade config path; consumed in Task 5.3/5.4
+	BaseURL       string // default "http://localhost:13305"
+	ConfigPath    string // default: ~/.cache/lemonade/config.json
 }
 
 // model is the root bubbletea model; it holds navigation state and hw info.
@@ -60,8 +60,6 @@ type model struct {
 	grbmFunc func() float64
 }
 
-// baseURL returns the configured lemonade base URL, defaulting to the standard
-// local endpoint (matches the model picker's default).
 func (m model) baseURL() string {
 	if m.cfg.BaseURL != "" {
 		return m.cfg.BaseURL
@@ -69,8 +67,6 @@ func (m model) baseURL() string {
 	return "http://localhost:13305"
 }
 
-// configPath returns the configured lemonade config.json path, defaulting to
-// the standard cache location (matches the CLI's --config-path default).
 func (m model) configPath() string {
 	if m.cfg.ConfigPath != "" {
 		return m.cfg.ConfigPath
@@ -96,7 +92,6 @@ type fixDoneMsg struct {
 	err error
 }
 
-// runPreflightCmd returns a tea.Cmd that calls preflight.Run off the event loop.
 func runPreflightCmd(info hw.Info, service string) tea.Cmd {
 	return func() tea.Msg {
 		return preflightResultsMsg{results: preflight.Run(info, service)}
@@ -169,7 +164,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// Mode picker: up/down navigation and Enter to select.
 		if m.current == screenMode {
 			switch msg.String() {
 			case "up", "k":
@@ -189,7 +183,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// Model picker: up/down navigation, space toggles, Enter advances.
 		if m.current == screenModel {
 			switch msg.String() {
 			case "up", "k":
@@ -220,17 +213,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// Params screen: delegate all keys to handleParamsKey before fallthrough.
 		if m.current == screenParams {
 			return handleParamsKey(m, msg)
 		}
 
-		// Run screen: q/Ctrl+C abort, Esc cancels back to params.
 		if m.current == screenRun {
 			return m.handleRunKey(msg)
 		}
 
-		// Results screen: m markdown toggle, w write log, Esc back, q quit.
 		if m.current == screenResults {
 			return m.handleResultsKey(msg)
 		}
@@ -262,7 +252,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View renders the currently active screen.
 func (m model) View() tea.View {
 	var s string
 	switch m.current {

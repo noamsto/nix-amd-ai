@@ -25,11 +25,10 @@ func ResolveLemonadeGGUF(modelID, cacheRoot string) string {
 
 	entries, err := os.ReadDir(cacheRoot)
 	if err != nil {
-		// cache root missing or unreadable
 		return ""
 	}
 
-	// Python iterates sorted(cache_dir.iterdir()); ReadDir already returns sorted.
+	// ReadDir already returns entries sorted, matching sorted(cache_dir.iterdir()).
 	for _, e := range entries {
 		if !e.IsDir() {
 			continue

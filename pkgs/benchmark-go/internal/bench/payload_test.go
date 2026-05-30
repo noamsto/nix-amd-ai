@@ -5,28 +5,24 @@ import (
 )
 
 func TestBuildCompletionPayload(t *testing.T) {
-	t.Run("base_keys_match_python", func(t *testing.T) {
+	t.Run("base_keys", func(t *testing.T) {
 		p := BuildCompletionPayload(CompletionOpts{
 			Model:     "mymodel",
 			Prompt:    "hello",
 			GenTokens: 128,
 			Stream:    true,
 		})
-		// Python's build_completion_payload always produces exactly these keys
-		// when ignore_eos is false: model, prompt, max_tokens, stream
 		for _, key := range []string{"model", "prompt", "max_tokens", "stream"} {
 			if _, ok := p[key]; !ok {
 				t.Errorf("missing key %q", key)
 			}
 		}
-		// Must NOT contain ignore_eos when not requested
 		if _, ok := p["ignore_eos"]; ok {
 			t.Errorf("unexpected key 'ignore_eos' when IgnoreEOS=false")
 		}
-		// Must NOT contain temperature or cache_prompt (not in Python source)
 		for _, key := range []string{"temperature", "cache_prompt", "n_predict"} {
 			if _, ok := p[key]; ok {
-				t.Errorf("unexpected key %q (not present in Python source)", key)
+				t.Errorf("unexpected key %q", key)
 			}
 		}
 	})
@@ -78,12 +74,11 @@ func TestBuildCompletionPayload(t *testing.T) {
 			IgnoreEOS: false,
 		})
 		if _, ok := p["ignore_eos"]; ok {
-			t.Error("'ignore_eos' key must be absent when IgnoreEOS=false, matching Python's conditional inclusion")
+			t.Error("'ignore_eos' must be absent when IgnoreEOS=false")
 		}
 	})
 
 	t.Run("exact_key_count_base", func(t *testing.T) {
-		// Python produces exactly 4 keys without ignore_eos
 		p := BuildCompletionPayload(CompletionOpts{
 			Model: "m", Prompt: "p", GenTokens: 1, Stream: true,
 		})
@@ -93,7 +88,6 @@ func TestBuildCompletionPayload(t *testing.T) {
 	})
 
 	t.Run("exact_key_count_with_ignore_eos", func(t *testing.T) {
-		// Python produces exactly 5 keys with ignore_eos
 		p := BuildCompletionPayload(CompletionOpts{
 			Model: "m", Prompt: "p", GenTokens: 1, Stream: true, IgnoreEOS: true,
 		})

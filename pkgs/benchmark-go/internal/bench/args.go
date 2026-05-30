@@ -2,7 +2,6 @@ package bench
 
 import "fmt"
 
-// ServerArgs holds parameters for BuildLlamaServerArgs.
 type ServerArgs struct {
 	BinPath   string // absolute path to the backend-specific llama-server binary
 	ModelPath string // absolute path to the GGUF file
@@ -14,11 +13,8 @@ type ServerArgs struct {
 }
 
 // BuildLlamaServerArgs returns the argv slice to spawn llama-server.
-//
-// Mirrors Python's build_llama_server_args exactly:
-//   - always includes --flash-attn on
-//   - appends --spec-draft-n-max 6 only when SpecType != "none"
-//   - --parallel 1 forces a single slot for KV-cache budget control
+// Always includes --flash-attn on; appends --spec-draft-n-max 6 when SpecType != "none";
+// --parallel 1 for KV-cache budget control.
 func BuildLlamaServerArgs(sa ServerArgs) []string {
 	args := []string{
 		sa.BinPath,

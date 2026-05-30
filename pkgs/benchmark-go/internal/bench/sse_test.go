@@ -90,7 +90,7 @@ func TestParseSSE(t *testing.T) {
 
 	t.Run("captures_server_timings_predicted_per_second", func(t *testing.T) {
 		// llama.cpp sends timings.predicted_per_second in the final chunk;
-		// run_completion prefers it over client-side wall-clock TPS.
+		// it takes precedence over client-side wall-clock TPS.
 		stream := strings.Join([]string{
 			`data: {"choices":[{"text":"a"}]}`,
 			`data: {"choices":[{"text":"b"}],"usage":{"completion_tokens":2},"timings":{"predicted_per_second":42.5}}`,

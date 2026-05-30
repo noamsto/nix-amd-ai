@@ -17,7 +17,6 @@ import (
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 )
 
-// Status is the severity of a preflight check result.
 type Status int
 
 const (
@@ -26,7 +25,6 @@ const (
 	Fail
 )
 
-// String renders the status as a name for logs and test failure output.
 func (s Status) String() string {
 	switch s {
 	case Pass:
@@ -40,7 +38,6 @@ func (s Status) String() string {
 	}
 }
 
-// Result is the outcome of a single preflight check.
 type Result struct {
 	Name   string
 	Status Status
@@ -50,7 +47,6 @@ type Result struct {
 	Fix func() error
 }
 
-// Listener is a TCP port that is currently in LISTEN state.
 type Listener struct {
 	Port int
 	Proc string // best-effort process name; "" when unknown
@@ -60,8 +56,7 @@ type Listener struct {
 // Pure classifiers — all accept injected inputs; no exec, no filesystem I/O.
 // ---------------------------------------------------------------------------
 
-// classifyGPU returns Fail when grbmBusyPct > 5, Pass otherwise.
-// No fixer: we cannot safely free someone else's GPU work.
+// No fixer: cannot safely free someone else's GPU work.
 func classifyGPU(grbmBusyPct float64) Result {
 	if grbmBusyPct > 5 {
 		return Result{
@@ -95,8 +90,6 @@ func classifyPower(onAC, performance bool) Result {
 	return Result{Name: "power", Status: Pass}
 }
 
-// classifyLemond returns Warn when the service activeState is "active" (it may
-// hold a model on the GPU), Pass otherwise. Fix is stopLemond.
 func classifyLemond(service, activeState string) Result {
 	if activeState == "active" {
 		return Result{
@@ -162,16 +155,13 @@ func parseSSOutput(output string) []Listener {
 	sc := bufio.NewScanner(strings.NewReader(output))
 	for sc.Scan() {
 		line := sc.Text()
-		// Skip header and blank lines.
 		if !strings.HasPrefix(line, "LISTEN") {
 			continue
 		}
 		fields := strings.Fields(line)
-		// Minimum: State Recv-Q Send-Q Local Peer [Process]
 		if len(fields) < 5 {
 			continue
 		}
-		// Local Address:Port is fields[3].
 		addrPort := fields[3]
 		portStr := addrPort
 		if idx := strings.LastIndex(addrPort, ":"); idx >= 0 {
@@ -182,12 +172,9 @@ func parseSSOutput(output string) []Listener {
 			continue
 		}
 
-		// Process column is optional: users:(("name",pid=N,fd=N))
-		// It may appear anywhere from fields[5] onwards (sometimes merged).
 		procName := ""
 		rest := strings.Join(fields[5:], " ")
 		if idx := strings.Index(rest, `users:((`); idx >= 0 {
-			// Extract the quoted name right after users:((
 			after := rest[idx+len(`users:(("`):]
 			if end := strings.IndexByte(after, '"'); end >= 0 {
 				procName = after[:end]
@@ -205,15 +192,11 @@ func parseSSOutput(output string) []Listener {
 // Live gatherers — thin wrappers; not unit-tested directly.
 // ---------------------------------------------------------------------------
 
-// lemondActiveState runs `systemctl is-active <service>` and returns the
-// trimmed stdout ("active", "inactive", "failed", etc.). Returns "" on error.
 func lemondActiveState(service string) string {
 	out, _ := exec.Command("systemctl", "is-active", service).Output()
 	return strings.TrimSpace(string(out))
 }
 
-// listListeners runs `ss -ltnp` and parses its output. Returns an empty slice
-// on any error.
 func listListeners() []Listener {
 	out, err := exec.Command("ss", "-ltnp").Output()
 	if err != nil {
@@ -296,9 +279,7 @@ func writeSysfsPerformance(path string) error {
 // ---------------------------------------------------------------------------
 
 // Run performs all preflight checks and returns the ordered results.
-// It never panics; gatherer errors degrade gracefully (empty listeners, etc.).
-// The Fix field is populated on fixable Warn/Fail items but is NEVER called
-// here — callers decide whether to invoke it.
+// Fix fields are populated but NEVER called here — callers decide whether to invoke.
 func Run(info hw.Info, service string) []Result {
 	return []Result{
 		classifyGPU(info.GRBMBusyPct),

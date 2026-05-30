@@ -64,9 +64,7 @@ func (p *modelPicker) selectedIDs() []string {
 	return out
 }
 
-// enterModelScreen prepares the picker state and returns the load Cmd.
-// Called from model.Update when transitioning to screenModel; the model
-// value is updated in place before the Cmd is returned.
+// enterModelScreen resets picker state and returns the load Cmd.
 func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	p.loading = true
 	p.err = nil
@@ -88,8 +86,7 @@ func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	}
 }
 
-// resolveModelSizeGiB returns the GGUF file size in GiB.
-// Returns (0, false) when the file cannot be found or stat'd.
+// resolveModelSizeGiB returns the GGUF file size in GiB, or (0, false) if not found.
 func resolveModelSizeGiB(id string) (float64, bool) {
 	path := bench.ResolveLemonadeGGUF(id, "")
 	if path == "" {
@@ -102,7 +99,6 @@ func resolveModelSizeGiB(id string) (float64, bool) {
 	return float64(fi.Size()) / (1024 * 1024 * 1024), true
 }
 
-// fitGlyph returns the glyph for a FitState.
 func fitGlyph(fit advise.FitState) string {
 	switch fit {
 	case advise.Fits:
@@ -114,8 +110,7 @@ func fitGlyph(fit advise.FitState) string {
 	}
 }
 
-// formatModelRow formats a single model row for display.
-// Pure function — used by unit tests.
+// formatModelRow formats a single model row for display (pure, tested directly).
 func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitState, ceilingTPS float64, isMoE bool, estimated bool, selected bool) string {
 	check := "[ ]"
 	if selected {
@@ -145,7 +140,6 @@ func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitS
 		check, id, sizeStr, fitGlyph(fit), ceilStr, moeTag)
 }
 
-// buildModelRows converts fetched models into display rows using hw info.
 func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(id string) (float64, bool)) []modelRow {
 	budgetGiB := advise.BudgetGiB(info.GTTBytes)
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)
@@ -193,7 +187,6 @@ func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(id string)
 	return rows
 }
 
-// renderModelScreen renders the model picker panel.
 func renderModelScreen(p *modelPicker) string {
 	var b strings.Builder
 

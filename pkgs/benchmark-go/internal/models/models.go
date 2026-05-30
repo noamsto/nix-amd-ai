@@ -9,21 +9,16 @@ import (
 	"time"
 )
 
-// Model holds the fields lemonade's /api/v1/models endpoint returns that
-// benchmark.py uses: id, downloaded, and the labels slice (used as a set
-// of recipe tags, e.g. ["llamacpp"]). The recipe field, when present, is
-// included so run_benchmarks can look it up from the returned map.
+// Model holds the fields from lemonade's /api/v1/models endpoint.
+// Labels is used as a set of recipe tags (e.g. ["llamacpp"]).
 type Model struct {
 	ID         string   `json:"id"`
 	Downloaded bool     `json:"downloaded"`
 	Labels     []string `json:"labels"`
-	// Recipe is the lemonade recipe string (e.g. "llamacpp"). Python reads
-	// model_map[mid].get("recipe") in model_recipe(). May be empty.
-	Recipe string `json:"recipe"`
+	Recipe     string   `json:"recipe"` // lemonade recipe (e.g. "llamacpp"); may be empty
 }
 
-// modelsEnvelope matches the {"data":[...], "object":"list"} wrapper that
-// /api/v1/models returns.
+// modelsEnvelope is the {"data":[...]} wrapper from /api/v1/models.
 type modelsEnvelope struct {
 	Data []rawModel `json:"data"`
 }
@@ -67,7 +62,6 @@ func ParseModels(data []byte) ([]Model, error) {
 	return convertModels(raws), nil
 }
 
-// convertModels applies the id-fallback logic and builds the public slice.
 func convertModels(raws []rawModel) []Model {
 	out := make([]Model, 0, len(raws))
 	for _, r := range raws {
@@ -94,11 +88,9 @@ func convertModels(raws []rawModel) []Model {
 	return out
 }
 
-// modelsHTTPTimeout bounds the GET /api/v1/models request.
 const modelsHTTPTimeout = 10 * time.Second
 
-// Fetch retrieves the model list from a running lemonade server.
-// baseURL is the scheme+host+port, e.g. "http://localhost:13305".
+// Fetch retrieves models from a lemonade server (baseURL = scheme+host+port).
 func Fetch(baseURL string) ([]Model, error) {
 	url := baseURL + "/api/v1/models"
 	client := &http.Client{Timeout: modelsHTTPTimeout}

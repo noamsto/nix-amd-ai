@@ -16,19 +16,16 @@ import (
 )
 
 // ErrNoMTPHead is returned by RunMTPAB when llama-server rejects
-// --spec-type draft-mtp because the model has no MTP draft head. Callers
-// match it with errors.Is to map to exit code 1 (mirrors Python's sys.exit(1)).
+// --spec-type draft-mtp because the model has no MTP draft head.
 var ErrNoMTPHead = errors.New("no MTP head")
 
 // completionHTTPTimeout bounds streaming completion and model-load requests.
 // Shared by runOneCompletion and LoadModel so they cannot silently diverge.
 const completionHTTPTimeout = 300 * time.Second
 
-// settleDelay is paused between llama-server launches (between backends and
-// between spec types) to let GPU memory drain before the next launch.
-const settleDelay = 3 * time.Second // let GPU memory drain before next llama-server launch
+// settleDelay lets GPU memory drain between llama-server launches.
+const settleDelay = 3 * time.Second
 
-// MeasureOpts holds parameters for MeasureSpec / BenchmarkModel.
 type MeasureOpts struct {
 	PromptTokens int
 	GenTokens    int
@@ -55,7 +52,7 @@ type MeasureResult struct {
 }
 
 // completionResult holds what one streaming completion returns.
-// ok=false is the "no tokens" sentinel (mirrors Python's `return None, None, 0`).
+// ok=false is the "no tokens" sentinel.
 type completionResult struct {
 	ttft      float64
 	decodeTPS float64
@@ -63,16 +60,15 @@ type completionResult struct {
 	ok        bool
 }
 
-// runOneCompletion posts one streaming completion to baseURL+path and
-// returns timing/TPS. Mirrors Python's run_completion exactly.
+// runOneCompletion posts one streaming completion to baseURL+path and returns timing/TPS.
 //
-// Timing combination rules (Python mirror):
-//   - completion_tokens = CompletionTokens if > 0, else TextTokenCount
-//   - decode_tps = PredictedPerSecond if > 0, else wall-clock
+// Timing rules:
+//   - completion_tokens = server CompletionTokens if > 0, else client TextTokenCount
+//   - decode_tps = server PredictedPerSecond if > 0, else wall-clock
 //     (compTokens-1)/decodeElapsed; 0 if compTokens<=1; +Inf if elapsed<=0
 //   - TTFT = wall-clock from request start to first non-empty text token
 //
-// Returns ok=false when no tokens received (TextTokenCount == 0).
+// Returns ok=false when no tokens received.
 func runOneCompletion(ctx context.Context, baseURL, path string, opts CompletionOpts) completionResult {
 	payload := BuildCompletionPayload(opts)
 	body, err := json.Marshal(payload)
@@ -95,10 +91,8 @@ func runOneCompletion(ctx context.Context, baseURL, path string, opts Completion
 	}
 	defer resp.Body.Close()
 
-	// Parse SSE stream while recording per-token wall-clock times. Shares
-	// scanSSE with ParseSSE; the only reason runOneCompletion needs its own
-	// onChunk is the per-token timing, which ParseSSE does not capture.
-	// Matches Python's run_completion loop exactly.
+	// Parse SSE stream while recording per-token wall-clock times. Uses scanSSE
+	// directly (rather than ParseSSE) to capture per-token timestamps.
 	var (
 		tFirstToken time.Time
 		tLastToken  time.Time
@@ -109,7 +103,7 @@ func runOneCompletion(ctx context.Context, baseURL, path string, opts Completion
 	)
 
 	_ = scanSSE(resp.Body, func(c sseChunk) {
-		// Overwrite on each truthy value — matches Python final_usage/final_timings.
+		// Overwrite on each truthy value — last truthy wins.
 		if c.Usage != nil && c.Usage.CompletionTokens != 0 {
 			finalCompTokens = c.Usage.CompletionTokens
 		}
@@ -128,7 +122,6 @@ func runOneCompletion(ctx context.Context, baseURL, path string, opts Completion
 		}
 	})
 
-	// No tokens received → sentinel, matching Python's `if t_first_token is None`.
 	if tFirstToken.IsZero() {
 		return completionResult{}
 	}
@@ -141,8 +134,8 @@ func runOneCompletion(ctx context.Context, baseURL, path string, opts Completion
 		compTokens = textCount
 	}
 
-	// decode_tps: server-reported if truthy, else wall-clock. Python gates on
-	// truthiness (!= 0), so a pathological negative server TPS is taken as-is.
+	// decode_tps: server-reported if truthy (!= 0), else wall-clock.
+	// A pathological negative server TPS is taken as-is.
 	var decodeTPS float64
 	if finalPredictedTPS != 0 {
 		decodeTPS = finalPredictedTPS
@@ -171,16 +164,13 @@ func runOneCompletion(ctx context.Context, baseURL, path string, opts Completion
 // model: the model ID string for the payload ("default" for raw llama-server).
 // path: "/v1/completions" for raw llama-server, "/api/v1/completions" for lemonade.
 //
-// Skips iterations that hit the "no tokens" sentinel, matching Python's
-// `if ttft is None: continue`. Empty result slices mean all iterations failed.
+// Skips iterations that return no tokens. Empty result slices mean all failed.
 //
-// ctx cancellation interrupts the in-flight HTTP call (via the request context)
-// and breaks the warmup/measure loops at the next iteration boundary, so an
-// abort returns promptly instead of blocking up to completionHTTPTimeout.
+// ctx cancellation interrupts the in-flight HTTP call and breaks the loops at
+// the next iteration boundary, returning promptly without blocking up to completionHTTPTimeout.
 func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts) MeasureResult {
 	var prompt string
 	if o.IgnoreEOS {
-		// MTP A/B uses the naturalistic prompt.
 		prompt = BuildMTPPrompt(o.PromptTokens)
 	} else {
 		prompt = BuildPrompt(o.PromptTokens)
@@ -226,7 +216,6 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 	return result
 }
 
-// BenchmarkModelOpts holds parameters for BenchmarkModel.
 type BenchmarkModelOpts struct {
 	BaseURL      string
 	ModelID      string
@@ -239,19 +228,15 @@ type BenchmarkModelOpts struct {
 	OnIteration func(iter int, decodeTPS float64)
 }
 
-// BenchmarkModelResult holds aggregated results. Nil pointer fields signal
-// "no successful iterations" (N/A), matching Python's `return None, None, None`.
+// BenchmarkModelResult holds aggregated results. Nil pointer fields signal N/A.
 type BenchmarkModelResult struct {
 	MeanTTFT *float64
 	MeanTPS  *float64
 	StdevTPS *float64
 }
 
-// BenchmarkModel benchmarks a single model via the lemonade HTTP server.
-// Loads the model, warms up, measures. Mirrors Python's benchmark_model.
-//
-// ctx cancellation interrupts the in-flight measurement (threaded into
-// MeasureSpec); it is not threaded into LoadModel, which has its own timeout.
+// BenchmarkModel loads a model into lemonade then warms up and measures.
+// ctx cancellation interrupts the in-flight measurement; LoadModel has its own timeout.
 func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelResult, error) {
 	fmt.Fprintf(os.Stderr, "  Loading %q...\n", o.ModelID)
 	if err := LoadModel(o.BaseURL, o.ModelID); err != nil {
@@ -270,7 +255,6 @@ func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelRe
 
 	r := MeasureSpec(ctx, o.BaseURL, lemonadeCompletionsPath, o.ModelID, mo)
 
-	// Guard: empty → N/A.
 	if len(r.DecodeTPS) == 0 {
 		return BenchmarkModelResult{}, nil
 	}
@@ -284,7 +268,6 @@ func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelRe
 	}, nil
 }
 
-// MTPABOpts holds parameters for RunMTPAB.
 type MTPABOpts struct {
 	ModelID      string
 	Backends     []string
@@ -311,14 +294,11 @@ type MTPABResult struct {
 	OnTPS   *float64
 }
 
-// defaultBackendBinEnv maps backend key → env var holding the llama-server binary.
 var defaultBackendBinEnv = map[string]string{
 	"rocm":   "LEMONADE_LLAMACPP_ROCM_BIN",
 	"vulkan": "LEMONADE_LLAMACPP_VULKAN_BIN",
 }
 
-// resolveBackendBin returns the llama-server binary path for the given backend.
-// Mirrors Python's _resolve_backend_bin.
 func resolveBackendBin(backend string, binEnv map[string]string) (string, error) {
 	envVar, ok := binEnv[backend]
 	if !ok {
@@ -339,13 +319,10 @@ func resolveBackendBin(backend string, binEnv map[string]string) (string, error)
 	return path, nil
 }
 
-// mtpABDefaultCtx is the fallback --ctx-size for the MTP A/B sweep: sized to
-// the 512+128-token workload with headroom. Larger ctx wastes KV memory and
-// risks iGPU offload (mirrors Python's run_mtp_ab ctx_size=2048).
+// mtpABDefaultCtx is the fallback --ctx-size: sized to the 512+128-token
+// workload with headroom. Larger ctx wastes KV memory and risks iGPU offload.
 const mtpABDefaultCtx = 2048
 
-// resolveCtxSize returns the requested ctx size, falling back to
-// mtpABDefaultCtx when ctx <= 0 (so callers that don't set it keep 2048).
 func resolveCtxSize(ctx int) int {
 	if ctx <= 0 {
 		return mtpABDefaultCtx
@@ -354,11 +331,9 @@ func resolveCtxSize(ctx int) int {
 }
 
 // RunMTPAB runs an MTP-on / MTP-off A/B across the given backends,
-// spawning llama-server twice per backend. Mirrors Python's run_mtp_ab.
-//
-// ctx cancellation interrupts the in-flight measurement (threaded into
-// measureOneSpec → MeasureSpec) and stops the sweep at the next backend/spec
-// boundary; the per-spec deferred Stop() still tears the server down.
+// spawning llama-server twice per backend.
+// ctx cancellation stops the sweep at the next backend/spec boundary;
+// the per-spec deferred Stop() still tears the server down.
 func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 	if len(o.Backends) == 0 {
 		return nil, fmt.Errorf("RunMTPAB: empty backend list")
@@ -479,7 +454,6 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 
 // measureOneSpec runs warmup+repeat MTP completions against a running LlamaServer.
 // Returns mean decode TPS, or nil if no successful iterations.
-// Mirrors Python's _measure_one_spec.
 func measureOneSpec(ctx context.Context, srv *LlamaServer, o MTPABOpts, backend, specType string) *float64 {
 	mo := MeasureOpts{
 		PromptTokens: o.PromptTokens,
@@ -501,7 +475,6 @@ func measureOneSpec(ctx context.Context, srv *LlamaServer, o MTPABOpts, backend,
 	return &mean
 }
 
-// runListDevices executes `binPath --list-devices` and returns stdout.
 func runListDevices(binPath string) (string, error) {
 	out, err := exec.Command(binPath, "--list-devices").Output() //nolint:gosec
 	if err != nil {

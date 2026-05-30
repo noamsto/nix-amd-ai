@@ -10,7 +10,6 @@ import (
 )
 
 // RunParams holds the user-configured values for the benchmark run.
-// Task 5.4 reads these from model.paramsForm.runParams().
 type RunParams struct {
 	Ctx      int
 	Repeat   int
@@ -22,11 +21,11 @@ type RunParams struct {
 type paramField int
 
 const (
-	fieldCtx      paramField = iota
-	fieldRepeat              // 1
-	fieldWarmup              // 2
-	fieldBackends            // 3
-	fieldCount    = 4        // total number of fields
+	fieldCtx paramField = iota
+	fieldRepeat
+	fieldWarmup
+	fieldBackends
+	fieldCount = 4
 )
 
 // paramsForm holds editable state for the params screen.
@@ -41,7 +40,6 @@ type paramsForm struct {
 	ctxSuggested bool // true when Ctx was pre-filled by advise
 }
 
-// defaultParamsForm returns a form with hardcoded defaults (no advise input).
 func defaultParamsForm() paramsForm {
 	return paramsForm{
 		ctx:      "2048",
@@ -52,10 +50,8 @@ func defaultParamsForm() paramsForm {
 	}
 }
 
-// enterParamsScreen initialises the params form when transitioning from
-// screenModel to screenParams. It pre-fills Ctx from advise.RecommendParams
-// using the largest selected model's size in GiB (passed in as largestGiB;
-// pass 0 when unknown, which yields the advise default of 2048).
+// enterParamsScreen pre-fills the form from advise.RecommendParams(largestGiB).
+// Pass 0 when size is unknown; advise defaults to 2048.
 func enterParamsScreen(f *paramsForm, largestGiB float64) {
 	rec := advise.RecommendParams(largestGiB)
 
@@ -122,8 +118,8 @@ func splitBackends(s string) []string {
 	return out
 }
 
-// updateParamsForm handles a key press on the params screen.
-// Returns whether the key was consumed; the caller must handle Enter/Esc itself.
+// updateParamsForm handles a key on the params screen.
+// Returns true when the key was consumed; caller handles Enter/Esc.
 func updateParamsForm(f *paramsForm, key string) (consumed bool) {
 	switch key {
 	case "tab", "down":

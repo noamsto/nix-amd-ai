@@ -20,8 +20,7 @@ import (
 	"golang.org/x/term"
 )
 
-// opts holds all parsed CLI flags + positional args, matching Python's
-// argparse namespace (main ~867-1048).
+// opts holds all parsed CLI flags + positional args.
 type opts struct {
 	// Positional
 	ModelIDs []string
@@ -34,29 +33,26 @@ type opts struct {
 	GenTokens    int
 	Warmup       int
 	Repeat       int
-	MinDecodeTPS float64 // exit 1 gate; default 5.0
+	MinDecodeTPS float64
 
 	// Backend switch (lemonade mode)
-	Backend       string // "rocm", "vulkan", "auto", or ""
+	Backend       string
 	ConfigPath    string
 	LemondService string
 	NoRestart     bool
 
 	// MTP A/B mode
-	MTPAb         string // model ID for --mtp-ab; "" means normal mode
-	MTPAbBackends string // comma-separated; default "rocm,vulkan"
+	MTPAb         string
+	MTPAbBackends string
 
-	// Ctx size (Go extension: Python hardcodes 2048 in run_mtp_ab)
+	// Ctx size (Go extension: Python hardcodes 2048)
 	CtxSize int
 
 	// Go-specific
 	NoTUI bool
 }
 
-// parseFlags parses args[1:] into opts. Returns (o, nil) on success,
-// (opts{}, flag.ErrHelp) when --help/-h is seen, and (opts{}, err) on parse
-// error. On mutual-exclusion violation it returns an error (callers print +
-// exit 2).
+// parseFlags parses args[1:] into opts.
 func parseFlags(args []string) (opts, error) {
 	fs := flag.NewFlagSet("benchmark", flag.ContinueOnError)
 	fs.Usage = func() {
@@ -67,11 +63,8 @@ func parseFlags(args []string) (opts, error) {
 
 	var o opts
 
-	// Lemonade connection
 	fs.StringVar(&o.BaseURL, "base-url", "http://localhost:13305",
 		"Lemonade server base URL")
-
-	// Measurement parameters
 	fs.IntVar(&o.PromptTokens, "prompt-tokens", 512,
 		"Approximate number of prompt tokens")
 	fs.IntVar(&o.GenTokens, "gen-tokens", 128,
@@ -82,8 +75,6 @@ func parseFlags(args []string) (opts, error) {
 		"Number of measurement iterations")
 	fs.Float64Var(&o.MinDecodeTPS, "min-decode-tps", 5.0,
 		"Minimum acceptable decode t/s; exit 1 if any model falls below this (signals CPU fallback)")
-
-	// Backend switch
 	fs.StringVar(&o.Backend, "backend", "",
 		`Force llamacpp.backend in lemonade config and restart lemond before benchmarking (choices: rocm, vulkan, auto)`)
 	fs.StringVar(&o.ConfigPath, "config-path",
@@ -93,18 +84,12 @@ func parseFlags(args []string) (opts, error) {
 		"systemd service name to restart when --backend is set")
 	fs.BoolVar(&o.NoRestart, "no-restart", false,
 		"Skip sudo systemctl restart after writing the config")
-
-	// MTP A/B
 	fs.StringVar(&o.MTPAb, "mtp-ab", "",
 		"Run MTP on/off A/B for MODEL_ID (mutually exclusive with positional MODEL_IDs)")
 	fs.StringVar(&o.MTPAbBackends, "mtp-ab-backends", "rocm,vulkan",
 		"Comma-separated backends to sweep when --mtp-ab is set")
-
-	// Ctx size (Go extension; Python hardcodes 2048 for MTP A/B)
 	fs.IntVar(&o.CtxSize, "ctx-size", 2048,
 		"llama-server --ctx-size for MTP A/B mode (Go extension; Python hardcodes 2048)")
-
-	// Go-specific
 	fs.BoolVar(&o.NoTUI, "no-tui", false,
 		"Disable interactive TUI; print markdown to stdout")
 
@@ -113,12 +98,10 @@ func parseFlags(args []string) (opts, error) {
 	}
 	o.ModelIDs = fs.Args()
 
-	// Mutual exclusion: --mtp-ab vs positional MODEL_IDs (matches Python ~972-979).
 	if o.MTPAb != "" && len(o.ModelIDs) > 0 {
 		return opts{}, fmt.Errorf("--mtp-ab is mutually exclusive with positional MODEL_ID arguments")
 	}
 
-	// Backend validation: match Python's choices=["rocm","vulkan","auto"].
 	if o.Backend != "" {
 		switch o.Backend {
 		case "rocm", "vulkan", "auto":
@@ -157,7 +140,6 @@ func Run(args []string) int {
 	return runHeadless(o)
 }
 
-// runTUI launches the interactive bubbletea TUI.
 func runTUI(o opts) int {
 	info := hw.Detect()
 	cfg := tui.Config{
@@ -173,8 +155,6 @@ func runTUI(o opts) int {
 	return 0
 }
 
-// formatPreflightLine formats a single preflight result as a stderr warning line.
-// Only Warn and Fail results are non-empty; Pass returns "".
 func formatPreflightLine(r preflight.Result) string {
 	switch r.Status {
 	case preflight.Warn:
@@ -186,8 +166,6 @@ func formatPreflightLine(r preflight.Result) string {
 	}
 }
 
-// runHeadless drives the real benchmark calls and prints a markdown table.
-// Mirrors Python's main() / run_benchmarks().
 func runHeadless(o opts) int {
 	// Ctrl+C cancels the in-flight benchmark (threaded into bench via ctx) so
 	// the HTTP call is interrupted promptly instead of blocking up to its 300s
@@ -209,8 +187,6 @@ func runHeadless(o opts) int {
 	return runHeadlessLemonade(ctx, o)
 }
 
-// runHeadlessMTPAB implements the --mtp-ab path. Mirrors Python's run_mtp_ab
-// call in main().
 func runHeadlessMTPAB(ctx context.Context, o opts) int {
 	backends := splitBackends(o.MTPAbBackends)
 	if len(backends) == 0 {
@@ -252,8 +228,6 @@ func runHeadlessMTPAB(ctx context.Context, o opts) int {
 	return 0
 }
 
-// runHeadlessLemonade implements the normal lemonade path (positional MODEL_IDs).
-// Mirrors Python's run_benchmarks().
 func runHeadlessLemonade(ctx context.Context, o opts) int {
 	if len(o.ModelIDs) == 0 {
 		fmt.Fprintln(os.Stderr, "ERROR: at least one MODEL_ID is required (or use --mtp-ab)")
@@ -265,11 +239,9 @@ func runHeadlessLemonade(ctx context.Context, o opts) int {
 	fmt.Fprintf(os.Stderr, "Benchmarking %d model(s) against %s\n",
 		len(o.ModelIDs), baseURL)
 
-	// --- Backend switch: rewrite lemonade config + restart lemond ---
-	// Mirrors Python's try/finally block in main(). The deferred restore is the
-	// single restore site: registered the moment the config is written, it runs
-	// on every return path (success, below-threshold, or pre-benchmark failure)
-	// with no ordering dependency on later code.
+	// Deferred restore is the single restore site: registered the moment the
+	// config is written, it runs on every return path with no ordering
+	// dependency on later code.
 	prevBackend := ""
 	backendForced := false
 	defer func() {
@@ -313,8 +285,6 @@ func runHeadlessLemonade(ctx context.Context, o opts) int {
 		}
 	}
 
-	// --- Step 1: validate models exist and are downloaded ---
-	// Mirrors Python's check_models().
 	allModels, err := models.Fetch(baseURL)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: cannot reach lemonade at %s: %v\n", baseURL, err)
@@ -347,15 +317,12 @@ func runHeadlessLemonade(ctx context.Context, o opts) int {
 		return 2
 	}
 
-	// modelRecipe returns the recipe string for a model, rewriting it when
-	// --backend forced a specific llamacpp backend (mirrors Python's model_recipe).
 	modelRecipe := func(mid string) string {
 		m := modelMap[mid]
 		raw := m.Recipe
 		if raw == "" {
 			raw = "unknown"
 		}
-		// Rewrite llamacpp* recipe when a specific backend was forced.
 		if (o.Backend == "rocm" || o.Backend == "vulkan") &&
 			strings.HasPrefix(raw, "llamacpp") {
 			return "llamacpp:" + o.Backend
@@ -363,7 +330,6 @@ func runHeadlessLemonade(ctx context.Context, o opts) int {
 		return raw
 	}
 
-	// --- Step 2: benchmark each model ---
 	var rows []Row
 	var belowThreshold []string
 
@@ -402,11 +368,9 @@ func runHeadlessLemonade(ctx context.Context, o opts) int {
 		}
 	}
 
-	// --- Step 3: print results table ---
 	fmt.Println()
 	fmt.Print(RenderMarkdownTable(rows))
 
-	// --- Step 4: exit 1 if any model below threshold ---
 	if len(belowThreshold) > 0 {
 		fmt.Fprintf(os.Stderr,
 			"\nERROR: the following models are below the minimum decode t/s threshold (%.1f t/s) -- likely CPU fallback:\n",
@@ -421,8 +385,6 @@ func runHeadlessLemonade(ctx context.Context, o opts) int {
 	return 0
 }
 
-// splitBackends splits a comma-separated backend string, matching Python's
-// [b.strip() for b in s.split(",") if b.strip()].
 func splitBackends(s string) []string {
 	parts := strings.Split(s, ",")
 	out := make([]string, 0, len(parts))

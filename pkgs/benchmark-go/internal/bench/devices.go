@@ -6,7 +6,6 @@ import (
 	"strings"
 )
 
-// backendPrefix maps backend keys to the device-string prefix used by llama-server.
 var backendPrefix = map[string]string{
 	"rocm":   "ROCm",
 	"vulkan": "Vulkan",

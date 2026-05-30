@@ -66,7 +66,7 @@ type grbmTickMsg struct {
 	pct float64
 }
 
-// --- completed-results shape (consumed by results.go in 5.4b) ---
+// --- completed-results shape ---
 
 // runUnitResult holds the aggregated outcome of one measured unit. The unit is
 // a (model, backend, spec) tuple that fits all three modes:
@@ -295,8 +295,7 @@ func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 
 // --- default real runner ---
 
-// defaultPromptTokens / defaultGenTokens mirror the CLI defaults for the
-// live-run workload (cli.go: prompt-tokens=512, gen-tokens=128).
+// defaultPromptTokens / defaultGenTokens mirror the CLI defaults.
 const (
 	defaultPromptTokens = 512
 	defaultGenTokens    = 128
@@ -360,9 +359,7 @@ func runMTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) te
 	return runResultMsg{results: res}
 }
 
-// runHTTPLive benchmarks each selected model via the lemonade HTTP server as
-// currently configured (no backend switching), streaming per-iteration
-// progress. Backend is left "" on every unit.
+// runHTTPLive benchmarks each model against the current server (no backend switch).
 func runHTTPLive(ctx context.Context, req runRequest, progress chan<- tea.Msg) tea.Msg {
 	var res runResults
 	res.Mode = req.mode
@@ -436,10 +433,8 @@ func runBackendABLive(ctx context.Context, req runRequest, progress chan<- tea.M
 	return runResultMsg{results: res}
 }
 
-// benchmarkModelsLive benchmarks every model in req against the currently
-// configured server, streaming per-iteration progress and recording one unit
-// per model tagged with backend (which is "" for plain HTTP). On error it
-// returns the units accumulated so far plus the error.
+// benchmarkModelsLive benchmarks every model against the current server, streaming
+// progress. On error it returns units accumulated so far plus the error.
 func benchmarkModelsLive(ctx context.Context, req runRequest, backend string, progress chan<- tea.Msg) ([]runUnitResult, error) {
 	var units []runUnitResult
 	for _, modelID := range req.models {

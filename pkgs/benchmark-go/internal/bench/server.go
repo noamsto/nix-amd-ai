@@ -12,22 +12,13 @@ import (
 )
 
 const (
-	// defaultReadyTimeout is how long to wait for llama-server to become
-	// ready — matches Python's LlamaServer default of 300 s.
 	defaultReadyTimeout = 300 * time.Second
-
-	// defaultTermTimeout is how long to wait after SIGTERM before SIGKILL —
-	// matches Python's LlamaServer default of 10 s.
-	defaultTermTimeout = 10 * time.Second
-
-	// pollInterval is how often waitReady polls /health.
-	// Polls faster than Python's 0.5s; no behavioral downside.
-	pollInterval = 250 * time.Millisecond
+	defaultTermTimeout  = 10 * time.Second
+	pollInterval        = 250 * time.Millisecond
 )
 
 // FindFreePort binds to :0, reads the kernel-assigned port, and closes.
-// The port is briefly racy until the caller binds again, which is fine for
-// our subprocess spawn flow — mirrors Python's find_free_port.
+// The port is briefly racy until the caller binds again — fine for subprocess spawn.
 func FindFreePort() (int, error) {
 	l, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
@@ -38,12 +29,8 @@ func FindFreePort() (int, error) {
 	return port, nil
 }
 
-// waitReady polls GET {baseURL}/health every pollInterval until it receives
-// HTTP 200 or the deadline expires.
-//
-// Unlike Python's _wait_ready, the process-exited-early check is the
-// responsibility of LlamaServer.Start (it wraps waitReady and can inspect
-// cmd.ProcessState). Here we only poll the HTTP endpoint.
+// waitReady polls GET {baseURL}/health every pollInterval until HTTP 200 or deadline.
+// Process-exited-early detection is the caller's responsibility (see waitReadyWithEarlyExit).
 func waitReady(baseURL string, timeout time.Duration) error {
 	url := baseURL + "/health"
 	// Cap each per-attempt HTTP timeout to min(2s, remaining) so callers
@@ -78,7 +65,6 @@ func waitReady(baseURL string, timeout time.Duration) error {
 }
 
 // LlamaServer spawns and manages a llama-server subprocess.
-// Use Start/Stop (not a context manager as in Python, but equivalent).
 type LlamaServer struct {
 	Argv         []string
 	Port         int
@@ -95,8 +81,6 @@ type LlamaServer struct {
 	waitDone chan error
 }
 
-// NewLlamaServer constructs a LlamaServer with the given argv and port,
-// using the default ready/term timeouts — mirrors Python's LlamaServer.__init__.
 func NewLlamaServer(argv []string, port int) *LlamaServer {
 	return &LlamaServer{
 		Argv:         argv,
@@ -132,10 +116,8 @@ func (s *LlamaServer) Start() error {
 }
 
 // waitReadyWithEarlyExit polls /health but also detects early process exit via
-// the waitDone channel, matching Python's _wait_ready which reads stderr and
-// raises on returncode. Reading from waitDone (instead of cmd.ProcessState,
-// which is nil until Wait returns) guarantees a fast crash is caught instead
-// of burning the full ReadyTimeout.
+// waitDone. Reading from waitDone (instead of cmd.ProcessState, which is nil until
+// Wait returns) guarantees a fast crash is caught instead of burning the full ReadyTimeout.
 func (s *LlamaServer) waitReadyWithEarlyExit() error {
 	url := s.BaseURL + "/health"
 	deadline := time.Now().Add(s.ReadyTimeout)
@@ -180,12 +162,7 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 }
 
 // Stop sends SIGTERM and waits up to TermTimeout, then SIGKILLs if still alive.
-// Mirrors Python's LlamaServer.__exit__.
-//
-// Stop drains the same waitDone channel the readiness goroutine feeds, so
-// cmd.Wait() is never called a second time. If the process already exited
-// (waitReadyWithEarlyExit consumed the value), ProcessState is set and Stop
-// returns without signaling.
+// Drains the same waitDone channel the goroutine feeds, so cmd.Wait() is called exactly once.
 func (s *LlamaServer) Stop() error {
 	if s.cmd == nil || s.cmd.Process == nil {
 		return nil

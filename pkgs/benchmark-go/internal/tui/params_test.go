@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 
@@ -67,34 +68,34 @@ func TestParseIntField_BackspaceSimulation(t *testing.T) {
 func TestRenderParamsField(t *testing.T) {
 	t.Run("focused field has cursor", func(t *testing.T) {
 		out := renderParamsField("Ctx:", "2048", true, false)
-		if !stringContains(out, "> ") {
+		if !strings.Contains(out, "> ") {
 			t.Errorf("focused field should contain '> ', got %q", out)
 		}
-		if !stringContains(out, "Ctx:") {
+		if !strings.Contains(out, "Ctx:") {
 			t.Errorf("field label missing in %q", out)
 		}
-		if !stringContains(out, "2048") {
+		if !strings.Contains(out, "2048") {
 			t.Errorf("field value missing in %q", out)
 		}
 	})
 
 	t.Run("unfocused field has no cursor", func(t *testing.T) {
 		out := renderParamsField("Repeat:", "3", false, false)
-		if stringContains(out, "> ") {
+		if strings.Contains(out, "> ") {
 			t.Errorf("unfocused field should not have '> ', got %q", out)
 		}
 	})
 
 	t.Run("suggested field shows hint", func(t *testing.T) {
 		out := renderParamsField("Ctx:", "2048", true, true)
-		if !stringContains(out, "suggested") {
+		if !strings.Contains(out, "suggested") {
 			t.Errorf("suggested field should show hint, got %q", out)
 		}
 	})
 
 	t.Run("non-suggested field has no hint", func(t *testing.T) {
 		out := renderParamsField("Repeat:", "3", false, false)
-		if stringContains(out, "suggested") {
+		if strings.Contains(out, "suggested") {
 			t.Errorf("non-suggested field should not show hint, got %q", out)
 		}
 	})

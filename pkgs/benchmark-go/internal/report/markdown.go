@@ -28,8 +28,7 @@ type MTPRow struct {
 	OnTPS   *float64 // MTP-on (spec-type draft-mtp)
 }
 
-// RenderMarkdownTable renders a GitHub-flavored markdown table matching
-// Python's print_markdown_table exactly.
+// RenderMarkdownTable renders a GitHub-flavored markdown table.
 //
 //	| Model | Backend | TTFT (s) | Decode (t/s) |
 //	| ----- | ------- | -------: | -----------: |
@@ -46,7 +45,6 @@ func RenderMarkdownTable(rows []Row) string {
 	return sb.String()
 }
 
-// FmtTTFT formats a TTFT value. nil → "N/A".
 func FmtTTFT(v *float64) string {
 	if v == nil {
 		return "N/A"
@@ -73,8 +71,7 @@ func FmtTPS(mean, stdev *float64) string {
 	return fmt.Sprintf("%.1f", *mean)
 }
 
-// RenderMTPMarkdownTable renders the MTP A/B table matching Python's
-// run_mtp_ab output:
+// RenderMTPMarkdownTable renders the MTP A/B table.
 //
 //	| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |
 //	| ----- | ------- | ------------: | -----------: | ------: |
@@ -89,15 +86,7 @@ func RenderMTPMarkdownTable(rows []MTPRow) string {
 	return sb.String()
 }
 
-// FormatMTPRow formats a single MTP row, matching Python's format_mtp_row.
-//
-//	def fmt(v):
-//	    return f"{v:.1f}" if isinstance(v, (int, float)) else "N/A"
-//
-//	if off > 0 and on is not None:
-//	    speedup = f"{on/off:.2f}x"
-//	else:
-//	    speedup = "N/A"
+// FormatMTPRow formats a single MTP row.
 func FormatMTPRow(r MTPRow) string {
 	offStr := FmtMTPTPS(r.OffTPS)
 	onStr := FmtMTPTPS(r.OnTPS)
@@ -113,7 +102,6 @@ func FormatMTPRow(r MTPRow) string {
 		r.Model, r.Backend, offStr, onStr, speedup)
 }
 
-// FmtMTPTPS formats a TPS value for the MTP table. nil → "N/A".
 func FmtMTPTPS(v *float64) string {
 	if v == nil {
 		return "N/A"

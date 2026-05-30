@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	tea "charm.land/bubbletea/v2"
@@ -86,16 +87,7 @@ func TestModeSelection(t *testing.T) {
 	}
 }
 
-// containsStr checks whether s contains sub (plain string, not style-aware).
+// containsStr checks whether s contains sub.
 func containsStr(s, sub string) bool {
-	return len(s) > 0 && len(sub) > 0 && stringContains(s, sub)
-}
-
-func stringContains(s, sub string) bool {
-	for i := 0; i <= len(s)-len(sub); i++ {
-		if s[i:i+len(sub)] == sub {
-			return true
-		}
-	}
-	return false
+	return strings.Contains(s, sub)
 }

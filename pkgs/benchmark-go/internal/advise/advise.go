@@ -9,12 +9,13 @@ import (
 )
 
 // FitState classifies how well a model fits within a GPU memory budget.
+// Fits < 90% of budget; Tight >= 90%; Spills > budget.
 type FitState int
 
 const (
-	Fits   FitState = iota // model uses < 90% of budget
-	Tight                  // model uses >= 90% of budget but does not exceed it
-	Spills                 // model exceeds budget
+	Fits FitState = iota
+	Tight
+	Spills
 )
 
 // DecodeCeilingTPS returns the bandwidth-bound decode ceiling in tokens/second.
@@ -32,7 +33,6 @@ func DecodeCeilingTPS(bandwidthGBs, activeGiB float64) float64 {
 }
 
 // FitClass classifies modelGiB against the usable GPU memory budget.
-// >budget → Spills; >=90% of budget → Tight; else Fits.
 // Boundary: modelGiB == budgetGiB → Tight (not Spills).
 func FitClass(modelGiB, budgetGiB float64) FitState {
 	if budgetGiB <= 0 {
@@ -51,9 +51,8 @@ func FitClass(modelGiB, budgetGiB float64) FitState {
 // Strix Point DDR5-5600 dual-channel: 5600 MT/s * 8 bytes * 2 channels / 1000 = 89.6 GB/s.
 const ddr5Fallback = 89.6
 
-// BandwidthGBs derives memory bandwidth in decimal GB/s from RAM type and speed.
-// DDR5/LPDDR5/LPDDR5X dual-channel formula: speedMTs * 8 * 2 / 1000 GB/s.
-// When ramType is empty or speedMTs <= 0, falls back to ddr5Fallback (89.6)
+// BandwidthGBs returns decimal GB/s for dual-channel RAM (speedMTs * 8 * 2 / 1000).
+// Falls back to ddr5Fallback (89.6) when ramType is empty or speedMTs <= 0,
 // and returns estimated=true.
 func BandwidthGBs(ramType string, speedMTs int) (gbps float64, estimated bool) {
 	if ramType == "" || speedMTs <= 0 {
@@ -63,7 +62,7 @@ func BandwidthGBs(ramType string, speedMTs int) (gbps float64, estimated bool) {
 	return float64(speedMTs) * 8 * 2 / 1000, false
 }
 
-// Params holds recommended llama.cpp server launch parameters for gfx1150.
+// Params holds recommended llama.cpp launch parameters for gfx1150.
 type Params struct {
 	NGL       int
 	Batch     int
@@ -78,10 +77,9 @@ type Params struct {
 // 8 GiB is chosen over a looser 10 GiB so ~8-10 GiB models also get the safer batch.
 const largeBatchCutoffGiB = 8.0
 
-// RecommendParams returns gfx1150 defaults for a model of the given size.
-// Large models (>=8 GiB) use batch=256 to avoid hangs; smaller use batch=512.
-// RocWMMA is always false — flash-attention via rocWMMA is a net regression
-// on gfx1150 (locally tested: -42% pp4096).
+// RecommendParams returns gfx1150 defaults for a model of modelGiB.
+// Models >=8 GiB use batch=256 to avoid hangs; smaller use batch=512.
+// RocWMMA is always false — net regression on gfx1150 (−42% pp4096).
 func RecommendParams(modelGiB float64) Params {
 	batch := 512
 	if modelGiB >= largeBatchCutoffGiB {
@@ -104,12 +102,11 @@ func BudgetGiB(gttBytes uint64) float64 {
 	return float64(gttBytes) / (1024 * 1024 * 1024)
 }
 
-// reTotalB matches a plain "<n>B" total-param token, e.g. "26B", "27B", "30B".
-// The negative lookahead equivalent: requires the digit(s) are NOT preceded by "A"
-// (handled in EstimateActiveGiB by checking the active token separately).
+// reTotalB matches a plain "<n>B" param token, e.g. "26B", "27B", "30B".
+// A<n>B tokens are excluded by checking for a preceding "A" in EstimateActiveGiB.
 var reTotalB = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)B`)
 
-// reActiveB matches an MoE active-param token of the form "A<n>B", e.g. "A4B", "A3B".
+// reActiveB matches an MoE active-param token, e.g. "A4B", "A3B".
 var reActiveB = regexp.MustCompile(`(?i)A(\d+(?:\.\d+)?)B`)
 
 // EstimateActiveGiB returns the active bytes/token size (in GiB) for the
@@ -127,7 +124,6 @@ var reActiveB = regexp.MustCompile(`(?i)A(\d+(?:\.\d+)?)B`)
 func EstimateActiveGiB(modelID string, totalGiB float64) (activeGiB float64, isMoE bool) {
 	upper := strings.ToUpper(modelID)
 
-	// Find the MoE active token first (A<n>B).
 	activeMatch := reActiveB.FindStringSubmatch(upper)
 	if activeMatch == nil {
 		return totalGiB, false
@@ -137,17 +133,13 @@ func EstimateActiveGiB(modelID string, totalGiB float64) (activeGiB float64, isM
 		return totalGiB, false
 	}
 
-	// Find all plain <n>B tokens. Pick the largest as the total-param candidate,
-	// but skip any that are part of an A<n>B match (i.e. preceded by "A").
 	allTotalMatches := reTotalB.FindAllStringIndex(upper, -1)
 	var totalB float64
 	for _, loc := range allTotalMatches {
 		start, end := loc[0], loc[1]
-		// Skip if this token is immediately preceded by "A" — it is the active token.
 		if start > 0 && upper[start-1] == 'A' {
 			continue
 		}
-		// The regex captured the full match including "B"; extract the numeric part.
 		raw := upper[start : end-1] // strip trailing "B"
 		v, err := strconv.ParseFloat(raw, 64)
 		if err != nil {

@@ -227,23 +227,7 @@ func TestMeasureSpec_CtxCancelInterruptsHTTP(t *testing.T) {
 	}()
 	select {
 	case <-done:
-		// Returned promptly — the interrupt worked.
 	case <-time.After(5 * time.Second):
 		t.Fatal("MeasureSpec did not return after ctx cancel; HTTP call was not interrupted")
-	}
-}
-
-func TestMeasureSpec_EmptySliceGuard(t *testing.T) {
-	// Verify that when all iterations produce no tokens, calling MeanStdev on
-	// the empty result would be wrong — but we DON'T call it here; we just
-	// confirm the slice is empty (the caller's guard works correctly).
-	result := MeasureResult{}
-	if len(result.DecodeTPS) != 0 {
-		t.Error("zero-value MeasureResult should have empty DecodeTPS")
-	}
-	// MeanStdev with empty input returns (0, 0) — contracts says "do not call".
-	// We verify the guard pattern works.
-	if len(result.DecodeTPS) > 0 {
-		_, _ = MeanStdev(result.DecodeTPS)
 	}
 }

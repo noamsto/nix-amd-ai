@@ -187,7 +187,6 @@ func TestRecommendParams(t *testing.T) {
 		}
 	})
 
-	// 9.0 GiB is >= 8 GiB cutoff but < the old plan's 10 GiB; pins the 8 GiB choice.
 	t.Run("9 GiB model crosses 8 GiB cutoff -> batch 256", func(t *testing.T) {
 		if p := RecommendParams(9.0); p.Batch != 256 {
 			t.Errorf("RecommendParams(9.0).Batch = %d; want 256", p.Batch)

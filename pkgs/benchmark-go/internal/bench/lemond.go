@@ -10,12 +10,8 @@ import (
 	"time"
 )
 
-// lemonadeCompletionsPath is the OpenAI-compatible completions endpoint on
-// the lemonade HTTP server.
 const lemonadeCompletionsPath = "/api/v1/completions"
 
-// RestartLemond restarts lemond via sudo systemctl, matching Python's
-// restart_lemond. Raises on failure.
 func RestartLemond(service string) error {
 	cmd := exec.Command("sudo", "systemctl", "restart", service) //nolint:gosec
 	cmd.Stderr = nil
@@ -25,12 +21,10 @@ func RestartLemond(service string) error {
 	return nil
 }
 
-// WaitForLemond polls /api/v1/models until lemond answers or timeout expires,
-// matching Python's wait_for_lemond (polls every 1s).
+// WaitForLemond polls /api/v1/models every 1s until lemond answers or timeout expires.
 func WaitForLemond(baseURL string, timeout time.Duration) error {
 	url := baseURL + "/api/v1/models"
-	// Per-attempt timeout so a hung connection can't run past the deadline,
-	// matching waitReady's bounded client.
+	// Per-attempt timeout so a hung connection can't run past the deadline.
 	client := &http.Client{Timeout: 5 * time.Second}
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
@@ -50,7 +44,6 @@ func WaitForLemond(baseURL string, timeout time.Duration) error {
 }
 
 // LoadModel loads a model into lemonade via POST /api/v1/load.
-// Matches Python's load_model.
 func LoadModel(baseURL, modelID string) error {
 	payload, err := json.Marshal(map[string]string{"model_name": modelID})
 	if err != nil {

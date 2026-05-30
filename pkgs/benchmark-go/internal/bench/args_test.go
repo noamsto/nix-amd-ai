@@ -83,9 +83,6 @@ func TestBuildLlamaServerArgs_SpecTypeNone(t *testing.T) {
 	}
 }
 
-// TestResolveCtxSize covers the --ctx-size wiring: a positive request is
-// honored, and <= 0 falls back to the 2048 default. RunMTPAB feeds this
-// resolved value straight into ServerArgs.Ctx → "--ctx-size".
 func TestResolveCtxSize(t *testing.T) {
 	tests := []struct {
 		name string
@@ -105,8 +102,6 @@ func TestResolveCtxSize(t *testing.T) {
 	}
 }
 
-// TestBuildLlamaServerArgs_CtxSizeFlows confirms the resolved ctx size lands
-// on the "--ctx-size" flag, end-to-end through the args builder.
 func TestBuildLlamaServerArgs_CtxSizeFlows(t *testing.T) {
 	for _, ctx := range []int{resolveCtxSize(4096), resolveCtxSize(0)} {
 		args := BuildLlamaServerArgs(ServerArgs{

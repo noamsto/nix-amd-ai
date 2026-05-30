@@ -43,7 +43,6 @@ type amdgpuTopJSON struct {
 }
 
 // parseMemTotalGiB parses /proc/meminfo content and returns MemTotal in GiB.
-// Returns 0 on parse failure.
 func parseMemTotalGiB(data []byte) float64 {
 	sc := bufio.NewScanner(bytes.NewReader(data))
 	for sc.Scan() {
@@ -66,10 +65,7 @@ func parseMemTotalGiB(data []byte) float64 {
 }
 
 // parseAmdgpuTop decodes the first NDJSON record from amdgpu_top --json output.
-// grbmBusyPct is devices[0].GRBM["Graphics Pipe"].value.
-// arch is extracted from devices[0].Info["ASIC Name"]: e.g. "GFX1150/Strix Point"
-// → "gfx1150" (the part before "/" lowercased).
-// Returns ("", 0) on decode failure.
+// arch is devices[0].Info["ASIC Name"] e.g. "GFX1150/Strix Point" → "gfx1150".
 func parseAmdgpuTop(data []byte) (grbmBusyPct float64, arch string) {
 	// Use only the first newline-delimited record.
 	line := data
@@ -108,7 +104,6 @@ func parseAmdgpuTop(data []byte) (grbmBusyPct float64, arch string) {
 }
 
 // parseBytesFile parses a sysfs integer file (e.g. mem_info_vram_total).
-// Returns 0 on parse failure.
 func parseBytesFile(data []byte) uint64 {
 	s := strings.TrimSpace(string(data))
 	v, err := strconv.ParseUint(s, 10, 64)
@@ -200,7 +195,6 @@ func findAMDGPUCard() (string, error) {
 	return filepath.Dir(matches[0]), nil
 }
 
-// readFile reads a file and returns its contents. Returns nil on error.
 func readFile(path string) []byte {
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -209,14 +203,12 @@ func readFile(path string) []byte {
 	return data
 }
 
-// readSysfsString reads a sysfs file and returns trimmed string. Returns "" on error.
 func readSysfsString(path string) string {
 	return strings.TrimSpace(string(readFile(path)))
 }
 
-// runAmdgpuTop spawns amdgpu_top --json, reads only the first NDJSON line,
-// then kills the process. amdgpu_top streams continuously so we must not use
-// cmd.Output() which waits for EOF.
+// runAmdgpuTop spawns amdgpu_top --json and reads the first NDJSON line,
+// then kills the process — amdgpu_top streams forever, so cmd.Output() would hang.
 func runAmdgpuTop() (grbmBusyPct float64, arch string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -251,10 +243,8 @@ func runAmdgpuTop() (grbmBusyPct float64, arch string) {
 	return parseAmdgpuTop(line)
 }
 
-// GRBMBusyPct returns the live GPU Graphics Pipe busy percentage from a
-// single amdgpu_top sample. Returns 0 on any error; never panics.
-// It does NOT read dmidecode, sysfs, or /proc/meminfo — safe to call during
-// a measured benchmark run without perturbing the workload.
+// GRBMBusyPct returns the GPU Graphics Pipe busy % from one amdgpu_top sample.
+// Safe to call during a measured run — reads no sysfs, meminfo, or dmidecode.
 func GRBMBusyPct() float64 {
 	pct, _ := runAmdgpuTop()
 	return pct
@@ -280,9 +270,7 @@ func Detect() Info {
 		}
 	}
 
-	// GPU utilisation and arch from amdgpu_top.
-	// amdgpu_top --json streams NDJSON forever; use a 5-second context so we
-	// kill the process after capturing the first sample line.
+	// GPU utilisation and arch from amdgpu_top
 	info.GRBMBusyPct, info.GfxArch = runAmdgpuTop()
 
 	// CPU governor

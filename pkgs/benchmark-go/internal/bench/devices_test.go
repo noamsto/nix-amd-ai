@@ -4,15 +4,13 @@ import (
 	"testing"
 )
 
-// Verbatim sample strings from pkgs/benchmark/tests/test_benchmark.py
+// Real llama-server --list-devices output samples (verbatim).
 const rocmOutput = "Available devices:\n" +
 	"  ROCm0: AMD Radeon 890M Graphics (27935 MiB, 49248 MiB free)\n"
 
 const vulkanOutput = "Available devices:\n" +
 	"  Vulkan0: AMD Radeon 890M Graphics (RADV STRIX1)" +
 	" (36127 MiB, 35117 MiB free)\n"
-
-// ParseLlamaDevices tests
 
 func TestParseLlamaDevices_ROCm(t *testing.T) {
 	devs, err := ParseLlamaDevices(rocmOutput)
@@ -57,8 +55,6 @@ func TestParseLlamaDevices_HeaderOnly_Errors(t *testing.T) {
 		t.Fatal("expected error for header-only output with no devices")
 	}
 }
-
-// PickDevice tests
 
 func TestPickDevice_ROCm(t *testing.T) {
 	devs := []string{"Vulkan0", "ROCm0"}

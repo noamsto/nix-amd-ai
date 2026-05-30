@@ -27,12 +27,9 @@ const mtpPromptBase = ("The quick brown fox jumps over the lazy dog. " +
 	"proud to say that they were perfectly normal, thank you " +
 	"very much. ")
 
-// MTPPromptBase returns the fixed naturalistic passage used by BuildMTPPrompt.
-// Exported for testing.
+// MTPPromptBase returns the base passage; exported for tests.
 func MTPPromptBase() string { return mtpPromptBase }
 
-// BuildPrompt builds a rough prompt of approximately promptTokens tokens by
-// repeating "The ", matching Python's build_prompt.
 func BuildPrompt(promptTokens int) string {
 	return strings.Repeat("The ", promptTokens)
 }
@@ -40,7 +37,6 @@ func BuildPrompt(promptTokens int) string {
 // BuildMTPPrompt builds a naturalistic prompt of approximately promptTokens
 // tokens by repeating mtpPromptBase until the character target is met.
 // Target chars = promptTokens * 4 (~3.5 chars/token on English text).
-// Matches Python's build_mtp_prompt exactly.
 func BuildMTPPrompt(promptTokens int) string {
 	targetChars := promptTokens * 4
 	var b strings.Builder

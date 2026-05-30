@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bytes"
+	"strings"
 	"testing"
 	"time"
 
@@ -18,43 +19,43 @@ import (
 func TestFormatModelRow_Glyphs(t *testing.T) {
 	t.Run("fits dense no estimate", func(t *testing.T) {
 		out := formatModelRow("MyModel-7B-GGUF", 4.5, true, advise.Fits, 12.3, false, false, false)
-		if !stringContains(out, "✅") {
+		if !strings.Contains(out, "✅") {
 			t.Errorf("expected ✅ in %q", out)
 		}
-		if stringContains(out, "~") {
+		if strings.Contains(out, "~") {
 			t.Errorf("unexpected ~ in %q", out)
 		}
-		if stringContains(out, "(MoE)") {
+		if strings.Contains(out, "(MoE)") {
 			t.Errorf("unexpected (MoE) in %q", out)
 		}
 	})
 
 	t.Run("spills with estimate and MoE", func(t *testing.T) {
 		out := formatModelRow("Gemma-4-26B-A4B", 15.7, true, advise.Spills, 42.0, true, true, false)
-		if !stringContains(out, "❌") {
+		if !strings.Contains(out, "❌") {
 			t.Errorf("expected ❌ in %q", out)
 		}
-		if !stringContains(out, "~") {
+		if !strings.Contains(out, "~") {
 			t.Errorf("expected ~ in %q", out)
 		}
-		if !stringContains(out, "(MoE)") {
+		if !strings.Contains(out, "(MoE)") {
 			t.Errorf("expected (MoE) in %q", out)
 		}
 	})
 
 	t.Run("tight selected", func(t *testing.T) {
 		out := formatModelRow("Model-14B", 8.0, true, advise.Tight, 5.0, false, false, true)
-		if !stringContains(out, "⚠️") {
+		if !strings.Contains(out, "⚠️") {
 			t.Errorf("expected ⚠️ in %q", out)
 		}
-		if !stringContains(out, "[✓]") {
+		if !strings.Contains(out, "[✓]") {
 			t.Errorf("expected [✓] in %q", out)
 		}
 	})
 
 	t.Run("unknown size shows ?? GiB", func(t *testing.T) {
 		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false)
-		if !stringContains(out, "?? GiB") {
+		if !strings.Contains(out, "?? GiB") {
 			t.Errorf("expected '?? GiB' in %q", out)
 		}
 	})

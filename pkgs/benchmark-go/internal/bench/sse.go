@@ -40,13 +40,9 @@ type sseChunk struct {
 	} `json:"timings"`
 }
 
-// scanSSE performs the low-level SSE scan shared by ParseSSE and
-// runOneCompletion: bufio-scans lines, strips the "data: " prefix, breaks on
-// "[DONE]", JSON-decodes each chunk (silently skipping non-JSON and non-data
-// lines), and invokes onChunk per decoded chunk. Returns the scanner error.
-//
-// Matches Python's run_completion loop: non-data lines skipped, "[DONE]"
-// terminates, json.loads wrapped in try/except JSONDecodeError.
+// scanSSE performs the low-level SSE scan shared by ParseSSE and runOneCompletion:
+// strips the "data: " prefix, breaks on "[DONE]", JSON-decodes each chunk
+// (silently skipping non-JSON and non-data lines), and calls onChunk per chunk.
 func scanSSE(r io.Reader, onChunk func(c sseChunk)) error {
 	sc := bufio.NewScanner(r)
 	sc.Buffer(make([]byte, 0, 64*1024), 1024*1024)
@@ -68,24 +64,19 @@ func scanSSE(r io.Reader, onChunk func(c sseChunk)) error {
 	return sc.Err()
 }
 
-// ParseSSE reads an OpenAI-style completion SSE stream, replicating what
-// run_completion extracts: concatenated text, server usage/timings, and a
-// client-side non-empty-text token count for fallback.
-//
-// The last chunk carrying a truthy usage / timings wins, matching Python's
-// final_usage / final_timings overwrite-on-each-truthy behavior.
+// ParseSSE reads an OpenAI-style completion SSE stream: concatenated text,
+// server usage/timings, and a client-side non-empty-text token count for fallback.
+// The last chunk carrying a truthy usage / timings wins (overwrite-on-each-truthy).
 func ParseSSE(r io.Reader) (SSEResult, error) {
 	var out SSEResult
 	var text strings.Builder
 	err := scanSSE(r, func(c sseChunk) {
-		// Python: `if usage:` / `if timings:` — only truthy blocks overwrite.
 		if c.Usage != nil && c.Usage.CompletionTokens != 0 {
 			out.CompletionTokens = c.Usage.CompletionTokens
 		}
 		if c.Timings != nil && c.Timings.PredictedPerSecond != 0 {
 			out.PredictedPerSecond = c.Timings.PredictedPerSecond
 		}
-		// Python iterates all choices and counts only non-empty text.
 		for _, ch := range c.Choices {
 			text.WriteString(ch.Text)
 			if ch.Text != "" {
