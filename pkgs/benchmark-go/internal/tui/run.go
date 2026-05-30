@@ -91,7 +91,8 @@ type runResults struct {
 type runState struct {
 	active   bool
 	done     bool
-	aborted  bool // set on Esc/quit; makes handleRunMsg drop late goroutine output
+	aborted  bool // set on Esc; makes handleRunMsg drop late goroutine output
+	quitting bool // set on ctrl+c/q during active run; wait for runner cleanup before tea.Quit
 	err      error
 	results  runResults
 	progress progress.Model
@@ -147,13 +148,15 @@ func (m *model) startRun() tea.Cmd {
 
 	// The goroutine sends progress messages on ch as they arrive, then sends a
 	// single runResultMsg and returns. It never closes ch (the model holds the
-	// only reader; closing would race a late progress send). It cannot block
-	// forever: every send (progress and the final result) is a non-blocking
-	// select against ctx.Done() (see sendMsg), so once we cancel ctx on abort —
-	// even if the reader stopped on tea.Quit and the 64-deep buffer is full —
-	// the goroutine takes the ctx.Done() branch and exits. No leak.
+	// only reader; closing would race a late progress send).
+	//
+	// Progress sends are non-blocking (see sendMsg): once ctx is cancelled and
+	// the buffer drains, they drop via ctx.Done(). The terminal runResultMsg is
+	// sent unconditionally (plain ch <-) so the quitting path can always wait
+	// for it — the buffer has room because the model keeps reading while quitting.
 	go func() {
-		sendMsg(ctx, ch, runner(ctx, req, ch))
+		result := runner(ctx, req, ch)
+		ch <- result
 	}()
 
 	return waitForRunMsg(ch)
@@ -201,13 +204,20 @@ func (s *runState) applyProgress(msg runProgressMsg) {
 func (m model) handleRunKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c", "q":
-		// Abort: cancel the runner's context (bench stops cleanly) and quit.
-		// Mark aborted so any in-flight goroutine output is dropped.
-		m.run.aborted = true
-		m.run.active = false
-		if m.run.cancel != nil {
-			m.run.cancel()
+		if m.run.active {
+			// A run is in flight: cancel the context so the runner returns
+			// promptly (bench HTTP calls honour ctx). Set quitting so
+			// handleRunMsg waits for the terminal runResultMsg before calling
+			// tea.Quit — this guarantees defer srv.Stop() runs first (no orphan).
+			m.run.quitting = true
+			if m.run.cancel != nil {
+				m.run.cancel()
+			}
+			// Stay in the program; keep draining the channel until the terminal
+			// result arrives (handleRunMsg issues the quit once it lands).
+			return m, waitForRunMsg(m.run.ch)
 		}
+		// No active run — quit immediately.
 		return m, tea.Quit
 	case "esc":
 		// Esc aborts mid-run (cancel + back to params). After completion it's a
@@ -227,13 +237,22 @@ func (m model) handleRunKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 // handleRunMsg processes progress/result/tick messages while a run is in flight.
 //
-// Once a run is aborted, late goroutine output (progress that was already in
-// flight, or the terminal result the cancelled runner still emits) is dropped:
-// it must not re-navigate to screenResults or mutate m.run.units after the user
-// has left the run screen.
+// Once a run is aborted (Esc path), late goroutine output is dropped: it must
+// not re-navigate to screenResults or mutate m.run.units after the user has
+// left the run screen.
+//
+// When quitting (ctrl+c/q during an active run), progress messages are ignored
+// but the channel must keep being drained (re-issue waitForRunMsg) so the
+// terminal runResultMsg can arrive. Once it does, the server's defer srv.Stop()
+// has already run, so we quit cleanly with tea.Quit.
 func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 	switch msg := msg.(type) {
 	case runProgressMsg:
+		if m.run.quitting {
+			// Ignore progress during graceful quit but keep draining the channel
+			// so the terminal runResultMsg still arrives.
+			return m, waitForRunMsg(m.run.ch), true
+		}
 		if m.run.aborted {
 			return m, nil, true
 		}
@@ -242,6 +261,10 @@ func (m model) handleRunMsg(msg tea.Msg) (tea.Model, tea.Cmd, bool) {
 		return m, waitForRunMsg(m.run.ch), true
 
 	case runResultMsg:
+		if m.run.quitting {
+			// The runner returned — defer srv.Stop() has run. Quit now.
+			return m, tea.Quit, true
+		}
 		if m.run.aborted {
 			// Stop reading; do not transition or store the cancelled result.
 			return m, nil, true

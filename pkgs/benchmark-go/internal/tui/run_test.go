@@ -257,3 +257,62 @@ func TestHTTPKey(t *testing.T) {
 
 // testHWInfo is a minimal hw.Info for white-box tests.
 func testHWInfo() hw.Info { return hw.Info{GfxArch: "gfx1150"} }
+
+// isQuit reports whether cmd is tea.Quit. Only safe to invoke on a cmd that
+// does not block (tea.Quit returns immediately); never call it on a
+// waitForRunMsg cmd, which blocks on the channel.
+func isQuit(cmd tea.Cmd) bool {
+	if cmd == nil {
+		return false
+	}
+	return cmd() == tea.QuitMsg{}
+}
+
+// TestQuitWaitsForRunnerCleanup verifies Ctrl+C/q during an ACTIVE run does NOT
+// quit immediately: it cancels the context and enters the quitting state, then
+// quits only once the terminal runResultMsg arrives — by which point the
+// runner's defer srv.Stop() has killed llama-server. This guards against
+// orphaning the spawned server on abort (the bug where Ctrl+C left llama-server
+// running and holding the GPU).
+func TestQuitWaitsForRunnerCleanup(t *testing.T) {
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil))
+	canceled := false
+	m.run = runState{
+		active: true,
+		ch:     make(chan tea.Msg, 4),
+		cancel: func() { canceled = true },
+		units:  map[string]*runUnitProgress{},
+	}
+
+	// q on an active run: cancel + enter quitting, but do NOT tea.Quit yet.
+	// (The returned cmd is waitForRunMsg, which blocks — so we assert state,
+	// not the cmd.)
+	tm, _ := m.handleRunKey(tea.KeyPressMsg{Code: 'q', Text: "q"})
+	got := tm.(model)
+	if !canceled {
+		t.Fatal("abort did not cancel the run context")
+	}
+	if !got.run.quitting {
+		t.Fatal("abort did not enter quitting state (would orphan llama-server)")
+	}
+
+	// The terminal result (runner returned → defer srv.Stop ran) → quit now.
+	_, rcmd, handled := got.handleRunMsg(runResultMsg{})
+	if !handled {
+		t.Fatal("runResultMsg not handled")
+	}
+	if !isQuit(rcmd) {
+		t.Fatal("terminal result while quitting did not tea.Quit")
+	}
+}
+
+// TestQuitImmediateWhenNotRunning verifies q quits immediately when no run is
+// active (nothing to tear down).
+func TestQuitImmediateWhenNotRunning(t *testing.T) {
+	m := newRunModel(fakeRunBench(nil, runResults{}, nil))
+	m.run = runState{active: false}
+	_, cmd := m.handleRunKey(tea.KeyPressMsg{Code: 'q', Text: "q"})
+	if !isQuit(cmd) {
+		t.Fatal("q with no active run should quit immediately")
+	}
+}
