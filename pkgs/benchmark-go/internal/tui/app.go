@@ -36,6 +36,10 @@ type model struct {
 	cfg              Config
 	preflightResults []preflight.Result
 	preflightLoaded  bool
+	modePicker       modePicker
+	selectedMode     BenchMode
+	modelPicker      modelPicker
+	selectedModels   []string // IDs chosen on the model picker screen
 }
 
 // New returns an initialised tea.Model starting on the Hardware screen.
@@ -79,6 +83,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.preflightLoaded = true
 		return m, nil
 
+	case modelsLoadedMsg:
+		m.modelPicker.loading = false
+		if msg.err != nil {
+			m.modelPicker.err = msg.err
+			return m, nil
+		}
+		sizeFunc := m.modelPicker.modelSizeGiB
+		m.modelPicker.rows = buildModelRows(msg.models, m.info, sizeFunc)
+		return m, nil
+
 	case fixDoneMsg:
 		// Re-run preflight after any fix attempt (error or success).
 		return m, runPreflightCmd(m.info, m.lemondService())
@@ -107,6 +121,49 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						}
 					}
 				}
+			}
+		}
+
+		// Mode picker: up/down navigation and Enter to select.
+		if m.current == screenMode {
+			switch msg.String() {
+			case "up", "k":
+				if m.modePicker.cursor > 0 {
+					m.modePicker.cursor--
+				}
+				return m, nil
+			case "down", "j":
+				if m.modePicker.cursor < len(modeItems)-1 {
+					m.modePicker.cursor++
+				}
+				return m, nil
+			case "enter":
+				m.selectedMode = modeItems[m.modePicker.cursor].mode
+				m.current = screenModel
+				return m, enterModelScreen(&m.modelPicker, m.cfg.BaseURL)
+			}
+		}
+
+		// Model picker: up/down navigation, space toggles, Enter advances.
+		if m.current == screenModel {
+			switch msg.String() {
+			case "up", "k":
+				if m.modelPicker.cursor > 0 {
+					m.modelPicker.cursor--
+				}
+				return m, nil
+			case "down", "j":
+				if m.modelPicker.cursor < len(m.modelPicker.rows)-1 {
+					m.modelPicker.cursor++
+				}
+				return m, nil
+			case " ":
+				m.modelPicker.toggleSelected()
+				return m, nil
+			case "enter":
+				m.selectedModels = m.modelPicker.selectedIDs()
+				m.current = screenParams
+				return m, nil
 			}
 		}
 
@@ -146,9 +203,9 @@ func (m model) View() tea.View {
 	case screenPreflight:
 		s = renderPreflightScreen(m.preflightResults, m.preflightLoaded)
 	case screenMode:
-		s = renderMode()
+		s = renderModeScreen(m.modePicker)
 	case screenModel:
-		s = renderModel()
+		s = renderModelScreen(&m.modelPicker)
 	case screenParams:
 		s = renderParams()
 	case screenRun:
@@ -161,10 +218,8 @@ func (m model) View() tea.View {
 	return tea.NewView(s)
 }
 
-// --- per-screen stubs (real implementations come in 5.3-5.4) ---
+// --- per-screen stubs (real implementations come in later tasks) ---
 
-func renderMode() string    { return "Mode — select benchmark mode\n" }
-func renderModel() string   { return "Model — choose a model file\n" }
 func renderParams() string  { return "Params — configure run parameters\n" }
 func renderRun() string     { return "Run — benchmark in progress\n" }
 func renderResults() string { return "Results — summary & throughput\n" }
