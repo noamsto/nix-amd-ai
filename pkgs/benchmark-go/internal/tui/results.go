@@ -46,7 +46,7 @@ type resultsState struct {
 // sizeOf is a seam; pass nil to use the default resolver.
 func buildResultRows(results runResults, info hw.Info, sizeOf func(id string) (float64, bool)) []resultRow {
 	if sizeOf == nil {
-		sizeOf = resolveModelSizeGiB
+		sizeOf = resolveModelSizeGiBByID
 	}
 
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)

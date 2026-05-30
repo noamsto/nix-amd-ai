@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/advise"
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/bench"
@@ -41,7 +42,7 @@ type modelPicker struct {
 
 	// test seams: override these to avoid real filesystem / network calls.
 	fetchModels  func(baseURL string) ([]models.Model, error)
-	modelSizeGiB func(id string) (float64, bool) // returns (gib, ok)
+	modelSizeGiB func(m models.Model) (float64, bool) // returns (gib, ok)
 }
 
 // toggleSelected toggles the selection of the row under the cursor.
@@ -86,8 +87,26 @@ func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	}
 }
 
-// resolveModelSizeGiB returns the GGUF file size in GiB, or (0, false) if not found.
-func resolveModelSizeGiB(id string) (float64, bool) {
+// resolveModelSizeGiB returns the GGUF file size in GiB for a models.Model.
+// Tries the checkpoint field first, falls back to the display id.
+func resolveModelSizeGiB(m models.Model) (float64, bool) {
+	path := bench.ResolveGGUFByCheckpoint(m.Checkpoint, "")
+	if path == "" {
+		path = bench.ResolveLemonadeGGUF(m.ID, "")
+	}
+	if path == "" {
+		return 0, false
+	}
+	fi, err := os.Stat(path)
+	if err != nil {
+		return 0, false
+	}
+	return float64(fi.Size()) / (1024 * 1024 * 1024), true
+}
+
+// resolveModelSizeGiBByID returns the GGUF file size in GiB for a model display id.
+// Used by the results screen where only the id is available (no checkpoint).
+func resolveModelSizeGiBByID(id string) (float64, bool) {
 	path := bench.ResolveLemonadeGGUF(id, "")
 	if path == "" {
 		return 0, false
@@ -99,7 +118,10 @@ func resolveModelSizeGiB(id string) (float64, bool) {
 	return float64(fi.Size()) / (1024 * 1024 * 1024), true
 }
 
-func fitGlyph(fit advise.FitState) string {
+func fitGlyph(fit advise.FitState, sizeKnown bool) string {
+	if !sizeKnown {
+		return "?"
+	}
 	switch fit {
 	case advise.Fits:
 		return "✅"
@@ -110,37 +132,78 @@ func fitGlyph(fit advise.FitState) string {
 	}
 }
 
+const idColumnWidth = 32 // display columns for the model id field
+
+// padToWidth pads or truncates s so its display width equals w.
+// Truncation appends "…" (1 display column) and is done by rune boundary.
+func padToWidth(s string, w int) string {
+	cur := lipgloss.Width(s)
+	if cur > w {
+		// Truncate: walk runes until display width would exceed w-1, then append "…"
+		var b strings.Builder
+		used := 0
+		for _, r := range s {
+			rw := lipgloss.Width(string(r))
+			if used+rw > w-1 {
+				break
+			}
+			b.WriteRune(r)
+			used += rw
+		}
+		b.WriteString("…")
+		used++
+		// Pad remaining if needed
+		for used < w {
+			b.WriteByte(' ')
+			used++
+		}
+		return b.String()
+	}
+	// Pad with spaces
+	return s + strings.Repeat(" ", w-cur)
+}
+
 // formatModelRow formats a single model row for display (pure, tested directly).
+// Columns (fixed display width):
+//
+//	[x]  <id padded/truncated to 32>  <size right-aligned 9>  <fit>  ceil <ceil>  (MoE)
 func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitState, ceilingTPS float64, isMoE bool, estimated bool, selected bool) string {
 	check := "[ ]"
 	if selected {
 		check = "[✓]"
 	}
 
-	sizeStr := "?? GiB"
+	idCol := padToWidth(id, idColumnWidth)
+
+	sizeStr := "   ?? GiB"
 	if sizeKnown {
-		sizeStr = fmt.Sprintf("%.1f GiB", totalGiB)
+		sizeStr = fmt.Sprintf("%9s", fmt.Sprintf("%.1f GiB", totalGiB))
 	}
 
-	ceilStr := "??"
+	glyphStr := fitGlyph(fit, sizeKnown)
+	// Pad fit glyph to 2 display columns so the ceil column aligns regardless
+	// of whether glyph is 1-col ("?") or 2-col ("✅"/"⚠️"/"❌").
+	glyphPadded := glyphStr + strings.Repeat(" ", 2-lipgloss.Width(glyphStr))
+
+	ceilStr := "      ??"
 	if ceilingTPS > 0 {
 		prefix := ""
 		if estimated || !sizeKnown {
 			prefix = "~"
 		}
-		ceilStr = fmt.Sprintf("%s%.1f t/s", prefix, ceilingTPS)
+		ceilStr = fmt.Sprintf("%8s", fmt.Sprintf("%s%.1f t/s", prefix, ceilingTPS))
 	}
 
 	moeTag := ""
 	if isMoE {
-		moeTag = " (MoE)"
+		moeTag = "  (MoE)"
 	}
 
 	return fmt.Sprintf("%s %s  %s  %s  ceil %s%s",
-		check, id, sizeStr, fitGlyph(fit), ceilStr, moeTag)
+		check, idCol, sizeStr, glyphPadded, ceilStr, moeTag)
 }
 
-func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(id string) (float64, bool)) []modelRow {
+func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(models.Model) (float64, bool)) []modelRow {
 	budgetGiB := advise.BudgetGiB(info.GTTBytes)
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)
 
@@ -154,16 +217,22 @@ func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(id string)
 		if !m.Downloaded {
 			continue
 		}
+		// Only llamacpp models can be benchmarked by this tool.
+		if m.Recipe != "llamacpp" {
+			continue
+		}
 
-		totalGiB, sizeKnown := sizeOf(m.ID)
+		totalGiB, sizeKnown := sizeOf(m)
 
 		// fit uses TOTAL size — all expert weights must be resident in GTT.
-		fit := advise.Spills
+		// Unknown size is neutral (not Spills) — we simply don't know.
+		fit := advise.Fits
 		if sizeKnown {
 			fit = advise.FitClass(totalGiB, budgetGiB)
 		}
 
 		// ceiling uses ACTIVE size — bandwidth per token only reads active experts.
+		// EstimateActiveGiB uses m.ID because the display id carries the A<n>B token.
 		var ceilingTPS float64
 		var isMoE bool
 		if sizeKnown {

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/exp/teatest/v2"
 
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/advise"
@@ -53,12 +54,58 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 		}
 	})
 
-	t.Run("unknown size shows ?? GiB", func(t *testing.T) {
-		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false)
-		if !strings.Contains(out, "?? GiB") {
-			t.Errorf("expected '?? GiB' in %q", out)
+	t.Run("unknown size shows ? glyph not cross", func(t *testing.T) {
+		out := formatModelRow("UnknownModel", 0, false, advise.Fits, 0, false, false, false)
+		if strings.Contains(out, "❌") {
+			t.Errorf("unknown-size row must not show ❌ in %q", out)
+		}
+		if !strings.Contains(out, "?") {
+			t.Errorf("unknown-size row should show ? in %q", out)
 		}
 	})
+
+	t.Run("unknown size with fit=Spills still shows ? not cross", func(t *testing.T) {
+		// Even if fit field is Spills (stale default), unknown size → neutral glyph.
+		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false)
+		if strings.Contains(out, "❌") {
+			t.Errorf("unknown-size row must not show ❌ in %q", out)
+		}
+		if !strings.Contains(out, "?") {
+			t.Errorf("unknown-size row should show ? in %q", out)
+		}
+	})
+}
+
+// TestFormatModelRow_Alignment verifies that rows with different id lengths
+// produce the size column starting at the same display column.
+func TestFormatModelRow_Alignment(t *testing.T) {
+	short := formatModelRow("A", 4.5, true, advise.Fits, 10.0, false, false, false)
+	long := formatModelRow("A-Very-Long-Model-Name-That-Gets-Truncated-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false)
+
+	// Find the display offset of the size string "4.5 GiB" in each row.
+	// Both must match because the id column is padded/truncated to idColumnWidth.
+	findSizeOffset := func(row string) int {
+		// Walk by rune width until we find the size content after the id column.
+		// The format is: "[ ] " (4) + idCol (idColumnWidth) + "  " (2) + size...
+		// We count display width from the start to the size column start.
+		target := "4.5 GiB"
+		idx := strings.Index(row, target)
+		if idx < 0 {
+			return -1
+		}
+		return lipgloss.Width(row[:idx])
+	}
+
+	shortOff := findSizeOffset(short)
+	longOff := findSizeOffset(long)
+
+	if shortOff < 0 || longOff < 0 {
+		t.Fatalf("size string not found: short=%q long=%q", short, long)
+	}
+	if shortOff != longOff {
+		t.Errorf("size column at display offset %d (short) vs %d (long); want equal\nshort: %s\n long: %s",
+			shortOff, longOff, short, long)
+	}
 }
 
 // TestToggleSelection verifies space-bar selection logic.
@@ -108,11 +155,11 @@ func TestBuildModelRows_FitVsCeiling(t *testing.T) {
 	}
 
 	fakeList := []models.Model{
-		{ID: "Gemma-4-26B-A4B-it-GGUF", Downloaded: true},
+		{ID: "Gemma-4-26B-A4B-it-GGUF", Downloaded: true, Recipe: "llamacpp"},
 	}
 
 	// Fake size: 15.7 GiB total
-	fakeSize := func(id string) (float64, bool) {
+	fakeSize := func(m models.Model) (float64, bool) {
 		return 15.7, true
 	}
 
@@ -146,10 +193,10 @@ func TestBuildModelRows_FitVsCeiling(t *testing.T) {
 func TestBuildModelRows_SkipsUndownloaded(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "downloaded-model", Downloaded: true},
-		{ID: "not-downloaded", Downloaded: false},
+		{ID: "downloaded-model", Downloaded: true, Recipe: "llamacpp"},
+		{ID: "not-downloaded", Downloaded: false, Recipe: "llamacpp"},
 	}
-	fakeSize := func(id string) (float64, bool) { return 5.0, true }
+	fakeSize := func(m models.Model) (float64, bool) { return 5.0, true }
 
 	rows := buildModelRows(fakeList, info, fakeSize)
 	if len(rows) != 1 {
@@ -158,6 +205,67 @@ func TestBuildModelRows_SkipsUndownloaded(t *testing.T) {
 	if rows[0].id != "downloaded-model" {
 		t.Errorf("unexpected row id %q", rows[0].id)
 	}
+}
+
+// TestBuildModelRows_FiltersNonLlamacpp verifies that non-llamacpp models are excluded.
+func TestBuildModelRows_FiltersNonLlamacpp(t *testing.T) {
+	info := hw.Info{GTTBytes: 27 << 30}
+	fakeList := []models.Model{
+		{ID: "llama-model", Downloaded: true, Recipe: "llamacpp"},
+		{ID: "flux-model", Downloaded: true, Recipe: "sd-cpp"},
+		{ID: "whisper-model", Downloaded: true, Recipe: "whispercpp"},
+		{ID: "vllm-model", Downloaded: true, Recipe: "vllm"},
+		{ID: "flm-model", Downloaded: true, Recipe: "flm"},
+		{ID: "kokoro-model", Downloaded: true, Recipe: "kokoro"},
+	}
+	fakeSize := func(m models.Model) (float64, bool) { return 5.0, true }
+
+	rows := buildModelRows(fakeList, info, fakeSize)
+	if len(rows) != 1 {
+		t.Errorf("expected 1 row (llamacpp only), got %d; ids: %v", len(rows), rowIDs(rows))
+	}
+	if len(rows) > 0 && rows[0].id != "llama-model" {
+		t.Errorf("unexpected row id %q, want llama-model", rows[0].id)
+	}
+}
+
+// TestBuildModelRows_UnknownSizeIsNeutral verifies that a model with unknown size
+// gets a neutral fit (not Spills) and renders "?" not "❌".
+func TestBuildModelRows_UnknownSizeIsNeutral(t *testing.T) {
+	info := hw.Info{GTTBytes: 27 << 30}
+	fakeList := []models.Model{
+		{ID: "mystery-model", Downloaded: true, Recipe: "llamacpp"},
+	}
+	fakeSize := func(m models.Model) (float64, bool) { return 0, false }
+
+	rows := buildModelRows(fakeList, info, fakeSize)
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 row, got %d", len(rows))
+	}
+	r := rows[0]
+
+	if r.fit == advise.Spills {
+		t.Error("unknown-size row should not have fit=Spills")
+	}
+	if r.sizeKnown {
+		t.Error("sizeKnown should be false")
+	}
+
+	rendered := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected)
+	if strings.Contains(rendered, "❌") {
+		t.Errorf("unknown-size row rendered ❌, want ?: %q", rendered)
+	}
+	if !strings.Contains(rendered, "?") {
+		t.Errorf("unknown-size row should render ?, got: %q", rendered)
+	}
+}
+
+func rowIDs(rows []modelRow) []string {
+	ids := make([]string, len(rows))
+	for i, r := range rows {
+		ids[i] = r.id
+	}
+	return ids
 }
 
 // TestModelScreenHeader is a teatest integration test that asserts the model
@@ -198,10 +306,10 @@ func TestModelScreenHeader(t *testing.T) {
 func TestModelPickerSpaceAndEnter(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "model-alpha", Downloaded: true},
-		{ID: "model-beta", Downloaded: true},
+		{ID: "model-alpha", Downloaded: true, Recipe: "llamacpp"},
+		{ID: "model-beta", Downloaded: true, Recipe: "llamacpp"},
 	}
-	fakeSize := func(id string) (float64, bool) { return 4.0, true }
+	fakeSize := func(m models.Model) (float64, bool) { return 4.0, true }
 
 	rows := buildModelRows(fakeList, info, fakeSize)
 
