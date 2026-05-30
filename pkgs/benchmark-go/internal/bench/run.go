@@ -2,6 +2,7 @@ package bench
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -72,14 +73,14 @@ type completionResult struct {
 //   - TTFT = wall-clock from request start to first non-empty text token
 //
 // Returns ok=false when no tokens received (TextTokenCount == 0).
-func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResult {
+func runOneCompletion(ctx context.Context, baseURL, path string, opts CompletionOpts) completionResult {
 	payload := BuildCompletionPayload(opts)
 	body, err := json.Marshal(payload)
 	if err != nil {
 		return completionResult{}
 	}
 
-	req, err := http.NewRequest(http.MethodPost, baseURL+path, bytes.NewReader(body))
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+path, bytes.NewReader(body))
 	if err != nil {
 		return completionResult{}
 	}
@@ -172,7 +173,11 @@ func runOneCompletion(baseURL, path string, opts CompletionOpts) completionResul
 //
 // Skips iterations that hit the "no tokens" sentinel, matching Python's
 // `if ttft is None: continue`. Empty result slices mean all iterations failed.
-func MeasureSpec(baseURL, path, model string, o MeasureOpts) MeasureResult {
+//
+// ctx cancellation interrupts the in-flight HTTP call (via the request context)
+// and breaks the warmup/measure loops at the next iteration boundary, so an
+// abort returns promptly instead of blocking up to completionHTTPTimeout.
+func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts) MeasureResult {
 	var prompt string
 	if o.IgnoreEOS {
 		// MTP A/B uses the naturalistic prompt.
@@ -193,7 +198,10 @@ func MeasureSpec(baseURL, path, model string, o MeasureOpts) MeasureResult {
 		fmt.Fprintf(os.Stderr, "  Warming up (%d iteration(s))...\n", o.Warmup)
 	}
 	for range o.Warmup {
-		runOneCompletion(baseURL, path, opts)
+		if ctx.Err() != nil {
+			return MeasureResult{}
+		}
+		runOneCompletion(ctx, baseURL, path, opts)
 	}
 
 	if o.PhaseLog {
@@ -201,7 +209,10 @@ func MeasureSpec(baseURL, path, model string, o MeasureOpts) MeasureResult {
 	}
 	var result MeasureResult
 	for i := range o.Repeat {
-		cr := runOneCompletion(baseURL, path, opts)
+		if ctx.Err() != nil {
+			break
+		}
+		cr := runOneCompletion(ctx, baseURL, path, opts)
 		if !cr.ok {
 			fmt.Fprintf(os.Stderr, "  WARNING: iteration %d produced no tokens\n", i+1)
 			continue
@@ -238,7 +249,10 @@ type BenchmarkModelResult struct {
 
 // BenchmarkModel benchmarks a single model via the lemonade HTTP server.
 // Loads the model, warms up, measures. Mirrors Python's benchmark_model.
-func BenchmarkModel(o BenchmarkModelOpts) (BenchmarkModelResult, error) {
+//
+// ctx cancellation interrupts the in-flight measurement (threaded into
+// MeasureSpec); it is not threaded into LoadModel, which has its own timeout.
+func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelResult, error) {
 	fmt.Fprintf(os.Stderr, "  Loading %q...\n", o.ModelID)
 	if err := LoadModel(o.BaseURL, o.ModelID); err != nil {
 		return BenchmarkModelResult{}, err
@@ -254,7 +268,7 @@ func BenchmarkModel(o BenchmarkModelOpts) (BenchmarkModelResult, error) {
 		OnIteration:  o.OnIteration,
 	}
 
-	r := MeasureSpec(o.BaseURL, lemonadeCompletionsPath, o.ModelID, mo)
+	r := MeasureSpec(ctx, o.BaseURL, lemonadeCompletionsPath, o.ModelID, mo)
 
 	// Guard: empty → N/A.
 	if len(r.DecodeTPS) == 0 {
@@ -341,7 +355,11 @@ func resolveCtxSize(ctx int) int {
 
 // RunMTPAB runs an MTP-on / MTP-off A/B across the given backends,
 // spawning llama-server twice per backend. Mirrors Python's run_mtp_ab.
-func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
+//
+// ctx cancellation interrupts the in-flight measurement (threaded into
+// measureOneSpec → MeasureSpec) and stops the sweep at the next backend/spec
+// boundary; the per-spec deferred Stop() still tears the server down.
+func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 	if len(o.Backends) == 0 {
 		return nil, fmt.Errorf("RunMTPAB: empty backend list")
 	}
@@ -370,6 +388,9 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 
 	var results []MTPABResult
 	for i, backend := range o.Backends {
+		if ctx.Err() != nil {
+			return results, ctx.Err()
+		}
 		if i > 0 {
 			time.Sleep(settleDelay)
 		}
@@ -399,6 +420,9 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 		specTPS := map[string]*float64{}
 		specTypes := []string{"none", "draft-mtp"}
 		for j, specType := range specTypes {
+			if ctx.Err() != nil {
+				return results, ctx.Err()
+			}
 			if j > 0 {
 				time.Sleep(settleDelay)
 			}
@@ -436,7 +460,7 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 				}
 				defer func() { _ = srv.Stop() }()
 
-				return measureOneSpec(srv, o, backend, specType), nil
+				return measureOneSpec(ctx, srv, o, backend, specType), nil
 			}()
 			if err != nil {
 				return nil, err
@@ -456,7 +480,7 @@ func RunMTPAB(o MTPABOpts) ([]MTPABResult, error) {
 // measureOneSpec runs warmup+repeat MTP completions against a running LlamaServer.
 // Returns mean decode TPS, or nil if no successful iterations.
 // Mirrors Python's _measure_one_spec.
-func measureOneSpec(srv *LlamaServer, o MTPABOpts, backend, specType string) *float64 {
+func measureOneSpec(ctx context.Context, srv *LlamaServer, o MTPABOpts, backend, specType string) *float64 {
 	mo := MeasureOpts{
 		PromptTokens: o.PromptTokens,
 		GenTokens:    o.GenTokens,
@@ -469,7 +493,7 @@ func measureOneSpec(srv *LlamaServer, o MTPABOpts, backend, specType string) *fl
 			o.OnIteration(backend, specType, iter, decodeTPS)
 		}
 	}
-	r := MeasureSpec(srv.BaseURL, "/v1/completions", "default", mo)
+	r := MeasureSpec(ctx, srv.BaseURL, "/v1/completions", "default", mo)
 	if len(r.DecodeTPS) == 0 {
 		return nil
 	}

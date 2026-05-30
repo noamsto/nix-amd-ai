@@ -1,10 +1,12 @@
 package bench
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 // cannedSSE builds a minimal SSE response that matches what runOneCompletion expects:
@@ -48,7 +50,7 @@ func TestMeasureSpec_BasicSSE(t *testing.T) {
 		Repeat:       repeat,
 		IgnoreEOS:    false,
 	}
-	result := MeasureSpec(srv.URL, "/v1/completions", "test-model", o)
+	result := MeasureSpec(context.Background(), srv.URL, "/v1/completions", "test-model", o)
 
 	if len(result.DecodeTPS) != repeat {
 		t.Fatalf("expected %d DecodeTPS samples, got %d", repeat, len(result.DecodeTPS))
@@ -80,7 +82,7 @@ func TestMeasureSpec_ServerReportedTPS(t *testing.T) {
 	defer srv.Close()
 
 	o := MeasureOpts{PromptTokens: 8, GenTokens: 64, Warmup: 0, Repeat: 1}
-	result := MeasureSpec(srv.URL, "/v1/completions", "m", o)
+	result := MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
 
 	if len(result.DecodeTPS) != 1 {
 		t.Fatalf("expected 1 sample, got %d", len(result.DecodeTPS))
@@ -101,7 +103,7 @@ func TestMeasureSpec_NoTokensSentinel(t *testing.T) {
 	defer srv.Close()
 
 	o := MeasureOpts{PromptTokens: 8, GenTokens: 64, Warmup: 0, Repeat: 3}
-	result := MeasureSpec(srv.URL, "/v1/completions", "m", o)
+	result := MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
 
 	if len(result.DecodeTPS) != 0 {
 		t.Errorf("expected 0 samples (all no-token), got %d", len(result.DecodeTPS))
@@ -138,7 +140,7 @@ func TestMeasureSpec_OnIteration(t *testing.T) {
 			got = append(got, sample{iter, decodeTPS})
 		},
 	}
-	MeasureSpec(srv.URL, "/v1/completions", "m", o)
+	MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
 
 	// Exactly Repeat callbacks (warmup iterations must NOT fire it).
 	if len(got) != repeat {
@@ -168,9 +170,66 @@ func TestMeasureSpec_OnIterationSkipsNoToken(t *testing.T) {
 		PromptTokens: 8, GenTokens: 64, Warmup: 0, Repeat: 3,
 		OnIteration: func(int, float64) { calls++ },
 	}
-	MeasureSpec(srv.URL, "/v1/completions", "m", o)
+	MeasureSpec(context.Background(), srv.URL, "/v1/completions", "m", o)
 	if calls != 0 {
 		t.Errorf("expected 0 callbacks for no-token iterations, got %d", calls)
+	}
+}
+
+func TestMeasureSpec_CtxCancelledBeforeStart(t *testing.T) {
+	// An already-cancelled ctx must yield zero samples without hitting the
+	// server (the loop guards break before runOneCompletion).
+	var hits int
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		hits++
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		_, _ = fmt.Fprint(w, cannedSSE(4, 64, 42.0))
+	}))
+	defer srv.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel() // cancel up-front
+
+	o := MeasureOpts{PromptTokens: 8, GenTokens: 64, Warmup: 1, Repeat: 3}
+	result := MeasureSpec(ctx, srv.URL, "/v1/completions", "m", o)
+
+	if len(result.DecodeTPS) != 0 {
+		t.Errorf("expected 0 samples on cancelled ctx, got %d", len(result.DecodeTPS))
+	}
+	if hits != 0 {
+		t.Errorf("expected 0 server hits on cancelled ctx, got %d", hits)
+	}
+}
+
+func TestMeasureSpec_CtxCancelInterruptsHTTP(t *testing.T) {
+	// A ctx cancelled mid-flight interrupts the in-flight streaming HTTP call,
+	// so the call returns promptly (well under the 300s completion timeout)
+	// rather than blocking. The server hangs after the first chunk.
+	ctx, cancel := context.WithCancel(context.Background())
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/event-stream")
+		w.WriteHeader(http.StatusOK)
+		if f, ok := w.(http.Flusher); ok {
+			f.Flush()
+		}
+		// Cancel the client ctx, then block until the request context is done.
+		cancel()
+		<-r.Context().Done()
+	}))
+	defer srv.Close()
+
+	o := MeasureOpts{PromptTokens: 8, GenTokens: 64, Warmup: 0, Repeat: 1}
+	done := make(chan struct{})
+	go func() {
+		MeasureSpec(ctx, srv.URL, "/v1/completions", "m", o)
+		close(done)
+	}()
+	select {
+	case <-done:
+		// Returned promptly — the interrupt worked.
+	case <-time.After(5 * time.Second):
+		t.Fatal("MeasureSpec did not return after ctx cancel; HTTP call was not interrupted")
 	}
 }
 

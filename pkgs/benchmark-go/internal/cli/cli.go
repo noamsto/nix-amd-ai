@@ -1,10 +1,12 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 
@@ -175,6 +177,12 @@ func formatPreflightLine(r preflight.Result) string {
 // runHeadless drives the real benchmark calls and prints a markdown table.
 // Mirrors Python's main() / run_benchmarks().
 func runHeadless(o opts) int {
+	// Ctrl+C cancels the in-flight benchmark (threaded into bench via ctx) so
+	// the HTTP call is interrupted promptly instead of blocking up to its 300s
+	// timeout. stop releases the signal handler on return.
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
+	defer stop()
+
 	// Preflight: detect GPU/power/service interference and warn. Never block,
 	// never prompt, never call a Fix in headless mode (that is Phase 5 / TUI).
 	for _, r := range preflight.Run(hw.Detect(), o.LemondService) {
@@ -184,14 +192,14 @@ func runHeadless(o opts) int {
 	}
 
 	if o.MTPAb != "" {
-		return runHeadlessMTPAB(o)
+		return runHeadlessMTPAB(ctx, o)
 	}
-	return runHeadlessLemonade(o)
+	return runHeadlessLemonade(ctx, o)
 }
 
 // runHeadlessMTPAB implements the --mtp-ab path. Mirrors Python's run_mtp_ab
 // call in main().
-func runHeadlessMTPAB(o opts) int {
+func runHeadlessMTPAB(ctx context.Context, o opts) int {
 	backends := splitBackends(o.MTPAbBackends)
 	if len(backends) == 0 {
 		fmt.Fprintln(os.Stderr, "ERROR: --mtp-ab-backends produced an empty backend list")
@@ -208,7 +216,7 @@ func runHeadlessMTPAB(o opts) int {
 		CtxSize:      o.CtxSize,
 	}
 
-	results, err := bench.RunMTPAB(abOpts)
+	results, err := bench.RunMTPAB(ctx, abOpts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR: %v\n", err)
 		// exit 1 for MTP-head-absent (mirrors Python's sys.exit(1) in run_mtp_ab)
@@ -234,7 +242,7 @@ func runHeadlessMTPAB(o opts) int {
 
 // runHeadlessLemonade implements the normal lemonade path (positional MODEL_IDs).
 // Mirrors Python's run_benchmarks().
-func runHeadlessLemonade(o opts) int {
+func runHeadlessLemonade(ctx context.Context, o opts) int {
 	if len(o.ModelIDs) == 0 {
 		fmt.Fprintln(os.Stderr, "ERROR: at least one MODEL_ID is required (or use --mtp-ab)")
 		return 2
@@ -359,7 +367,7 @@ func runHeadlessLemonade(o opts) int {
 			Warmup:       o.Warmup,
 			Repeat:       o.Repeat,
 		}
-		result, bmErr := bench.BenchmarkModel(bmOpts)
+		result, bmErr := bench.BenchmarkModel(ctx, bmOpts)
 		if bmErr != nil {
 			fmt.Fprintf(os.Stderr, "ERROR: benchmarking %q: %v\n", mid, bmErr)
 			return 2
