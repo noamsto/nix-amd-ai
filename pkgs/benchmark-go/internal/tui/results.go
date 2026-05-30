@@ -49,7 +49,6 @@ func buildResultRows(results runResults, info hw.Info, sizeOf func(id string) (f
 	}
 
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)
-	totalGiB := info.RAMGiB // total host RAM used as GTT proxy when GTT=0
 
 	rows := make([]resultRow, 0, len(results.Units))
 	for _, u := range results.Units {
@@ -62,9 +61,9 @@ func buildResultRows(results runResults, info hw.Info, sizeOf func(id string) (f
 			MeanTTFT: u.MeanTTFT,
 		}
 
-		// Predicted ceiling: bandwidth / active size.
-		// Uses EstimateActiveGiB (MoE-aware) on the TOTAL file size, same as model
-		// picker. totalGiB here is the file size, not host RAM.
+		// Predicted ceiling: bandwidth / active size. Uses EstimateActiveGiB
+		// (MoE-aware) on the model's total file size, same as the model picker.
+		// Size unknown → Predicted stays 0 and the render shows "—".
 		fileSizeGiB, sizeKnown := sizeOf(u.Model)
 		row.SizeKnown = sizeKnown
 		row.Estimated = bwEstimated || !sizeKnown
@@ -72,9 +71,6 @@ func buildResultRows(results runResults, info hw.Info, sizeOf func(id string) (f
 		if sizeKnown && fileSizeGiB > 0 {
 			activeGiB, _ := advise.EstimateActiveGiB(u.Model, fileSizeGiB)
 			row.Predicted = advise.DecodeCeilingTPS(bwGBs, activeGiB)
-		} else if totalGiB > 0 {
-			// Size unknown: use a rough estimate from host RAM context (not exposed).
-			// Leave Predicted=0 and SizeKnown=false; the render shows "—".
 		}
 
 		// % of ceiling

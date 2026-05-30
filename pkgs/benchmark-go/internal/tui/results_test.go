@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	tea "charm.land/bubbletea/v2"
+
 	"github.com/noamsto/nix-amd-ai/pkgs/benchmark-go/internal/hw"
 )
 
@@ -277,3 +279,65 @@ func TestTruncate_long(t *testing.T) {
 		t.Errorf("expected length 8, got %d: %q", len([]rune(got)), got)
 	}
 }
+
+// --- Update-level: results screen keys + logWrittenMsg dispatch ---
+
+// resultsModel builds a model parked on screenResults with one completed unit.
+func resultsModel() model {
+	m := New(testHWInfoFull(), Config{}).(model)
+	m.current = screenResults
+	m.run.done = true
+	m.run.results = runResults{
+		Mode:  ModeHTTP,
+		Units: []runUnitResult{{Model: "modelA", Backend: "llamacpp", MeanTPS: ptrF(42.0)}},
+	}
+	return m
+}
+
+func TestResultsKey_MTogglesMarkdown(t *testing.T) {
+	m := resultsModel()
+	if m.results.showMarkdown {
+		t.Fatal("showMarkdown should start false")
+	}
+
+	tm, _ := m.Update(tea.KeyPressMsg{Code: 'm', Text: "m"})
+	m = tm.(model)
+	if !m.results.showMarkdown {
+		t.Error("first [m] should set showMarkdown=true")
+	}
+
+	tm, _ = m.Update(tea.KeyPressMsg{Code: 'm', Text: "m"})
+	m = tm.(model)
+	if m.results.showMarkdown {
+		t.Error("second [m] should toggle showMarkdown back to false")
+	}
+}
+
+func TestUpdate_LogWrittenMsgSetsLogMsg(t *testing.T) {
+	m := resultsModel()
+
+	tm, _ := m.Update(logWrittenMsg{path: "/tmp/foo.md"})
+	m = tm.(model)
+
+	if !strings.Contains(m.results.logMsg, "/tmp/foo.md") {
+		t.Errorf("logMsg should mention the saved path, got %q", m.results.logMsg)
+	}
+}
+
+func TestUpdate_LogWrittenMsgError(t *testing.T) {
+	m := resultsModel()
+
+	tm, _ := m.Update(logWrittenMsg{err: errFakeWrite})
+	m = tm.(model)
+
+	if !strings.Contains(m.results.logMsg, "write failed") {
+		t.Errorf("logMsg should report failure, got %q", m.results.logMsg)
+	}
+}
+
+// errFakeWrite is a sentinel error for the log-write failure path.
+var errFakeWrite = fakeErr("disk full")
+
+type fakeErr string
+
+func (e fakeErr) Error() string { return string(e) }
