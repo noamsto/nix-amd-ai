@@ -2,6 +2,12 @@
 // parameter recommendations on Strix Point (gfx1150) hardware.
 package advise
 
+import (
+	"regexp"
+	"strconv"
+	"strings"
+)
+
 // FitState classifies how well a model fits within a GPU memory budget.
 type FitState int
 
@@ -96,4 +102,65 @@ func RecommendParams(modelGiB float64) Params {
 // On Strix Point, GTT (not the UMA carveout) is the real usable GPU memory ceiling.
 func BudgetGiB(gttBytes uint64) float64 {
 	return float64(gttBytes) / (1024 * 1024 * 1024)
+}
+
+// reTotalB matches a plain "<n>B" total-param token, e.g. "26B", "27B", "30B".
+// The negative lookahead equivalent: requires the digit(s) are NOT preceded by "A"
+// (handled in EstimateActiveGiB by checking the active token separately).
+var reTotalB = regexp.MustCompile(`(?i)(\d+(?:\.\d+)?)B`)
+
+// reActiveB matches an MoE active-param token of the form "A<n>B", e.g. "A4B", "A3B".
+var reActiveB = regexp.MustCompile(`(?i)A(\d+(?:\.\d+)?)B`)
+
+// EstimateActiveGiB returns the active bytes/token size (in GiB) for the
+// decode-ceiling calc, derived from the model name + total size.
+//
+// Heuristic: parse the model ID (case-insensitive) for an active token
+// A<n>B (e.g. "A4B" in "Gemma-4-26B-A4B") and a total token <n>B (e.g. "26B").
+// If both are found and active < total, it is an MoE model:
+//
+//	activeGiB = totalGiB * (activeB / totalB)
+//
+// For a dense model, active == total. The total token is the largest plain <n>B
+// value found; the active token is the A<n>B value. "A4B" is excluded from the
+// total-token candidates because it is fully consumed by reActiveB first.
+func EstimateActiveGiB(modelID string, totalGiB float64) (activeGiB float64, isMoE bool) {
+	upper := strings.ToUpper(modelID)
+
+	// Find the MoE active token first (A<n>B).
+	activeMatch := reActiveB.FindStringSubmatch(upper)
+	if activeMatch == nil {
+		return totalGiB, false
+	}
+	activeB, err := strconv.ParseFloat(activeMatch[1], 64)
+	if err != nil || activeB <= 0 {
+		return totalGiB, false
+	}
+
+	// Find all plain <n>B tokens. Pick the largest as the total-param candidate,
+	// but skip any that are part of an A<n>B match (i.e. preceded by "A").
+	allTotalMatches := reTotalB.FindAllStringIndex(upper, -1)
+	var totalB float64
+	for _, loc := range allTotalMatches {
+		start, end := loc[0], loc[1]
+		// Skip if this token is immediately preceded by "A" — it is the active token.
+		if start > 0 && upper[start-1] == 'A' {
+			continue
+		}
+		// The regex captured the full match including "B"; extract the numeric part.
+		raw := upper[start : end-1] // strip trailing "B"
+		v, err := strconv.ParseFloat(raw, 64)
+		if err != nil {
+			continue
+		}
+		if v > totalB {
+			totalB = v
+		}
+	}
+
+	if totalB <= 0 || activeB >= totalB {
+		return totalGiB, false
+	}
+
+	return totalGiB * (activeB / totalB), true
 }

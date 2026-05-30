@@ -5,6 +5,74 @@ import (
 	"testing"
 )
 
+func TestEstimateActiveGiB(t *testing.T) {
+	tests := []struct {
+		name        string
+		modelID     string
+		totalGiB    float64
+		wantActive  float64
+		wantIsMoE   bool
+		wantEpsilon float64
+	}{
+		{
+			name:     "Gemma MoE 26B total 4B active",
+			modelID:  "Gemma-4-26B-A4B-it-GGUF",
+			totalGiB: 15.7,
+			// activeGiB = 15.7 * (4/26) ≈ 2.4154
+			wantActive:  15.7 * (4.0 / 26.0),
+			wantIsMoE:   true,
+			wantEpsilon: 0.05,
+		},
+		{
+			name:     "Qwen3.6 dense 27B",
+			modelID:  "Qwen3.6-27B-GGUF",
+			totalGiB: 16.0,
+			// dense: activeGiB == totalGiB
+			wantActive:  16.0,
+			wantIsMoE:   false,
+			wantEpsilon: 1e-9,
+		},
+		{
+			name:     "Qwen3 30B-A3B MoE",
+			modelID:  "Qwen3-30B-A3B",
+			totalGiB: 18.0,
+			// activeGiB = 18.0 * (3/30) = 1.8
+			wantActive:  18.0 * (3.0 / 30.0),
+			wantIsMoE:   true,
+			wantEpsilon: 0.05,
+		},
+		{
+			name:     "no B token at all",
+			modelID:  "SomeModel-GGUF",
+			totalGiB: 5.0,
+			wantActive: 5.0,
+			wantIsMoE:  false,
+			wantEpsilon: 1e-9,
+		},
+		{
+			name:     "MoE token but active >= total (nonsensical - treat as dense)",
+			modelID:  "Model-4B-A8B",
+			totalGiB: 3.0,
+			wantActive: 3.0,
+			wantIsMoE:  false,
+			wantEpsilon: 1e-9,
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, isMoE := EstimateActiveGiB(tc.modelID, tc.totalGiB)
+			if isMoE != tc.wantIsMoE {
+				t.Errorf("EstimateActiveGiB(%q, %.1f): isMoE=%v; want %v", tc.modelID, tc.totalGiB, isMoE, tc.wantIsMoE)
+			}
+			if math.Abs(got-tc.wantActive) > tc.wantEpsilon {
+				t.Errorf("EstimateActiveGiB(%q, %.1f): activeGiB=%.4f; want %.4f (±%.4f)",
+					tc.modelID, tc.totalGiB, got, tc.wantActive, tc.wantEpsilon)
+			}
+		})
+	}
+}
+
 func TestDecodeCeilingTPS(t *testing.T) {
 	// bandwidth is decimal GB/s, model size is GiB. Converted internally:
 	// 89.6 / (15.7 * 1.073741824) ≈ 5.32 TPS
