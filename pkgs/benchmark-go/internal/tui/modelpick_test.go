@@ -19,7 +19,7 @@ import (
 // fit glyph, MoE tag, and estimation prefix.
 func TestFormatModelRow_Glyphs(t *testing.T) {
 	t.Run("fits dense no estimate", func(t *testing.T) {
-		out := formatModelRow("MyModel-7B-GGUF", 4.5, true, advise.Fits, 12.3, false, false, false)
+		out := formatModelRow("MyModel-7B-GGUF", 4.5, true, advise.Fits, 12.3, false, false, false, true, false)
 		if !strings.Contains(out, "✅") {
 			t.Errorf("expected ✅ in %q", out)
 		}
@@ -32,7 +32,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 
 	t.Run("spills with estimate and MoE", func(t *testing.T) {
-		out := formatModelRow("Gemma-4-26B-A4B", 15.7, true, advise.Spills, 42.0, true, true, false)
+		out := formatModelRow("Gemma-4-26B-A4B", 15.7, true, advise.Spills, 42.0, true, true, false, true, false)
 		if !strings.Contains(out, "❌") {
 			t.Errorf("expected ❌ in %q", out)
 		}
@@ -45,7 +45,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 
 	t.Run("tight selected", func(t *testing.T) {
-		out := formatModelRow("Model-14B", 8.0, true, advise.Tight, 5.0, false, false, true)
+		out := formatModelRow("Model-14B", 8.0, true, advise.Tight, 5.0, false, false, true, true, false)
 		if !strings.Contains(out, "⚠️") {
 			t.Errorf("expected ⚠️ in %q", out)
 		}
@@ -55,7 +55,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 
 	t.Run("unknown size shows ? glyph not cross", func(t *testing.T) {
-		out := formatModelRow("UnknownModel", 0, false, advise.Fits, 0, false, false, false)
+		out := formatModelRow("UnknownModel", 0, false, advise.Fits, 0, false, false, false, true, false)
 		if strings.Contains(out, "❌") {
 			t.Errorf("unknown-size row must not show ❌ in %q", out)
 		}
@@ -66,7 +66,7 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 
 	t.Run("unknown size with fit=Spills still shows ? not cross", func(t *testing.T) {
 		// Even if fit field is Spills (stale default), unknown size → neutral glyph.
-		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false)
+		out := formatModelRow("UnknownModel", 0, false, advise.Spills, 0, false, false, false, true, false)
 		if strings.Contains(out, "❌") {
 			t.Errorf("unknown-size row must not show ❌ in %q", out)
 		}
@@ -76,19 +76,56 @@ func TestFormatModelRow_Glyphs(t *testing.T) {
 	})
 }
 
+// TestFormatModelRow_Markers verifies ⬇ and ★ render correctly.
+func TestFormatModelRow_Markers(t *testing.T) {
+	t.Run("not-downloaded shows down arrow", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, false, false)
+		if !strings.Contains(out, "⬇") {
+			t.Errorf("not-downloaded row should contain ⬇ in %q", out)
+		}
+	})
+
+	t.Run("downloaded does not show down arrow", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+		if strings.Contains(out, "⬇") {
+			t.Errorf("downloaded row must not show ⬇ in %q", out)
+		}
+	})
+
+	t.Run("suggested shows star", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, true)
+		if !strings.Contains(out, "★") {
+			t.Errorf("suggested row should contain ★ in %q", out)
+		}
+	})
+
+	t.Run("not suggested does not show star", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+		if strings.Contains(out, "★") {
+			t.Errorf("non-suggested row must not show ★ in %q", out)
+		}
+	})
+
+	t.Run("both markers together", func(t *testing.T) {
+		out := formatModelRow("SomeModel-7B-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, false, true)
+		if !strings.Contains(out, "★") {
+			t.Errorf("expected ★ in %q", out)
+		}
+		if !strings.Contains(out, "⬇") {
+			t.Errorf("expected ⬇ in %q", out)
+		}
+	})
+}
+
 // TestFormatModelRow_Alignment verifies that rows with different id lengths
 // produce the size column starting at the same display column.
+// Also verifies that marked vs unmarked rows have the same size column offset.
 func TestFormatModelRow_Alignment(t *testing.T) {
-	short := formatModelRow("A", 4.5, true, advise.Fits, 10.0, false, false, false)
-	long := formatModelRow("A-Very-Long-Model-Name-That-Gets-Truncated-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false)
+	short := formatModelRow("A", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+	long := formatModelRow("A-Very-Long-Model-Name-That-Gets-Truncated-GGUF", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
 
 	// Find the display offset of the size string "4.5 GiB" in each row.
-	// Both must match because the id column is padded/truncated to idColumnWidth.
 	findSizeOffset := func(row string) int {
-		// Locate the size content (byte offset; the prefix is pure ASCII here),
-		// then convert the prefix to its display-column width via lipgloss.Width.
-		// Both rows must yield the same offset because the id column is
-		// padded/truncated to idColumnWidth.
 		target := "4.5 GiB"
 		idx := strings.Index(row, target)
 		if idx < 0 {
@@ -106,6 +143,21 @@ func TestFormatModelRow_Alignment(t *testing.T) {
 	if shortOff != longOff {
 		t.Errorf("size column at display offset %d (short) vs %d (long); want equal\nshort: %s\n long: %s",
 			shortOff, longOff, short, long)
+	}
+
+	// Marker vs no-marker: size column offset must be identical (markers are
+	// fixed-width, so they don't affect the id or size columns).
+	withMarkers := formatModelRow("SomeModel", 4.5, true, advise.Fits, 10.0, false, false, false, false, true)
+	noMarkers := formatModelRow("SomeModel", 4.5, true, advise.Fits, 10.0, false, false, false, true, false)
+
+	markedOff := findSizeOffset(withMarkers)
+	plainOff := findSizeOffset(noMarkers)
+	if markedOff < 0 || plainOff < 0 {
+		t.Fatalf("size string not found in marker test: marked=%q plain=%q", withMarkers, noMarkers)
+	}
+	if markedOff != plainOff {
+		t.Errorf("marker shifts size column: marked offset %d vs plain %d\nmarked: %s\nplain:  %s",
+			markedOff, plainOff, withMarkers, noMarkers)
 	}
 }
 
@@ -155,16 +207,12 @@ func TestBuildModelRows_FitVsCeiling(t *testing.T) {
 		GTTBytes:    27 << 30, // 27 GiB budget
 	}
 
+	// 15.7 GB from API → ~14.63 GiB
 	fakeList := []models.Model{
-		{ID: "Gemma-4-26B-A4B-it-GGUF", Downloaded: true, Recipe: "llamacpp"},
+		{ID: "Gemma-4-26B-A4B-it-GGUF", Downloaded: true, Recipe: "llamacpp", Size: 15.7 * 1.073741824},
 	}
 
-	// Fake size: 15.7 GiB total
-	fakeSize := func(m models.Model) (float64, bool) {
-		return 15.7, true
-	}
-
-	rows := buildModelRows(fakeList, info, fakeSize)
+	rows := buildModelRows(fakeList, info, ModeHTTP)
 	if len(rows) != 1 {
 		t.Fatalf("expected 1 row, got %d", len(rows))
 	}
@@ -190,21 +238,113 @@ func TestBuildModelRows_FitVsCeiling(t *testing.T) {
 	}
 }
 
-// TestBuildModelRows_SkipsUndownloaded verifies that non-downloaded models are excluded.
-func TestBuildModelRows_SkipsUndownloaded(t *testing.T) {
+// TestBuildModelRows_SizeFromAPI verifies that size comes from m.Size (API, GB→GiB)
+// and not from filesystem access.
+func TestBuildModelRows_SizeFromAPI(t *testing.T) {
+	info := hw.Info{GTTBytes: 27 << 30}
+	// 18.8 GB from API → 18.8/1.073741824 ≈ 17.51 GiB
+	fakeList := []models.Model{
+		{ID: "Qwen3.6-27B-MTP-GGUF", Downloaded: true, Recipe: "llamacpp", Size: 18.8},
+	}
+
+	rows := buildModelRows(fakeList, info, ModeHTTP)
+	if len(rows) != 1 {
+		t.Fatalf("expected 1 row, got %d", len(rows))
+	}
+	r := rows[0]
+
+	expected := 18.8 / 1.073741824
+	if r.totalGiB < expected-0.01 || r.totalGiB > expected+0.01 {
+		t.Errorf("totalGiB = %.4f, want ~%.4f (18.8 GB / 1.073741824)", r.totalGiB, expected)
+	}
+	if !r.sizeKnown {
+		t.Error("sizeKnown should be true when m.Size > 0")
+	}
+}
+
+// TestBuildModelRows_IncludesNotDownloaded verifies not-downloaded llamacpp models are included.
+func TestBuildModelRows_IncludesNotDownloaded(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "downloaded-model", Downloaded: true, Recipe: "llamacpp"},
-		{ID: "not-downloaded", Downloaded: false, Recipe: "llamacpp"},
+		{ID: "downloaded-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0},
+		{ID: "not-downloaded", Downloaded: false, Recipe: "llamacpp", Size: 8.0},
 	}
-	fakeSize := func(m models.Model) (float64, bool) { return 5.0, true }
 
-	rows := buildModelRows(fakeList, info, fakeSize)
-	if len(rows) != 1 {
-		t.Errorf("expected 1 row (downloaded only), got %d", len(rows))
+	rows := buildModelRows(fakeList, info, ModeHTTP)
+	if len(rows) != 2 {
+		t.Errorf("expected 2 rows (including not-downloaded), got %d: %v", len(rows), rowIDs(rows))
 	}
-	if rows[0].id != "downloaded-model" {
-		t.Errorf("unexpected row id %q", rows[0].id)
+
+	// Verify downloaded field is propagated correctly.
+	var foundNotDownloaded bool
+	for _, r := range rows {
+		if r.id == "not-downloaded" {
+			foundNotDownloaded = true
+			if r.downloaded {
+				t.Errorf("not-downloaded row has downloaded=true")
+			}
+		}
+	}
+	if !foundNotDownloaded {
+		t.Error("not-downloaded model was excluded from rows")
+	}
+}
+
+// TestBuildModelRows_DownloadedSortedFirst verifies downloaded models appear before not-downloaded.
+func TestBuildModelRows_DownloadedSortedFirst(t *testing.T) {
+	info := hw.Info{GTTBytes: 27 << 30}
+	// Deliberately put not-downloaded first in the input list.
+	fakeList := []models.Model{
+		{ID: "not-downloaded-A", Downloaded: false, Recipe: "llamacpp", Size: 5.0},
+		{ID: "downloaded-B", Downloaded: true, Recipe: "llamacpp", Size: 5.0},
+		{ID: "not-downloaded-C", Downloaded: false, Recipe: "llamacpp", Size: 5.0},
+		{ID: "downloaded-D", Downloaded: true, Recipe: "llamacpp", Size: 5.0},
+	}
+
+	rows := buildModelRows(fakeList, info, ModeHTTP)
+	if len(rows) != 4 {
+		t.Fatalf("expected 4 rows, got %d", len(rows))
+	}
+	// First two should be downloaded.
+	if !rows[0].downloaded || !rows[1].downloaded {
+		t.Errorf("first two rows should be downloaded: %v %v", rows[0].id, rows[1].id)
+	}
+	// Last two should be not-downloaded.
+	if rows[2].downloaded || rows[3].downloaded {
+		t.Errorf("last two rows should be not-downloaded: %v %v", rows[2].id, rows[3].id)
+	}
+	// Order within each group should be stable (preserved from input).
+	if rows[0].id != "downloaded-B" || rows[1].id != "downloaded-D" {
+		t.Errorf("downloaded group order: got %v %v, want downloaded-B downloaded-D", rows[0].id, rows[1].id)
+	}
+	if rows[2].id != "not-downloaded-A" || rows[3].id != "not-downloaded-C" {
+		t.Errorf("not-downloaded group order: got %v %v, want not-downloaded-A not-downloaded-C", rows[2].id, rows[3].id)
+	}
+}
+
+// TestBuildModelRows_SuggestedField verifies the suggested field is propagated.
+func TestBuildModelRows_SuggestedField(t *testing.T) {
+	info := hw.Info{GTTBytes: 27 << 30}
+	fakeList := []models.Model{
+		{ID: "suggested-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Suggested: true},
+		{ID: "plain-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Suggested: false},
+	}
+
+	rows := buildModelRows(fakeList, info, ModeHTTP)
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 rows, got %d", len(rows))
+	}
+	for _, r := range rows {
+		switch r.id {
+		case "suggested-model":
+			if !r.suggested {
+				t.Errorf("suggested-model: suggested = false, want true")
+			}
+		case "plain-model":
+			if r.suggested {
+				t.Errorf("plain-model: suggested = true, want false")
+			}
+		}
 	}
 }
 
@@ -212,16 +352,15 @@ func TestBuildModelRows_SkipsUndownloaded(t *testing.T) {
 func TestBuildModelRows_FiltersNonLlamacpp(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "llama-model", Downloaded: true, Recipe: "llamacpp"},
-		{ID: "flux-model", Downloaded: true, Recipe: "sd-cpp"},
-		{ID: "whisper-model", Downloaded: true, Recipe: "whispercpp"},
-		{ID: "vllm-model", Downloaded: true, Recipe: "vllm"},
-		{ID: "flm-model", Downloaded: true, Recipe: "flm"},
-		{ID: "kokoro-model", Downloaded: true, Recipe: "kokoro"},
+		{ID: "llama-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0},
+		{ID: "flux-model", Downloaded: true, Recipe: "sd-cpp", Size: 5.0},
+		{ID: "whisper-model", Downloaded: true, Recipe: "whispercpp", Size: 5.0},
+		{ID: "vllm-model", Downloaded: true, Recipe: "vllm", Size: 5.0},
+		{ID: "flm-model", Downloaded: true, Recipe: "flm", Size: 5.0},
+		{ID: "kokoro-model", Downloaded: true, Recipe: "kokoro", Size: 5.0},
 	}
-	fakeSize := func(m models.Model) (float64, bool) { return 5.0, true }
 
-	rows := buildModelRows(fakeList, info, fakeSize)
+	rows := buildModelRows(fakeList, info, ModeHTTP)
 	if len(rows) != 1 {
 		t.Errorf("expected 1 row (llamacpp only), got %d; ids: %v", len(rows), rowIDs(rows))
 	}
@@ -231,15 +370,14 @@ func TestBuildModelRows_FiltersNonLlamacpp(t *testing.T) {
 }
 
 // TestBuildModelRows_UnknownSizeIsNeutral verifies that a model with unknown size
-// gets a neutral fit (not Spills) and renders "?" not "❌".
+// (m.Size == 0) gets a neutral fit (not Spills) and renders "?" not "❌".
 func TestBuildModelRows_UnknownSizeIsNeutral(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "mystery-model", Downloaded: true, Recipe: "llamacpp"},
+		{ID: "mystery-model", Downloaded: true, Recipe: "llamacpp", Size: 0},
 	}
-	fakeSize := func(m models.Model) (float64, bool) { return 0, false }
 
-	rows := buildModelRows(fakeList, info, fakeSize)
+	rows := buildModelRows(fakeList, info, ModeHTTP)
 	if len(rows) != 1 {
 		t.Fatalf("expected 1 row, got %d", len(rows))
 	}
@@ -252,13 +390,50 @@ func TestBuildModelRows_UnknownSizeIsNeutral(t *testing.T) {
 		t.Error("sizeKnown should be false")
 	}
 
-	rendered := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected)
+	rendered := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.suggested)
 	if strings.Contains(rendered, "❌") {
 		t.Errorf("unknown-size row rendered ❌, want ?: %q", rendered)
 	}
 	if !strings.Contains(rendered, "?") {
 		t.Errorf("unknown-size row should render ?, got: %q", rendered)
 	}
+}
+
+// TestBuildModelRows_MTPModeFilter verifies MTP mode filtering by label.
+func TestBuildModelRows_MTPModeFilter(t *testing.T) {
+	info := hw.Info{GTTBytes: 27 << 30}
+	fakeList := []models.Model{
+		{ID: "mtp-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Labels: []string{"mtp", "llamacpp"}},
+		{ID: "plain-model", Downloaded: true, Recipe: "llamacpp", Size: 5.0, Labels: []string{"llamacpp"}},
+		{ID: "not-downloaded-mtp", Downloaded: false, Recipe: "llamacpp", Size: 5.0, Labels: []string{"mtp"}},
+	}
+
+	t.Run("MTP mode keeps only mtp-labeled", func(t *testing.T) {
+		rows := buildModelRows(fakeList, info, ModeMTP)
+		ids := rowIDs(rows)
+		for _, r := range rows {
+			if r.id == "plain-model" {
+				t.Errorf("plain-model (no mtp label) should be excluded in MTP mode; got: %v", ids)
+			}
+		}
+		if len(rows) != 2 {
+			t.Errorf("expected 2 rows in MTP mode (mtp-model + not-downloaded-mtp), got %d: %v", len(rows), ids)
+		}
+	})
+
+	t.Run("HTTP mode keeps all llamacpp regardless of mtp label", func(t *testing.T) {
+		rows := buildModelRows(fakeList, info, ModeHTTP)
+		if len(rows) != 3 {
+			t.Errorf("expected 3 rows in HTTP mode, got %d: %v", len(rows), rowIDs(rows))
+		}
+	})
+
+	t.Run("Backend mode keeps all llamacpp regardless of mtp label", func(t *testing.T) {
+		rows := buildModelRows(fakeList, info, ModeBackend)
+		if len(rows) != 3 {
+			t.Errorf("expected 3 rows in Backend mode, got %d: %v", len(rows), rowIDs(rows))
+		}
+	})
 }
 
 func rowIDs(rows []modelRow) []string {
@@ -307,12 +482,11 @@ func TestModelScreenHeader(t *testing.T) {
 func TestModelPickerSpaceAndEnter(t *testing.T) {
 	info := hw.Info{GTTBytes: 27 << 30}
 	fakeList := []models.Model{
-		{ID: "model-alpha", Downloaded: true, Recipe: "llamacpp"},
-		{ID: "model-beta", Downloaded: true, Recipe: "llamacpp"},
+		{ID: "model-alpha", Downloaded: true, Recipe: "llamacpp", Size: 4.0},
+		{ID: "model-beta", Downloaded: true, Recipe: "llamacpp", Size: 4.0},
 	}
-	fakeSize := func(m models.Model) (float64, bool) { return 4.0, true }
 
-	rows := buildModelRows(fakeList, info, fakeSize)
+	rows := buildModelRows(fakeList, info, ModeHTTP)
 
 	p := modelPicker{rows: rows, cursor: 0}
 

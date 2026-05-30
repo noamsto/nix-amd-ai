@@ -30,6 +30,8 @@ type modelRow struct {
 	isMoE      bool
 	estimated  bool // bandwidth or size was estimated
 	selected   bool
+	downloaded bool // false → model is available but not yet downloaded
+	suggested  bool // lemonade marks this as a recommended model
 }
 
 // modelPicker holds transient state for the model selection screen.
@@ -40,9 +42,8 @@ type modelPicker struct {
 	err           error
 	needSelection bool // set when Enter is pressed with no models selected
 
-	// test seams: override these to avoid real filesystem / network calls.
-	fetchModels  func(baseURL string) ([]models.Model, error)
-	modelSizeGiB func(m models.Model) (float64, bool) // returns (gib, ok)
+	// fetchModels is a test seam to avoid real network calls.
+	fetchModels func(baseURL string) ([]models.Model, error)
 }
 
 // toggleSelected toggles the selection of the row under the cursor.
@@ -85,23 +86,6 @@ func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 		list, err := fetch(url)
 		return modelsLoadedMsg{models: list, err: err}
 	}
-}
-
-// resolveModelSizeGiB returns the GGUF file size in GiB for a models.Model.
-// Tries the checkpoint field first, falls back to the display id.
-func resolveModelSizeGiB(m models.Model) (float64, bool) {
-	path := bench.ResolveGGUFByCheckpoint(m.Checkpoint, "")
-	if path == "" {
-		path = bench.ResolveLemonadeGGUF(m.ID, "")
-	}
-	if path == "" {
-		return 0, false
-	}
-	fi, err := os.Stat(path)
-	if err != nil {
-		return 0, false
-	}
-	return float64(fi.Size()) / (1024 * 1024 * 1024), true
 }
 
 // resolveModelSizeGiBByID returns the GGUF file size in GiB for a model display id.
@@ -166,11 +150,38 @@ func padToWidth(s string, w int) string {
 // formatModelRow formats a single model row for display (pure, tested directly).
 // Columns (fixed display width):
 //
-//	[x]  <id padded/truncated to 32>  <size right-aligned 9>  <fit>  ceil <ceil>  (MoE)
-func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitState, ceilingTPS float64, isMoE bool, estimated bool, selected bool) string {
+//	[x]  <markers 2>  <id padded/truncated to 32>  <size right-aligned 9>  <fit>  ceil <ceil>  (MoE)
+//
+// Markers: column of width 2.
+//
+//	"★ " = suggested
+//	"⬇ " = not downloaded
+//	"  " = neither
+func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitState, ceilingTPS float64, isMoE bool, estimated bool, selected bool, downloaded bool, suggested bool) string {
 	check := "[ ]"
 	if selected {
 		check = "[✓]"
+	}
+
+	// Markers slot: fixed 2 display columns.
+	// Priority: suggested (★) shown if suggested; ⬇ shown if not downloaded.
+	// Both can apply simultaneously; show ★ first, ⬇ second, each 1 col wide.
+	var markerA, markerB string
+	if suggested {
+		markerA = "★"
+	} else {
+		markerA = " "
+	}
+	if !downloaded {
+		markerB = "⬇"
+	} else {
+		markerB = " "
+	}
+	markers := markerA + markerB
+	// Ensure markers slot is exactly 2 display columns.
+	mw := lipgloss.Width(markers)
+	if mw < 2 {
+		markers += strings.Repeat(" ", 2-mw)
 	}
 
 	idCol := padToWidth(id, idColumnWidth)
@@ -199,30 +210,42 @@ func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitS
 		moeTag = "  (MoE)"
 	}
 
-	return fmt.Sprintf("%s %s  %s  %s  ceil %s%s",
-		check, idCol, sizeStr, glyphPadded, ceilStr, moeTag)
+	return fmt.Sprintf("%s %s %s  %s  %s  ceil %s%s",
+		check, markers, idCol, sizeStr, glyphPadded, ceilStr, moeTag)
 }
 
-func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(models.Model) (float64, bool)) []modelRow {
+// hasLabel reports whether the labels slice contains target.
+func hasLabel(labels []string, target string) bool {
+	for _, l := range labels {
+		if l == target {
+			return true
+		}
+	}
+	return false
+}
+
+// buildModelRows builds display rows from the lemonade model list.
+// Size comes from m.Size (API, GB) converted to GiB; no filesystem access.
+// mode filters: in ModeMTP, only models with the "mtp" label are included.
+// Sorting: downloaded models appear before not-downloaded (stable within each group).
+func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelRow {
 	budgetGiB := advise.BudgetGiB(info.GTTBytes)
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)
 
-	sizeOf := sizeFunc
-	if sizeOf == nil {
-		sizeOf = resolveModelSizeGiB
-	}
-
-	rows := make([]modelRow, 0, len(mList))
+	var downloaded, notDownloaded []modelRow
 	for _, m := range mList {
-		if !m.Downloaded {
-			continue
-		}
 		// Only llamacpp models can be benchmarked by this tool.
 		if m.Recipe != "llamacpp" {
 			continue
 		}
+		// In MTP A/B mode, only models with the "mtp" label are relevant.
+		if mode == ModeMTP && !hasLabel(m.Labels, "mtp") {
+			continue
+		}
 
-		totalGiB, sizeKnown := sizeOf(m)
+		// Size from API: GB → GiB (1 GiB = 1.073741824 GB).
+		totalGiB := m.Size / 1.073741824
+		sizeKnown := m.Size > 0
 
 		// fit uses TOTAL size — all expert weights must be resident in GTT.
 		// Unknown size is neutral (not Spills) — we simply don't know.
@@ -243,7 +266,7 @@ func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(models.Mod
 
 		estimated := bwEstimated || !sizeKnown
 
-		rows = append(rows, modelRow{
+		row := modelRow{
 			id:         m.ID,
 			totalGiB:   totalGiB,
 			sizeKnown:  sizeKnown,
@@ -251,9 +274,16 @@ func buildModelRows(mList []models.Model, info hw.Info, sizeFunc func(models.Mod
 			ceilingTPS: ceilingTPS,
 			isMoE:      isMoE,
 			estimated:  estimated,
-		})
+			downloaded: m.Downloaded,
+			suggested:  m.Suggested,
+		}
+		if m.Downloaded {
+			downloaded = append(downloaded, row)
+		} else {
+			notDownloaded = append(notDownloaded, row)
+		}
 	}
-	return rows
+	return append(downloaded, notDownloaded...)
 }
 
 func renderModelScreen(p *modelPicker, st styles) string {
@@ -273,13 +303,13 @@ func renderModelScreen(p *modelPicker, st styles) string {
 	}
 
 	if len(p.rows) == 0 {
-		b.WriteString(st.hint.Render("No downloaded models found.") + "\n")
+		b.WriteString(st.hint.Render("No models found.") + "\n")
 		b.WriteString("\n" + st.label.Render("Esc ← back"))
 		return st.panel.Render(b.String())
 	}
 
 	for i, r := range p.rows {
-		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected)
+		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.suggested)
 		if i == p.cursor {
 			b.WriteString(st.value.Render("> "+line) + "\n")
 		} else {

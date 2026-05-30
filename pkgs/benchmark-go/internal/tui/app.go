@@ -151,8 +151,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.modelPicker.err = msg.err
 			return m, nil
 		}
-		sizeFunc := m.modelPicker.modelSizeGiB
-		m.modelPicker.rows = buildModelRows(msg.models, m.info, sizeFunc)
+		m.modelPicker.rows = buildModelRows(msg.models, m.info, m.selectedMode)
 		return m, nil
 
 	case fixDoneMsg:
