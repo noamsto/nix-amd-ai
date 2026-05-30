@@ -116,6 +116,41 @@ func shellSingleQuote(s string) string {
 	return "'" + strings.ReplaceAll(s, "'", `'\''`) + "'"
 }
 
+// pullPromptText phrases the download confirmation for the pending models.
+// One model reads naturally; several are summarised with a total size.
+func pullPromptText(pending []modelRow) string {
+	var totalGiB float64
+	sizeKnown := true
+	for _, r := range pending {
+		totalGiB += r.totalGiB
+		if !r.sizeKnown {
+			sizeKnown = false
+		}
+	}
+	size := ""
+	if sizeKnown && totalGiB > 0 {
+		size = fmt.Sprintf("~%.1f GiB", totalGiB)
+	}
+
+	if len(pending) == 1 {
+		if size != "" {
+			return fmt.Sprintf("%s isn't downloaded yet (%s). Download it and continue?", pending[0].id, size)
+		}
+		return fmt.Sprintf("%s isn't downloaded yet. Download it and continue?", pending[0].id)
+	}
+
+	names := make([]string, len(pending))
+	for i, r := range pending {
+		names[i] = r.id
+	}
+	if size != "" {
+		return fmt.Sprintf("%d models need downloading (%s total): %s. Download them and continue?",
+			len(pending), size, strings.Join(names, ", "))
+	}
+	return fmt.Sprintf("%d models need downloading: %s. Download them and continue?",
+		len(pending), strings.Join(names, ", "))
+}
+
 // enterModelScreen resets picker state and returns the load Cmd.
 func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	p.loading = true
@@ -429,21 +464,9 @@ func renderModelScreen(p *modelPicker, st styles) string {
 
 	// Confirm prompt: selected models that need downloading first.
 	if p.needPull {
-		pending := p.pendingPullRows()
-		names := make([]string, len(pending))
-		var totalGiB float64
-		for i, r := range pending {
-			names[i] = r.id
-			totalGiB += r.totalGiB
-		}
-		sizeNote := ""
-		if totalGiB > 0 {
-			sizeNote = fmt.Sprintf(" (~%.1f GiB)", totalGiB)
-		}
-		b.WriteString("\n" + st.warn.Render(fmt.Sprintf(
-			"%d model(s) not downloaded: %s%s", len(pending), strings.Join(names, ", "), sizeNote)) + "\n")
-		b.WriteString(keybar(st,
-			[2]string{"p/Enter", "download & continue"},
+		b.WriteString("\n" + st.warn.Render("⬇  "+pullPromptText(p.pendingPullRows())) + "\n")
+		b.WriteString("\n" + keybar(st,
+			[2]string{"Enter", "download & continue"},
 			[2]string{"Esc", "cancel"},
 		))
 		return titledPanel(st, "Select Models", b.String(), 0)
