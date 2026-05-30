@@ -84,3 +84,44 @@ func TestParseModels_recipeFallback(t *testing.T) {
 		t.Errorf("ms[0].Recipe = %q, want llamacpp", ms[0].Recipe)
 	}
 }
+
+func TestParseModels_checkpointCaptured(t *testing.T) {
+	raw := `{"data":[
+		{"id":"Gemma-4-26B-A4B-it-GGUF","downloaded":true,"recipe":"llamacpp","checkpoint":"unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M"},
+		{"id":"Qwen3.6-27B-MTP-GGUF","downloaded":true,"recipe":"llamacpp","checkpoint":"unsloth/Qwen3.6-27B-MTP-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf"},
+		{"id":"Flux-2-Klein-9B-GGUF","downloaded":true,"recipe":"sd-cpp","checkpoint":"unsloth/FLUX.2-klein-9B-GGUF:flux-2-klein-9b-Q8_0.gguf"}
+	]}`
+
+	ms, err := ParseModels([]byte(raw))
+	if err != nil {
+		t.Fatalf("ParseModels error: %v", err)
+	}
+	if len(ms) != 3 {
+		t.Fatalf("want 3 models, got %d", len(ms))
+	}
+
+	cases := []struct{ id, want string }{
+		{"Gemma-4-26B-A4B-it-GGUF", "unsloth/gemma-4-26B-A4B-it-GGUF:UD-Q4_K_M"},
+		{"Qwen3.6-27B-MTP-GGUF", "unsloth/Qwen3.6-27B-MTP-GGUF:Qwen3.6-27B-UD-Q4_K_XL.gguf"},
+		{"Flux-2-Klein-9B-GGUF", "unsloth/FLUX.2-klein-9B-GGUF:flux-2-klein-9b-Q8_0.gguf"},
+	}
+	for i, c := range cases {
+		if ms[i].ID != c.id {
+			t.Errorf("ms[%d].ID = %q, want %q", i, ms[i].ID, c.id)
+		}
+		if ms[i].Checkpoint != c.want {
+			t.Errorf("ms[%d].Checkpoint = %q, want %q", i, ms[i].Checkpoint, c.want)
+		}
+	}
+}
+
+func TestParseModels_checkpointEmptyWhenAbsent(t *testing.T) {
+	raw := `{"data":[{"id":"NoCheckpoint","downloaded":true}]}`
+	ms, err := ParseModels([]byte(raw))
+	if err != nil {
+		t.Fatalf("ParseModels error: %v", err)
+	}
+	if ms[0].Checkpoint != "" {
+		t.Errorf("ms[0].Checkpoint = %q, want empty", ms[0].Checkpoint)
+	}
+}
