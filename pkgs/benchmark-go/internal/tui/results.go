@@ -252,21 +252,35 @@ func renderResults(res runResults, err error, rs resultsState, info hw.Info, siz
 	}
 
 	if rs.showMarkdown {
-		return renderMarkdownView(res, st)
+		return renderMarkdownView(res, rs.logMsg, rs.logErr, st)
 	}
 	return renderResultsTable(res, info, sizeOf, rs.logMsg, rs.logErr, st)
 }
 
 // renderMarkdownView shows the markdown export as copy-paste text.
-func renderMarkdownView(res runResults, st styles) string {
+func renderMarkdownView(res runResults, logMsg string, logErr bool, st styles) string {
 	var b strings.Builder
 	b.WriteString(st.value.Render(buildMarkdownExport(res)))
+	writeLogMsg(&b, logMsg, logErr, st)
 	b.WriteString("\n" + keybar(st,
 		[2]string{"m", "← table"},
-		[2]string{"w", "write"},
+		[2]string{"w", "write log"},
 		[2]string{"q", "quit"},
 	))
 	return titledPanel(st, "Results — Markdown", b.String(), 0)
+}
+
+// writeLogMsg appends the [w] write-log outcome (success or failure) with a
+// ✓/✗ prefix, so the feedback is visible in both the table and markdown views.
+func writeLogMsg(b *strings.Builder, logMsg string, logErr bool, st styles) {
+	if logMsg == "" {
+		return
+	}
+	if logErr {
+		b.WriteString("\n" + st.fail.Render("✗ "+logMsg) + "\n")
+	} else {
+		b.WriteString("\n" + st.pass.Render("✓ "+logMsg) + "\n")
+	}
 }
 
 // renderResultsTable renders the lipgloss-styled results table.
@@ -288,15 +302,7 @@ func renderResultsTable(res runResults, info hw.Info, sizeOf func(id string) (fl
 		renderHTTPTable(&b, rows, allBackendsEmpty(res.Units), st)
 	}
 
-	if logMsg != "" {
-		var rendered string
-		if logErr {
-			rendered = st.fail.Render(logMsg)
-		} else {
-			rendered = st.pass.Render(logMsg)
-		}
-		b.WriteString("\n" + rendered + "\n")
-	}
+	writeLogMsg(&b, logMsg, logErr, st)
 
 	b.WriteString("\n" + keybar(st,
 		[2]string{"m", "markdown"},

@@ -19,7 +19,7 @@ func TestRenderMarkdownTable_withResult(t *testing.T) {
 	}
 	out := RenderMarkdownTable(rows)
 
-	if !strings.Contains(out, "| Model |") {
+	if !strings.Contains(out, "| Model") {
 		t.Errorf("header missing: %q", out)
 	}
 	if !strings.Contains(out, "Gemma-4-26B-A4B-it-GGUF") {
@@ -39,7 +39,7 @@ func TestRenderMarkdownTable_naResult(t *testing.T) {
 	}
 	out := RenderMarkdownTable(rows)
 
-	if !strings.Contains(out, "| Model |") {
+	if !strings.Contains(out, "| Model") {
 		t.Errorf("header missing: %q", out)
 	}
 	lines := strings.Split(strings.TrimSpace(out), "\n")

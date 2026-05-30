@@ -28,21 +28,91 @@ type MTPRow struct {
 	OnTPS   *float64 // MTP-on (spec-type draft-mtp)
 }
 
-// RenderMarkdownTable renders a GitHub-flavored markdown table.
-//
-//	| Model | Backend | TTFT (s) | Decode (t/s) |
-//	| ----- | ------- | -------: | -----------: |
-//	| ...   | ...     |     0.12 | 42.3 +/- 1.2 |
-func RenderMarkdownTable(rows []Row) string {
+// colAlign controls per-column padding in renderAlignedTable.
+type colAlign int
+
+const (
+	alignLeft colAlign = iota
+	alignRight
+)
+
+// renderAlignedTable renders a GitHub-flavored markdown table with every column
+// padded to its widest cell, so the source text lines up in a monospace view
+// (it still renders identically on GitHub). Right-aligned columns get a "---:"
+// separator. Cells are measured by rune count (good enough for model names and
+// numbers; no wide-glyph cells here).
+func renderAlignedTable(headers []string, aligns []colAlign, rows [][]string) string {
+	n := len(headers)
+	width := make([]int, n)
+	for i, h := range headers {
+		width[i] = len([]rune(h))
+	}
+	for _, row := range rows {
+		for i := 0; i < n && i < len(row); i++ {
+			if w := len([]rune(row[i])); w > width[i] {
+				width[i] = w
+			}
+		}
+	}
+
 	var sb strings.Builder
-	sb.WriteString("| Model | Backend | TTFT (s) | Decode (t/s) |\n")
-	sb.WriteString("| ----- | ------- | -------: | -----------: |\n")
+	writeRow := func(cells []string) {
+		sb.WriteByte('|')
+		for i := 0; i < n; i++ {
+			c := ""
+			if i < len(cells) {
+				c = cells[i]
+			}
+			sb.WriteByte(' ')
+			sb.WriteString(padCell(c, width[i], aligns[i]))
+			sb.WriteString(" |")
+		}
+		sb.WriteByte('\n')
+	}
+
+	writeRow(headers)
+	sb.WriteByte('|')
+	for i := 0; i < n; i++ {
+		sb.WriteByte(' ')
+		if aligns[i] == alignRight {
+			sb.WriteString(strings.Repeat("-", width[i]-1) + ":")
+		} else {
+			sb.WriteString(strings.Repeat("-", width[i]))
+		}
+		sb.WriteString(" |")
+	}
+	sb.WriteByte('\n')
 	for _, r := range rows {
-		ttftStr := FmtTTFT(r.MeanTTFT)
-		tpsStr := FmtTPS(r.MeanTPS, r.StdevTPS)
-		fmt.Fprintf(&sb, "| %s | %s | %s | %s |\n", r.Model, r.Backend, ttftStr, tpsStr)
+		writeRow(r)
 	}
 	return sb.String()
+}
+
+// padCell pads s to display width w per the alignment.
+func padCell(s string, w int, a colAlign) string {
+	gap := w - len([]rune(s))
+	if gap <= 0 {
+		return s
+	}
+	if a == alignRight {
+		return strings.Repeat(" ", gap) + s
+	}
+	return s + strings.Repeat(" ", gap)
+}
+
+// RenderMarkdownTable renders a column-aligned markdown table:
+//
+//	| Model | Backend       | TTFT (s) | Decode (t/s) |
+//	| ----- | ------------- | -------: | -----------: |
+//	| M     | llamacpp:rocm |     0.12 | 42.3 +/- 1.2 |
+func RenderMarkdownTable(rows []Row) string {
+	headers := []string{"Model", "Backend", "TTFT (s)", "Decode (t/s)"}
+	aligns := []colAlign{alignLeft, alignLeft, alignRight, alignRight}
+	cells := make([][]string, len(rows))
+	for i, r := range rows {
+		cells[i] = []string{r.Model, r.Backend, FmtTTFT(r.MeanTTFT), FmtTPS(r.MeanTPS, r.StdevTPS)}
+	}
+	return renderAlignedTable(headers, aligns, cells)
 }
 
 func FmtTTFT(v *float64) string {
@@ -71,35 +141,26 @@ func FmtTPS(mean, stdev *float64) string {
 	return fmt.Sprintf("%.1f", *mean)
 }
 
-// RenderMTPMarkdownTable renders the MTP A/B table.
+// RenderMTPMarkdownTable renders the column-aligned MTP A/B table.
 //
 //	| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |
 //	| ----- | ------- | ------------: | -----------: | ------: |
 func RenderMTPMarkdownTable(rows []MTPRow) string {
-	var sb strings.Builder
-	sb.WriteString("| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |\n")
-	sb.WriteString("| ----- | ------- | ------------: | -----------: | ------: |\n")
-	for _, r := range rows {
-		sb.WriteString(FormatMTPRow(r))
-		sb.WriteByte('\n')
+	headers := []string{"Model", "Backend", "MTP off (t/s)", "MTP on (t/s)", "Speedup"}
+	aligns := []colAlign{alignLeft, alignLeft, alignRight, alignRight, alignRight}
+	cells := make([][]string, len(rows))
+	for i, r := range rows {
+		cells[i] = []string{r.Model, r.Backend, FmtMTPTPS(r.OffTPS), FmtMTPTPS(r.OnTPS), mtpSpeedup(r)}
 	}
-	return sb.String()
+	return renderAlignedTable(headers, aligns, cells)
 }
 
-// FormatMTPRow formats a single MTP row.
-func FormatMTPRow(r MTPRow) string {
-	offStr := FmtMTPTPS(r.OffTPS)
-	onStr := FmtMTPTPS(r.OnTPS)
-
-	var speedup string
+// mtpSpeedup formats the on/off ratio, or "N/A" when it can't be computed.
+func mtpSpeedup(r MTPRow) string {
 	if r.OffTPS != nil && *r.OffTPS > 0 && r.OnTPS != nil {
-		speedup = fmt.Sprintf("%.2fx", *r.OnTPS / *r.OffTPS)
-	} else {
-		speedup = "N/A"
+		return fmt.Sprintf("%.2fx", *r.OnTPS / *r.OffTPS)
 	}
-
-	return fmt.Sprintf("| %s | %s | %s | %s | %s |",
-		r.Model, r.Backend, offStr, onStr, speedup)
+	return "N/A"
 }
 
 func FmtMTPTPS(v *float64) string {

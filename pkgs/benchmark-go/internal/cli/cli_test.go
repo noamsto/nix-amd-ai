@@ -28,7 +28,7 @@ func TestRenderMarkdownTable_withResult(t *testing.T) {
 	}
 	out := RenderMarkdownTable(rows)
 
-	if !strings.Contains(out, "| Model |") {
+	if !strings.Contains(out, "| Model") {
 		t.Errorf("header missing: %q", out)
 	}
 	if !strings.Contains(out, "Gemma-4-26B-A4B-it-GGUF") {
@@ -54,7 +54,7 @@ func TestRenderMarkdownTable_naResult(t *testing.T) {
 	}
 	out := RenderMarkdownTable(rows)
 
-	if !strings.Contains(out, "| Model |") {
+	if !strings.Contains(out, "| Model") {
 		t.Errorf("header missing: %q", out)
 	}
 	// Both TTFT and TPS must show N/A, never "0" or "0.00".
