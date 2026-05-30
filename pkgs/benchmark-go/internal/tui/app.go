@@ -39,7 +39,8 @@ type model struct {
 	modePicker       modePicker
 	selectedMode     BenchMode
 	modelPicker      modelPicker
-	selectedModels   []string // IDs chosen on the model picker screen
+	selectedModels   []string   // IDs chosen on the model picker screen
+	paramsForm       paramsForm // editable run-parameter form (screenParams)
 }
 
 // New returns an initialised tea.Model starting on the Hardware screen.
@@ -170,8 +171,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.selectedModels = selected
 				m.current = screenParams
+				enterParamsScreen(&m.paramsForm, largestSelectedGiB(&m.modelPicker))
 				return m, nil
 			}
+		}
+
+		// Params screen: delegate all keys to handleParamsKey before fallthrough.
+		if m.current == screenParams {
+			return handleParamsKey(m, msg)
 		}
 
 		switch msg.String() {
@@ -214,7 +221,7 @@ func (m model) View() tea.View {
 	case screenModel:
 		s = renderModelScreen(&m.modelPicker)
 	case screenParams:
-		s = renderParams()
+		s = renderParamsScreen(m.paramsForm)
 	case screenRun:
 		s = renderRun()
 	case screenResults:
@@ -227,6 +234,5 @@ func (m model) View() tea.View {
 
 // --- per-screen stubs (real implementations come in later tasks) ---
 
-func renderParams() string  { return "Params — configure run parameters\n" }
 func renderRun() string     { return "Run — benchmark in progress\n" }
 func renderResults() string { return "Results — summary & throughput\n" }
