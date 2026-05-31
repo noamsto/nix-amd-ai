@@ -151,6 +151,38 @@ If `lemonade backends` reports a backend as `installed` but benchmarks report <5
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
 
+## GPU memory headroom
+
+The iGPU draws GPU memory from the GTT pool. By default the kernel exposes
+~27 GB addressable, which covers the 17–22 GB models this flake targets on a
+64 GB Strix Point host — so **leave these options unset there; they're a no-op.**
+
+On a **128 GB Strix Halo** host you need to raise the ceiling to expose the
+large unified pool for big models. The module takes sizes in **GiB** and
+computes the `ttm` page counts for you (`pages = GiB × 262144`):
+
+```nix
+hardware.amd-npu.gpuMemory = {
+  ttmSizeGiB = 120;       # GTT pool ceiling  → ttm pages_limit
+  pagePoolSizeGiB = 60;   # pre-cached pool   → ttm page_pool_size
+};
+```
+
+This emits `options ttm pages_limit=31457280 page_pool_size=15728640` via
+`boot.extraModprobeConfig`. Recommended starting point for 128 GB:
+
+| Option | Value (128 GB) | Meaning |
+|---|---|---|
+| `ttmSizeGiB` | 120 | Hard ceiling on the GTT pool; leaves ~8 GiB for the OS/CPU. |
+| `pagePoolSizeGiB` | 60 | Pre-cached pool inside that ceiling. |
+
+> **Note:** these Halo values are guidance from the [Strix Halo wiki](https://strixhalo.wiki/AI/AI_Capabilities_Overview),
+> **not measured on a Halo host by this flake** (the development target is a
+> 64 GB Strix Point P14s). Treat them as a starting point, not a validated tune.
+
+**Leave RAM headroom** — don't set `ttmSizeGiB` to your full physical RAM; the
+CPU and OS still need their share (the 120/128 example keeps a margin).
+
 ## Troubleshooting
 
 ### `amdxdna ... aie2_get_info: Not supported request parameter N` in dmesg/journald
