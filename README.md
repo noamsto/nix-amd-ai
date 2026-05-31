@@ -107,7 +107,7 @@ hardware.amd-npu = {
 
 - **Vulkan** is the recommended path: RADV is arch-agnostic, so llama.cpp / whisper.cpp run on any RDNA3 iGPU including the Radeon 780M (Phoenix / Hawk Point).
 - **NPU** (`enableFastFlowLM`) is XDNA-2 only; the assertion blocks it unless `enableNPU = true`.
-- **ROCm** (`enableROCm`) is **untested on `gfx1103`** — it isn't an officially supported ROCm target and the prebuilt `llama-cpp-rocm` may not include `gfx1103` kernels. To experiment, force the arch override out-of-band; this is unsupported and may not work:
+- **ROCm** (`enableROCm`): the shipped `llama-cpp-rocm` is compiled with `gfx1103` in its `CMAKE_HIP_ARCHITECTURES` list, so it carries native 780M kernels — no `HSA_OVERRIDE_GFX_VERSION` workaround should be needed. This is **untested on actual Hawk Point hardware**, and rocBLAS coverage for `gfx1103` APUs can be uneven, so Vulkan remains the recommended path. If ROCm misbehaves, the usual fallback is to alias the arch to `gfx1100`:
 
   ```nix
   systemd.services.lemond.environment.HSA_OVERRIDE_GFX_VERSION = "11.0.0";
