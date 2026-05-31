@@ -183,6 +183,39 @@ This emits `options ttm pages_limit=31457280 page_pool_size=15728640` via
 **Leave RAM headroom** — don't set `ttmSizeGiB` to your full physical RAM; the
 CPU and OS still need their share (the 120/128 example keeps a margin).
 
+## Tuning tradeoffs we don't automate
+
+### `amd_iommu=off` would kill the NPU
+
+The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
+**Do not do this on a host that uses the NPU.** amdxdna binds the NPU through
+IOMMU SVA/PASID (`iommu_sva_bind_device`, IOMMU group 25, IOMMU in *Translated*
+mode); `amd_iommu=off` or `iommu.passthrough=1` makes the bind fail
+(`*ERROR* Can not assign PASID` / `SVA get pasid failed`) and the NPU dies. The
+module already pins `iommu.passthrough=0` for this reason. `amd_iommu=off` is
+only viable on a GPU-only host that has given up XDNA.
+
+### CPU performance tuning (not implemented — pending A/B)
+
+The wiki recommends biasing the CPU to `performance` (governor + HWP boost) for
++3% memory bandwidth / +5–8% `pp512`. We don't wire this, because on a
+shared-TDP APU the tradeoff is murky:
+
+- There's **no direct CPU-governor → GPU-clock link** — the iGPU has its own
+  clock domain. Pinning CPU cores to `performance` doesn't raise GPU clocks.
+- On shared package power, forcing the CPU to max frequency **steals TDP from
+  the iGPU** during bandwidth-bound decode — a bounded, possibly net-negative
+  lever.
+- The knob actually aimed at decode is the **C-state latency floor**
+  (`/dev/cpu_dma_latency`), which keeps the fabric/memory subsystem clocked;
+  the governor is not.
+- Prefill (`pp512`) does have a CPU component, so the wiki's prefill claim is
+  plausible — for prefill, not decode.
+
+It's left out until an A/B on an idle/AC host (governor pinned `performance`)
+confirms whether the wiki's numbers reproduce on Strix Point. Tracked in
+[#19](https://github.com/noamsto/nix-amd-ai/issues/19).
+
 ## Troubleshooting
 
 ### `amdxdna ... aie2_get_info: Not supported request parameter N` in dmesg/journald
