@@ -50,7 +50,8 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 
   hardware.amd-npu = {
     enable = true;
-    enableFastFlowLM = true;  # LLM inference on NPU
+    enableNPU = true;         # default; set false for GPU-only hosts (see "Other hardware")
+    enableFastFlowLM = true;  # LLM inference on NPU (requires enableNPU)
     enableLemonade = true;    # OpenAI-compatible API server
     enableROCm = true;        # ROCm GPU backends (llamacpp + sd-cpp)
     enableVulkan = true;      # Vulkan GPU backends (llamacpp + whispercpp)
@@ -84,9 +85,33 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 
 ## Requirements
 
-- NixOS with kernel >= 6.14 (has `amdxdna` driver built-in)
-- AMD Ryzen AI processor with XDNA 2 NPU (Strix Point / Strix Halo)
+- NixOS with kernel >= 6.14 (has `amdxdna` driver built-in) — only required when `enableNPU = true`
+- AMD Ryzen AI processor with XDNA 2 NPU (Strix Point / Strix Halo) for the NPU path; the GPU backends run on any supported AMD GPU with `enableNPU = false` (see "Other hardware")
 - User in `video` and `render` groups
+
+## Other hardware (RDNA3 iGPUs / Hawk Point)
+
+The module splits into an NPU half and a GPU half. The NPU half (XRT + `amdxdna` + FastFlowLM) is built and tested for **XDNA 2** (Strix Point / Strix Halo) — that's what FastFlowLM targets. The GPU backends are independent and run on other AMD GPUs.
+
+Set `enableNPU = false` to drop the XRT/`amdxdna` closure (kernel module, IOMMU param, udev rules, memlock limits) and run GPU-only. Example for a **Hawk Point** APU (Ryzen 9 8945HS, Radeon 780M / `gfx1103`):
+
+```nix
+hardware.amd-npu = {
+  enable = true;
+  enableNPU = false;        # no XDNA-2 NPU on Hawk Point
+  enableVulkan = true;      # 780M via RADV — works, and fastest on these iGPUs
+  enableLemonade = true;
+  lemonade.user = "youruser";
+};
+```
+
+- **Vulkan** is the recommended path: RADV is arch-agnostic, so llama.cpp / whisper.cpp run on any RDNA3 iGPU including the Radeon 780M (Phoenix / Hawk Point).
+- **NPU** (`enableFastFlowLM`) is XDNA-2 only; the assertion blocks it unless `enableNPU = true`.
+- **ROCm** (`enableROCm`) is **untested on `gfx1103`** — it isn't an officially supported ROCm target and the prebuilt `llama-cpp-rocm` may not include `gfx1103` kernels. To experiment, force the arch override out-of-band; this is unsupported and may not work:
+
+  ```nix
+  systemd.services.lemond.environment.HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+  ```
 
 ## What the module configures
 
