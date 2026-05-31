@@ -58,10 +58,14 @@ func railBudget(info hw.Info) string {
 	return fmt.Sprintf("%.0fGB GTT", float64(info.GTTBytes)/(1<<30))
 }
 
-// railGPU renders the GPU busy-percent segment.
-func railGPU(pct float64) string {
+// railGPU renders the GPU busy-percent segment. The glyph is context-aware:
+// while a benchmark is running, a busy GPU is expected (✓) and an idle one is
+// a stall (⚠); on idle screens it's the reverse — a busy GPU means another
+// workload is contending and will skew results (⚠).
+func railGPU(pct float64, running bool) string {
+	busy := pct > gpuBusyThreshold
 	glyph := "✓"
-	if pct > gpuBusyThreshold {
+	if busy != running {
 		glyph = "⚠"
 	}
 	return fmt.Sprintf("GPU %.0f%% %s", pct, glyph)
@@ -124,15 +128,15 @@ func joinFit(segs []string, sep string, width int) string {
 }
 
 // renderRail builds the status rail string for the given hw info and state.
-// width<=0 defaults to 80.
-func renderRail(info hw.Info, st railState, width int, styles styles) string {
+// running flips the GPU-busy glyph semantics (see railGPU). width<=0 → 80.
+func renderRail(info hw.Info, st railState, width int, running bool, styles styles) string {
 	if width <= 0 {
 		width = defaultRailWidth
 	}
 	segs := []string{
 		railArch(info),
 		railBudget(info),
-		railGPU(st.gpuPct),
+		railGPU(st.gpuPct, running),
 		railPower(info),
 		railPreflight(st.preflight),
 	}
@@ -142,15 +146,15 @@ func renderRail(info hw.Info, st railState, width int, styles styles) string {
 // railTickMsg carries a fresh GPU busy-percent reading.
 type railTickMsg struct{ pct float64 }
 
-// defaultRailGRBM reads the real GPU busy percent.
-func defaultRailGRBM() float64 { return hw.GRBMBusyPct() }
+// defaultGPUSampler reads the live GPU busy percent from amdgpu sysfs.
+func defaultGPUSampler() float64 { return hw.GPUBusyPct() }
 
 // railTickCmd returns a command that fires after railTickInterval with a fresh
-// GPU reading. grbm==nil falls back to defaultRailGRBM.
-func railTickCmd(grbm func() float64) tea.Cmd {
-	read := grbm
+// GPU reading. sampler==nil falls back to defaultGPUSampler.
+func railTickCmd(sampler func() float64) tea.Cmd {
+	read := sampler
 	if read == nil {
-		read = defaultRailGRBM
+		read = defaultGPUSampler
 	}
 	return tea.Tick(railTickInterval, func(time.Time) tea.Msg {
 		return railTickMsg{pct: read()}

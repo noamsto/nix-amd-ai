@@ -243,11 +243,27 @@ func runAmdgpuTop() (grbmBusyPct float64, arch string) {
 	return parseAmdgpuTop(line)
 }
 
-// GRBMBusyPct returns the GPU Graphics Pipe busy % from one amdgpu_top sample.
-// Safe to call during a measured run — reads no sysfs, meminfo, or dmidecode.
-func GRBMBusyPct() float64 {
-	pct, _ := runAmdgpuTop()
-	return pct
+// parseGPUBusyPct parses the amdgpu sysfs gpu_busy_percent file (an integer
+// 0–100). Returns 0 on empty/garbage input.
+func parseGPUBusyPct(data []byte) float64 {
+	v, err := strconv.ParseFloat(strings.TrimSpace(string(data)), 64)
+	if err != nil {
+		return 0
+	}
+	return v
+}
+
+// GPUBusyPct returns the live GPU busy percent from amdgpu sysfs
+// (gpu_busy_percent) — the same counter btop/nvtop read. World-readable, no
+// root, and cheap enough to poll every second. Preferred over amdgpu_top for
+// the live rail: amdgpu_top's first JSON sample is a cold reading that reports
+// ~0, and spawning it per tick is wasteful.
+func GPUBusyPct() float64 {
+	cardDev, err := findAMDGPUCard()
+	if err != nil {
+		return 0
+	}
+	return parseGPUBusyPct(readFile(filepath.Join(cardDev, "gpu_busy_percent")))
 }
 
 // GPUMemFree returns free GTT bytes (total − used), read live from amdgpu sysfs.

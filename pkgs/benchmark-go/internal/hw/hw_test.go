@@ -185,13 +185,33 @@ Memory Device
 	}
 }
 
-// TestGRBMBusyPct_NoError exercises the exported entry point used by the TUI ticker.
-func TestGRBMBusyPct_NoError(t *testing.T) {
-	got := GRBMBusyPct()
-	if got < 0 {
-		t.Errorf("GRBMBusyPct() = %v; want >= 0", got)
+// TestParseGPUBusyPct covers the amdgpu sysfs gpu_busy_percent parser.
+func TestParseGPUBusyPct(t *testing.T) {
+	cases := []struct {
+		in   string
+		want float64
+	}{
+		{"14\n", 14},
+		{"0\n", 0},
+		{"100", 100},
+		{"", 0},
+		{"garbage", 0},
 	}
-	t.Logf("GRBMBusyPct() = %.1f%%", got)
+	for _, c := range cases {
+		if got := parseGPUBusyPct([]byte(c.in)); got != c.want {
+			t.Errorf("parseGPUBusyPct(%q) = %v; want %v", c.in, got, c.want)
+		}
+	}
+}
+
+// TestGPUBusyPct_NoError exercises the exported live-sampling entry point used
+// by the TUI rail ticker.
+func TestGPUBusyPct_NoError(t *testing.T) {
+	got := GPUBusyPct()
+	if got < 0 {
+		t.Errorf("GPUBusyPct() = %v; want >= 0", got)
+	}
+	t.Logf("GPUBusyPct() = %.1f%%", got)
 }
 
 // TestDetect_Smoke calls Detect on the real box. Run with -short to skip.

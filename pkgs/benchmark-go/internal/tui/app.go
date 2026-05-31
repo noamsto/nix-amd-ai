@@ -57,9 +57,10 @@ type model struct {
 	results resultsState
 
 	// Status rail state.
-	rail     railState
-	width    int
-	railGRBM func() float64 // nil → defaultRailGRBM
+	rail       railState
+	width      int
+	height     int
+	gpuSampler func() float64 // nil → defaultGPUSampler
 
 	// Theme — updated on BackgroundColorMsg.
 	st styles
@@ -91,7 +92,7 @@ func New(info hw.Info, cfg Config) tea.Model {
 
 // Init satisfies tea.Model; starts the rail GPU ticker and requests terminal background color.
 func (m model) Init() tea.Cmd {
-	return tea.Batch(railTickCmd(m.railGRBM), tea.RequestBackgroundColor)
+	return tea.Batch(railTickCmd(m.gpuSampler), tea.RequestBackgroundColor)
 }
 
 // preflightResultsMsg carries the results of a preflight.Run call.
@@ -146,7 +147,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case railTickMsg:
 		m.rail.gpuPct = msg.pct
-		return m, railTickCmd(m.railGRBM)
+		return m, railTickCmd(m.gpuSampler)
 
 	case logWrittenMsg:
 		return m.handleLogWritten(msg)
@@ -388,7 +389,7 @@ func (m model) View() tea.View {
 	default:
 		s = renderHWPanel(m.info, st)
 	}
-	rail := renderRail(m.info, m.rail, m.width, st)
+	rail := renderRail(m.info, m.rail, m.width, m.current == screenRun, st)
 	stepper := renderStepper(m.current, st)
 	v := tea.NewView(lipgloss.JoinVertical(lipgloss.Left, rail, stepper, "", s))
 	v.AltScreen = true

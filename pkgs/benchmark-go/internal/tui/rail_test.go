@@ -57,26 +57,43 @@ func TestSummarizePreflight(t *testing.T) {
 }
 
 func TestRailSegments(t *testing.T) {
-	t.Run("railGPU 0 → contains GPU 0% and ✓", func(t *testing.T) {
-		s := railGPU(0)
-		if !strings.Contains(s, "GPU") {
-			t.Fatalf("railGPU(0) missing 'GPU': %q", s)
-		}
-		if !strings.Contains(s, "0%") {
-			t.Fatalf("railGPU(0) missing '0%%': %q", s)
+	// Glyph is context-aware: ✓ when the GPU state matches the screen, ⚠ when
+	// it doesn't. Idle (running=false): busy → contention warning. Running:
+	// idle → stalled warning.
+	t.Run("idle + idle GPU → ✓", func(t *testing.T) {
+		s := railGPU(0, false)
+		if !strings.Contains(s, "GPU") || !strings.Contains(s, "0%") {
+			t.Fatalf("railGPU(0,false) missing GPU/0%%: %q", s)
 		}
 		if !strings.Contains(s, "✓") {
-			t.Fatalf("railGPU(0) missing '✓': %q", s)
+			t.Fatalf("railGPU(0,false) want ✓: %q", s)
 		}
 	})
 
-	t.Run("railGPU 42 → contains 42% and ⚠", func(t *testing.T) {
-		s := railGPU(42)
+	t.Run("idle + busy GPU → ⚠ contention", func(t *testing.T) {
+		s := railGPU(42, false)
 		if !strings.Contains(s, "42%") {
-			t.Fatalf("railGPU(42) missing '42%%': %q", s)
+			t.Fatalf("railGPU(42,false) missing 42%%: %q", s)
 		}
 		if !strings.Contains(s, "⚠") {
-			t.Fatalf("railGPU(42) missing '⚠': %q", s)
+			t.Fatalf("railGPU(42,false) want ⚠ (contention): %q", s)
+		}
+	})
+
+	t.Run("running + busy GPU → ✓ working", func(t *testing.T) {
+		s := railGPU(73, true)
+		if !strings.Contains(s, "73%") {
+			t.Fatalf("railGPU(73,true) missing 73%%: %q", s)
+		}
+		if !strings.Contains(s, "✓") {
+			t.Fatalf("railGPU(73,true) want ✓ (working): %q", s)
+		}
+	})
+
+	t.Run("running + idle GPU → ⚠ stalled", func(t *testing.T) {
+		s := railGPU(0, true)
+		if !strings.Contains(s, "⚠") {
+			t.Fatalf("railGPU(0,true) want ⚠ (stalled): %q", s)
 		}
 	})
 
@@ -194,7 +211,7 @@ func TestRenderRailContainsArchNoPanic(t *testing.T) {
 		OnAC:     true,
 	}
 	st := railState{gpuPct: 0}
-	result := renderRail(info, st, 120, newStyles(true))
+	result := renderRail(info, st, 120, false, newStyles(true))
 	if !strings.Contains(result, "gfx1150") {
 		t.Fatalf("renderRail missing 'gfx1150': %q", result)
 	}
@@ -220,7 +237,7 @@ func TestRailTickUpdatesAndRearms(t *testing.T) {
 	if !ok {
 		t.Fatalf("New() returned %T, not model", raw)
 	}
-	m.railGRBM = func() float64 { return 73 }
+	m.gpuSampler = func() float64 { return 73 }
 
 	updated, cmd := m.Update(railTickMsg{pct: 73})
 	nm, ok := updated.(model)
