@@ -192,6 +192,40 @@
               }
             ];
           }).config.system.build.etc;
+
+          # GTT headroom: configured system emits the ttm modprobe line with
+          # GiB→page conversion; default system emits no ttm line.
+          module-eval-gtt = let
+            mkSys = extra: (inputs.nixpkgs.lib.nixosSystem {
+              inherit system;
+              modules = [
+                inputs.self.nixosModules.default
+                {
+                  boot.loader.grub.enable = false;
+                  fileSystems."/" = { device = "/dev/sda1"; fsType = "ext4"; };
+                  hardware.amd-npu = {
+                    enable = true;
+                    lemonade.user = "testuser";
+                  } // extra;
+                  users.users.testuser = {
+                    isNormalUser = true;
+                    extraGroups = ["video" "render"];
+                  };
+                }
+              ];
+            }).config.boot.extraModprobeConfig;
+            configured = mkSys {
+              gpuMemory = { ttmSizeGiB = 120; pagePoolSizeGiB = 60; };
+            };
+            default = mkSys {};
+          in
+            pkgs.runCommand "module-eval-gtt" {
+              inherit configured default;
+            } ''
+              echo "$configured" | grep -F 'options ttm pages_limit=31457280 page_pool_size=15728640'
+              echo "$default" | grep -vq 'pages_limit' || { echo "default must not set pages_limit"; exit 1; }
+              touch $out
+            '';
         };
 
         apps.benchmark = {
