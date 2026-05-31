@@ -122,7 +122,7 @@
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
           gaia = pkgs.callPackage ./pkgs/gaia {};
-          benchmark = pkgs.callPackage ./pkgs/benchmark {};
+          benchmark = pkgs.callPackage ./pkgs/benchmark-go {};
         };
 
         checks = {
@@ -196,8 +196,8 @@
 
         apps.benchmark = {
           type = "app";
-          program = "${pkgs.callPackage ./pkgs/benchmark {}}/bin/benchmark";
-          meta = {description = "Benchmark lemonade backends (ROCm, Vulkan, FLM)";};
+          program = "${pkgs.callPackage ./pkgs/benchmark-go {}}/bin/benchmark";
+          meta = {description = "Benchmark lemonade backends — interactive TUI or headless (ROCm, Vulkan, FLM)";};
         };
       };
     };

@@ -224,22 +224,49 @@ curl -s -X POST http://localhost:13305/api/v1/images/generations \
 
 Lemond logs should show `Starting server on port 8001 (backend: rocm)` and *no* `Installing sd-server` line — sd-server is invoked directly from the nix store.
 
-To run a multi-backend benchmark and detect silent CPU fallbacks:
+### Interactive TUI (default)
 
 ```bash
-nix run .#benchmark -- Gemma-4-26B-A4B-it-GGUF
+nix run .#benchmark
 ```
 
-The benchmark exits non-zero if any backend falls below `--min-decode-tps` (default 5 t/s), which reliably indicates a CPU fallback rather than GPU execution.
+Launches a full-screen TUI that walks through:
 
-To directly compare ROCm vs Vulkan on the same model, pass `--backend`. This rewrites `llamacpp.backend` in `~/.cache/lemonade/config.json`, restarts `lemond.service` (via sudo), runs the benchmark, and restores the original config on exit:
+1. **Hardware panel** — CPU, GPU, VRAM, driver, kernel
+2. **Preflight check** — detects interference (competing GPU processes, battery power); consent-gated fixers where possible
+3. **Mode picker** — single backend, A/B comparison, or MTP on/off
+4. **Model picker** — lists downloaded lemonade models annotated with VRAM fit and predicted throughput ceiling
+5. **Params form** — context size, repeat, warmup, backends
+6. **Live run** — streaming progress with GPU% utilisation
+7. **Results** — measured vs predicted, markdown export, log written to `bench-logs-<topic>-<date>/` (cwd-relative)
+
+A persistent **status rail** sits above every screen — `gfx arch · GTT budget · GPU% · power · preflight` — refreshed live (~1s), so you can see whether the GPU is actually idle (e.g. another process holding a model) without leaving the current step. Colors adapt to the terminal background, staying legible on both light and dark themes.
+
+For trustworthy numbers: run with an idle GPU and on AC power (the preflight guard will prompt if either condition isn't met).
+
+The benchmark is a portable Go binary. It runs off-Nix on any machine with lemonade installed — just put the binary on `$PATH`.
+
+### Headless mode
 
 ```bash
-nix run .#benchmark -- --backend rocm   Phi-4-mini-instruct-GGUF
-nix run .#benchmark -- --backend vulkan Phi-4-mini-instruct-GGUF
+nix run .#benchmark -- --no-tui --backend rocm   Phi-4-mini-instruct-GGUF
+nix run .#benchmark -- --no-tui --backend vulkan Phi-4-mini-instruct-GGUF
+nix run .#benchmark -- --no-tui Gemma-4-26B-A4B-it-GGUF
 ```
 
-If you've already set the backend manually, pass `--no-restart` to skip the sudo restart step.
+`--no-tui` keeps all the original flags: positional model IDs, `--backend rocm|vulkan`, `--mtp-ab MODEL`, `--mtp-ab-backends`, `--repeat`, `--warmup`, `--ctx-size`, `--min-decode-tps`. Exits non-zero when any model falls below `--min-decode-tps` (default 5 t/s), which reliably signals CPU fallback rather than GPU execution.
+
+`--backend` rewrites `llamacpp.backend` in `~/.cache/lemonade/config.json`, restarts `lemond.service` (via sudo), runs the benchmark, and restores the original config on exit.
+
+### MTP speedup (Qwen3.6 family)
+
+Use `--mtp-ab` to measure the Multi-Token Prediction speedup on a given model:
+
+```bash
+nix run .#benchmark -- --no-tui --mtp-ab Qwen3.6B-GGUF
+```
+
+Authoritative numbers (idle GPU + AC + performance power profile) are **pending** — the `--mtp-ab` methodology is stable but no clean reference run has been committed yet.
 
 ## CI
 

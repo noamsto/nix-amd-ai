@@ -105,9 +105,17 @@ table, exits non-zero below `--min-decode-tps`. Same contract `benchmark.py` has
   RAM, no perf delta). KV estimate from ctx × layers × heads at model precision;
   `--parallel 1` keeps it single-slot. Classify ✅fits / ⚠️tight (within ~10%) / ❌spills.
 - **Decode ceiling.** Bandwidth-bound: `ceiling_t/s ≈ bandwidth_GB/s ÷ active_bytes_per_token`.
-  Bandwidth from RAM type/speed (DDR5-5600 ≈ 89.6 GB/s dual-channel; LPDDR5X higher);
-  unknown type → configurable assumption, prediction labeled *estimated*. Show predicted
-  vs measured so a large gap flags CPU fallback or thermal throttle.
+  The denominator is **per-model** and is the *active* bytes read per token, NOT the total
+  file size. For a dense model active ≈ total GGUF size. For an **MoE** model (e.g.
+  `Gemma-4-26B-A4B` ≈ 4B active of ~26B; Qwen3 MoE) active ≈ (active_params/total_params) ×
+  size — using total size would massively underestimate the ceiling and make measured
+  *exceed* predicted. The model picker (Phase 5) must derive active-param size for MoE
+  (GGUF expert metadata or a lookup); `DecodeCeilingTPS(bandwidth, activeGiB)` itself is
+  correct — it just needs the active size passed in. Units: bandwidth is decimal GB/s,
+  model size is GiB, converted internally (×1.0737). Bandwidth from RAM type/speed
+  (DDR5-5600 ≈ 89.6 GB/s dual-channel; LPDDR5X higher); unknown type → configurable
+  assumption, prediction labeled *estimated*. Show predicted vs measured so a large gap
+  flags CPU fallback or thermal throttle.
 - **Recommended params.** gfx1150 defaults (below), scaled: drop `-b` to 256 first for
   large models (anti-hang), keep ctx tight for A/B, **never auto-enable rocWMMA**.
 
