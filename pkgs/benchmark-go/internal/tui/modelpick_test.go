@@ -2,6 +2,7 @@ package tui
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -477,6 +478,315 @@ func TestBuildModelRows_MTPModeFilter(t *testing.T) {
 			t.Errorf("expected 3 rows in Backend mode, got %d: %v", len(rows), rowIDs(rows))
 		}
 	})
+}
+
+// TestFilterRows verifies case-insensitive id-first, label-second matching.
+func TestFilterRows(t *testing.T) {
+	rows := []modelRow{
+		{id: "Qwen3-8B-GGUF", labels: []string{"llamacpp"}},
+		{id: "Gemma-3-27B-GGUF", labels: []string{"hot", "mtp"}},
+		{id: "Llama-3-8B-GGUF", labels: []string{"llamacpp"}},
+	}
+
+	t.Run("empty query returns all in order", func(t *testing.T) {
+		got := filterRows(rows, "")
+		if want := []int{0, 1, 2}; !equalInts(got, want) {
+			t.Errorf("filterRows(\"\") = %v; want %v", got, want)
+		}
+	})
+
+	t.Run("whitespace query returns all", func(t *testing.T) {
+		got := filterRows(rows, "   ")
+		if want := []int{0, 1, 2}; !equalInts(got, want) {
+			t.Errorf("filterRows(\"   \") = %v; want %v", got, want)
+		}
+	})
+
+	t.Run("case-insensitive id substring", func(t *testing.T) {
+		got := filterRows(rows, "qwen")
+		if want := []int{0}; !equalInts(got, want) {
+			t.Errorf("filterRows(\"qwen\") = %v; want %v", got, want)
+		}
+	})
+
+	t.Run("label match ranks after id matches", func(t *testing.T) {
+		// "mtp" matches row 1 only via its label → it should appear, alone.
+		got := filterRows(rows, "mtp")
+		if want := []int{1}; !equalInts(got, want) {
+			t.Errorf("filterRows(\"mtp\") = %v; want %v", got, want)
+		}
+	})
+
+	t.Run("id matches come before label-only matches", func(t *testing.T) {
+		// Query "gemma" matches row 1 by id. Query "llamacpp" matches rows 0,2
+		// by label. A query hitting both an id and another row's label must
+		// list the id hit first.
+		mixed := []modelRow{
+			{id: "hot-sauce-GGUF", labels: []string{"x"}}, // id contains "hot"
+			{id: "Gemma-GGUF", labels: []string{"hot"}},   // label contains "hot"
+		}
+		got := filterRows(mixed, "hot")
+		if want := []int{0, 1}; !equalInts(got, want) {
+			t.Errorf("filterRows(\"hot\") = %v; want %v (id hit before label hit)", got, want)
+		}
+	})
+
+	t.Run("no match returns empty", func(t *testing.T) {
+		got := filterRows(rows, "zzz")
+		if len(got) != 0 {
+			t.Errorf("filterRows(\"zzz\") = %v; want empty", got)
+		}
+	})
+}
+
+// TestVisibleRange verifies the scroll window keeps the cursor visible.
+func TestVisibleRange(t *testing.T) {
+	t.Run("fits without scrolling", func(t *testing.T) {
+		start, end := visibleRange(5, 2, 10)
+		if start != 0 || end != 5 {
+			t.Errorf("visibleRange(5,2,10) = (%d,%d); want (0,5)", start, end)
+		}
+	})
+
+	t.Run("maxRows non-positive shows all", func(t *testing.T) {
+		start, end := visibleRange(5, 2, 0)
+		if start != 0 || end != 5 {
+			t.Errorf("visibleRange(5,2,0) = (%d,%d); want (0,5)", start, end)
+		}
+	})
+
+	t.Run("cursor near top clamps to 0", func(t *testing.T) {
+		start, end := visibleRange(100, 1, 10)
+		if start != 0 || end != 10 {
+			t.Errorf("visibleRange(100,1,10) = (%d,%d); want (0,10)", start, end)
+		}
+	})
+
+	t.Run("cursor near bottom clamps to end", func(t *testing.T) {
+		start, end := visibleRange(100, 99, 10)
+		if start != 90 || end != 100 {
+			t.Errorf("visibleRange(100,99,10) = (%d,%d); want (90,100)", start, end)
+		}
+	})
+
+	t.Run("cursor in middle stays visible and windowed", func(t *testing.T) {
+		start, end := visibleRange(100, 50, 10)
+		if end-start != 10 {
+			t.Errorf("window size = %d; want 10", end-start)
+		}
+		if 50 < start || 50 >= end {
+			t.Errorf("cursor 50 not visible in [%d,%d)", start, end)
+		}
+	})
+}
+
+// pickerWithRows builds a model on screenModel with rows + a populated filter view.
+func pickerWithRows(rows []modelRow) model {
+	m := model{current: screenModel}
+	m.modelPicker.rows = append([]modelRow(nil), rows...)
+	m.modelPicker.applyFilter()
+	return m
+}
+
+// TestSlashEntersFilterMode verifies "/" focuses the filter input.
+func TestSlashEntersFilterMode(t *testing.T) {
+	m := pickerWithRows([]modelRow{{id: "alpha"}, {id: "beta"}})
+	m2 := send(m, tea.KeyPressMsg{Code: '/', Text: "/"})
+	if !m2.modelPicker.filtering {
+		t.Error("\"/\" should set filtering=true")
+	}
+	// "/" itself must not be inserted into the query.
+	if m2.modelPicker.filter != "" {
+		t.Errorf("filter = %q; want empty after entering filter mode", m2.modelPicker.filter)
+	}
+}
+
+// TestFilterTypingNarrowsView verifies typed characters narrow the visible set.
+func TestFilterTypingNarrowsView(t *testing.T) {
+	m := pickerWithRows([]modelRow{
+		{id: "Qwen3-8B"}, {id: "Gemma-3"}, {id: "Qwen3-4B"},
+	})
+	m = send(m, tea.KeyPressMsg{Code: '/', Text: "/"})
+	for _, r := range "qwen" {
+		m = send(m, tea.KeyPressMsg{Code: r, Text: string(r)})
+	}
+	if m.modelPicker.filter != "qwen" {
+		t.Fatalf("filter = %q; want \"qwen\"", m.modelPicker.filter)
+	}
+	if got := len(m.modelPicker.view()); got != 2 {
+		t.Errorf("visible = %d rows; want 2 (the two Qwen models)", got)
+	}
+
+	// Backspace shrinks the query and re-widens the view.
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyBackspace})
+	if m.modelPicker.filter != "qwe" {
+		t.Errorf("filter after backspace = %q; want \"qwe\"", m.modelPicker.filter)
+	}
+}
+
+// TestFilterEscClears verifies Esc while editing clears the query and exits.
+func TestFilterEscClears(t *testing.T) {
+	m := pickerWithRows([]modelRow{{id: "alpha"}, {id: "beta"}})
+	m = send(m, tea.KeyPressMsg{Code: '/', Text: "/"})
+	m = send(m, tea.KeyPressMsg{Code: 'a', Text: "a"})
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
+	if m.modelPicker.filtering {
+		t.Error("Esc should exit filter-edit mode")
+	}
+	if m.modelPicker.filter != "" {
+		t.Errorf("filter = %q; want cleared after Esc", m.modelPicker.filter)
+	}
+	if len(m.modelPicker.view()) != 2 {
+		t.Errorf("view = %d; want all 2 rows after clearing filter", len(m.modelPicker.view()))
+	}
+}
+
+// TestFilterEnterKeepsQuery verifies Enter exits edit mode but keeps the filter.
+func TestFilterEnterKeepsQuery(t *testing.T) {
+	m := pickerWithRows([]modelRow{{id: "alpha"}, {id: "beta"}})
+	m = send(m, tea.KeyPressMsg{Code: '/', Text: "/"})
+	m = send(m, tea.KeyPressMsg{Code: 'a', Text: "a"})
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyEnter})
+	if m.modelPicker.filtering {
+		t.Error("Enter should leave filter-edit mode")
+	}
+	if m.modelPicker.filter != "a" {
+		t.Errorf("filter = %q; want \"a\" preserved", m.modelPicker.filter)
+	}
+	if m.current != screenModel {
+		t.Errorf("current = %d; want screenModel (Enter applies filter, does not advance)", m.current)
+	}
+}
+
+// TestEscClearsActiveFilterBeforeBack verifies a list-nav Esc clears an applied
+// filter first, and only a second Esc navigates back.
+func TestEscClearsActiveFilterBeforeBack(t *testing.T) {
+	m := pickerWithRows([]modelRow{{id: "alpha"}, {id: "beta"}})
+	m.modelPicker.filter = "a"
+	m.modelPicker.applyFilter()
+
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
+	if m.modelPicker.filter != "" {
+		t.Errorf("first Esc should clear filter; filter = %q", m.modelPicker.filter)
+	}
+	if m.current != screenModel {
+		t.Errorf("first Esc should stay on screenModel; current = %d", m.current)
+	}
+
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
+	if m.current != screenMode {
+		t.Errorf("second Esc should go back to screenMode; current = %d", m.current)
+	}
+}
+
+// TestToggleOnFilteredRowPersists verifies selecting a filtered row keeps that
+// selection after the filter is cleared.
+func TestToggleOnFilteredRowPersists(t *testing.T) {
+	m := pickerWithRows([]modelRow{
+		{id: "Qwen3-8B"}, {id: "Gemma-3"}, {id: "Qwen3-4B"},
+	})
+	// Filter to the Qwen models, select the first visible one.
+	m = send(m, tea.KeyPressMsg{Code: '/', Text: "/"})
+	for _, r := range "qwen" {
+		m = send(m, tea.KeyPressMsg{Code: r, Text: string(r)})
+	}
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyEnter}) // exit edit, keep filter
+	m = send(m, tea.KeyPressMsg{Code: ' ', Text: " "})
+
+	// Clear the filter; the selection must survive.
+	m = send(m, tea.KeyPressMsg{Code: tea.KeyEscape})
+	if ids := m.modelPicker.selectedIDs(); len(ids) != 1 || ids[0] != "Qwen3-8B" {
+		t.Errorf("selectedIDs = %v; want [Qwen3-8B] (selection survives filter clear)", ids)
+	}
+}
+
+// TestRenderModelScreenScrolls verifies the render windows the list to maxRows
+// and shows a "more below" affordance instead of overflowing.
+func TestRenderModelScreenScrolls(t *testing.T) {
+	st := newStyles(true)
+	rows := make([]modelRow, 30)
+	for i := range rows {
+		rows[i] = modelRow{id: fmt.Sprintf("model-%02d", i), sizeKnown: true, totalGiB: 4}
+	}
+	p := &modelPicker{rows: rows, cursor: 0}
+	p.applyFilter()
+
+	out := renderModelScreen(p, st, 10)
+
+	if !strings.Contains(out, "↓ 20 more") {
+		t.Errorf("expected \"↓ 20 more\" affordance; got:\n%s", out)
+	}
+	// The last model must not be rendered when windowed at the top.
+	if strings.Contains(out, "model-29") {
+		t.Errorf("windowed render should not include model-29 with cursor at top")
+	}
+}
+
+// TestRenderModelScreenFilterHeader verifies the filter line shows the query
+// and a match count.
+func TestRenderModelScreenFilterHeader(t *testing.T) {
+	st := newStyles(true)
+	p := &modelPicker{rows: []modelRow{
+		{id: "Qwen3-8B"}, {id: "Gemma-3"}, {id: "Qwen3-4B"},
+	}}
+	p.filter = "qwen"
+	p.applyFilter()
+
+	out := renderModelScreen(p, st, 20)
+	// The query text is styled separately from the leading "/", so assert on
+	// the contiguous query run rather than "/qwen".
+	if !strings.Contains(out, "qwen") {
+		t.Errorf("expected filter query \"qwen\" in header; got:\n%s", out)
+	}
+	if !strings.Contains(out, "2 matches") {
+		t.Errorf("expected \"2 matches\"; got:\n%s", out)
+	}
+}
+
+// TestFilterCtrlCQuits verifies ctrl+c still quits while editing the filter.
+func TestFilterCtrlCQuits(t *testing.T) {
+	m := pickerWithRows([]modelRow{{id: "alpha"}})
+	m = send(m, tea.KeyPressMsg{Code: '/', Text: "/"})
+	_, cmd := m.Update(tea.KeyPressMsg{Code: 'c', Mod: tea.ModCtrl})
+	if cmd == nil {
+		t.Fatal("ctrl+c while filtering should return a quit Cmd")
+	}
+	if msg := cmd(); msg == nil {
+		t.Error("ctrl+c Cmd should produce a quit message")
+	} else if _, ok := msg.(tea.QuitMsg); !ok {
+		t.Errorf("ctrl+c Cmd produced %T; want tea.QuitMsg", msg)
+	}
+}
+
+// TestApiSizeMap verifies only known-size rows are captured, keyed by id.
+func TestApiSizeMap(t *testing.T) {
+	rows := []modelRow{
+		{id: "a", totalGiB: 4.5, sizeKnown: true},
+		{id: "b", totalGiB: 0, sizeKnown: false},
+		{id: "c", totalGiB: 17.0, sizeKnown: true},
+	}
+	got := apiSizeMap(rows)
+	if len(got) != 2 {
+		t.Fatalf("len = %d; want 2 (unknown-size row excluded)", len(got))
+	}
+	if got["a"] != 4.5 || got["c"] != 17.0 {
+		t.Errorf("apiSizeMap = %v; want a=4.5 c=17.0", got)
+	}
+	if _, ok := got["b"]; ok {
+		t.Error("row b has unknown size and must be excluded")
+	}
+}
+
+func equalInts(a, b []int) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 func rowIDs(rows []modelRow) []string {

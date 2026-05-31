@@ -47,8 +47,9 @@ type model struct {
 	modePicker       modePicker
 	selectedMode     BenchMode
 	modelPicker      modelPicker
-	selectedModels   []string   // IDs chosen on the model picker screen
-	paramsForm       paramsForm // editable run-parameter form (screenParams)
+	selectedModels   []string           // IDs chosen on the model picker screen
+	modelSizes       map[string]float64 // id → total GiB from the lemonade API, for results Predicted
+	paramsForm       paramsForm         // editable run-parameter form (screenParams)
 
 	// Live run state (screenRun). Populated by startRun.
 	run runState
@@ -143,6 +144,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
+		m.height = msg.Height
 		return m, nil
 
 	case railTickMsg:
@@ -165,6 +167,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.modelPicker.rows = buildModelRows(msg.models, m.info, m.selectedMode)
+		m.modelPicker.cursor = 0
+		m.modelPicker.applyFilter()
+		// Capture API sizes so the results screen can compute Predicted without
+		// re-resolving GGUF paths from disk (which is fragile by display id).
+		m.modelSizes = apiSizeMap(m.modelPicker.rows)
 		return m, nil
 
 	case fixDoneMsg:
@@ -266,20 +273,58 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, nil // swallow other keys while confirming
 			}
+
+			// Filter-edit mode: keystrokes edit the query; Enter/↓ apply and
+			// return to list nav; Esc clears and exits.
+			if m.modelPicker.filtering {
+				switch msg.String() {
+				case "ctrl+c":
+					return m, tea.Quit
+				case "esc":
+					m.modelPicker.filter = ""
+					m.modelPicker.filtering = false
+					m.modelPicker.applyFilter()
+					return m, nil
+				case "enter", "down":
+					m.modelPicker.filtering = false
+					return m, nil
+				case "backspace":
+					m.modelPicker.filter = trimLastRune(m.modelPicker.filter)
+					m.modelPicker.applyFilter()
+					return m, nil
+				}
+				if msg.Text != "" { // a printable character
+					m.modelPicker.filter += msg.Text
+					m.modelPicker.applyFilter()
+				}
+				return m, nil
+			}
+
 			switch msg.String() {
+			case "/":
+				m.modelPicker.filtering = true
+				return m, nil
 			case "up", "k":
 				if m.modelPicker.cursor > 0 {
 					m.modelPicker.cursor--
 				}
 				return m, nil
 			case "down", "j":
-				if m.modelPicker.cursor < len(m.modelPicker.rows)-1 {
+				if m.modelPicker.cursor < len(m.modelPicker.view())-1 {
 					m.modelPicker.cursor++
 				}
 				return m, nil
 			case " ", "space":
 				m.modelPicker.toggleSelected()
 				return m, nil
+			case "esc":
+				// An active filter is cleared first; only a second Esc (no
+				// filter) falls through to the generic "← back".
+				if m.modelPicker.filter != "" {
+					m.modelPicker.filter = ""
+					m.modelPicker.applyFilter()
+					return m, nil
+				}
 			case "enter":
 				selected := m.modelPicker.selectedIDs()
 				if len(selected) == 0 {
@@ -379,13 +424,13 @@ func (m model) View() tea.View {
 	case screenMode:
 		s = renderModeScreen(m.modePicker, st)
 	case screenModel:
-		s = renderModelScreen(&m.modelPicker, st)
+		s = renderModelScreen(&m.modelPicker, st, modelListRows(m.height))
 	case screenParams:
 		s = renderParamsScreen(m.paramsForm, st)
 	case screenRun:
 		s = renderRunScreen(m.run, st)
 	case screenResults:
-		s = renderResults(m.run.results, m.run.err, m.results, m.info, nil, st)
+		s = renderResults(m.run.results, m.run.err, m.results, m.info, m.resultSizeOf, st)
 	default:
 		s = renderHWPanel(m.info, st)
 	}

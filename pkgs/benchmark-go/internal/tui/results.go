@@ -42,6 +42,17 @@ type resultsState struct {
 	logBaseDir   string // base directory for bench-logs-*/; defaults to "."
 }
 
+// resultSizeOf resolves a model's total size (GiB) for the results screen.
+// It prefers the lemonade API size captured by the picker (reliable, keyed by
+// the same display id) and falls back to filesystem GGUF resolution when a
+// model wasn't seen in the picker.
+func (m model) resultSizeOf(id string) (float64, bool) {
+	if g, ok := m.modelSizes[id]; ok && g > 0 {
+		return g, true
+	}
+	return resolveModelSizeGiBByID(id)
+}
+
 // buildResultRows computes the display rows for the results screen.
 // sizeOf is a seam; pass nil to use the default resolver.
 func buildResultRows(results runResults, info hw.Info, sizeOf func(id string) (float64, bool)) []resultRow {

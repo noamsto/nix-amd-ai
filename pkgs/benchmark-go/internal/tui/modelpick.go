@@ -32,9 +32,72 @@ type modelRow struct {
 	isMoE       bool
 	estimated   bool // bandwidth or size was estimated
 	selected    bool
-	downloaded  bool // false → model is available but not yet downloaded
-	hot         bool // lemonade "hot" label (community-featured) → 🔥
-	recommended bool // good for THIS hardware: fits comfortably + decent predicted t/s → ⚡
+	downloaded  bool     // false → model is available but not yet downloaded
+	hot         bool     // lemonade "hot" label (community-featured) → 🔥
+	recommended bool     // good for THIS hardware: fits comfortably + decent predicted t/s → ⚡
+	labels      []string // raw lemonade labels, for filter matching (lower priority than id)
+}
+
+// filterRows returns the indices of rows matching query, in display order:
+// id-substring matches first, then rows that match only on a label. An empty
+// or whitespace query returns all indices in natural order. Matching is
+// case-insensitive.
+func filterRows(rows []modelRow, query string) []int {
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		all := make([]int, len(rows))
+		for i := range rows {
+			all[i] = i
+		}
+		return all
+	}
+	var idHits, labelHits []int
+	for i, r := range rows {
+		switch {
+		case strings.Contains(strings.ToLower(r.id), q):
+			idHits = append(idHits, i)
+		case labelsContain(r.labels, q):
+			labelHits = append(labelHits, i)
+		}
+	}
+	return append(idHits, labelHits...)
+}
+
+// trimLastRune drops the final rune of s (backspace in the filter input).
+func trimLastRune(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	return string(r[:len(r)-1])
+}
+
+// labelsContain reports whether any label contains q (q is already lower-cased).
+func labelsContain(labels []string, q string) bool {
+	for _, l := range labels {
+		if strings.Contains(strings.ToLower(l), q) {
+			return true
+		}
+	}
+	return false
+}
+
+// visibleRange windows n rows around cursor so at most maxRows are shown and
+// the cursor stays visible. maxRows<=0 or n<=maxRows shows everything. The
+// window centres on the cursor, clamped to the ends — a pure function of
+// (n, cursor, maxRows) with no scroll-position state.
+func visibleRange(n, cursor, maxRows int) (start, end int) {
+	if maxRows <= 0 || n <= maxRows {
+		return 0, n
+	}
+	start = cursor - maxRows/2
+	if start < 0 {
+		start = 0
+	}
+	if start > n-maxRows {
+		start = n - maxRows
+	}
+	return start, start + maxRows
 }
 
 // recommendTPSThreshold is the predicted decode ceiling (t/s) at/above which a
@@ -52,17 +115,67 @@ type modelPicker struct {
 	needPull      bool   // set when Enter is pressed with not-downloaded selections
 	baseURL       string // lemonade endpoint, for error messages + start/retry
 
+	// Filter state (the `/` search). cursor indexes into `visible`, not `rows`;
+	// selection lives on the underlying modelRow, so it survives filter changes.
+	filtering bool   // true → the filter input has focus; keystrokes edit `filter`
+	filter    string // current query; applies while non-empty even when not editing
+	visible   []int  // row indices matching `filter`, in display order (nil → unfiltered)
+
 	// fetchModels is a test seam to avoid real network calls.
 	fetchModels func(baseURL string) ([]models.Model, error)
 }
 
-// toggleSelected toggles the selection of the row under the cursor.
+// view returns the row indices currently displayed. Before any filter is
+// applied (visible nil) it falls back to all rows in natural order, so an
+// unfiltered picker behaves exactly as before.
+func (p *modelPicker) view() []int {
+	if p.visible == nil {
+		all := make([]int, len(p.rows))
+		for i := range p.rows {
+			all[i] = i
+		}
+		return all
+	}
+	return p.visible
+}
+
+// applyFilter recomputes the visible window from the current query and clamps
+// the cursor into range. Always leaves visible non-nil so a zero-match query
+// shows nothing rather than falling back to the full list.
+func (p *modelPicker) applyFilter() {
+	p.visible = filterRows(p.rows, p.filter)
+	if p.visible == nil {
+		p.visible = []int{}
+	}
+	if p.cursor >= len(p.visible) {
+		p.cursor = len(p.visible) - 1
+	}
+	if p.cursor < 0 {
+		p.cursor = 0
+	}
+}
+
+// toggleSelected toggles the selection of the row under the cursor (in the
+// filtered view).
 func (p *modelPicker) toggleSelected() {
-	if len(p.rows) == 0 {
+	v := p.view()
+	if p.cursor < 0 || p.cursor >= len(v) {
 		return
 	}
-	p.rows[p.cursor].selected = !p.rows[p.cursor].selected
+	p.rows[v[p.cursor]].selected = !p.rows[v[p.cursor]].selected
 	p.needSelection = false // any toggle clears the "select something" hint
+}
+
+// apiSizeMap returns id→total GiB for rows whose size is known from the
+// lemonade API. Used to feed the results screen a reliable size.
+func apiSizeMap(rows []modelRow) map[string]float64 {
+	m := make(map[string]float64)
+	for _, r := range rows {
+		if r.sizeKnown {
+			m[r.id] = r.totalGiB
+		}
+	}
+	return m
 }
 
 // selectedIDs returns the IDs of all selected rows.
@@ -157,6 +270,9 @@ func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	p.err = nil
 	p.rows = nil
 	p.cursor = 0
+	p.filter = ""
+	p.filtering = false
+	p.visible = nil
 
 	fetch := p.fetchModels
 	if fetch == nil {
@@ -407,6 +523,7 @@ func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelR
 			isMoE:      isMoE,
 			estimated:  estimated,
 			downloaded: m.Downloaded,
+			labels:     m.Labels,
 			// 🔥 from the "hot" label (the API's `suggested` is true for nearly the
 			// whole catalog, so it's useless as a marker; "hot" is selective).
 			hot: hasLabel(m.Labels, "hot"),
@@ -424,7 +541,29 @@ func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelR
 	return append(downloaded, notDownloaded...)
 }
 
-func renderModelScreen(p *modelPicker, st styles) string {
+// modelListReserved is the count of non-list lines on the model screen (rail,
+// stepper, panel chrome, filter line, legend, keybar, scroll affordances) —
+// subtracted from terminal height to size the scrollable model window.
+const modelListReserved = 14
+
+// modelListMin floors the visible window so a short or pre-resize terminal
+// still shows a usable handful of rows.
+const modelListMin = 5
+
+// modelListRows returns how many model rows fit a terminal of the given height.
+// Height 0 (before the first resize) falls back to a generous default so the
+// list is never worse than the old unbounded render on a normal terminal.
+func modelListRows(height int) int {
+	if height <= 0 {
+		return 20
+	}
+	if n := height - modelListReserved; n > modelListMin {
+		return n
+	}
+	return modelListMin
+}
+
+func renderModelScreen(p *modelPicker, st styles, maxRows int) string {
 	var b strings.Builder
 
 	if p.loading {
@@ -450,13 +589,42 @@ func renderModelScreen(p *modelPicker, st styles) string {
 		return titledPanel(st, "Select Models", b.String(), 0)
 	}
 
-	for i, r := range p.rows {
-		line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.hot, r.recommended)
-		focused := i == p.cursor
-		if focused {
-			b.WriteString(st.focusBullet(true) + st.value.Render(line) + "\n")
-		} else {
-			b.WriteString(st.focusBullet(false) + st.label.Render(line) + "\n")
+	// Filter line: shown while editing or whenever a query is active. A block
+	// cursor trails the query in edit mode.
+	if p.filtering || p.filter != "" {
+		q := p.filter
+		if p.filtering {
+			q += st.cursorStr
+		}
+		matches := len(p.view())
+		unit := "matches"
+		if matches == 1 {
+			unit = "match"
+		}
+		b.WriteString(st.accent.Render("/") + st.value.Render(q) +
+			"   " + st.hint.Render(fmt.Sprintf("%d %s", matches, unit)) + "\n\n")
+	}
+
+	v := p.view()
+	if len(v) == 0 {
+		// Rows exist but none match the active filter.
+		b.WriteString(st.hint.Render(fmt.Sprintf("No models match %q.", p.filter)) + "\n")
+	} else {
+		start, end := visibleRange(len(v), p.cursor, maxRows)
+		if start > 0 {
+			b.WriteString(st.hint.Render(fmt.Sprintf("  ↑ %d more", start)) + "\n")
+		}
+		for i := start; i < end; i++ {
+			r := p.rows[v[i]]
+			line := formatModelRow(r.id, r.totalGiB, r.sizeKnown, r.fit, r.ceilingTPS, r.isMoE, r.estimated, r.selected, r.downloaded, r.hot, r.recommended)
+			if i == p.cursor {
+				b.WriteString(st.focusBullet(true) + st.value.Render(line) + "\n")
+			} else {
+				b.WriteString(st.focusBullet(false) + st.label.Render(line) + "\n")
+			}
+		}
+		if end < len(v) {
+			b.WriteString(st.hint.Render(fmt.Sprintf("  ↓ %d more", len(v)-end)) + "\n")
 		}
 	}
 
@@ -476,11 +644,25 @@ func renderModelScreen(p *modelPicker, st styles) string {
 		b.WriteString("\n" + st.warn.Render("select at least one model (space to toggle)") + "\n")
 	}
 
+	if p.filtering {
+		b.WriteString("\n" + keybar(st,
+			[2]string{"type", "filter"},
+			[2]string{"Enter/↓", "apply"},
+			[2]string{"Esc", "clear"},
+		))
+		return titledPanel(st, "Select Models", b.String(), 0)
+	}
+
+	escLabel := "← back"
+	if p.filter != "" {
+		escLabel = "clear filter"
+	}
 	b.WriteString("\n" + keybar(st,
+		[2]string{"/", "filter"},
 		[2]string{"↑/↓", "move"},
 		[2]string{"Space", "toggle"},
 		[2]string{"Enter", "continue →"},
-		[2]string{"Esc", "← back"},
+		[2]string{"Esc", escLabel},
 	))
 
 	return titledPanel(st, "Select Models", b.String(), 0)

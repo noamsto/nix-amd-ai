@@ -29,6 +29,25 @@ func fixedSizeOf(gib float64, known bool) func(string) (float64, bool) {
 	return func(_ string) (float64, bool) { return gib, known }
 }
 
+// --- result size resolution (Predicted from API size) ---
+
+func TestResultSizeOfPrefersAPISize(t *testing.T) {
+	m := model{modelSizes: map[string]float64{"Gemma-4-26B-A4B-it-GGUF": 14.6}}
+	g, ok := m.resultSizeOf("Gemma-4-26B-A4B-it-GGUF")
+	if !ok || g != 14.6 {
+		t.Errorf("resultSizeOf = %v, %v; want 14.6, true (from captured API size)", g, ok)
+	}
+}
+
+func TestResultSizeOfFallsBackWhenAbsent(t *testing.T) {
+	m := model{modelSizes: map[string]float64{}}
+	// Not captured → falls through to filesystem GGUF resolution, which returns
+	// (0,false) for a model that isn't in the HF cache in the test environment.
+	if _, ok := m.resultSizeOf("definitely-not-a-real-model-xyz"); ok {
+		t.Error("expected filesystem fallback to fail for an unknown model")
+	}
+}
+
 // --- buildResultRows ---
 
 func TestBuildResultRows_httpKnownSize(t *testing.T) {
