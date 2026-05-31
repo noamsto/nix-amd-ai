@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast;
+  inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast concatStringsSep;
   cfg = config.hardware.amd-npu;
 
   xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
@@ -16,16 +16,29 @@
     ln -sf ${pkgs.xrt-plugin-amdxdna}/opt/xilinx/xrt/lib/libxrt_driver_xdna* $out/lib/
   '';
 
-  optionalROCmLibs =
-    optionalString cfg.enableROCm
-    ":${pkgs.rocmPackages.clr}/lib";
+  # XRT (NPU) libs only present when enableNPU; ROCm libs trail them.
+  ldLibraryPath = concatStringsSep ":" (
+    optional cfg.enableNPU "${xrt-combined}/lib"
+    ++ optional cfg.enableROCm "${pkgs.rocmPackages.clr}/lib"
+  );
 
   pathList =
-    [xrt-combined]
+    optional cfg.enableNPU xrt-combined
     ++ optional cfg.enableFastFlowLM pkgs.fastflowlm;
 in {
   options.hardware.amd-npu = {
     enable = mkEnableOption "AMD NPU (AI Engine) support";
+
+    enableNPU = mkOption {
+      type = types.bool;
+      default = true;
+      description = ''
+        Whether to wire the XDNA-2 NPU stack (amdxdna kernel module, XRT,
+        IOMMU/udev/memlock). Set false for GPU-only hosts — e.g. RDNA3 iGPUs
+        (Radeon 780M / Phoenix / Hawk Point) that lack an XDNA-2 NPU — to keep
+        the Vulkan/ROCm backends without pulling in the XRT closure.
+      '';
+    };
 
     enableFastFlowLM = mkOption {
       type = types.bool;
@@ -92,25 +105,29 @@ in {
   config = mkIf cfg.enable {
     assertions = [
       {
-        assertion = versionAtLeast config.boot.kernelPackages.kernel.version "6.14";
+        assertion = !cfg.enableNPU || versionAtLeast config.boot.kernelPackages.kernel.version "6.14";
         message = "AMD NPU (amdxdna) requires kernel >= 6.14.";
+      }
+      {
+        assertion = !cfg.enableFastFlowLM || cfg.enableNPU;
+        message = "hardware.amd-npu.enableFastFlowLM requires enableNPU = true (FastFlowLM runs on the NPU).";
       }
     ];
 
-    # Kernel configuration
-    boot.kernelParams = ["iommu.passthrough=0"];
-    boot.kernelModules = ["amdxdna"];
+    # Kernel configuration (NPU-only)
+    boot.kernelParams = optionals cfg.enableNPU ["iommu.passthrough=0"];
+    boot.kernelModules = optionals cfg.enableNPU ["amdxdna"];
 
     # Udev rules for NPU device access
-    services.udev.extraRules = ''
+    services.udev.extraRules = optionalString cfg.enableNPU ''
       # AMD NPU (amdxdna) — accel subsystem
       SUBSYSTEM=="accel", DRIVERS=="amdxdna", GROUP="video", MODE="0660"
       # AMD NPU — misc device fallback
       KERNEL=="accel*", SUBSYSTEM=="misc", ATTRS{driver}=="amdxdna", GROUP="video", MODE="0660"
     '';
 
-    # PAM limits — unlimited memlock for video and render groups
-    security.pam.loginLimits = [
+    # PAM limits — unlimited memlock for NPU buffer allocation (video/render groups)
+    security.pam.loginLimits = optionals cfg.enableNPU [
       {
         domain = "@video";
         type = "-";
@@ -127,7 +144,7 @@ in {
 
     # Environment variables for XRT plugin discovery
     environment.sessionVariables =
-      {
+      optionalAttrs cfg.enableNPU {
         XILINX_XRT = "${xrt-combined}";
         XRT_PATH = "${xrt-combined}";
       }
@@ -173,10 +190,10 @@ in {
     # binaries.
     environment.systemPackages =
       [
-        xrt-combined
         pkgs.pciutils
         pkgs.lshw
       ]
+      ++ optional cfg.enableNPU xrt-combined
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
       ++ optional cfg.enableLemonade pkgs.lemonade
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr
@@ -201,9 +218,6 @@ in {
       path = pathList ++ ["/run/current-system/sw"];
       environment =
         {
-          XILINX_XRT = "${xrt-combined}";
-          XRT_PATH = "${xrt-combined}";
-          LD_LIBRARY_PATH = "${xrt-combined}/lib${optionalROCmLibs}";
           # Disable lemond's 300s upstream timeout so long prompt-processing
           # phases (common with large agent system prompts on iGPU) don't
           # abort before the first token. See lemonade-sdk/lemonade#1364.
@@ -211,17 +225,29 @@ in {
           LEMONADE_LLAMACPP_CPU_BIN = "${pkgs.llama-cpp}/bin/llama-server";
           LEMONADE_WHISPERCPP_CPU_BIN = "${pkgs.whisper-cpp}/bin/whisper-server";
           LEMONADE_LLAMACPP_ARGS = "--flash-attn ${cfg.lemonade.flashAttn}";
-        } // optionalAttrs cfg.enableImageGen {
+        }
+        // optionalAttrs cfg.enableNPU {
+          XILINX_XRT = "${xrt-combined}";
+          XRT_PATH = "${xrt-combined}";
+        }
+        // optionalAttrs (ldLibraryPath != "") {
+          LD_LIBRARY_PATH = ldLibraryPath;
+        }
+        // optionalAttrs cfg.enableImageGen {
           LEMONADE_SDCPP_CPU_BIN = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
-        } // optionalAttrs cfg.enableROCm {
+        }
+        // optionalAttrs cfg.enableROCm {
           LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
           LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
-        } // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
+        }
+        // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
           LEMONADE_SDCPP_ROCM_BIN = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
-        } // optionalAttrs cfg.enableVulkan {
+        }
+        // optionalAttrs cfg.enableVulkan {
           LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
           LEMONADE_WHISPERCPP_VULKAN_BIN = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
-        } // optionalAttrs cfg.enableFastFlowLM {
+        }
+        // optionalAttrs cfg.enableFastFlowLM {
           # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
           # New in FLM 0.9.41.
           FLM_DISABLE_UPDATE_CHECK = "1";
