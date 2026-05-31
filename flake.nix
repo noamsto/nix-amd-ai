@@ -217,12 +217,17 @@
             configured = mkSys {
               gpuMemory = { ttmSizeGiB = 120; pagePoolSizeGiB = 60; };
             };
+            ttmOnly = mkSys {
+              gpuMemory = { ttmSizeGiB = 10; };
+            };
             default = mkSys {};
           in
             pkgs.runCommand "module-eval-gtt" {
-              inherit configured default;
+              inherit configured ttmOnly default;
             } ''
               echo "$configured" | grep -F 'options ttm pages_limit=31457280 page_pool_size=15728640'
+              echo "$ttmOnly" | grep -F 'options ttm pages_limit=2621440'
+              echo "$ttmOnly" | grep -vq 'page_pool_size' || { echo "ttm-only must not set page_pool_size"; exit 1; }
               echo "$default" | grep -vq 'pages_limit' || { echo "default must not set pages_limit"; exit 1; }
               touch $out
             '';

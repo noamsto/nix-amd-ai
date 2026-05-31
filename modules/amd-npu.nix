@@ -10,6 +10,11 @@
   # 4096-byte pages: pages = GiB * 1024^3 / 4096 = GiB * 262144.
   gttPages = gib: gib * 262144;
 
+  # Optional " page_pool_size=…" clause appended to the ttm modprobe line.
+  ttmPagePoolClause =
+    optionalString (cfg.gpuMemory.pagePoolSizeGiB != null)
+    " page_pool_size=${toString (gttPages cfg.gpuMemory.pagePoolSizeGiB)}";
+
   xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
 
   xrt-combined = pkgs.runCommand "xrt-combined" {} ''
@@ -164,7 +169,7 @@ in {
     # power cost. Needed on Strix Halo / 128 GB for large models; no-op on
     # Strix Point / 64 GB. modprobe.d form matches the Strix Halo wiki verbatim.
     boot.extraModprobeConfig = mkIf (cfg.gpuMemory.ttmSizeGiB != null) ''
-      options ttm pages_limit=${toString (gttPages cfg.gpuMemory.ttmSizeGiB)}${optionalString (cfg.gpuMemory.pagePoolSizeGiB != null) " page_pool_size=${toString (gttPages cfg.gpuMemory.pagePoolSizeGiB)}"}
+      options ttm pages_limit=${toString (gttPages cfg.gpuMemory.ttmSizeGiB)}${ttmPagePoolClause}
     '';
 
     # Udev rules for NPU device access
