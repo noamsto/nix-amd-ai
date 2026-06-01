@@ -151,6 +151,71 @@ If `lemonade backends` reports a backend as `installed` but benchmarks report <5
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
 
+## GPU memory headroom
+
+The iGPU draws GPU memory from the GTT pool. By default the kernel exposes
+~27 GB addressable, which covers the 17–22 GB models this flake targets on a
+64 GB Strix Point host — so **leave these options unset there; they're a no-op.**
+
+On a **128 GB Strix Halo** host you need to raise the ceiling to expose the
+large unified pool for big models. The module takes sizes in **GiB** and
+computes the `ttm` page counts for you (`pages = GiB × 262144`):
+
+```nix
+hardware.amd-npu.gpuMemory = {
+  ttmSizeGiB = 120;       # GTT pool ceiling  → ttm pages_limit
+  pagePoolSizeGiB = 60;   # pre-cached pool   → ttm page_pool_size
+};
+```
+
+This emits `options ttm pages_limit=31457280 page_pool_size=15728640` via
+`boot.extraModprobeConfig`. Recommended starting point for 128 GB:
+
+| Option | Value (128 GB) | Meaning |
+|---|---|---|
+| `ttmSizeGiB` | 120 | Hard ceiling on the GTT pool; leaves ~8 GiB for the OS/CPU. |
+| `pagePoolSizeGiB` | 60 | Pre-cached pool inside that ceiling. |
+
+> **Note:** these Halo values are guidance from the [Strix Halo wiki](https://strixhalo.wiki/AI/AI_Capabilities_Overview),
+> **not measured on a Halo host by this flake** (the development target is a
+> 64 GB Strix Point P14s). Treat them as a starting point, not a validated tune.
+
+**Leave RAM headroom** — don't set `ttmSizeGiB` to your full physical RAM; the
+CPU and OS still need their share (the 120/128 example keeps a margin).
+
+## Tuning tradeoffs we don't automate
+
+### `amd_iommu=off` would kill the NPU
+
+The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
+**Do not do this on a host that uses the NPU.** amdxdna binds the NPU through
+IOMMU SVA/PASID (`iommu_sva_bind_device`, IOMMU group 25, IOMMU in *Translated*
+mode); `amd_iommu=off` or `iommu.passthrough=1` makes the bind fail
+(`*ERROR* Can not assign PASID` / `SVA get pasid failed`) and the NPU dies. The
+module already pins `iommu.passthrough=0` for this reason. `amd_iommu=off` is
+only viable on a GPU-only host that has given up XDNA.
+
+### CPU performance tuning (not implemented — pending A/B)
+
+The wiki recommends biasing the CPU to `performance` (governor + HWP boost) for
++3% memory bandwidth / +5–8% `pp512`. We don't wire this, because on a
+shared-TDP APU the tradeoff is murky:
+
+- There's **no direct CPU-governor → GPU-clock link** — the iGPU has its own
+  clock domain. Pinning CPU cores to `performance` doesn't raise GPU clocks.
+- On shared package power, forcing the CPU to max frequency **steals TDP from
+  the iGPU** during bandwidth-bound decode — a bounded, possibly net-negative
+  lever.
+- The knob actually aimed at decode is the **C-state latency floor**
+  (`/dev/cpu_dma_latency`), which keeps the fabric/memory subsystem clocked;
+  the governor is not.
+- Prefill (`pp512`) does have a CPU component, so the wiki's prefill claim is
+  plausible — for prefill, not decode.
+
+It's left out until an A/B on an idle/AC host (governor pinned `performance`)
+confirms whether the wiki's numbers reproduce on Strix Point. Tracked in
+[#19](https://github.com/noamsto/nix-amd-ai/issues/19).
+
 ## Troubleshooting
 
 ### `amdxdna ... aie2_get_info: Not supported request parameter N` in dmesg/journald

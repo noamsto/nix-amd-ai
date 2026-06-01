@@ -7,6 +7,14 @@
   inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast concatStringsSep;
   cfg = config.hardware.amd-npu;
 
+  # 4096-byte pages: pages = GiB * 1024^3 / 4096 = GiB * 262144.
+  gttPages = gib: gib * 262144;
+
+  # Optional " page_pool_size=…" clause appended to the ttm modprobe line.
+  ttmPagePoolClause =
+    optionalString (cfg.gpuMemory.pagePoolSizeGiB != null)
+    " page_pool_size=${toString (gttPages cfg.gpuMemory.pagePoolSizeGiB)}";
+
   xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
 
   xrt-combined = pkgs.runCommand "xrt-combined" {} ''
@@ -100,6 +108,34 @@ in {
         '';
       };
     };
+
+    gpuMemory = {
+      ttmSizeGiB = mkOption {
+        type = types.nullOr types.ints.positive;
+        default = null;
+        description = ''
+          GTT pool ceiling in GiB, emitted as the `ttm` `pages_limit` modprobe
+          option (page count is computed for you: GiB * 262144).
+
+          null (default) leaves the kernel default untouched. No-op on Strix
+          Point / 64 GB — the default (~27 GB addressable) already covers
+          17-22 GB models. This is the lever a Strix Halo / 128 GB host needs
+          to expose its large unified pool. See the README "GPU memory
+          headroom" section for recommended Halo values.
+        '';
+      };
+
+      pagePoolSizeGiB = mkOption {
+        type = types.nullOr types.ints.positive;
+        default = null;
+        description = ''
+          Pre-cached GTT pool size in GiB, emitted as the `ttm` `page_pool_size`
+          modprobe option (pages kept warm rather than freed back). Requires
+          ttmSizeGiB and must be <= it. null (default) leaves the kernel
+          default untouched.
+        '';
+      };
+    };
   };
 
   config = mkIf cfg.enable {
@@ -112,11 +148,29 @@ in {
         assertion = !cfg.enableFastFlowLM || cfg.enableNPU;
         message = "hardware.amd-npu.enableFastFlowLM requires enableNPU = true (FastFlowLM runs on the NPU).";
       }
+      {
+        assertion = cfg.gpuMemory.pagePoolSizeGiB == null || cfg.gpuMemory.ttmSizeGiB != null;
+        message = "hardware.amd-npu.gpuMemory.pagePoolSizeGiB requires ttmSizeGiB to be set.";
+      }
+      {
+        assertion =
+          cfg.gpuMemory.pagePoolSizeGiB == null
+          || cfg.gpuMemory.ttmSizeGiB == null
+          || cfg.gpuMemory.pagePoolSizeGiB <= cfg.gpuMemory.ttmSizeGiB;
+        message = "hardware.amd-npu.gpuMemory.pagePoolSizeGiB must be <= ttmSizeGiB.";
+      }
     ];
 
     # Kernel configuration (NPU-only)
     boot.kernelParams = optionals cfg.enableNPU ["iommu.passthrough=0"];
     boot.kernelModules = optionals cfg.enableNPU ["amdxdna"];
+
+    # GTT pool sizing (opt-in). Raises what's *addressable*, not consumed — no
+    # power cost. Needed on Strix Halo / 128 GB for large models; no-op on
+    # Strix Point / 64 GB. modprobe.d form matches the Strix Halo wiki verbatim.
+    boot.extraModprobeConfig = mkIf (cfg.gpuMemory.ttmSizeGiB != null) ''
+      options ttm pages_limit=${toString (gttPages cfg.gpuMemory.ttmSizeGiB)}${ttmPagePoolClause}
+    '';
 
     # Udev rules for NPU device access
     services.udev.extraRules = optionalString cfg.enableNPU ''
