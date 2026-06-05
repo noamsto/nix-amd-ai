@@ -17,9 +17,7 @@ AMD AI inference stack for NixOS — packages XRT, XDNA driver plugin, FastFlowL
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`, `gaia-emr`, `gaia-code`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
-CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`.
-
-**Temporary override:** the three `llama-cpp*` packages are pinned to `b9213` (lemonade v10.5.1's expected build) so the new `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944), backed by llama.cpp [#22673](https://github.com/ggml-org/llama.cpp/pull/22673) — actually fires. The weekly update workflow flags the override for removal once nixpkgs llama-cpp catches up past `b9175`.
+CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`. The GPU backends track nixpkgs too; the `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944), backed by llama.cpp [#22673](https://github.com/ggml-org/llama.cpp/pull/22673) — fires on any nixpkgs llama.cpp past `b9175`.
 
 The `lemonade` package composes three derivations:
 
