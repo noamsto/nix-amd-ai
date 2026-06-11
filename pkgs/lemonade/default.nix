@@ -15,6 +15,7 @@
   brotli,
   httplib,
   libwebsockets,
+  mbedtls,
   openssl,
   systemd,
   libcap,
@@ -63,30 +64,12 @@ in stdenv.mkDerivation {
     brotli
     httplib
     libwebsockets
+    mbedtls
     openssl
     systemd
     libcap
     libdrm
   ];
-
-  # nixpkgs ships httplib as `httplib.pc`, but lemonade's CMakeLists looks for
-  # `cpp-httplib.pc` via pkg_check_modules. Synthesize an alias .pc file and add
-  # it to PKG_CONFIG_PATH so USE_SYSTEM_HTTPLIB takes the system path instead of
-  # falling through to FetchContent (which requires network and breaks the
-  # nix sandbox).
-  # Drop once lemonade-sdk/lemonade#2047 (httplib pkg-config name fallback) lands.
-  preConfigure = ''
-    mkdir -p $TMPDIR/pc-shim
-    cat > $TMPDIR/pc-shim/cpp-httplib.pc <<EOF
-    prefix=${httplib}
-    includedir=${httplib}/include
-    Name: cpp-httplib
-    Description: C++ header-only HTTP/HTTPS server and client library (alias for httplib)
-    Version: ${httplib.version}
-    Cflags: -I${httplib}/include
-    EOF
-    export PKG_CONFIG_PATH=$TMPDIR/pc-shim:$PKG_CONFIG_PATH
-  '';
 
   cmakeFlags = [
     (lib.cmakeFeature "CMAKE_BUILD_TYPE" "Release")
@@ -98,22 +81,6 @@ in stdenv.mkDerivation {
   ];
 
   postPatch = ''
-    # Lemonade's CMakeLists assumes Debian's compiled libcpp-httplib.so
-    # (target name `cpp-httplib`); nixpkgs ships httplib header-only, so the
-    # link of -lcpp-httplib fails. Header-only cpp-httplib doesn't need a
-    # link entry — the inline functions are emitted into our own .o files —
-    # so use ''${HTTPLIB_LIBRARIES} (empty under our header-only .pc shim)
-    # instead of the literal `cpp-httplib` target name.
-    # Drop once lemonade-sdk/lemonade#2047 lands (upstreams this exact rewrite).
-    substituteInPlace CMakeLists.txt \
-      --replace-fail \
-        'target_link_libraries(lemonade-server-core PUBLIC cpp-httplib)' \
-        'target_link_libraries(lemonade-server-core PUBLIC ''${HTTPLIB_LIBRARIES})'
-    substituteInPlace src/cpp/cli/CMakeLists.txt \
-      --replace-fail \
-        'target_link_libraries(lemonade PRIVATE cpp-httplib)' \
-        'target_link_libraries(lemonade PRIVATE ''${HTTPLIB_LIBRARIES})'
-
     # Two install(CODE ...) blocks in cli and the top-level CMakeLists try
     # to symlink binaries / units into /usr/bin and /usr/lib/systemd/system
     # via $ENV{DESTDIR} — designed for Debian's DESTDIR-staged build. In
@@ -133,95 +100,24 @@ in stdenv.mkDerivation {
         'DESTINATION /etc/lemonade/conf.d' \
         'DESTINATION share/lemonade/conf.d.example'
 
-    # Make user-supplied llamacpp.*_bin paths fully authoritative. v10.3.0
-    # added a no_fetch_executables throw and rocm-stable / TheRock runtime
-    # downloads to install_backend that fire BEFORE install_from_github's
-    # path-override short-circuit, so the env-var-migrated *_bin we set
-    # in the NixOS module gets ignored: the runtime libs still download
-    # into ~/.cache/lemonade/bin/ and llamacpp_server prepends them to
-    # LD_LIBRARY_PATH, shadowing the libs the nix-built llama-server is
-    # RPATH-bound to. Short-circuit install_backend the moment we see a
-    # user-supplied bin path. See lemonade-sdk/lemonade#1791 and
-    # noamsto/nix-amd-ai#5.
-    substituteInPlace src/cpp/server/backend_manager.cpp \
-      --replace-fail \
-        '    if (auto* cfg = RuntimeConfig::global()) {
-        if (cfg->no_fetch_executables()) {
-            throw std::runtime_error(
-                "Fetching executable artifacts is disabled");
-        }
-    }' \
-        '    if (!backends::BackendUtils::find_external_backend_binary(recipe, resolved_backend).empty()) {
-        return;
-    }
-
-    if (auto* cfg = RuntimeConfig::global()) {
-        if (cfg->no_fetch_executables()) {
-            throw std::runtime_error(
-                "Fetching executable artifacts is disabled");
-        }
-    }'
-
-    # Companion to the install_backend patch above. When the user pointed
-    # llamacpp.rocm_bin at a system binary, that binary already resolves
-    # its ROCm libs through its own RPATH; lemonade prepending TheRock's
-    # ~/.cache/lemonade/bin/.../lib (or the rocm-stable runtime dir) to
-    # LD_LIBRARY_PATH would override that and crash on lib version skew.
-    substituteInPlace src/cpp/server/backends/llamacpp_server.cpp \
-      --replace-fail \
-        '    // For ROCm on Linux, set LD_LIBRARY_PATH to include the ROCm library directory
-    std::vector<std::pair<std::string, std::string>> env_vars;
-#ifndef _WIN32
-    if (is_llamacpp_rocm_backend(llamacpp_backend)) {' \
-        '    // For ROCm on Linux, set LD_LIBRARY_PATH to include the ROCm library directory
-    std::vector<std::pair<std::string, std::string>> env_vars;
-#ifndef _WIN32
-    if (is_llamacpp_rocm_backend(llamacpp_backend) &&
-        BackendUtils::find_external_backend_binary(SPEC.recipe, llamacpp_backend).empty()) {'
-
-    # Teach is_ggml_hip_plugin_available() about a NixOS-friendly env var
-    # so the "system" llamacpp recipe stops being permanently "unsupported"
-    # here. The hardcoded probe only knows Debian/Ubuntu/Arch FHS paths;
-    # libggml-hip.so on NixOS lives in $\{llama-cpp-rocm}/lib. With the env
-    # var set, "system" + prefer_system: true becomes a real option.
-    # Drop once lemonade-sdk/lemonade#2044 lands (upstreams LEMONADE_GGML_HIP_PATH).
-    substituteInPlace src/cpp/server/utils/path_utils.cpp \
-      --replace-fail \
-        'bool is_ggml_hip_plugin_available() {
-#ifdef __linux__
-    // On Linux x86_64, check common system library paths for the HIP plugin' \
-        'bool is_ggml_hip_plugin_available() {
-#ifdef __linux__
-    if (const char* env = std::getenv("LEMONADE_GGML_HIP_PATH"); env && *env && fs::exists(env)) {
-        return true;
-    }
-    // On Linux x86_64, check common system library paths for the HIP plugin'
-
-    # whispercpp's vulkan and rocm backends accept *_bin via runtime config
-    # (build_bin_config_key) but lemonade ships no env-var migration for
-    # them — only LEMONADE_WHISPERCPP_{CPU,NPU}_BIN are mapped. Add the
-    # missing vulkan mapping so the NixOS module can wire whisper-cpp's
-    # vulkan build via systemd Environment. (rocm not exposed for
-    # whispercpp at all in v${version} RECIPE_DEFS.)
-    # Drop once lemonade-sdk/lemonade#2045 lands (upstreams the vulkan mapping).
+    # Let a packager point lemonade at a defaults.json outside the FHS path.
+    # v10.7.0 dropped the LEMONADE_*_BIN env→config migration, so the NixOS
+    # module can no longer inject backend bin paths via the environment; the
+    # only seam left is get_defaults(), which merges a hardcoded
+    # /usr/share/lemonade/defaults.json that NixOS doesn't populate. Honor
+    # LEMONADE_DEFAULTS_PATH so the module can supply a store-path defaults
+    # file. Mirrors the LEMONADE_GGML_HIP_PATH escape hatch from #2044.
+    # Drop once the upstream LEMONADE_DEFAULTS_PATH proposal lands.
     substituteInPlace src/cpp/server/config_file.cpp \
       --replace-fail \
-        '{"LEMONADE_WHISPERCPP_NPU_BIN",      "whispercpp", "npu_bin"},' \
-        '{"LEMONADE_WHISPERCPP_NPU_BIN",      "whispercpp", "npu_bin"},
-    {"LEMONADE_WHISPERCPP_VULKAN_BIN",   "whispercpp", "vulkan_bin"},'
+        '    return defaults;
+}' \
+        '    if (const char* env = std::getenv("LEMONADE_DEFAULTS_PATH"); env && *env && fs::exists(env)) {
+        defaults = utils::JsonUtils::merge(defaults, load_json_file(env));
+    }
 
-    # ConfigFile::load only runs migrate_from_env when ~/.cache/lemonade/
-    # config.json doesn't exist (first run). After that, env-var changes
-    # are silently ignored — so a NixOS module bumping pkgs.llama-cpp from
-    # the systemd Environment won't take effect unless the user manually
-    # deletes config.json. Re-apply the env overlay on every load so
-    # systemd-set bin paths stay authoritative. migrate_from_env's first
-    # arg is just the merge base (despite the name), so passing the loaded
-    # config in lets env values override stored ones.
-    substituteInPlace src/cpp/server/config_file.cpp \
-      --replace-fail \
-        'json merged = utils::JsonUtils::merge(defaults, loaded);' \
-        'json merged = migrate_from_env(utils::JsonUtils::merge(defaults, loaded));'
+    return defaults;
+}'
 
     # Don't abort downloads when the SSE progress stream's TCP socket goes
     # away. WebKitGTK suspends the network process for backgrounded windows
@@ -249,13 +145,12 @@ in stdenv.mkDerivation {
     # commit so one version covers all three sd-cpp keys.
     if [ -f src/cpp/resources/backend_versions.json ]; then
       jq '.flm.npu = "v${fastflowlm.version}"
-          | .llamacpp.rocm = "b${llama-cpp-rocm.version}"
+          | .llamacpp."rocm-stable" = "b${llama-cpp-rocm.version}"
           | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"
           | .whispercpp.cpu = "v${whisper-cpp.version}"
           | .whispercpp.vulkan = "v${whisper-cpp-vulkan.version}"
           | ."sd-cpp".cpu = "${stable-diffusion-cpp.version}"
-          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"
-          | ."sd-cpp"."rocm-preview" = "${stable-diffusion-cpp-rocm.version}"' \
+          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"' \
         src/cpp/resources/backend_versions.json > src/cpp/resources/backend_versions.json.tmp
       mv src/cpp/resources/backend_versions.json.tmp src/cpp/resources/backend_versions.json
     fi
