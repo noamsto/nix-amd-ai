@@ -7,6 +7,12 @@
   inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast concatStringsSep;
   cfg = config.hardware.amd-npu;
 
+  # The Tauri desktop app is the only part of lemonade that pulls a Rust/npm
+  # build (and a crates.io cargo-vendor fetch). Headless/server hosts can drop
+  # it via withDesktopApp = false so `enableLemonade` doesn't drag in that
+  # build path. See noamsto/nix-amd-ai#28.
+  lemonadePackage = pkgs.lemonade.override {withDesktopApp = cfg.lemonade.desktopApp.enable;};
+
   # 4096-byte pages: pages = GiB * 1024^3 / 4096 = GiB * 262144.
   gttPages = gib: gib * 262144;
 
@@ -148,6 +154,18 @@ in {
         description = "User account to run the Lemonade server as.";
       };
 
+      desktopApp.enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether to build and install the Lemonade desktop app (the Tauri
+          shell around the web UI). This is the only part of lemonade that
+          requires a Rust + npm build and a crates.io cargo-vendor fetch.
+          Set false on headless/server hosts to skip that build path entirely
+          and ship only the `lemond` server + CLI.
+        '';
+      };
+
       flashAttn = mkOption {
         type = types.enum ["auto" "on" "off"];
         default = "on";
@@ -287,7 +305,7 @@ in {
       ]
       ++ optional cfg.enableNPU xrt-combined
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
-      ++ optional cfg.enableLemonade pkgs.lemonade
+      ++ optional cfg.enableLemonade lemonadePackage
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr
       ++ optional cfg.enableROCm pkgs.llama-cpp-rocm
       ++ optional (cfg.enableROCm && cfg.enableImageGen) pkgs.stable-diffusion-cpp-rocm
@@ -335,7 +353,7 @@ in {
       serviceConfig = {
         Type = "simple";
         User = cfg.lemonade.user;
-        ExecStart = "${pkgs.lemonade}/bin/lemond --port ${toString cfg.lemonade.port} --host ${cfg.lemonade.host}";
+        ExecStart = "${lemonadePackage}/bin/lemond --port ${toString cfg.lemonade.port} --host ${cfg.lemonade.host}";
         Restart = "on-failure";
         RestartSec = "5s";
         KillSignal = "SIGINT";
