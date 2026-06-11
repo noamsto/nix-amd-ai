@@ -149,6 +149,8 @@ If `lemonade backends` reports a backend as `installed` but benchmarks report <5
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
 
+The desktop app is the only part of lemonade that pulls a Rust + npm build (and a crates.io cargo-vendor fetch). Headless/server hosts that only need the `lemond` API + CLI can skip it entirely with `lemonade.desktopApp.enable = false;` — this drops the Tauri build path from the closure. (The pre-built app is also on the [binary cache](#binary-cache), so configuring the substituter avoids building it from source in the first place.)
+
 ## GPU memory headroom
 
 The iGPU draws GPU memory from the GTT pool. By default the kernel exposes
