@@ -33,6 +33,57 @@
   pathList =
     optional cfg.enableNPU xrt-combined
     ++ optional cfg.enableFastFlowLM pkgs.fastflowlm;
+
+  # Stable /etc indirection for lemonade's backend binaries. v10.7.0 reads bin
+  # paths only from config.json (it dropped the LEMONADE_*_BIN env→config
+  # migration), and a cached config.json overrides our seed — so a raw
+  # /nix/store path would dangle after a backend bump + GC. These /etc symlinks
+  # retarget each generation; config.json caches the stable path, the symlink
+  # follows the store.
+  lemonadeBackendBin = name: "/etc/lemonade/backends/${name}";
+  lemonadeBackendEtc =
+    optionalAttrs cfg.enableLemonade {
+      "lemonade/backends/llamacpp-cpu".source = "${pkgs.llama-cpp}/bin/llama-server";
+      "lemonade/backends/whispercpp-cpu".source = "${pkgs.whisper-cpp}/bin/whisper-server";
+    }
+    // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {
+      "lemonade/backends/sdcpp-cpu".source = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
+    }
+    // optionalAttrs cfg.enableROCm {
+      "lemonade/backends/llamacpp-rocm".source = "${pkgs.llama-cpp-rocm}/bin/llama-server";
+    }
+    // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
+      "lemonade/backends/sdcpp-rocm".source = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
+    }
+    // optionalAttrs cfg.enableVulkan {
+      "lemonade/backends/llamacpp-vulkan".source = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
+      "lemonade/backends/whispercpp-vulkan".source = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
+    };
+
+  # defaults.json seed that lemonade's get_defaults() merges over its packaged
+  # defaults (via the LEMONADE_DEFAULTS_PATH patch in pkgs/lemonade). Carries
+  # the backend bin paths plus global_timeout / flash-attn, all of which lost
+  # their env hook when v10.7.0 removed migrate_from_env.
+  lemonadeDefaults =
+    {
+      global_timeout = 0;
+      llamacpp =
+        {
+          args = "--flash-attn ${cfg.lemonade.flashAttn}";
+          cpu_bin = lemonadeBackendBin "llamacpp-cpu";
+        }
+        // optionalAttrs cfg.enableROCm {rocm_bin = lemonadeBackendBin "llamacpp-rocm";}
+        // optionalAttrs cfg.enableVulkan {vulkan_bin = lemonadeBackendBin "llamacpp-vulkan";};
+      whispercpp =
+        {cpu_bin = lemonadeBackendBin "whispercpp-cpu";}
+        // optionalAttrs cfg.enableVulkan {vulkan_bin = lemonadeBackendBin "whispercpp-vulkan";};
+    }
+    // optionalAttrs cfg.enableImageGen {
+      sdcpp =
+        {cpu_bin = lemonadeBackendBin "sdcpp-cpu";}
+        // optionalAttrs cfg.enableROCm {rocm_bin = lemonadeBackendBin "sdcpp-rocm";};
+    };
+  lemonadeDefaultsFile = (pkgs.formats.json {}).generate "lemonade-defaults.json" lemonadeDefaults;
 in {
   options.hardware.amd-npu = {
     enable = mkEnableOption "AMD NPU (AI Engine) support";
@@ -208,40 +259,27 @@ in {
         FLM_DISABLE_UPDATE_CHECK = "1";
       }
       // optionalAttrs cfg.enableLemonade {
-        # CPU recipes work on every host, no GPU enable flag needed.
-        LEMONADE_LLAMACPP_CPU_BIN = "${pkgs.llama-cpp}/bin/llama-server";
-        LEMONADE_WHISPERCPP_CPU_BIN = "${pkgs.whisper-cpp}/bin/whisper-server";
-        # Force-set FA because upstream lemonade defaults to no flag at all.
-        LEMONADE_LLAMACPP_ARGS = "--flash-attn ${cfg.lemonade.flashAttn}";
+        # v10.7.0 reads backend bin paths + tuning only from config.json; point
+        # the lemonade CLI / desktop app at our generated seed via the
+        # LEMONADE_DEFAULTS_PATH patch in pkgs/lemonade.
+        LEMONADE_DEFAULTS_PATH = lemonadeDefaultsFile;
       }
-      // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {
-        LEMONADE_SDCPP_CPU_BIN = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
-      }
-      // optionalAttrs cfg.enableROCm {
-        LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
-        # Activates the "system" llamacpp recipe via our nix-amd-ai
-        # is_ggml_hip_plugin_available() patch in pkgs/lemonade.
+      // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
+        # Keeps the ROCm llamacpp backend offered: read directly by
+        # is_ggml_hip_plugin_available()'s env probe (upstreamed in #2044).
         LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
-      }
-      // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
-        LEMONADE_SDCPP_ROCM_BIN = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
-      }
-      // optionalAttrs cfg.enableVulkan {
-        LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
-        # whispercpp.vulkan_bin works thanks to our config_file.cpp env-mapping
-        # patch in pkgs/lemonade — upstream v10.3.0 doesn't ship the mapping.
-        LEMONADE_WHISPERCPP_VULKAN_BIN = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
       };
+
+    # Stable indirection symlinks lemonade's config.json bin paths point at.
+    environment.etc = lemonadeBackendEtc;
 
     # System packages.
     #
     # The GPU-enabled llama-cpp / whisper-cpp variants are listed BEFORE the
-    # CPU variants so that `llama-server` / `whisper-server` resolved through
-    # PATH (e.g. by the lemonade "system" recipe, which has no env-var hook
-    # and just does a PATH lookup) point at the GPU build. nixpkgs buildEnv
-    # merges packages in declaration order, and the first package providing a
-    # given relative path wins; declaring CPU first would shadow the GPU
-    # binaries.
+    # CPU variants so that a `llama-server` / `whisper-server` invoked through
+    # PATH points at the GPU build. nixpkgs buildEnv merges packages in
+    # declaration order, and the first package providing a given relative path
+    # wins; declaring CPU first would shadow the GPU binaries.
     environment.systemPackages =
       [
         pkgs.pciutils
@@ -272,13 +310,12 @@ in {
       path = pathList ++ ["/run/current-system/sw"];
       environment =
         {
-          # Disable lemond's 300s upstream timeout so long prompt-processing
-          # phases (common with large agent system prompts on iGPU) don't
-          # abort before the first token. See lemonade-sdk/lemonade#1364.
-          LEMONADE_GLOBAL_TIMEOUT = "0";
-          LEMONADE_LLAMACPP_CPU_BIN = "${pkgs.llama-cpp}/bin/llama-server";
-          LEMONADE_WHISPERCPP_CPU_BIN = "${pkgs.whisper-cpp}/bin/whisper-server";
-          LEMONADE_LLAMACPP_ARGS = "--flash-attn ${cfg.lemonade.flashAttn}";
+          # Backend bin paths plus global_timeout (0 disables lemond's 300s
+          # upstream timeout — see lemonade-sdk/lemonade#1364) and the
+          # flash-attn arg now live in the generated defaults.json; v10.7.0
+          # dropped their env hooks. See the LEMONADE_DEFAULTS_PATH patch in
+          # pkgs/lemonade.
+          LEMONADE_DEFAULTS_PATH = lemonadeDefaultsFile;
         }
         // optionalAttrs cfg.enableNPU {
           XILINX_XRT = "${xrt-combined}";
@@ -287,19 +324,8 @@ in {
         // optionalAttrs (ldLibraryPath != "") {
           LD_LIBRARY_PATH = ldLibraryPath;
         }
-        // optionalAttrs cfg.enableImageGen {
-          LEMONADE_SDCPP_CPU_BIN = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
-        }
         // optionalAttrs cfg.enableROCm {
-          LEMONADE_LLAMACPP_ROCM_BIN = "${pkgs.llama-cpp-rocm}/bin/llama-server";
           LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
-        }
-        // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
-          LEMONADE_SDCPP_ROCM_BIN = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
-        }
-        // optionalAttrs cfg.enableVulkan {
-          LEMONADE_LLAMACPP_VULKAN_BIN = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
-          LEMONADE_WHISPERCPP_VULKAN_BIN = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
         }
         // optionalAttrs cfg.enableFastFlowLM {
           # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
