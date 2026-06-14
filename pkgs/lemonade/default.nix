@@ -32,7 +32,7 @@
   withWebApp ? true,
   withDesktopApp ? true,
 }: let
-  version = "10.7.0";
+  version = import ./version.nix;
 
   src = fetchFromGitHub {
     owner = "lemonade-sdk";

@@ -24,6 +24,20 @@ jobs:
       - name: Check flake
         run: nix flake check
 
+  build-darwin:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: cachix/cachix-action@v17
+        with:
+          name: nix-amd-ai
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Build Lemonade (Metal)
+        run: nix build .#lemonade .#benchmark
+      - name: Check flake
+        run: nix flake check
+
   release:
     needs: build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -65,7 +79,7 @@ jobs:
             notes="First tagged release."
           fi
 
-          lem=$(grep 'version = ' pkgs/lemonade/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+          lem=$(sed -n 's/.*"\(.*\)".*/\1/p' pkgs/lemonade/version.nix | head -1)
           if [ -n "$lem" ]; then
             title="$tag — Lemonade $lem"
           else

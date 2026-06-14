@@ -2,6 +2,8 @@
 
 AMD AI inference stack for NixOS — packages XRT, XDNA driver plugin, FastFlowLM, and Lemonade with a NixOS module for NPU + ROCm GPU support.
 
+On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platform Lemonade server (llama.cpp Metal backend) via a nix-darwin module — see [macOS (nix-darwin)](#macos-nix-darwin). The AMD/NPU/ROCm stack is Linux-only.
+
 ## Packages
 
 | Package | Description | Source |
@@ -60,6 +62,28 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
   users.users.youruser.extraGroups = ["video" "render"];
 }
 ```
+
+### macOS (nix-darwin)
+
+On Apple Silicon the flake ships a `darwinModules.default` exposing `services.lemonade`. It installs the Lemonade server and runs it as a per-user LaunchAgent (the llama.cpp Metal backend needs a GUI login session, so it cannot run as a root daemon). The Metal/sd.cpp backends are fetched into `~/.cache/lemonade` on first run, exactly as the upstream `.pkg` does — there is no NPU/ROCm wiring on macOS.
+
+```nix
+# flake.nix
+inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
+
+# darwin configuration
+{inputs, ...}: {
+  imports = [inputs.nix-amd-ai.darwinModules.default];
+
+  services.lemonade = {
+    enable = true;
+    port = 13305;          # default
+    host = "localhost";    # default
+  };
+}
+```
+
+The package alone (no service) is also available: `nix build github:noamsto/nix-amd-ai#lemonade` on `aarch64-darwin` produces `bin/lemond` + `bin/lemonade` serving the OpenAI-compatible API at `http://localhost:13305/api/v1`. It wraps upstream's prebuilt, server-only `lemonade-embeddable-*-macos-arm64` release (no web UI / Tauri app — those ship only in the `.pkg`).
 
 ## Binary cache
 

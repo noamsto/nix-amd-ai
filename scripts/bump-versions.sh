@@ -28,12 +28,28 @@ if [ "$FLM_NEW" != "$FLM_OLD" ]; then
   update_hash fastflowlm
 fi
 
-# Lemonade
+# Lemonade — one version (pkgs/lemonade/version.nix) feeds both the Linux source
+# build and the macOS prebuilt wrap, but they fetch different tarballs and so
+# carry separate hashes.
 if [ "$LEM_NEW" != "$LEM_OLD" ]; then
   echo "Bumping Lemonade: $LEM_OLD -> $LEM_NEW"
-  sed -i "s/version = \"$LEM_OLD\"/version = \"$LEM_NEW\"/" pkgs/lemonade/default.nix
+  sed -i "s/\"$LEM_OLD\"/\"$LEM_NEW\"/" pkgs/lemonade/version.nix
+
+  # Linux source tarball: blank + rebuild to capture the new hash.
   sed -i 's/hash = "sha256-[^"]*"/hash = ""/' pkgs/lemonade/default.nix
   update_hash lemonade
+
+  # macOS embeddable bundle: a fixed-output fetch, so prefetch the URL directly
+  # (works on the Linux CI runner, where the aarch64-darwin package can't build).
+  echo "  Prefetching macOS embeddable hash..."
+  darwin_url="https://github.com/lemonade-sdk/lemonade/releases/download/v${LEM_NEW}/lemonade-embeddable-${LEM_NEW}-macos-arm64.tar.gz"
+  darwin_hash=$(nix store prefetch-file --json "$darwin_url" | jq -r .hash || true)
+  if [ -n "$darwin_hash" ]; then
+    sed -i "s|hash = \"sha256-[^\"]*\"|hash = \"$darwin_hash\"|" pkgs/lemonade/darwin.nix
+    echo "  macOS hash updated: $darwin_hash"
+  else
+    echo "  WARNING: could not prefetch macOS embeddable hash for $LEM_NEW"
+  fi
 fi
 
 # xdna-driver (also check XRT submodule)
