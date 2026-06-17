@@ -122,12 +122,39 @@
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
           gaia = pkgs.callPackage ./pkgs/gaia {};
+          lemond-unit = lemondUnit;
         };
 
         # macOS: server-only Lemonade wrap (Metal backend, fetched at runtime).
         darwinPackages = {
           lemonade = pkgs.callPackage ./pkgs/lemonade/darwin.nix {};
         };
+
+        # Rendered lemond.service for a minimal enableLemonade host — consumed by
+        # the lemond-unit-render check and the CI systemd-analyze step.
+        lemondUnit =
+          (inputs.nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              inputs.self.nixosModules.default
+              {
+                boot.loader.grub.enable = false;
+                fileSystems."/" = {
+                  device = "/dev/sda1";
+                  fsType = "ext4";
+                };
+                hardware.amd-npu = {
+                  enable = true;
+                  enableLemonade = true;
+                  lemonade.user = "testuser";
+                };
+                users.users.testuser = {
+                  isNormalUser = true;
+                  extraGroups = ["video" "render"];
+                };
+              }
+            ];
+          }).config.systemd.units."lemond.service".unit;
       in {
         packages =
           (
@@ -270,6 +297,21 @@
                 echo "$default" | grep -vq 'pages_limit' || { echo "default must not set pages_limit"; exit 1; }
                 touch $out
               '';
+
+            # The lemond unit must keep its writable runtime dir + nix-ld loader
+            # env, else omni backends (WhisperServer, koko TTS) fail to load. The
+            # NIX_LD paths track the values nix-ld exports as session vars.
+            # (Semantic `systemd-analyze verify` runs in CI — it can't create
+            # /run/systemd inside nix's build sandbox.)
+            lemond-unit-render = pkgs.runCommand "lemond-unit-render" {} ''
+              unit=${lemondUnit}/lemond.service
+              grep -q 'RuntimeDirectory=lemond' "$unit" || { echo "missing RuntimeDirectory"; exit 1; }
+              grep -q 'NIX_LD=/run/current-system/sw/share/nix-ld/lib/ld.so' "$unit" \
+                || { echo "missing/changed NIX_LD"; exit 1; }
+              grep -q 'NIX_LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib' "$unit" \
+                || { echo "missing/changed NIX_LD_LIBRARY_PATH"; exit 1; }
+              touch $out
+            '';
           }
           else {
             # Force the nix-darwin module to evaluate and assert the launchd

@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast concatStringsSep;
+  inherit (lib) mkEnableOption mkOption mkIf mkDefault types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast concatStringsSep;
   cfg = config.hardware.amd-npu;
 
   # The Tauri desktop app is the only part of lemonade that pulls a Rust/npm
@@ -114,7 +114,11 @@ in {
     enableLemonade = mkOption {
       type = types.bool;
       default = true;
-      description = "Whether to enable the Lemonade AI server.";
+      description = ''
+        Whether to enable the Lemonade AI server. Also enables nix-ld
+        (overridable via `programs.nix-ld.enable`) so runtime-downloaded omni
+        backends — e.g. the kokoro TTS ELF — can find a dynamic loader.
+      '';
     };
 
     enableROCm = mkOption {
@@ -319,6 +323,12 @@ in {
       ]
       ++ optional (cfg.enableLemonade && cfg.enableImageGen) pkgs.stable-diffusion-cpp;
 
+    # koko (kokoro TTS) is a runtime-downloaded prebuilt ELF that asks for
+    # /lib64/ld-linux-x86-64.so.2; nix-ld swaps the stub for a real loader, and
+    # its default libraries already cover koko's needs (openssl, gcc-libs).
+    # mkDefault so hosts managing nix-ld themselves can still opt out.
+    programs.nix-ld.enable = mkIf cfg.enableLemonade (mkDefault true);
+
     # Lemonade systemd service
     systemd.services.lemond = mkIf cfg.enableLemonade {
       description = "Lemonade AI Server";
@@ -349,6 +359,12 @@ in {
           # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
           # New in FLM 0.9.41.
           FLM_DISABLE_UPDATE_CHECK = "1";
+        }
+        // optionalAttrs config.programs.nix-ld.enable {
+          # nix-ld exports these only as session vars; the unit doesn't inherit
+          # them, so koko's loader can't find them without re-exporting here.
+          NIX_LD = config.environment.sessionVariables.NIX_LD;
+          NIX_LD_LIBRARY_PATH = config.environment.sessionVariables.NIX_LD_LIBRARY_PATH;
         };
       serviceConfig = {
         Type = "simple";
@@ -358,6 +374,8 @@ in {
         RestartSec = "5s";
         KillSignal = "SIGINT";
         LimitMEMLOCK = "infinity";
+        # WhisperServer resolves its writable runtime dir from RUNTIME_DIRECTORY.
+        RuntimeDirectory = "lemond";
       };
     };
   };
