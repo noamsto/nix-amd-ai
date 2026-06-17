@@ -77,6 +77,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create PR
+        id: pr
         if: steps.check.outputs.needs_update == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -128,4 +129,19 @@ jobs:
 
           BODY+=$'\n'"**Note:** Hashes may need manual correction if auto-prefetch failed."
 
-          echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -
+          PR_URL=$(echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -)
+          echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
+
+      # Auto-merge only the clean path: this job already built the 4 packages and
+      # ran flake check on the bumped tree, so build success here IS the gate.
+      # MTP hand-bumps still build green with a stale override, so they stay for
+      # review. The push to main then triggers build.yml's release job.
+      - name: Auto-merge clean bumps
+        if: |
+          steps.pr.outputs.pr_url != '' &&
+          steps.flake_check.outputs.status == 'pass' &&
+          steps.build.outputs.failed == '' &&
+          steps.check.outputs.mtp_override_needs_update != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh pr merge --squash --delete-branch "${{ steps.pr.outputs.pr_url }}"
