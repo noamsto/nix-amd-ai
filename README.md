@@ -156,6 +156,8 @@ The lemonade source build deliberately doesn't bundle backend `llama-server` / `
 | `enableVulkan` | `llamacpp:vulkan`, `whispercpp:vulkan` |
 | `enableImageGen` (default true) | Gates all `sd-cpp:*` packages; turn off for ~150 MB CPU / ~1.5 GB ROCm savings on headless LLM-only hosts |
 
+Omni models (e.g. `LMX-Omni-*`) pull in two backends that need extra host plumbing the module wires automatically with `enableLemonade` ([#33](https://github.com/noamsto/nix-amd-ai/issues/33)): `whispercpp` resolves its writable runtime dir from the unit's `RuntimeDirectory`, and the runtime-downloaded kokoro TTS binary is a foreign prebuilt ELF, so the module enables `nix-ld` (its default libraries already cover koko's openssl + gcc-libs) and re-exports `NIX_LD*` into the `lemond` service. nix-ld is set via `mkDefault`, so hosts managing it themselves can opt out.
+
 Lemonade v10.4.0 added an experimental `llamacpp:vllm` (vLLM ROCm) backend for Strix Halo / Strix Point on Linux. We don't wire it: on Strix Point gfx1150 our benchmarks already show Vulkan ahead of ROCm for both prefill and decode, vLLM's batching wins don't apply to single-user lemonade workloads, and upstream still distributes it as a TheRock-style prebuilt blob with no env-var migration. Revisit when it leaves experimental, when a Strix Halo host lands here, or if anyone benchmarks it past Vulkan on gfx1150.
 
 Vanilla v10.5.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
