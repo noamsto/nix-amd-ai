@@ -227,7 +227,8 @@ in {
       }
       {
         assertion =
-          cfg.gpuMemory.pagePoolSizeGiB == null
+          cfg.gpuMemory.pagePoolSizeGiB
+          == null
           || cfg.gpuMemory.ttmSizeGiB == null
           || cfg.gpuMemory.pagePoolSizeGiB <= cfg.gpuMemory.ttmSizeGiB;
         message = "hardware.amd-npu.gpuMemory.pagePoolSizeGiB must be <= ttmSizeGiB.";
@@ -297,11 +298,12 @@ in {
 
     # System packages.
     #
-    # The GPU-enabled llama-cpp / whisper-cpp variants are listed BEFORE the
-    # CPU variants so that a `llama-server` / `whisper-server` invoked through
-    # PATH points at the GPU build. nixpkgs buildEnv merges packages in
-    # declaration order, and the first package providing a given relative path
-    # wins; declaring CPU first would shadow the GPU binaries.
+    # The llama-cpp / whisper-cpp / stable-diffusion-cpp engines are deliberately
+    # NOT installed here. Each ships its ggml backend .so files in $out/bin, and
+    # putting those on the system PATH makes glib's GIO module loader dlopen them
+    # as plugins and spam "Failed to load module" on every glib app. Nothing needs
+    # them on PATH: lemond reads its backends from the /etc/lemonade/backends/*
+    # symlinks below, and other consumers reference them by store path directly.
     environment.systemPackages =
       [
         pkgs.pciutils
@@ -310,18 +312,7 @@ in {
       ++ optional cfg.enableNPU xrt-combined
       ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
       ++ optional cfg.enableLemonade lemonadePackage
-      ++ optional cfg.enableROCm pkgs.rocmPackages.clr
-      ++ optional cfg.enableROCm pkgs.llama-cpp-rocm
-      ++ optional (cfg.enableROCm && cfg.enableImageGen) pkgs.stable-diffusion-cpp-rocm
-      ++ optionals cfg.enableVulkan [
-        pkgs.llama-cpp-vulkan
-        pkgs.whisper-cpp-vulkan
-      ]
-      ++ optionals cfg.enableLemonade [
-        pkgs.llama-cpp
-        pkgs.whisper-cpp
-      ]
-      ++ optional (cfg.enableLemonade && cfg.enableImageGen) pkgs.stable-diffusion-cpp;
+      ++ optional cfg.enableROCm pkgs.rocmPackages.clr;
 
     # koko (kokoro TTS) is a runtime-downloaded prebuilt ELF that asks for
     # /lib64/ld-linux-x86-64.so.2; nix-ld swaps the stub for a real loader, and
