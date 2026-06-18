@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf mkDefault types optionalString optional optionals optionalAttrs makeBinPath versionAtLeast concatStringsSep;
+  inherit (lib) mkEnableOption mkOption mkIf mkDefault types optionalString optional optionals optionalAttrs versionAtLeast concatStringsSep;
   cfg = config.hardware.amd-npu;
 
   # The Tauri desktop app is the only part of lemonade that pulls a Rust/npm
