@@ -312,6 +312,39 @@
                 || { echo "missing/changed NIX_LD_LIBRARY_PATH"; exit 1; }
               touch $out
             '';
+
+            # The /etc/lemonade/backends/* symlinks exist only to feed lemond, so
+            # they must not appear when enableLemonade is off — even with ROCm and
+            # Vulkan on. Reads environment.etc attr names only, so it skips the
+            # bootloader/root-fs stubs (and engine builds) the other checks force
+            # via system.build.etc.
+            module-eval-lemonade-false = let
+              etcNames =
+                builtins.concatStringsSep "\n"
+                (builtins.attrNames
+                  (inputs.nixpkgs.lib.nixosSystem {
+                    inherit system;
+                    modules = [
+                      inputs.self.nixosModules.default
+                      {
+                        hardware.amd-npu = {
+                          enable = true;
+                          enableLemonade = false;
+                          enableROCm = true;
+                          enableVulkan = true;
+                          lemonade.user = "testuser";
+                        };
+                      }
+                    ];
+                  }).config.environment.etc);
+            in
+              pkgs.runCommand "module-eval-lemonade-false" {inherit etcNames;} ''
+                if echo "$etcNames" | grep -q 'lemonade/backends'; then
+                  echo "enableLemonade=false must not create lemonade/backends symlinks"
+                  exit 1
+                fi
+                touch $out
+              '';
           }
           else {
             # Force the nix-darwin module to evaluate and assert the launchd
