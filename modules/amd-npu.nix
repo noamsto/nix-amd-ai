@@ -55,13 +55,13 @@
     // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {
       "lemonade/backends/sdcpp-cpu".source = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
     }
-    // optionalAttrs cfg.enableROCm {
+    // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
       "lemonade/backends/llamacpp-rocm".source = "${pkgs.llama-cpp-rocm}/bin/llama-server";
     }
-    // optionalAttrs (cfg.enableROCm && cfg.enableImageGen) {
+    // optionalAttrs (cfg.enableLemonade && cfg.enableROCm && cfg.enableImageGen) {
       "lemonade/backends/sdcpp-rocm".source = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
     }
-    // optionalAttrs cfg.enableVulkan {
+    // optionalAttrs (cfg.enableLemonade && cfg.enableVulkan) {
       "lemonade/backends/llamacpp-vulkan".source = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
       "lemonade/backends/whispercpp-vulkan".source = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
     };
