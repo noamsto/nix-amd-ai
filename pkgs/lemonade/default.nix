@@ -90,7 +90,8 @@ in stdenv.mkDerivation {
     # $out/{bin,lib/systemd/system}/ and the NixOS module wires them in.
     sed -i '/Create symlink in standard bin path only if not installing to/,/^endif()$/d' \
       src/cpp/cli/CMakeLists.txt
-    sed -i '/Create symlink in standard systemd search path only if not installing to/,/^    endif()$/d' CMakeLists.txt
+    # singular/plural tolerant: v10.8.1 pluralized the comment ("symlinks ... search paths").
+    sed -i '/Create symlinks\? in standard systemd search paths\? only if not installing to/,/^    endif()$/d' CMakeLists.txt
 
     # secrets.conf install rule writes to absolute /etc/lemonade/conf.d. The
     # NixOS module is what owns /etc, not us — relocate the template under
