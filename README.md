@@ -279,6 +279,20 @@ nix shell .#ds4 -c ds4-server --ctx 100000            # OpenAI-compatible server
 
 The engine only; bring your own GGUF (see upstream [`STRIXHALO.md`](https://github.com/antirez/ds4/blob/main/STRIXHALO.md) for the recommended `DeepSeek-V4-Flash` quant and the host GTT/`ttm.pages_limit` kernel tuning). Upstream ships no releases, so `pkgs/ds4/default.nix` pins a commit and is bumped manually — CI builds it but `scripts/check-updates.sh` doesn't track it.
 
+To run `ds4-server` as a managed systemd unit, enable it via the module:
+
+```nix
+hardware.amd-npu.ds4 = {
+  enable = true;
+  user = "youruser";                                  # must be in render + video
+  model = "/var/lib/ds4/DeepSeek-V4-Flash.gguf";       # runtime path, not store-copied
+  ctx = 100000;
+  extraArgs = ["--ssd-streaming" "--kv-disk-dir" "/var/lib/ds4/server-kv"];
+};
+```
+
+Binds `127.0.0.1:8000` by default (`host`/`port`); the unit runs with `render`/`video` GPU access, `LimitMEMLOCK=infinity`, and a writable `/var/lib/ds4` (StateDirectory) for the optional SSD-streaming KV cache. Retarget another AMD GPU with `package = pkgs.ds4.override { gpuTarget = "gfx1103"; }` (experimental — upstream only validates gfx1151).
+
 All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600). Prompt 256 tokens, generation 128 tokens, 3 iterations after 1 warmup.
 
 ### Large: Gemma-4-26B-A4B-it-GGUF (~15.7 GB, via `llama-bench`, llama.cpp b8770)

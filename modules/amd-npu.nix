@@ -182,6 +182,68 @@ in {
       };
     };
 
+    ds4 = {
+      enable = mkEnableOption "the ds4-server DeepSeek V4 inference server as a systemd unit";
+
+      package = mkOption {
+        type = types.package;
+        default = pkgs.ds4;
+        defaultText = lib.literalExpression "pkgs.ds4";
+        description = ''
+          ds4 package providing `ds4-server`. Override to retarget the ROCm
+          backend, e.g. `pkgs.ds4.override { gpuTarget = "gfx1103"; }`.
+        '';
+      };
+
+      model = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "/var/lib/ds4/DeepSeek-V4-Flash.gguf";
+        description = ''
+          Path to the DeepSeek V4 GGUF served by ds4-server. A runtime path,
+          deliberately a string so it is not copied into the Nix store.
+          Required when `ds4.enable` is set.
+        '';
+      };
+
+      ctx = mkOption {
+        type = types.nullOr types.ints.positive;
+        default = null;
+        description = "Allocated context tokens (`--ctx`). null leaves the ds4-server default.";
+      };
+
+      host = mkOption {
+        type = types.str;
+        default = "127.0.0.1";
+        description = "Bind address for ds4-server (`--host`).";
+      };
+
+      port = mkOption {
+        type = types.port;
+        default = 8000;
+        description = "Bind port for ds4-server (`--port`).";
+      };
+
+      user = mkOption {
+        type = types.str;
+        description = ''
+          User account to run ds4-server as. Must be in the `render` and
+          `video` groups for ROCm GPU access.
+        '';
+      };
+
+      extraArgs = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = ["--ssd-streaming" "--kv-disk-dir" "/var/lib/ds4/server-kv"];
+        description = ''
+          Extra arguments appended to the ds4-server command line — e.g.
+          `--ssd-streaming` with its `--kv-disk-*` flags, or `--threads`. The
+          unit provides a writable `/var/lib/ds4` via StateDirectory.
+        '';
+      };
+    };
+
     gpuMemory = {
       ttmSizeGiB = mkOption {
         type = types.nullOr types.ints.positive;
@@ -224,6 +286,10 @@ in {
       {
         assertion = cfg.gpuMemory.pagePoolSizeGiB == null || cfg.gpuMemory.ttmSizeGiB != null;
         message = "hardware.amd-npu.gpuMemory.pagePoolSizeGiB requires ttmSizeGiB to be set.";
+      }
+      {
+        assertion = !cfg.ds4.enable || cfg.ds4.model != null;
+        message = "hardware.amd-npu.ds4.enable requires hardware.amd-npu.ds4.model (path to a DeepSeek V4 GGUF).";
       }
       {
         assertion =
@@ -367,6 +433,37 @@ in {
         LimitMEMLOCK = "infinity";
         # WhisperServer resolves its writable runtime dir from RUNTIME_DIRECTORY.
         RuntimeDirectory = "lemond";
+      };
+    };
+
+    # ds4-server: OpenAI-compatible DeepSeek V4 server. The package is
+    # self-contained (rpath covers the ROCm libs), so it needs no LD_LIBRARY_PATH
+    # like lemond — only GPU device access (render/video) and a writable state
+    # dir for the optional SSD-streaming KV cache.
+    systemd.services.ds4-server = mkIf cfg.ds4.enable {
+      description = "ds4 DeepSeek V4 inference server";
+      after = ["network-online.target"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.ds4.user;
+        SupplementaryGroups = ["video" "render"];
+        ExecStart = concatStringsSep " " (
+          [
+            "${cfg.ds4.package}/bin/ds4-server"
+            "--model ${cfg.ds4.model}"
+            "--host ${cfg.ds4.host}"
+            "--port ${toString cfg.ds4.port}"
+          ]
+          ++ optional (cfg.ds4.ctx != null) "--ctx ${toString cfg.ds4.ctx}"
+          ++ cfg.ds4.extraArgs
+        );
+        Restart = "on-failure";
+        RestartSec = "5s";
+        KillSignal = "SIGINT";
+        LimitMEMLOCK = "infinity";
+        StateDirectory = "ds4";
       };
     };
   };
