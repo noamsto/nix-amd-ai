@@ -38,7 +38,7 @@
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-MbToo4ydBGiWk8pMF2Rw5awLdI+MZQsSQzlv9SQOmy8=";
+    hash = "sha256-HGJ4TNrt7CAxP8RpMLERFRpq4mX9b4ooQTVjCdn+3y8=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
