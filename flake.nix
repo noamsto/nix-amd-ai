@@ -78,6 +78,7 @@
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            ds4 = pinned.callPackage ./pkgs/ds4 {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
@@ -118,6 +119,7 @@
         in {
           inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+          ds4 = pkgs.callPackage ./pkgs/ds4 {};
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;

@@ -16,6 +16,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
+| `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`, `gaia-emr`, `gaia-code`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
@@ -267,7 +268,16 @@ The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching
 
 Bump the pinned version in `pkgs/gaia/default.nix` when a new GAIA release lands and you want it. CI doesn't auto-bump GAIA today (only lemonade / fastflowlm / xdna are wired into `scripts/check-updates.sh`).
 
-## Which backend should I use?
+## ds4 (DeepSeek V4 on Strix Halo)
+
+[ds4](https://github.com/antirez/ds4) is antirez's self-contained native inference engine for DeepSeek V4. It is deliberately narrow — not a generic GGUF runner — and its ROCm backend targets Strix Halo (`gfx1151`) only, so the package is `x86_64-linux` + AMD-hardware specific and pins `gfx1151` via the `gpuTarget` argument.
+
+```bash
+nix run .#ds4 -- -m /path/to/DeepSeek-V4-Flash.gguf   # interactive chat
+nix shell .#ds4 -c ds4-server --ctx 100000            # OpenAI-compatible server
+```
+
+The engine only; bring your own GGUF (see upstream [`STRIXHALO.md`](https://github.com/antirez/ds4/blob/main/STRIXHALO.md) for the recommended `DeepSeek-V4-Flash` quant and the host GTT/`ttm.pages_limit` kernel tuning). Upstream ships no releases, so `pkgs/ds4/default.nix` pins a commit and is bumped manually — CI builds it but `scripts/check-updates.sh` doesn't track it.
 
 All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600). Prompt 256 tokens, generation 128 tokens, 3 iterations after 1 warmup.
 
