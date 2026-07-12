@@ -141,7 +141,7 @@ hardware.amd-npu = {
 
 ## What the module configures
 
-- Kernel params (`iommu.passthrough=0`) and modules (`amdxdna`)
+- Kernel modules (`amdxdna`)
 - Udev rules for NPU device access
 - PAM limits (unlimited memlock for NPU buffer allocation)
 - XRT + plugin merged tree for runtime plugin discovery
@@ -218,12 +218,18 @@ CPU and OS still need their share (the 120/128 example keeps a margin).
 ### `amd_iommu=off` would kill the NPU
 
 The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
-**Do not do this on a host that uses the NPU.** amdxdna binds the NPU through
-IOMMU SVA/PASID (`iommu_sva_bind_device`, IOMMU group 25, IOMMU in *Translated*
-mode); `amd_iommu=off` or `iommu.passthrough=1` makes the bind fail
-(`*ERROR* Can not assign PASID` / `SVA get pasid failed`) and the NPU dies. The
-module already pins `iommu.passthrough=0` for this reason. `amd_iommu=off` is
-only viable on a GPU-only host that has given up XDNA.
+**Do not do this on a host that uses the NPU.** amdxdna needs the IOMMU present
+for PASID; with `amd_iommu=off` there is no IOMMU at all and the NPU dies.
+`amd_iommu=off` is only viable on a GPU-only host that has given up XDNA.
+
+The IOMMU default-domain *mode* is a separate knob. amdxdna historically
+required *Translated* mode (SVA/PASID), so the module used to pin
+`iommu.passthrough=0`. Since the June 2026 amdxdna fix (upstream `5b96159`,
+"skip PASID tag in non-SVA mode") the driver no longer tags DMA with an invalid
+PASID under an identity default domain, so the NPU works with `iommu=pt` too.
+The module no longer forces the mode — it leaves the kernel default (Translated
+on NixOS), and hosts that want passthrough for a memory-read win can set
+`iommu=pt` themselves.
 
 ### CPU performance tuning (not implemented — pending A/B)
 
