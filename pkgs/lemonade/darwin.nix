@@ -15,7 +15,7 @@ in
     # user cache at first run, exactly as the official .pkg does.
     src = fetchurl {
       url = "https://github.com/lemonade-sdk/lemonade/releases/download/v${version}/lemonade-embeddable-${version}-macos-arm64.tar.gz";
-      hash = "sha256-JIK+lSCWTWbUFf6/6x7nCy4AZn+dm7dg4xIRUS0J80s=";
+      hash = "sha256-KvG7raJIwCnVv65b5LyDTjcMmqdmuZhXf1yTbJQGhlg=";
     };
 
     # The Mach-O binaries are adhoc-signed and link only against system
