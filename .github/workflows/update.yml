@@ -135,7 +135,9 @@ jobs:
       # Auto-merge only the clean path: this job already built the 4 packages and
       # ran flake check on the bumped tree, so build success here IS the gate.
       # MTP hand-bumps still build green with a stale override, so they stay for
-      # review. The push to main then triggers build.yml's release job.
+      # review. The merge runs under RELEASE_PAT, not the default GITHUB_TOKEN,
+      # because pushes made by GITHUB_TOKEN do not trigger other workflows — the
+      # resulting push to main must fire build.yml (darwin build + release job).
       - name: Auto-merge clean bumps
         if: |
           steps.pr.outputs.pr_url != '' &&
@@ -143,5 +145,5 @@ jobs:
           steps.build.outputs.failed == '' &&
           steps.check.outputs.mtp_override_needs_update != 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: gh pr merge --squash --delete-branch "${{ steps.pr.outputs.pr_url }}"
