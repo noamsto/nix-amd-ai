@@ -75,14 +75,15 @@
             llama-cpp-rocm = pinned.llama-cpp-rocm;
             whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
+            stable-diffusion-cpp-vulkan = pinned.stable-diffusion-cpp.override {vulkanSupport = true;};
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-              inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+              inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
               inherit (pinned) whisper-cpp stable-diffusion-cpp;
             };
             gaia = pinned.callPackage ./pkgs/gaia {};
@@ -115,15 +116,16 @@
           llama-cpp-rocm = pkgs.llama-cpp-rocm;
           whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
+          stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};
           libwebsockets = libwebsocketsOverride pkgs;
         in {
           inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
           ds4 = pkgs.callPackage ./pkgs/ds4 {};
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             whisper-cpp = pkgs.whisper-cpp;
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };

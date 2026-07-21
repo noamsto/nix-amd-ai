@@ -64,6 +64,9 @@
     // optionalAttrs (cfg.enableLemonade && cfg.enableVulkan) {
       "lemonade/backends/llamacpp-vulkan".source = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
       "lemonade/backends/whispercpp-vulkan".source = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
+    }
+    // optionalAttrs (cfg.enableLemonade && cfg.enableVulkan && cfg.enableImageGen) {
+      "lemonade/backends/sdcpp-vulkan".source = "${pkgs.stable-diffusion-cpp-vulkan}/bin/sd-server";
     };
 
   # defaults.json seed that lemonade's get_defaults() merges over its packaged
@@ -87,7 +90,8 @@
     // optionalAttrs cfg.enableImageGen {
       sdcpp =
         {cpu_bin = lemonadeBackendBin "sdcpp-cpu";}
-        // optionalAttrs cfg.enableROCm {rocm_bin = lemonadeBackendBin "sdcpp-rocm";};
+        // optionalAttrs cfg.enableROCm {rocm_bin = lemonadeBackendBin "sdcpp-rocm";}
+        // optionalAttrs cfg.enableVulkan {vulkan_bin = lemonadeBackendBin "sdcpp-vulkan";};
     };
   lemonadeDefaultsFile = (pkgs.formats.json {}).generate "lemonade-defaults.json" lemonadeDefaults;
 in {
@@ -133,10 +137,10 @@ in {
       type = types.bool;
       default = true;
       description = ''
-        Whether to wire stable-diffusion.cpp recipes (sd-cpp:cpu and, when
-        enableROCm is true, sd-cpp:rocm) into lemonade. Disable to drop
-        ~150 MB CPU-only / ~1.5 GB with ROCm from the closure if you only
-        use lemonade for LLM inference.
+        Whether to wire stable-diffusion.cpp recipes (sd-cpp:cpu, plus
+        sd-cpp:rocm when enableROCm and sd-cpp:vulkan when enableVulkan) into
+        lemonade. Disable to drop ~150 MB CPU-only / ~1.5 GB with ROCm from
+        the closure if you only use lemonade for LLM inference.
       '';
     };
 

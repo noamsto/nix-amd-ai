@@ -27,6 +27,7 @@
   whisper-cpp-vulkan,
   stable-diffusion-cpp,
   stable-diffusion-cpp-rocm,
+  stable-diffusion-cpp-vulkan,
   # Default-on opt-out flags. Headless / server-only consumers can flip these
   # off via .override to skip the npm/Rust builds and shrink the closure.
   withWebApp ? true,
@@ -165,7 +166,8 @@ in stdenv.mkDerivation {
           | .whispercpp.cpu = "v${whisper-cpp.version}"
           | .whispercpp.vulkan = "v${whisper-cpp-vulkan.version}"
           | ."sd-cpp".cpu = "${stable-diffusion-cpp.version}"
-          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"' \
+          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"
+          | ."sd-cpp".vulkan = "${stable-diffusion-cpp-vulkan.version}"' \
         src/cpp/resources/backend_versions.json > src/cpp/resources/backend_versions.json.tmp
       mv src/cpp/resources/backend_versions.json.tmp src/cpp/resources/backend_versions.json
     fi
