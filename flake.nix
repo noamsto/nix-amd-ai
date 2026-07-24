@@ -8,6 +8,10 @@
       url = "github:nix-darwin/nix-darwin";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    flake-compat = {
+      url = "github:NixOS/flake-compat";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {flake-parts, ...}: let
@@ -71,13 +75,15 @@
             llama-cpp-rocm = pinned.llama-cpp-rocm;
             whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
+            stable-diffusion-cpp-vulkan = pinned.stable-diffusion-cpp.override {vulkanSupport = true;};
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+            ds4 = pinned.callPackage ./pkgs/ds4 {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-              inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+              inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
               inherit (pinned) whisper-cpp stable-diffusion-cpp;
             };
             gaia = pinned.callPackage ./pkgs/gaia {};
@@ -111,20 +117,23 @@
           llama-cpp-rocm = pkgs.llama-cpp-rocm;
           whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
+          stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};
           libwebsockets = libwebsocketsOverride pkgs;
         in {
           inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+          ds4 = pkgs.callPackage ./pkgs/ds4 {};
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm;
+            inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             whisper-cpp = pkgs.whisper-cpp;
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
           gaia = pkgs.callPackage ./pkgs/gaia {};
           vllm-rocm = pkgs.callPackage ./pkgs/vllm-rocm {};
           lemond-unit = lemondUnit;
+          ds4-server-unit = ds4ServerUnit;
         };
 
         # macOS: server-only Lemonade wrap (Metal backend, fetched at runtime).
@@ -157,6 +166,37 @@
               }
             ];
           }).config.systemd.units."lemond.service".unit;
+
+        # Rendered ds4-server.service for a minimal ds4.enable host — consumed by
+        # the ds4-server-unit-render check.
+        ds4ServerUnit =
+          (inputs.nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              inputs.self.nixosModules.default
+              {
+                boot.loader.grub.enable = false;
+                fileSystems."/" = {
+                  device = "/dev/sda1";
+                  fsType = "ext4";
+                };
+                hardware.amd-npu = {
+                  enable = true;
+                  ds4 = {
+                    enable = true;
+                    user = "testuser";
+                    model = "/var/lib/ds4/DeepSeek-V4-Flash.gguf";
+                    ctx = 100000;
+                    extraArgs = ["--ssd-streaming"];
+                  };
+                };
+                users.users.testuser = {
+                  isNormalUser = true;
+                  extraGroups = ["video" "render"];
+                };
+              }
+            ];
+          }).config.systemd.units."ds4-server.service".unit;
       in {
         packages =
           (
@@ -345,6 +385,22 @@
                 || { echo "missing/changed NIX_LD"; exit 1; }
               grep -q 'NIX_LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib' "$unit" \
                 || { echo "missing/changed NIX_LD_LIBRARY_PATH"; exit 1; }
+              touch $out
+            '';
+
+            # ds4-server assembles its argv from the ds4.* options: the model
+            # path, ctx, host/port, and passthrough extraArgs must all land on
+            # the ExecStart line, and the unit must grant render/video GPU
+            # access plus a writable state dir.
+            ds4-server-unit-render = pkgs.runCommand "ds4-server-unit-render" {} ''
+              unit=${ds4ServerUnit}/ds4-server.service
+              grep -q -- '--model /var/lib/ds4/DeepSeek-V4-Flash.gguf' "$unit" || { echo "missing/changed --model"; exit 1; }
+              grep -q -- '--ctx 100000' "$unit" || { echo "missing/changed --ctx"; exit 1; }
+              grep -q -- '--port 8000' "$unit" || { echo "missing/changed --port"; exit 1; }
+              grep -q -- '--ssd-streaming' "$unit" || { echo "missing extraArgs passthrough"; exit 1; }
+              grep -q 'SupplementaryGroups=video' "$unit" || { echo "missing video group"; exit 1; }
+              grep -q 'SupplementaryGroups=render' "$unit" || { echo "missing render group"; exit 1; }
+              grep -q 'StateDirectory=ds4' "$unit" || { echo "missing StateDirectory"; exit 1; }
               touch $out
             '';
 

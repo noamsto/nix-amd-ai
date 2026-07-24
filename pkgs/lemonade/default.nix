@@ -27,6 +27,7 @@
   whisper-cpp-vulkan,
   stable-diffusion-cpp,
   stable-diffusion-cpp-rocm,
+  stable-diffusion-cpp-vulkan,
   # Default-on opt-out flags. Headless / server-only consumers can flip these
   # off via .override to skip the npm/Rust builds and shrink the closure.
   withWebApp ? true,
@@ -38,7 +39,7 @@
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-RxTPr9pZ5zfvUkp8xFqH4nsyZn48po2UOFAEbIO0rdE=";
+    hash = "sha256-+8XPbD3faUlJKI2GLlXx1puJLrLXfaDBQzrVjfixOao=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
@@ -90,7 +91,8 @@ in stdenv.mkDerivation {
     # $out/{bin,lib/systemd/system}/ and the NixOS module wires them in.
     sed -i '/Create symlink in standard bin path only if not installing to/,/^endif()$/d' \
       src/cpp/cli/CMakeLists.txt
-    sed -i '/Create symlink in standard systemd search path only if not installing to/,/^    endif()$/d' CMakeLists.txt
+    # singular/plural tolerant: v10.8.1 pluralized the comment ("symlinks ... search paths").
+    sed -i '/Create symlinks\? in standard systemd search paths\? only if not installing to/,/^    endif()$/d' CMakeLists.txt
 
     # secrets.conf install rule writes to absolute /etc/lemonade/conf.d. The
     # NixOS module is what owns /etc, not us — relocate the template under
@@ -137,6 +139,20 @@ in stdenv.mkDerivation {
                     }
                     return true;'
 
+    # Never fetch lemonade's downloaded "TheRock" ROCm runtime: it prepends its
+    # lib/ to LD_LIBRARY_PATH for rocm-stable, shadowing our nix sd-server /
+    # llama-server's own ROCm libs (same sonames) with TheRock copies that need
+    # libatomic.so.1 — absent on NixOS, so the loader exits 127 (#57). Forcing
+    # will_install_therock() false skips the download; with no TheRock dir,
+    # get_therock_lib_path() returns "" and every injection site falls back to
+    # the binary's RUNPATH. Keep the therock key so get_therock_version() lookups
+    # don't throw.
+    substituteInPlace src/cpp/server/backend_manager.cpp \
+      --replace-fail \
+        'bool will_install_therock(const std::string& os, const json& backend_versions) {' \
+        'bool will_install_therock(const std::string& os, const json& backend_versions) {
+    return false;  // nix-amd-ai#57: ship self-contained ROCm binaries, never fetch TheRock'
+
     # Pin backend_versions.json to whatever fastflowlm / llama-cpp /
     # whisper-cpp / sd-cpp builds we ship, so lemonade's "installed vs
     # needs update" check stays satisfied and it doesn't try to download
@@ -150,7 +166,8 @@ in stdenv.mkDerivation {
           | .whispercpp.cpu = "v${whisper-cpp.version}"
           | .whispercpp.vulkan = "v${whisper-cpp-vulkan.version}"
           | ."sd-cpp".cpu = "${stable-diffusion-cpp.version}"
-          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"' \
+          | ."sd-cpp"."rocm-stable" = "${stable-diffusion-cpp-rocm.version}"
+          | ."sd-cpp".vulkan = "${stable-diffusion-cpp-vulkan.version}"' \
         src/cpp/resources/backend_versions.json > src/cpp/resources/backend_versions.json.tmp
       mv src/cpp/resources/backend_versions.json.tmp src/cpp/resources/backend_versions.json
     fi
