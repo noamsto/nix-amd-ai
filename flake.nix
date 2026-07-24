@@ -81,6 +81,7 @@
               inherit (pinned) whisper-cpp stable-diffusion-cpp;
             };
             gaia = pinned.callPackage ./pkgs/gaia {};
+            vllm-rocm = pinned.callPackage ./pkgs/vllm-rocm {};
           };
 
         nixosModules.default = {
@@ -122,6 +123,7 @@
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
           gaia = pkgs.callPackage ./pkgs/gaia {};
+          vllm-rocm = pkgs.callPackage ./pkgs/vllm-rocm {};
           lemond-unit = lemondUnit;
         };
 
