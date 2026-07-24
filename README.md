@@ -258,13 +258,12 @@ installed", and lists no FLM models even after `flm pull`. The module now seeds
 
 A **cached `~/.cache/lemonade/config.json` wins over that seed** (lemonade merges
 user config over defaults), so hosts that ran an older lemonade keep the stale
-`prefer_system: false`. Fix an existing host once, after rebuilding:
+`prefer_system: false`. Fix an existing host once, after rebuilding, by deleting
+the cached config so the module's defaults reseed it:
 
 ```bash
-# either flip the flag in place…
-jq '.flm.prefer_system = true' ~/.cache/lemonade/config.json | sponge ~/.cache/lemonade/config.json
+rm ~/.cache/lemonade/config.json
 sudo systemctl restart lemond
-# …or delete config.json to let the module's defaults reseed it
 ```
 
 See [#62](https://github.com/noamsto/nix-amd-ai/issues/62).
