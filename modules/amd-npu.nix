@@ -77,7 +77,14 @@
   # their env hook when v10.7.0 removed migrate_from_env.
   lemonadeDefaults =
     {
-      global_timeout = 0;
+      # 0 disables lemond's 300s request cutoff for llama.cpp (lemonade#1364).
+      # But vLLM passes this same value as its startup-readiness timeout, where
+      # 0 means "0 attempts" and the server never gets time to boot — so give it
+      # a large finite window instead. See noamsto/nix-amd-ai#63.
+      global_timeout =
+        if cfg.enableVllm
+        then 3600
+        else 0;
       llamacpp =
         {
           args = "--flash-attn ${cfg.lemonade.flashAttn}";
