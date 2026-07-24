@@ -152,7 +152,7 @@ in {
       type = types.bool;
       default = false;
       description = ''
-        Whether to wire the vLLM ROCm backend (llamacpp:vllm) into lemonade,
+        Whether to wire the vLLM ROCm backend (vllm:rocm) into lemonade,
         repackaged from the upstream lemonade-sdk/vllm-rocm prebuilt. Requires
         enableROCm. Strix Halo (gfx1151) needs a kernel with the CWSR fix;
         lemonade reports vllm:rocm as unsupported otherwise. Experimental —
