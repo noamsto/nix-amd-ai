@@ -248,6 +248,27 @@ confirms whether the wiki's numbers reproduce on Strix Point. Tracked in
 
 ## Troubleshooting
 
+### FLM models don't appear / `flm:npu` reports "not installed" after enabling FastFlowLM
+
+Lemonade v10.10.0 stopped auto-discovering a `flm` on `PATH`; it now only looks
+there when `flm.prefer_system` is set in `config.json`. Without it, `lemond`
+ignores the nix-provided `flm`, marks the NPU backend `installable`/"not
+installed", and lists no FLM models even after `flm pull`. The module now seeds
+`flm.prefer_system = true` (with `enableFastFlowLM`), so fresh installs work.
+
+A **cached `~/.cache/lemonade/config.json` wins over that seed** (lemonade merges
+user config over defaults), so hosts that ran an older lemonade keep the stale
+`prefer_system: false`. Fix an existing host once, after rebuilding:
+
+```bash
+# either flip the flag in place…
+jq '.flm.prefer_system = true' ~/.cache/lemonade/config.json | sponge ~/.cache/lemonade/config.json
+sudo systemctl restart lemond
+# …or delete config.json to let the module's defaults reseed it
+```
+
+See [#62](https://github.com/noamsto/nix-amd-ai/issues/62).
+
 ### `amdxdna ... aie2_get_info: Not supported request parameter N` in dmesg/journald
 
 Harmless. `aie2_get_info` handles the NPU's `GET_INFO` ioctl, and the mainline `amdxdna` driver implements only a subset of query types (AIE status/version/metadata, clock, hw-contexts). When userspace (`xrt-smi`, a system monitor, or the lemonade/FastFlowLM init path) probes a power/sensor/telemetry param the driver doesn't implement yet, it returns `-EOPNOTSUPP` and logs that `*ERROR*` line — often on a timer, so it repeats. NPU inference is unaffected. Upstream is filling in the missing queries (power reporting ~Linux 7.1, hwmon exposure tracked in [xdna-driver#323](https://github.com/amd/xdna-driver/issues/323)); a newer kernel makes the line disappear.

@@ -84,6 +84,12 @@
         {cpu_bin = lemonadeBackendBin "whispercpp-cpu";}
         // optionalAttrs cfg.enableVulkan {vulkan_bin = lemonadeBackendBin "whispercpp-vulkan";};
     }
+    // optionalAttrs cfg.enableFastFlowLM {
+      # v10.10.0 gates FLM-on-PATH discovery behind this flag; without it lemond
+      # ignores the flm we put on its PATH and reports the NPU backend as "not
+      # installed", so no FLM models list. See noamsto/nix-amd-ai#62.
+      flm.prefer_system = true;
+    }
     // optionalAttrs cfg.enableImageGen {
       sdcpp =
         {cpu_bin = lemonadeBackendBin "sdcpp-cpu";}
