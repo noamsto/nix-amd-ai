@@ -252,6 +252,39 @@
                 ];
               }).config.system.build.etc;
 
+            # enableVllm wiring: evaluate the module and build the generated
+            # lemonade defaults (asserts pass, vllm.rocm_bin seeded, global_timeout
+            # bumped off 0). Targets the defaults JSON rather than system.build.etc
+            # on purpose — the latter would realize the 7.6 GB vllm-rocm bundle,
+            # which no substituter serves.
+            module-eval-vllm =
+              (inputs.nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  inputs.self.nixosModules.default
+                  {
+                    boot.loader.grub.enable = false;
+                    fileSystems."/" = {
+                      device = "/dev/sda1";
+                      fsType = "ext4";
+                    };
+                    hardware.amd-npu = {
+                      enable = true;
+                      enableNPU = false;
+                      enableFastFlowLM = false;
+                      enableLemonade = true;
+                      enableROCm = true;
+                      enableVllm = true;
+                      lemonade.user = "testuser";
+                    };
+                    users.users.testuser = {
+                      isNormalUser = true;
+                      extraGroups = ["video" "render"];
+                    };
+                  }
+                ];
+              }).config.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
+
             # GTT headroom: configured system emits the ttm modprobe line with
             # GiB→page conversion; default system emits no ttm line.
             module-eval-gtt = let
