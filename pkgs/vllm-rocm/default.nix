@@ -4,22 +4,23 @@
 # is far behind ROCm 7.15 and lacks the Strix gfx targets. Lemonade launches the
 # resulting `vllm-server` via the `vllm.rocm_bin` config override wired in the
 # NixOS module. See noamsto/nix-amd-ai#63.
+#
+# NOTE: deliberately NOT autoPatchelf'd. The bundle is self-contained — it ships
+# its own `rocm_sysdeps` (numa/drm/elf/lzma) and resolves its .so via internal
+# $ORIGIN runpaths. autoPatchelfHook rewrites those runpaths and injects nixpkgs
+# libs (gcc-15 libstdc++/libatomic) that mismatch the Ubuntu-built torch, which
+# segfaults on `import torch`. Instead we only repoint the ELF interpreter to the
+# nix loader and supply the two genuinely-missing system libs (libstdc++, libz)
+# via the launcher's LD_LIBRARY_PATH.
 {
   lib,
   stdenv,
   fetchurl,
-  autoPatchelfHook,
+  patchelf,
   makeWrapper,
+  bash,
+  coreutils,
   zlib,
-  zstd,
-  xz,
-  numactl,
-  libdrm,
-  ncurses,
-  elfutils,
-  openssl,
-  libxml2,
-  libGL,
   gpuTarget ? "gfx1150",
 }: let
   sources = import ./sources.nix;
@@ -27,6 +28,8 @@
     sources.${gpuTarget}
     or (throw "vllm-rocm: no prebuilt for gpuTarget '${gpuTarget}' (have: ${lib.concatStringsSep ", " (lib.attrNames sources)})");
   parts = map (p: fetchurl {inherit (p) url hash;}) src.parts;
+  # Ubuntu-built torch/ROCm want these from the system; the bundle omits them.
+  runtimeLibs = lib.makeLibraryPath [stdenv.cc.cc.lib zlib];
 in
   stdenv.mkDerivation {
     pname = "vllm-rocm";
@@ -35,27 +38,7 @@ in
     # Two <2 GB GitHub assets that concatenate into one .tar.gz.
     srcs = parts;
 
-    nativeBuildInputs = [autoPatchelfHook makeWrapper];
-
-    # External libs the bundled ELFs need; the ROCm/torch .so ship inside the
-    # bundle and resolve intra-tree once its own lib dirs are on the runpath.
-    buildInputs = [
-      zlib
-      zstd
-      xz
-      numactl
-      libdrm
-      ncurses
-      elfutils
-      openssl
-      libxml2
-      libGL
-      stdenv.cc.cc.lib
-    ];
-
-    # The bundle carries CUDA/other-vendor stubs it never dlopens on this path;
-    # don't fail the build over their absent deps.
-    autoPatchelfIgnoreMissingDeps = ["*"];
+    nativeBuildInputs = [patchelf makeWrapper];
 
     unpackPhase = ''
       runHook preUnpack
@@ -68,13 +51,50 @@ in
 
     installPhase = ''
       runHook preInstall
-      mkdir -p $out/opt/vllm-rocm
-      cp -r ./* $out/opt/vllm-rocm/
-      # Point lemonade's vllm.rocm_bin here. The bundle's own launcher sets the
-      # ROCm LD_LIBRARY_PATH; wrap it to also expose the interpreter's lib dir.
+      prefix=$out/opt/vllm-rocm
+      mkdir -p $prefix
+      cp -r ./* $prefix/
+
+      # Upstream tars the venv with no exec bits (everything is 0644), so the
+      # interpreter and launchers can't run. Restore +x on the bundled binaries.
+      # The bundled clang matters too: the launcher chmod +x's it at runtime,
+      # which silently no-ops on the read-only store, so pre-mark it here.
+      chmod -R u+x $prefix/bin
+      for d in $prefix/lib/python3.*/site-packages/_rocm_sdk_*/bin \
+               $prefix/lib/python3.*/site-packages/_rocm_sdk_*/lib/llvm/bin; do
+        [ -d "$d" ] && chmod -R u+x "$d"
+      done
+
+      # Repoint the ELF interpreter (FHS /lib64/ld-linux-x86-64.so.2 -> nix
+      # loader) on the executables the launcher actually execs — python3 and the
+      # bundled clang (Triton JIT). Leave every runpath intact.
+      loader=${stdenv.cc.bintools.dynamicLinker}
+      for exe in $prefix/bin/python3 $prefix/bin/python3.* \
+                 $prefix/lib/python3.*/site-packages/_rocm_sdk_*/lib/llvm/bin/clang; do
+        if [ -f "$exe" ] && patchelf --print-interpreter "$exe" >/dev/null 2>&1; then
+          patchelf --set-interpreter "$loader" "$exe"
+        fi
+      done
+
+      # Launcher shebang is #!/bin/bash (FHS); rewrite to the nix bash.
+      patchShebangs $prefix/bin/vllm-server
+
+      # The torch/numpy/scipy/... wheels are auditwheel-repaired: each native ext
+      # carries an $ORIGIN RUNPATH to a sibling *.libs dir. That $ORIGIN doesn't
+      # resolve reliably once relocated into the store, so surface every *.libs
+      # dir on LD_LIBRARY_PATH explicitly.
+      auditLibs=""
+      for d in $prefix/lib/python3.*/site-packages/*.libs; do
+        [ -d "$d" ] && auditLibs="$auditLibs:$d"
+      done
+
+      # lemonade's vllm.rocm_bin points at $out/bin/vllm-server. The launcher
+      # prepends the bundle's ROCm/torch lib dirs to LD_LIBRARY_PATH but relies
+      # on the system for libstdc++/libz; supply those and the coreutils it calls.
       mkdir -p $out/bin
-      makeWrapper $out/opt/vllm-rocm/bin/vllm-server $out/bin/vllm-server \
-        --prefix LD_LIBRARY_PATH : "$out/opt/vllm-rocm/lib"
+      makeWrapper $prefix/bin/vllm-server $out/bin/vllm-server \
+        --prefix PATH : ${lib.makeBinPath [bash coreutils]} \
+        --prefix LD_LIBRARY_PATH : "${runtimeLibs}$auditLibs"
       runHook postInstall
     '';
 
