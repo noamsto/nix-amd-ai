@@ -1,11 +1,13 @@
 #!/usr/bin/env bash
 # Bump package versions in derivation files.
-# Usage: bump-versions.sh <flm_new> <flm_old> <lem_new> <lem_old> <xdna_new> <xdna_old>
+# Usage: bump-versions.sh <flm_new> <flm_old> <lem_new> <lem_old> <xdna_new> <xdna_old> [vllm_new] [vllm_old]
+# vllm_new/old are the gfx-stripped base release tags (see check-updates.sh).
 set -euo pipefail
 
 FLM_NEW="$1" FLM_OLD="$2"
 LEM_NEW="$3" LEM_OLD="$4"
 XDNA_NEW="$5" XDNA_OLD="$6"
+VLLM_NEW="${7:-}" VLLM_OLD="${8:-}"
 
 update_hash() {
   local pkg="$1"
@@ -71,6 +73,39 @@ if [ "$XDNA_NEW" != "$XDNA_OLD" ]; then
   fi
 
   update_hash xrt-plugin-amdxdna
+fi
+
+# vLLM-ROCm — prebuilt per-gfx split bundles. The base tag (minus -gfxNNNN)
+# appears plain in each releaseTag and URL-encoded (+ -> %2B) in each URL, so
+# swap both, then blank and refill the four hashes in file order (gfx1150 p1/p2,
+# gfx1151 p1/p2) via direct prefetch — nix build can't emit per-part hashes.
+if [ -n "$VLLM_NEW" ] && [ "$VLLM_NEW" != "$VLLM_OLD" ]; then
+  echo "Bumping vLLM-ROCm: $VLLM_OLD -> $VLLM_NEW"
+  src=pkgs/vllm-rocm/sources.nix
+  old_enc="${VLLM_OLD//+/%2B}"
+  new_enc="${VLLM_NEW//+/%2B}"
+  old_ver="${VLLM_OLD#vllm}"; old_ver="${old_ver%%+*}"
+  new_ver="${VLLM_NEW#vllm}"; new_ver="${new_ver%%+*}"
+
+  sed -i "s|$old_enc|$new_enc|g; s|$VLLM_OLD|$VLLM_NEW|g" "$src"
+  [ "$old_ver" != "$new_ver" ] && sed -i "s/version = \"$old_ver\"/version = \"$new_ver\"/g" "$src"
+  sed -i 's/hash = "sha256-[^"]*"/hash = ""/' "$src"
+
+  base_url="https://github.com/lemonade-sdk/vllm-rocm/releases/download"
+  for target in gfx1150 gfx1151; do
+    enctag="${new_enc}-${target}"
+    for part in part01-of-02 part02-of-02; do
+      url="${base_url}/${enctag}/${enctag}-x64.${part}.tar.gz"
+      echo "  Prefetching $target $part..."
+      h=$(nix store prefetch-file --json "$url" | jq -r .hash || true)
+      if [ -n "$h" ]; then
+        sed -i "0,/hash = \"\"/s||hash = \"$h\"|" "$src"
+        echo "    $h"
+      else
+        echo "  WARNING: could not prefetch $target $part"
+      fi
+    done
+  done
 fi
 
 echo "Version bump complete."

@@ -6,19 +6,27 @@ set -euo pipefail
 FLM_LATEST=$(gh api repos/FastFlowLM/FastFlowLM/releases/latest --jq '.tag_name' | sed 's/^v//')
 LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name' | sed 's/^v//')
 XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=1.7&per_page=1" --jq '.[0].sha')
+# vLLM-ROCm cuts one dated nightly per gfx target; strip the -gfxNNNN suffix to
+# get the shared base tag every target pins to.
+VLLM_LATEST=$(gh api repos/lemonade-sdk/vllm-rocm/releases/latest --jq '.tag_name' | sed 's/-gfx[^-]*$//')
 
 FLM_CURRENT=$(grep 'version = ' pkgs/fastflowlm/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
 LEM_CURRENT=$(sed -n 's/.*"\(.*\)".*/\1/p' pkgs/lemonade/version.nix | head -1)
 XDNA_CURRENT=$(grep 'rev = ' pkgs/xrt-plugin-amdxdna/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+VLLM_CURRENT=$(grep 'releaseTag = ' pkgs/vllm-rocm/sources.nix | head -1 | sed 's/.*"\(.*\)".*/\1/; s/-gfx[^-]*$//')
 
 NEEDS_UPDATE=false
 [ "$FLM_LATEST" != "$FLM_CURRENT" ] && NEEDS_UPDATE=true
 [ "$LEM_LATEST" != "$LEM_CURRENT" ] && NEEDS_UPDATE=true
 [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && NEEDS_UPDATE=true
+VLLM_NEEDS_UPDATE=false
+[ "$VLLM_LATEST" != "$VLLM_CURRENT" ] && VLLM_NEEDS_UPDATE=true
+[ "$VLLM_LATEST" != "$VLLM_CURRENT" ] && NEEDS_UPDATE=true
 
 echo "FLM: $FLM_CURRENT -> $FLM_LATEST"
 echo "Lemonade: $LEM_CURRENT -> $LEM_LATEST"
 echo "XDNA: $XDNA_CURRENT -> $XDNA_LATEST"
+echo "vLLM-ROCm: $VLLM_CURRENT -> $VLLM_LATEST"
 
 # nixpkgs lock vs nixos-unstable HEAD. We surface diffs for the six backend
 # packages we consume (Lemonade pins their versions into backend_versions.json
@@ -72,10 +80,13 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "flm_latest=$FLM_LATEST"
     echo "lem_latest=$LEM_LATEST"
     echo "xdna_latest=$XDNA_LATEST"
+    echo "vllm_latest=$VLLM_LATEST"
     echo "flm_current=$FLM_CURRENT"
     echo "lem_current=$LEM_CURRENT"
     echo "xdna_current=$XDNA_CURRENT"
+    echo "vllm_current=$VLLM_CURRENT"
     echo "needs_update=$NEEDS_UPDATE"
+    echo "vllm_needs_update=$VLLM_NEEDS_UPDATE"
     echo "nixpkgs_needs_update=$NIXPKGS_NEEDS_UPDATE"
     echo "mtp_cleanup=$MTP_CLEANUP"
     echo "mtp_override_needs_update=$MTP_OVERRIDE_NEEDS_UPDATE"

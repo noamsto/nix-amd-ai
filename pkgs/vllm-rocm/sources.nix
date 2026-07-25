@@ -1,7 +1,7 @@
 # Per-GPU-target prebuilt bundles from lemonade-sdk/vllm-rocm. Each release is a
 # relocatable Python 3.14 prefix bundling torch + vLLM + a full TheRock ROCm for
-# one gfx target, split across two <2 GB GitHub assets. Refresh with
-# scripts/bump-versions.sh (TODO: wire it in) or `nix store prefetch-file`.
+# one gfx target, split across two <2 GB GitHub assets. Auto-bumped by the
+# weekly update workflow (scripts/check-updates.sh + bump-versions.sh).
 {
   gfx1150 = {
     version = "0.23.1.dev0";

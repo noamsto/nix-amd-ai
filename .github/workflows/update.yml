@@ -23,6 +23,11 @@ jobs:
         with:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          # vllm-rocm is a ~7.6 GB blob that turns over every few nightlies — one
+          # build alone exceeds the 5 GB free tier, so it's built to *validate*
+          # the bump but kept out of the cache push. Drop this filter once a paid
+          # cachix plan has headroom, to serve it prebuilt to consumers.
+          pushFilter: '(vllm)'
 
       - name: Check for new releases
         id: check
@@ -42,7 +47,15 @@ jobs:
           ./scripts/bump-versions.sh \
             "${{ steps.check.outputs.flm_latest }}" "${{ steps.check.outputs.flm_current }}" \
             "${{ steps.check.outputs.lem_latest }}" "${{ steps.check.outputs.lem_current }}" \
-            "${{ steps.check.outputs.xdna_latest }}" "${{ steps.check.outputs.xdna_current }}"
+            "${{ steps.check.outputs.xdna_latest }}" "${{ steps.check.outputs.xdna_current }}" \
+            "${{ steps.check.outputs.vllm_latest }}" "${{ steps.check.outputs.vllm_current }}"
+
+      # vllm-rocm builds unpack ~7.6 GB; the runner's ~14 GB default isn't enough.
+      # Reclaim the preinstalled Android/.NET/GHC toolchains (~25 GB) so the
+      # validation build below fits. Only when vllm actually moved.
+      - name: Free disk space for vllm-rocm build
+        if: steps.check.outputs.vllm_needs_update == 'true'
+        uses: jlumbroso/free-disk-space@main
 
       - name: Validate flake eval
         if: steps.check.outputs.needs_update == 'true'
@@ -65,7 +78,14 @@ jobs:
         id: build
         run: |
           FAILED=""
-          for pkg in xrt xrt-plugin-amdxdna fastflowlm lemonade; do
+          PKGS="xrt xrt-plugin-amdxdna fastflowlm lemonade"
+          # Validate the vllm-rocm bump only when it moved — building it (and
+          # re-fetching 2.25 GB) every run when unchanged is pure waste since it
+          # isn't in the cache. A build failure here blocks the auto-merge below.
+          if [ "${{ steps.check.outputs.vllm_needs_update }}" = "true" ]; then
+            PKGS="$PKGS vllm-rocm"
+          fi
+          for pkg in $PKGS; do
             if ! nix build ".#$pkg"; then
               FAILED+="- ${pkg}"$'\n'
             fi
@@ -101,6 +121,9 @@ jobs:
             BODY+="- Lemonade: ${{ steps.check.outputs.lem_current }} -> ${{ steps.check.outputs.lem_latest }}"$'\n'
           [ "${{ steps.check.outputs.xdna_latest }}" != "${{ steps.check.outputs.xdna_current }}" ] && \
             BODY+="- xdna-driver: ${{ steps.check.outputs.xdna_current }} -> ${{ steps.check.outputs.xdna_latest }}"$'\n'
+          if [ "${{ steps.check.outputs.vllm_needs_update }}" = "true" ]; then
+            BODY+="- vLLM-ROCm: \`${{ steps.check.outputs.vllm_current }}\` -> \`${{ steps.check.outputs.vllm_latest }}\` (built to validate; not GPU-tested)"$'\n'
+          fi
 
           NIXPKGS_DIFFS='${{ steps.check.outputs.nixpkgs_backend_diffs }}'
           if [ -n "$NIXPKGS_DIFFS" ]; then
