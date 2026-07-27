@@ -27,8 +27,8 @@ in
     src = fetchFromGitHub {
       owner = "amd";
       repo = "xdna-driver";
-      rev = "0fb464f6e043fdaf8d9007b76bd9e9a666ffe870";
-      hash = "sha256-pG9fptnKMoHbK2HSBObfflCyBt9k0uDO/leKvtsKUnA=";
+      rev = "4e5aed38f3b74a5a9a2c7a6222eaff1a8be54305";
+      hash = "sha256-YUiM9u9vtISttbThTt9fTtBB/w3d5UatGyVK5mAgWNM=";
       fetchSubmodules = true;
     };
 
