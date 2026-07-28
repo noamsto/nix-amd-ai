@@ -18,9 +18,10 @@
     ];
   };
 
-  # Strix Halo. Hashes pinned; buildable, but not yet run on a Halo host — the
-  # gfx1150 recipe transfers, so this is expected to work. Validate inference on
-  # a gfx1151 machine before treating it as confirmed. See noamsto/nix-amd-ai#63.
+  # Strix Halo. Packaging is verified: this bundle unpacks and its `vllm-server
+  # --help` imports torch + vLLM, so the relocation covers gfx1151 too. No
+  # gfx1151 kernel has ever executed though — we have no Halo host. Validate
+  # inference before treating it as confirmed. See noamsto/nix-amd-ai#63, #68.
   gfx1151 = {
     version = "0.23.1.dev0";
     releaseTag = "vllm0.23.1.dev0+rocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1151";

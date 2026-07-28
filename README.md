@@ -172,12 +172,14 @@ Python + torch + TheRock-ROCm bundle instead (interpreter-patched, not
 autoPatchelf'd, which would inject mismatched nixpkgs libs and segfault torch).
 It's off by default and adds a ~7.6 GB closure with no binary-cache substituter.
 
-Validated on gfx1150 (standalone and through lemonade's OpenAI API); the
-`gfx1151` (Strix Halo) target is pinned and builds but hasn't been run on a Halo
-host yet. On gfx1150 our benchmarks still put Vulkan ahead of ROCm and vLLM's
-batching doesn't help single-user workloads, so `enableVllm` mainly matters on
-gfx1151 (where the Vulkan-fills-VRAM-first freeze on X11 makes the ROCm path
-worthwhile) or for vLLM-specific features.
+Validated on gfx1150 (standalone and through lemonade's OpenAI API). The
+`gfx1151` (Strix Halo) target builds and its `vllm-server` launches — torch and
+vLLM import cleanly, so the packaging carries over — but no gfx1151 kernel has
+run, because there is no Halo host to run it on. On gfx1150 our benchmarks
+still put Vulkan ahead of ROCm and vLLM's batching doesn't help single-user
+workloads, so `enableVllm` mainly matters on gfx1151 (where the
+Vulkan-fills-VRAM-first freeze on X11 makes the ROCm path worthwhile) or for
+vLLM-specific features.
 
 Vanilla v10.5.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
 
