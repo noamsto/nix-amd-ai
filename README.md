@@ -185,10 +185,49 @@ Vanilla v10.5.0 ignores these env vars on NixOS for several reasons that this fl
 - The Linux ROCm `LD_LIBRARY_PATH` block is gated on the same check, so a nix-store `llama-server` keeps its RPATH-resolved libs instead of being shadowed by `~/.cache/lemonade/bin/.../lib`.
 - `is_ggml_hip_plugin_available()` honors `LEMONADE_GGML_HIP_PATH` so the `system` llamacpp recipe stops being permanently `unsupported` on NixOS.
 - `LEMONADE_WHISPERCPP_VULKAN_BIN` is added to the env-var migration table (upstream only mapped CPU/NPU for whispercpp).
-- `ConfigFile::load` re-applies the env overlay on every startup, not just first run, so bumping `pkgs.*` propagates without users having to delete `~/.cache/lemonade/config.json`.
+- `ConfigFile::get_defaults` honors `LEMONADE_DEFAULTS_PATH`, so the module can seed backend bin paths from a store path instead of the hardcoded `/usr/share/lemonade/defaults.json` that NixOS can't populate (v10.7.0 dropped the env→config migration this replaced).
 - The download SSE handler treats `sink.write` failure as a transient client disconnect rather than a cancel signal, so a backgrounded Tauri window doesn't kill an in-flight multi-GB download.
 
 If `lemonade backends` reports a backend as `installed` but benchmarks report <5 t/s decode on a small model, you're on CPU — check that the matching `enable*` option is set and the host has been rebuilt.
+
+### Runtime config: `lemonade.settings`
+
+`LEMONADE_DEFAULTS_PATH` only seeds `~/.cache/lemonade/config.json` on lemond's
+**first** run — afterwards `ConfigFile::load` merges the packaged defaults
+*under* the persisted file, so every key the module declares goes inert. Backend
+bin paths survived that because they point at stable `/etc/lemonade/backends/*`
+symlinks, but scalars did not: a host that first started lemond before enabling
+`enableVllm` kept `global_timeout = 0`, which vLLM reads as its startup-readiness
+budget and turns into zero poll attempts ([#68](https://github.com/noamsto/nix-amd-ai/issues/68)).
+
+The lemond unit therefore re-applies the module-declared keys on every start,
+leaving everything else to whatever the web UI persisted. `lemonade.settings`
+rides the same path for keys the module has no dedicated option for:
+
+```nix
+hardware.amd-npu.lemonade.settings = {
+  max_loaded_models = -1;   # keep a small NPU model and a big GPU model resident together
+  auto_evict = true;        # then let lemond reclaim on idle / VRAM pressure
+};
+```
+
+`max_loaded_models` (default `1`) is what makes models take turns — raise or
+unset it (`-1`) to keep several resident. `auto_evict` is a *separate*,
+opt-in background reclaimer (default **off**) that unloads idle models and
+sheds them once VRAM crosses `auto_evict_threshold_pct` (default `0.90`); it
+pairs naturally with an unlimited `max_loaded_models`. Anything lemond's
+`RuntimeConfig` validates is accepted. Values merge recursively over the
+module's computed defaults, so overriding `llamacpp.args` does not drop the
+sibling `llamacpp.*_bin` paths.
+
+Per-*model* eviction knobs (`pinned`, `evict_idle_timeout`,
+`downsize_idle_timeout`, `evict_weight_factor`, and a per-recipe `auto_evict`
+override) live in lemond's separate `recipe_options.json` and are set through
+lemonade itself, not through this option.
+
+Reconciliation only ever writes keys, never deletes them: dropping a key from
+`settings` stops it being re-applied but leaves the last value in the persisted
+config. Set it back to the value you want rather than removing the line.
 
 ### Tauri desktop app: download progress is fragile when backgrounded
 

@@ -114,7 +114,29 @@
     // optionalAttrs (cfg.enableROCm && cfg.enableVllm) {
       vllm.rocm_bin = lemonadeBackendBin "vllm-rocm";
     };
-  lemonadeDefaultsFile = (pkgs.formats.json {}).generate "lemonade-defaults.json" lemonadeDefaults;
+  lemonadeDefaultsFile =
+    (pkgs.formats.json {}).generate "lemonade-defaults.json"
+    (lib.recursiveUpdate lemonadeDefaults cfg.lemonade.settings);
+
+  # LEMONADE_DEFAULTS_PATH only seeds config.json on lemond's first run — after
+  # that the persisted file wins for every key it holds, so module-declared
+  # values rot. Re-apply ours each start. See noamsto/nix-amd-ai#67 and #68.
+  lemonadeReconcile = pkgs.writeShellApplication {
+    name = "lemond-reconcile-config";
+    runtimeInputs = [pkgs.jq];
+    text = ''
+      config="''${LEMONADE_CACHE_DIR:-$HOME/.cache/lemonade}/config.json"
+      [ -f "$config" ] || exit 0
+
+      tmp="$config.nix-reconcile"
+      if jq -s '.[0] * .[1]' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
+        mv "$tmp" "$config"
+      else
+        rm -f "$tmp"
+        echo "lemond: $config is unreadable, leaving it untouched" >&2
+      fi
+    '';
+  };
 in {
   options.hardware.amd-npu = {
     enable = mkEnableOption "AMD NPU (AI Engine) support";
@@ -225,6 +247,29 @@ in {
           because upstream lemonade doesn't enable FA for llama-cpp despite enabling it
           for vLLM (see vllm_server.cpp:202); measured ~5% decode / ~10% prefill gain on
           gfx1150 + Gemma. Set "auto" or "off" to override.
+        '';
+      };
+
+      settings = mkOption {
+        type = (pkgs.formats.json {}).type;
+        default = {};
+        example = lib.literalExpression ''
+          {
+            max_loaded_models = -1;
+            auto_evict = true;
+          }
+        '';
+        description = ''
+          Extra keys merged into lemond's runtime config, overriding the values
+          this module computes. Accepts anything `RuntimeConfig` validates —
+          e.g. `max_loaded_models` (-1 for unlimited, so a small NPU model and a
+          large GPU model can stay resident together instead of taking turns),
+          and `auto_evict` (opt-in idle/VRAM-pressure eviction, off by default)
+          with its `auto_evict_threshold_pct`.
+
+          These keys are re-applied on every `lemond` start, so they stay
+          declarative; keys not listed here are left to whatever the web UI
+          persisted in `''${LEMONADE_CACHE_DIR:-~/.cache/lemonade}/config.json`.
         '';
       };
     };
@@ -476,6 +521,7 @@ in {
       serviceConfig = {
         Type = "simple";
         User = cfg.lemonade.user;
+        ExecStartPre = "${lemonadeReconcile}/bin/lemond-reconcile-config";
         ExecStart = "${lemonadePackage}/bin/lemond --port ${toString cfg.lemonade.port} --host ${cfg.lemonade.host}";
         Restart = "on-failure";
         RestartSec = "5s";
