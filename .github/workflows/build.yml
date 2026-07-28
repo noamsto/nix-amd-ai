@@ -22,7 +22,10 @@ jobs:
       - name: Build all packages
         run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#ds4
       - name: Check flake
-        run: nix flake check
+        # -L so NixOS VM tests stream their boot and assertions into the job log.
+        # Without it a VM test is a bare ✅/❌ line — indistinguishable from one
+        # that never ran, and undiagnosable when it fails.
+        run: nix flake check -L
       - name: Verify lemond unit (systemd-analyze)
         run: |
           unit=$(nix build .#lemond-unit --print-out-paths)/lemond.service
