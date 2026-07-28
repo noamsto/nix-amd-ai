@@ -229,6 +229,14 @@ Reconciliation only ever writes keys, never deletes them: dropping a key from
 `settings` stops it being re-applied but leaves the last value in the persisted
 config. Set it back to the value you want rather than removing the line.
 
+Two keys are *not* reachable this way. `lemond` persists `--port` and `--host`
+into `config.json` itself on every start, after the reconcile hook has run, so
+`settings.host` / `settings.port` are silently overwritten — use the dedicated
+`lemonade.host` and `lemonade.port` options instead. That same write also
+rewrites the file through a fresh `ofstream` + rename, which resets its mode to
+`0644` on every start; the hook preserves whatever mode it finds, but it cannot
+hold the file tighter than lemond leaves it.
+
 ### Tauri desktop app: download progress is fragile when backgrounded
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.

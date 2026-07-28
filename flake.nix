@@ -388,6 +388,80 @@
                 touch $out
               '';
 
+            # The checks above prove the unit renders and that the hook behaves
+            # when invoked by hand. This one boots it: lemond must actually reach
+            # active with the ExecStartPre in front of it. That is the failure
+            # class eval checks structurally cannot see — a hook that aborts
+            # takes the whole service down with it.
+            lemond-vm =
+              # Driven from an already-overlaid pkgs, importing the bare module:
+              # nixosModules.default bundles nixpkgs.overlays for consumers, and
+              # the test framework pins nixpkgs read-only.
+              (import inputs.nixpkgs {
+                inherit system;
+                overlays = [inputs.self.overlays.default];
+              })
+            .testers.runNixOSTest {
+                name = "lemond-reconcile";
+                nodes.machine = {
+                  lib,
+                  pkgs,
+                  ...
+                }: {
+                  imports = [./modules/amd-npu.nix];
+                  environment.systemPackages = [pkgs.jq];
+                  hardware.amd-npu = {
+                    enable = true;
+                    enableNPU = false;
+                    enableFastFlowLM = false;
+                    enableROCm = false;
+                    enableVulkan = false;
+                    enableImageGen = false;
+                    lemonade = {
+                      user = "tester";
+                      settings.max_loaded_models = -1;
+                    };
+                  };
+                  users.users.tester.isNormalUser = true;
+                  # Hold lemond back so the stale config is in place before its
+                  # first start; left to boot it would seed a fresh config, the one
+                  # path that never exercises reconciliation.
+                  systemd.services.lemond.wantedBy = lib.mkForce [];
+                };
+                testScript = ''
+                  cfg = "/home/tester/.cache/lemonade/config.json"
+
+                  machine.wait_for_unit("multi-user.target")
+
+                  # A config as a pre-existing host holds it: one module-managed key
+                  # gone stale, one key only the user or web UI ever sets. The
+                  # user-only key is ctx_size rather than host/port because lemond
+                  # persists those two from its own flags after the hook has run
+                  # (main.cpp:82-99), so they would prove nothing here.
+                  machine.succeed("mkdir -p /home/tester/.cache/lemonade")
+                  machine.succeed(
+                      "printf '%s' "
+                      "'{\"ctx_size\":8192,\"max_loaded_models\":1,\"llamacpp\":{\"args\":\"--stale\"}}'"
+                      " > " + cfg
+                  )
+                  machine.succeed("chown -R tester:users /home/tester/.cache")
+
+                  machine.succeed("systemctl start lemond")
+                  machine.wait_for_unit("lemond.service")
+
+                  machine.succeed("jq -e '.max_loaded_models == -1' " + cfg)
+                  machine.succeed("jq -e '.llamacpp.args == \"--flash-attn on\"' " + cfg)
+                  machine.succeed("jq -e '.llamacpp.cpu_bin | startswith(\"/etc/lemonade/backends/\")' " + cfg)
+                  machine.succeed("jq -e '.ctx_size == 8192' " + cfg)
+                  machine.succeed("test $(stat -c %U " + cfg + ") = tester")
+
+                  # No mode assertion: the same CLI-override save rewrites the file
+                  # through a fresh ofstream + rename, resetting it to 0644 on every
+                  # start. module-eval-lemonade-settings covers the hook's own
+                  # mode handling, which is the part we control.
+                '';
+              };
+
             # GTT headroom: configured system emits the ttm modprobe line with
             # GiB→page conversion; default system emits no ttm line.
             module-eval-gtt = let
