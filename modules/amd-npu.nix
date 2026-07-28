@@ -123,13 +123,15 @@
   # values rot. Re-apply ours each start. See noamsto/nix-amd-ai#67 and #68.
   lemonadeReconcile = pkgs.writeShellApplication {
     name = "lemond-reconcile-config";
-    runtimeInputs = [pkgs.jq];
+    runtimeInputs = [pkgs.jq pkgs.coreutils];
     text = ''
-      config="''${LEMONADE_CACHE_DIR:-$HOME/.cache/lemonade}/config.json"
+      config="''${LEMONADE_CACHE_DIR:-''${HOME:-}/.cache/lemonade}/config.json"
       [ -f "$config" ] || exit 0
 
       tmp="$config.nix-reconcile"
       if jq -s '.[0] * .[1]' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
+        # lemond may have tightened the mode; rename would silently widen it back.
+        chmod --reference="$config" "$tmp"
         mv "$tmp" "$config"
       else
         rm -f "$tmp"

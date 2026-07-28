@@ -368,7 +368,23 @@
                 jq -e '.max_loaded_models == -1' "$defaults" >/dev/null
                 jq -e '.llamacpp.args == "--custom"' "$defaults" >/dev/null
                 jq -e '.llamacpp.cpu_bin | startswith("/etc/lemonade/backends/")' "$defaults" >/dev/null
-                grep -q 'ExecStartPre=.*lemond-reconcile-config' "$unit"/lemond.service
+
+                # Run the unit's own ExecStartPre against a config that has both a
+                # stale module-managed key and a user-only key, and assert the merge
+                # direction — a broken jq expression would otherwise ship green.
+                reconcile=$(sed -n 's/^ExecStartPre=//p' "$unit"/lemond.service)
+                export HOME=$TMPDIR/home
+                mkdir -p "$HOME/.cache/lemonade"
+                cfg=$HOME/.cache/lemonade/config.json
+                echo '{"host":"0.0.0.0","max_loaded_models":1,"llamacpp":{"args":"--stale"}}' >"$cfg"
+                chmod 600 "$cfg"
+                "$reconcile"
+
+                jq -e '.max_loaded_models == -1' "$cfg" >/dev/null   # module key re-applied
+                jq -e '.llamacpp.args == "--custom"' "$cfg" >/dev/null
+                jq -e '.host == "0.0.0.0"' "$cfg" >/dev/null         # user-only key preserved
+                [ "$(stat -c %a "$cfg")" = 600 ]                     # mode not widened
+
                 touch $out
               '';
 
