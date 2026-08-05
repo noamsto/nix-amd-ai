@@ -204,10 +204,9 @@ in {
       default = "gfx1150";
       description = ''
         The host's actual iGPU: gfx1150 (Strix Point) or gfx1151 (Strix
-        Halo). Drives the gfx1151 CWSR-kernel warning below and the default
-        for vllmGpuTarget — set this instead of vllmGpuTarget on
-        llamacpp/sd-cpp-only hosts, since vllmGpuTarget's own default never
-        applies without enableVllm.
+        Halo). Drives the gfx1151 CWSR-kernel warning and the default for
+        vllmGpuTarget, so a llamacpp/sd-cpp-only host still declares its
+        chip without touching a vLLM option.
       '';
     };
 
@@ -295,19 +294,15 @@ in {
         default = [];
         example = ["https://app.example.com" "http://192.168.1.10:3000"];
         description = ''
-          Origins allowed to make cross-origin browser requests, set via
-          `LEMONADE_ALLOWED_ORIGINS`. 11.5.0 dropped the
-          `Access-Control-Allow-Origin: *` default and this is
-          env-only — there is no config.json key, so `lemonade.settings`
-          cannot reach it. Loopback origins (localhost, 127.0.0.1, ::1,
-          *.localhost) and non-http(s) desktop schemes (tauri://, file://,
-          vscode-webview://) are always allowed regardless of this setting,
-          so it is only needed for browsers on other machines reaching a
-          non-loopback `lemonade.host`. `["*"]` allows any
-          origin — combine with an API key (upstream's
-          `LEMONADE_API_KEY`, not wired up here) or requests are
-          unauthenticated and open to cross-origin attacks from any site the
-          browser visits.
+          Origins allowed to make cross-origin browser requests, emitted as
+          `LEMONADE_ALLOWED_ORIGINS`. Env-only upstream — there is no
+          config.json key, so `lemonade.settings` cannot reach it.
+
+          Loopback and non-http(s) desktop schemes (tauri://, file://) are
+          always allowed, so this is only needed for browsers on other
+          machines reaching a non-loopback `lemonade.host`. `["*"]` allows
+          any origin, which without an API key leaves the server open to any
+          site the browser visits.
         '';
       };
     };
@@ -439,12 +434,10 @@ in {
       optional
       (cfg.enableLemonade && cfg.lemonade.allowedOrigins == [] && !builtins.elem cfg.lemonade.host ["localhost" "127.0.0.1" "::1"])
       "hardware.amd-npu.lemonade.host is non-loopback but lemonade.allowedOrigins is empty; browsers on other machines will get a 403 'Origin not allowed' error. Set lemonade.allowedOrigins to the origins that should reach it."
-      # gfx1151 requires a kernel with the CWSR VGPR-count fix or ROCm can crash
-      # any ROCm backend (llamacpp:rocm, sd-cpp:rocm, vllm:rocm), not just vllm,
-      # so this checks gpuTarget (the host's real chip) too — vllmGpuTarget
-      # alone misses llamacpp/sd-cpp-only hosts that never touch it.
-      # A warning, not an assertion: the fix can be backported to a kernel older
-      # than 6.18.4, which a bare version check cannot detect.
+      # Checks gpuTarget as well as vllmGpuTarget: the CWSR bug crashes every
+      # ROCm backend, so a llamacpp-only gfx1151 host must warn too.
+      # A warning rather than an assertion — the fix can be backported to an
+      # older kernel, which a version check cannot detect.
       ++ optional
       (cfg.enableLemonade
         && cfg.enableROCm
