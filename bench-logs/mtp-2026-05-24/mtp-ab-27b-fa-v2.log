@@ -1,0 +1,21 @@
+warning: Git tree '/home/noams/git/noamsto/nix-amd-ai' has uncommitted changes
+this derivation will be built:
+  /nix/store/b5a8yszjbkn349f2dh9zyv245w8fx8ib-benchmark.drv
+building '/nix/store/b5a8yszjbkn349f2dh9zyv245w8fx8ib-benchmark.drv'...
+
+MTP A/B sweep: model=Qwen3.6-27B-MTP-GGUF
+  gguf=/home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf
+  backends=['rocm', 'vulkan']
+  protocol: prompt=512 tokens, gen=128 tokens, 1 warmup + 3 measured
+
+
+[rocm] bin=/nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server device=ROCm0
+
+[rocm] --spec-type none
+  Spawning: /nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 41649 --host 127.0.0.1 --device ROCm0 --spec-type none --n-gpu-layers 99 --ctx-size 2048 --parallel 1 --flash-attn on
+    iter 1: no tokens received
+    iter 2: no tokens received
+    iter 3: no tokens received
+
+[rocm] --spec-type draft-mtp
+  Spawning: /nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 36017 --host 127.0.0.1 --device ROCm0 --spec-type draft-mtp --n-gpu-layers 99 --ctx-size 2048 --parallel 1 --flash-attn on --spec-draft-n-max 6

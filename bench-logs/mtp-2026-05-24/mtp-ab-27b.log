@@ -1,0 +1,59 @@
+this derivation will be built:
+  /nix/store/3dghr2vn1mdq4j2f2bwcbbsq583x9i3g-benchmark.drv
+these 6 paths will be fetched (309.6 KiB download, 2.0 MiB unpacked):
+  /nix/store/ag5jbqxrlhxz16a4kfqb3x9xz8ci37fk-python3.13-flake8-7.3.0
+  /nix/store/mlg9n4lcg0anaibwqgy84sjwvd72332s-python3.13-mccabe-0.7.0
+  /nix/store/5v1xldfwfchlj1yli6ypklk7y2sxl8jj-python3.13-pycodestyle-2.14.0
+  /nix/store/5jan1nz0rd8swc7d2kagphqybbarahjx-python3.13-pyflakes-3.4.0
+  /nix/store/qwv1rs8cymg6fdnlq88767wazzd70ygj-pythoncheck.sh
+  /nix/store/ygyzszwpba0jrbni7881hh15sv39jisi-pythoncheck.sh
+copying path '/nix/store/mlg9n4lcg0anaibwqgy84sjwvd72332s-python3.13-mccabe-0.7.0' from 'https://cache.nixos.org'...
+copying path '/nix/store/5v1xldfwfchlj1yli6ypklk7y2sxl8jj-python3.13-pycodestyle-2.14.0' from 'https://cache.nixos.org'...
+copying path '/nix/store/5jan1nz0rd8swc7d2kagphqybbarahjx-python3.13-pyflakes-3.4.0' from 'https://cache.nixos.org'...
+copying path '/nix/store/ag5jbqxrlhxz16a4kfqb3x9xz8ci37fk-python3.13-flake8-7.3.0' from 'https://cache.nixos.org'...
+copying path '/nix/store/ygyzszwpba0jrbni7881hh15sv39jisi-pythoncheck.sh' from 'https://cache.nixos.org'...
+copying path '/nix/store/qwv1rs8cymg6fdnlq88767wazzd70ygj-pythoncheck.sh' from 'https://cache.nixos.org'...
+building '/nix/store/3dghr2vn1mdq4j2f2bwcbbsq583x9i3g-benchmark.drv'...
+
+MTP A/B sweep: model=Qwen3.6-27B-MTP-GGUF
+  gguf=/home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf
+  backends=['rocm', 'vulkan']
+  protocol: prompt=512 tokens, gen=128 tokens, 1 warmup + 3 measured
+
+
+[rocm] bin=/nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server device=ROCm0
+
+[rocm] --spec-type none
+  Spawning: /nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 44295 --host 127.0.0.1 --device ROCm0 --spec-type none --n-gpu-layers 99 --ctx-size 4096 --parallel 1
+    iter 1: no tokens received
+    iter 2: decode=3.7 t/s, tokens=128
+    iter 3: decode=3.7 t/s, tokens=128
+
+[rocm] --spec-type draft-mtp
+  Spawning: /nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 39023 --host 127.0.0.1 --device ROCm0 --spec-type draft-mtp --n-gpu-layers 99 --ctx-size 4096 --parallel 1 --spec-draft-n-max 6
+    iter 1: decode=3.9 t/s, tokens=128
+    iter 2: no tokens received
+    iter 3: no tokens received
+
+| Qwen3.6-27B-MTP-GGUF | rocm | 3.7 | 3.9 | 1.06x |
+
+[vulkan] bin=/nix/store/8ryz810bs86i0v2g4msyq0f2dikz8ig9-llama-cpp-mtp-9253/bin/llama-server device=Vulkan0
+
+[vulkan] --spec-type none
+  Spawning: /nix/store/8ryz810bs86i0v2g4msyq0f2dikz8ig9-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 46683 --host 127.0.0.1 --device Vulkan0 --spec-type none --n-gpu-layers 99 --ctx-size 4096 --parallel 1
+    iter 1: decode=4.1 t/s, tokens=128
+    iter 2: decode=4.1 t/s, tokens=128
+    iter 3: no tokens received
+
+[vulkan] --spec-type draft-mtp
+  Spawning: /nix/store/8ryz810bs86i0v2g4msyq0f2dikz8ig9-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 45213 --host 127.0.0.1 --device Vulkan0 --spec-type draft-mtp --n-gpu-layers 99 --ctx-size 4096 --parallel 1 --spec-draft-n-max 6
+    iter 1: decode=11.5 t/s, tokens=128
+    iter 2: no tokens received
+    iter 3: no tokens received
+
+| Qwen3.6-27B-MTP-GGUF | vulkan | 4.1 | 11.5 | 2.80x |
+
+| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |
+| ----- | ------- | ------------: | -----------: | ------: |
+| Qwen3.6-27B-MTP-GGUF | rocm | 3.7 | 3.9 | 1.06x |
+| Qwen3.6-27B-MTP-GGUF | vulkan | 4.1 | 11.5 | 2.80x |

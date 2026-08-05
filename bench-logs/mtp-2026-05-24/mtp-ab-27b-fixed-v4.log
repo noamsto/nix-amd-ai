@@ -1,0 +1,47 @@
+warning: Git tree '/home/noams/git/noamsto/nix-amd-ai' has uncommitted changes
+this derivation will be built:
+  /nix/store/5s4i86y35w7diahah12l11sj4y1n8lbc-benchmark.drv
+building '/nix/store/5s4i86y35w7diahah12l11sj4y1n8lbc-benchmark.drv'...
+
+MTP A/B sweep: model=Qwen3.6-27B-MTP-GGUF
+  gguf=/home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf
+  backends=['rocm', 'vulkan']
+  protocol: prompt=512 tokens, gen=128 tokens, 1 warmup + 3 measured
+
+
+[rocm] bin=/nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server device=ROCm0
+
+[rocm] --spec-type none
+  Spawning: /nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 42905 --host 127.0.0.1 --device ROCm0 --spec-type none --n-gpu-layers 99 --ctx-size 2048 --parallel 1 --flash-attn on
+    iter 1: decode=3.6 t/s, tokens=128
+    iter 2: decode=3.6 t/s, tokens=128
+    iter 3: decode=3.6 t/s, tokens=128
+
+[rocm] --spec-type draft-mtp
+  Spawning: /nix/store/yppg698k7p9qgnvs2cdj4ay4nrrbamx1-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 48005 --host 127.0.0.1 --device ROCm0 --spec-type draft-mtp --n-gpu-layers 99 --ctx-size 2048 --parallel 1 --flash-attn on --spec-draft-n-max 6
+    iter 1: decode=4.1 t/s, tokens=128
+    iter 2: decode=7.1 t/s, tokens=128
+    iter 3: decode=5.5 t/s, tokens=128
+
+| Qwen3.6-27B-MTP-GGUF | rocm | 3.6 | 5.6 | 1.55x |
+
+[vulkan] bin=/nix/store/8ryz810bs86i0v2g4msyq0f2dikz8ig9-llama-cpp-mtp-9253/bin/llama-server device=Vulkan0
+
+[vulkan] --spec-type none
+  Spawning: /nix/store/8ryz810bs86i0v2g4msyq0f2dikz8ig9-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 50537 --host 127.0.0.1 --device Vulkan0 --spec-type none --n-gpu-layers 99 --ctx-size 2048 --parallel 1 --flash-attn on
+    iter 1: decode=4.0 t/s, tokens=128
+    iter 2: decode=4.1 t/s, tokens=128
+    iter 3: decode=4.1 t/s, tokens=128
+
+[vulkan] --spec-type draft-mtp
+  Spawning: /nix/store/8ryz810bs86i0v2g4msyq0f2dikz8ig9-llama-cpp-mtp-9253/bin/llama-server --model /home/noams/.cache/huggingface/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots/0da008d9b980b76520a952bb3aa4abbaa0955647/Qwen3.6-27B-UD-Q4_K_XL.gguf --port 38193 --host 127.0.0.1 --device Vulkan0 --spec-type draft-mtp --n-gpu-layers 99 --ctx-size 2048 --parallel 1 --flash-attn on --spec-draft-n-max 6
+    iter 1: decode=6.2 t/s, tokens=128
+    iter 2: decode=11.8 t/s, tokens=128
+    iter 3: decode=8.1 t/s, tokens=128
+
+| Qwen3.6-27B-MTP-GGUF | vulkan | 4.1 | 8.7 | 2.14x |
+
+| Model | Backend | MTP off (t/s) | MTP on (t/s) | Speedup |
+| ----- | ------- | ------------: | -----------: | ------: |
+| Qwen3.6-27B-MTP-GGUF | rocm | 3.6 | 5.6 | 1.55x |
+| Qwen3.6-27B-MTP-GGUF | vulkan | 4.1 | 8.7 | 2.14x |

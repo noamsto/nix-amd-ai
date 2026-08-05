@@ -1,0 +1,1977 @@
+warning: Git tree '/home/noams/git/noamsto/nix-amd-ai/.worktrees/feat-llama-cpp-rocwmma' has uncommitted changes
+this derivation will be built:
+  /nix/store/cmyxx8fi79qniszf36yr03xns580m890-llama-cpp-mtp-9213.drv
+building '/nix/store/cmyxx8fi79qniszf36yr03xns580m890-llama-cpp-mtp-9213.drv'...
+llama-cpp-mtp> Running phase: unpackPhase
+llama-cpp-mtp> unpacking source archive /nix/store/j3kxl2c7yvm8scczdhfx0wc2l065bzc8-source
+llama-cpp-mtp> source root is source
+llama-cpp-mtp> Running phase: patchPhase
+llama-cpp-mtp> applying patch /nix/store/xsaaadsml3si44z51nxj80nb4gi0c56l-llama-cpp-vulkan-shaders-gen-posix-spawn.patch
+llama-cpp-mtp> patching file ggml/src/ggml-vulkan/vulkan-shaders/vulkan-shaders-gen.cpp
+llama-cpp-mtp> Executing npmConfigHook
+llama-cpp-mtp> /build/source/tools/ui /build/source
+llama-cpp-mtp> Configuring npm
+llama-cpp-mtp> Validating consistency between /build/source/tools/ui/package-lock.json and /nix/store/nrqxybh0785j4zxdys6cy4kpyv6fiali-llama-cpp-mtp-9213-npm-deps/package-lock.json
+llama-cpp-mtp> Setting npm_config_cache to /nix/store/nrqxybh0785j4zxdys6cy4kpyv6fiali-llama-cpp-mtp-9213-npm-deps
+llama-cpp-mtp> Installing dependencies
+llama-cpp-mtp> npm warn Unknown env config "nodedir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> npm warn Unknown env config "platform". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> npm warn Unknown env config "arch". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> 
+llama-cpp-mtp> added 650 packages, and audited 651 packages in 2s
+llama-cpp-mtp> 
+llama-cpp-mtp> 253 packages are looking for funding
+llama-cpp-mtp>   run `npm fund` for details
+llama-cpp-mtp> 
+llama-cpp-mtp> found 0 vulnerabilities
+llama-cpp-mtp> patching script interpreter paths in node_modules
+llama-cpp-mtp> node_modules/@babel/parser/bin/babel-parser.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/@parcel/watcher/node_modules/detect-libc/bin/detect-libc.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/@playwright/test/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/@sveltejs/kit/svelte-kit.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/acorn/bin/acorn: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/ajv/scripts/info: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/ajv/scripts/prepare-tests: interpreter directive changed from "#!/usr/bin/env sh" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/sh"
+llama-cpp-mtp> node_modules/ajv/scripts/publish-built-version: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/ajv/scripts/travis-gh-pages: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/chromatic/dist/bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/cssesc/bin/cssesc: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/esbuild/bin/esbuild: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/eslint/bin/eslint.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/eslint-config-prettier/bin/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/esprima/bin/esparse.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/esprima/bin/esvalidate.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/glob/dist/esm/bin.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/he/bin/he: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/http-server/bin/http-server: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/is-docker/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/is-inside-container/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/jiti/lib/jiti-cli.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/js-yaml/bin/js-yaml.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/katex/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/lz-string/bin/bin.js: interpreter directive changed from "#! /usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/mime/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/mime/src/build.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/mini-svg-data-uri/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/nanoid/bin/nanoid.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/node-addon-api/tools/conversion.js: interpreter directive changed from "#! /usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/opener/bin/opener-bin.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/open/xdg-open: interpreter directive changed from "#!/bin/sh" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/sh"
+llama-cpp-mtp> node_modules/playwright/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/playwright-core/lib/utilsBundleImpl/xdg-open: interpreter directive changed from "#!/bin/sh" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/sh"
+llama-cpp-mtp> node_modules/playwright-core/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_chrome_beta_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_chrome_beta_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_chrome_stable_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_chrome_stable_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_msedge_beta_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_msedge_beta_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_msedge_dev_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_msedge_dev_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_msedge_stable_linux.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/playwright-core/bin/reinstall_msedge_stable_mac.sh: interpreter directive changed from "#!/usr/bin/env bash" to "/nix/store/i27rhb3nr65rkrwz36bchkwmav6ggsmn-bash-5.3p9/bin/bash"
+llama-cpp-mtp> node_modules/prettier/bin/prettier.cjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/recast/example/add-braces: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/recast/example/generic-identity: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/recast/example/identity: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/recast/example/to-while: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/rollup/dist/bin/rollup: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/sass/sass.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/semver/bin/semver.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/storybook/dist/bin/dispatcher.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/svelte-check/bin/svelte-check: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/typescript/bin/tsc: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/typescript/bin/tsserver: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/url-join/bin/changelog: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/uuid/dist-node/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/vite/bin/vite.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/vite-node/vite-node.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/vitest/vitest.mjs: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/why-is-node-running/cli.js: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/which/bin/node-which: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> node_modules/vite-plugin-devtools-json/node_modules/uuid/dist/esm/bin/uuid: interpreter directive changed from "#!/usr/bin/env node" to "/nix/store/785jidgnryzj566s25s3rb262d4g5znb-nodejs-24.14.1/bin/node"
+llama-cpp-mtp> npm warn Unknown env config "nodedir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> npm warn Unknown env config "platform". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> npm warn Unknown env config "arch". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> rebuilt dependencies successfully
+llama-cpp-mtp> patching script interpreter paths in node_modules
+llama-cpp-mtp> ~/source
+llama-cpp-mtp> Finished npmConfigHook
+llama-cpp-mtp> Running phase: updateAutotoolsGnuConfigScriptsPhase
+llama-cpp-mtp> Running phase: configurePhase
+llama-cpp-mtp> cat: COMMIT: No such file or directory
+llama-cpp-mtp> ~/source/tools/ui ~/source
+llama-cpp-mtp> npm warn Unknown env config "nodedir". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> npm warn Unknown env config "platform". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> npm warn Unknown env config "arch". This will stop working in the next major version of npm. See `npm help npmrc` for supported config options.
+llama-cpp-mtp> 
+llama-cpp-mtp> > llama-ui@1.0.0 build
+llama-cpp-mtp> > vite build
+llama-cpp-mtp> 
+llama-cpp-mtp> ▲ [WARNING] Cannot find base config file "./.svelte-kit/tsconfig.json" [tsconfig.json]
+llama-cpp-mtp> 
+llama-cpp-mtp>     tsconfig.json:2:12:
+llama-cpp-mtp>       2 │   "extends": "./.svelte-kit/tsconfig.json",
+llama-cpp-mtp>         ╵              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+llama-cpp-mtp> 
+llama-cpp-mtp> vite v7.3.2 building ssr environment for production...
+llama-cpp-mtp> Deprecation Warning [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>    ╷
+llama-cpp-mtp> 17 │ @import 'katex/src/styles/katex.scss';
+llama-cpp-mtp>    │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+llama-cpp-mtp>    ╵
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9  root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> 12:27:44 PM [vite-plugin-svelte] src/lib/components/app/chat/ChatAttachments/ChatAttachmentsPreview/ChatAttachmentsPreviewCurrentItem/ChatAttachmentsPreviewCurrentItemVideo.svelte:17:3 `<video>` elements must have a `<track kind="captions">`
+llama-cpp-mtp> https://svelte.dev/e/a11y_media_has_caption
+llama-cpp-mtp> 15:
+llama-cpp-mtp> 16:     {#if videoSrc}
+llama-cpp-mtp> 17:       <video controls class="mb-4 w-full" src={videoSrc}>
+llama-cpp-mtp>                   ^
+llama-cpp-mtp> 18:         Your browser does not support the video element.
+llama-cpp-mtp> 19:       </video>
+llama-cpp-mtp> Deprecation Warning [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>   ╷
+llama-cpp-mtp> 2 │ @import "./fonts.scss";
+llama-cpp-mtp>   │         ^^^^^^^^^^^^^^
+llama-cpp-mtp>   ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 2:9  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9             root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.append instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>   ╷
+llama-cpp-mtp> 9 │         $src: append($src, url('#{$font-folder}/KaTeX_#{$family}-#{$family-suffix}.woff2') format('woff2'), comma);
+llama-cpp-mtp>   │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+llama-cpp-mtp>   ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/fonts.scss 9:15   generate-src()
+llama-cpp-mtp>     node_modules/katex/src/styles/fonts.scss 42:11  font-face()
+llama-cpp-mtp>     node_modules/katex/src/styles/fonts.scss 52:1   @import
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 2:9    @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9               root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.length instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 344 │         @for $from from 1 through length($sizes) {
+llama-cpp-mtp>     │                                   ^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 344:35  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.length instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 345 │             @for $to from 1 through length($sizes) {
+llama-cpp-mtp>     │                                     ^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 345:37  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.nth instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 348 │                     font-size: calc((nth($sizes, $to) / nth($sizes, $from)) * 1em);
+llama-cpp-mtp>     │                                      ^^^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 348:38  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.nth instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 348 │                     font-size: calc((nth($sizes, $to) / nth($sizes, $from)) * 1em);
+llama-cpp-mtp>     │                                                         ^^^^^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 348:57  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> ✓ 4813 modules transformed.
+llama-cpp-mtp> vite v7.3.2 building client environment for production...
+llama-cpp-mtp> Deprecation Warning [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>    ╷
+llama-cpp-mtp> 17 │ @import 'katex/src/styles/katex.scss';
+llama-cpp-mtp>    │         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+llama-cpp-mtp>    ╵
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9  root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> 12:27:50 PM [vite-plugin-svelte] src/lib/components/app/chat/ChatAttachments/ChatAttachmentsPreview/ChatAttachmentsPreviewCurrentItem/ChatAttachmentsPreviewCurrentItemVideo.svelte:17:3 `<video>` elements must have a `<track kind="captions">`
+llama-cpp-mtp> https://svelte.dev/e/a11y_media_has_caption
+llama-cpp-mtp> 15:
+llama-cpp-mtp> 16:     {#if videoSrc}
+llama-cpp-mtp> 17:       <video controls class="mb-4 w-full" src={videoSrc}>
+llama-cpp-mtp>                   ^
+llama-cpp-mtp> 18:         Your browser does not support the video element.
+llama-cpp-mtp> 19:       </video>
+llama-cpp-mtp> Deprecation Warning [import]: Sass @import rules are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>   ╷
+llama-cpp-mtp> 2 │ @import "./fonts.scss";
+llama-cpp-mtp>   │         ^^^^^^^^^^^^^^
+llama-cpp-mtp>   ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 2:9  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9             root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.append instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>   ╷
+llama-cpp-mtp> 9 │         $src: append($src, url('#{$font-folder}/KaTeX_#{$family}-#{$family-suffix}.woff2') format('woff2'), comma);
+llama-cpp-mtp>   │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+llama-cpp-mtp>   ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/fonts.scss 9:15   generate-src()
+llama-cpp-mtp>     node_modules/katex/src/styles/fonts.scss 42:11  font-face()
+llama-cpp-mtp>     node_modules/katex/src/styles/fonts.scss 52:1   @import
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 2:9    @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9               root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.length instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 344 │         @for $from from 1 through length($sizes) {
+llama-cpp-mtp>     │                                   ^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 344:35  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.length instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 345 │             @for $to from 1 through length($sizes) {
+llama-cpp-mtp>     │                                     ^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 345:37  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.nth instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 348 │                     font-size: calc((nth($sizes, $to) / nth($sizes, $from)) * 1em);
+llama-cpp-mtp>     │                                      ^^^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 348:38  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> Deprecation Warning [global-builtin]: Global built-in functions are deprecated and will be removed in Dart Sass 3.0.0.
+llama-cpp-mtp> Use list.nth instead.
+llama-cpp-mtp> 
+llama-cpp-mtp> More info and automated migrator: https://sass-lang.com/d/import
+llama-cpp-mtp> 
+llama-cpp-mtp>     ╷
+llama-cpp-mtp> 348 │                     font-size: calc((nth($sizes, $to) / nth($sizes, $from)) * 1em);
+llama-cpp-mtp>     │                                                         ^^^^^^^^^^^^^^^^^^
+llama-cpp-mtp>     ╵
+llama-cpp-mtp>     node_modules/katex/src/styles/katex.scss 348:57  @import
+llama-cpp-mtp>     src/styles/katex-custom.scss 17:9                root stylesheet
+llama-cpp-mtp> 
+llama-cpp-mtp> ✓ 5949 modules transformed.
+llama-cpp-mtp> .svelte-kit/output/client/_app/version.json                              0.02 kB │ gzip:     0.04 kB
+llama-cpp-mtp> .svelte-kit/output/client/.vite/manifest.json                            0.30 kB │ gzip:     0.19 kB
+llama-cpp-mtp> .svelte-kit/output/client/_app/immutable/assets/bundle.D6fOGM0E.css    505.48 kB │ gzip:   289.73 kB
+llama-cpp-mtp> .svelte-kit/output/client/_app/immutable/bundle.CV0PTiqB.js          5,283.75 kB │ gzip: 1,573.02 kB
+llama-cpp-mtp> 
+llama-cpp-mtp> (!) Some chunks are larger than 3072 kB after minification. Consider:
+llama-cpp-mtp> - Using dynamic import() to code-split the application
+llama-cpp-mtp> - Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+llama-cpp-mtp> - Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+llama-cpp-mtp> ✓ built in 9.14s
+llama-cpp-mtp> .svelte-kit/output/server/.vite/manifest.json                                      11.63 kB
+llama-cpp-mtp> .svelte-kit/output/server/_app/immutable/assets/_page.CV-KWLNP.css                  0.29 kB
+llama-cpp-mtp> .svelte-kit/output/server/_app/immutable/assets/DialogConfirmation.bHHIbcsu.css     0.35 kB
+llama-cpp-mtp> .svelte-kit/output/server/_app/immutable/assets/_layout.BIl5ZvVY.css              124.57 kB
+llama-cpp-mtp> .svelte-kit/output/server/_app/immutable/assets/sidebar-menu-button.BBSHOt2h.css  380.02 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/environment.js                                     0.07 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/api-key-validation.js                              0.19 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/server.js                                          0.20 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/(chat)/_page.ts.js                          0.29 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/(chat)/chat/_id_/_page.ts.js                0.31 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/arrow-right.js                                     0.31 kB
+llama-cpp-mtp> .svelte-kit/output/server/internal.js                                               0.37 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/refresh-cw.js                                      0.44 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/utils.js                                           0.60 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/settings/_layout.svelte.js                  0.85 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/ui.js                                              0.86 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/(chat)/_page.svelte.js                      1.06 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/settings.js                                        1.12 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/trash-2.js                                         1.16 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/(chat)/chat/_id_/_page.svelte.js            1.21 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/exports.js                                         1.46 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/url.js                                             1.60 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/input.js                                           1.62 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/render-context.js                                  1.64 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/label.js                                           1.78 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/internal.js                                        2.58 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/DialogModelNotAvailable.js                         2.70 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/index2.js                                          3.41 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/dialog-footer.js                                   5.64 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/_error.svelte.js                            8.50 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/mcp-servers/_page.svelte.js                 9.30 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/McpServerIdentity.js                              10.27 kB
+llama-cpp-mtp> .svelte-kit/output/server/remote-entry.js                                          13.90 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/conversations.svelte.js                           14.71 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/shared.js                                         14.94 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/popper-layer-force-mount.js                       15.40 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/index.js                                          18.84 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/ActionIcon.js                                     22.76 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/DialogConfirmation.js                             34.81 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/_layout.svelte.js                          37.67 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/root.js                                           38.55 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/url2.js                                           48.46 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/chat.svelte.js                                    53.10 kB
+llama-cpp-mtp> .svelte-kit/output/server/index.js                                                 57.08 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/settings/__section__/_page.svelte.js       68.09 kB
+llama-cpp-mtp> .svelte-kit/output/server/chunks/sidebar-menu-button.js                           137.04 kB
+llama-cpp-mtp> .svelte-kit/output/server/entries/pages/(chat)/_layout.svelte.js                  252.37 kB
+llama-cpp-mtp> ✓ built in 15.63s
+llama-cpp-mtp> 
+llama-cpp-mtp> Run npm run preview to preview your production build locally.
+llama-cpp-mtp> 
+llama-cpp-mtp> > Using @sveltejs/adapter-static
+llama-cpp-mtp> Overwriting ../../build/tools/ui/dist/index.html with fallback page. Consider using a different name for the fallback.
+llama-cpp-mtp>   Wrote site to "../../build/tools/ui/dist"
+llama-cpp-mtp>   ✔ done
+llama-cpp-mtp> ✓ Inlined favicon.svg as base64 data URL
+llama-cpp-mtp> ✓ Updated index.html
+llama-cpp-mtp> ✓ Copied bundle.CV0PTiqB.js -> bundle.js
+llama-cpp-mtp> ✓ Copied bundle.D6fOGM0E.css -> bundle.css
+llama-cpp-mtp> ✓ Removed _app directory
+llama-cpp-mtp> ✓ Removed favicon.svg
+llama-cpp-mtp> ~/source
+llama-cpp-mtp> cmake flags: -GNinja -DCMAKE_FIND_USE_SYSTEM_PACKAGE_REGISTRY=OFF -DCMAKE_FIND_USE_PACKAGE_REGISTRY=OFF -DCMAKE_EXPORT_NO_PACKAGE_REGISTRY=ON -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DCMAKE_INSTALL_LOCALEDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/share/locale -DCMAKE_INSTALL_LIBEXECDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/libexec -DCMAKE_INSTALL_LIBDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib -DCMAKE_INSTALL_DOCDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/share/doc/llama-cpp-mtp -DCMAKE_INSTALL_INFODIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/share/info -DCMAKE_INSTALL_MANDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/share/man -DCMAKE_INSTALL_INCLUDEDIR=/nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include -DCMAKE_INSTALL_SBINDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/sbin -DCMAKE_INSTALL_BINDIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin -DCMAKE_INSTALL_NAME_DIR=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib -DCMAKE_STRIP=/nix/store/qd70v8g0561vm8m33kmnp79z00cgyi5n-gcc-wrapper-15.2.0/bin/strip -DCMAKE_RANLIB=/nix/store/qd70v8g0561vm8m33kmnp79z00cgyi5n-gcc-wrapper-15.2.0/bin/ranlib -DCMAKE_AR=/nix/store/qd70v8g0561vm8m33kmnp79z00cgyi5n-gcc-wrapper-15.2.0/bin/ar -DCMAKE_C_COMPILER=gcc -DCMAKE_CXX_COMPILER=g++ -DCMAKE_INSTALL_PREFIX=/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213 -DLLAMA_BUILD_COMMIT:STRING= -DGGML_NATIVE:BOOL=FALSE -DLLAMA_BUILD_EXAMPLES:BOOL=FALSE -DLLAMA_BUILD_SERVER:BOOL=TRUE -DLLAMA_BUILD_TESTS:BOOL=FALSE -DLLAMA_OPENSSL:BOOL=TRUE -DBUILD_SHARED_LIBS:BOOL=TRUE -DGGML_BLAS:BOOL=FALSE -DGGML_CLBLAST:BOOL=FALSE -DGGML_CUDA:BOOL=FALSE -DGGML_HIP:BOOL=TRUE -DGGML_METAL:BOOL=FALSE -DGGML_RPC:BOOL=FALSE -DGGML_VULKAN:BOOL=FALSE -DLLAMA_BUILD_NUMBER:STRING=9213 -DCMAKE_HIP_COMPILER:STRING=/nix/store/l0kzlxlym9lana84fhm3z2am6qrgprcy-hipClang/bin/clang++ -DCMAKE_HIP_ARCHITECTURES:STRING=gfx900\;gfx906\;gfx908\;gfx90a\;gfx942\;gfx1010\;gfx1030\;gfx1100\;gfx1101\;gfx1102\;gfx1150\;gfx1151\;gfx1200\;gfx1201 -DGGML_HIP_ROCWMMA_FATTN:BOOL=TRUE -DCMAKE_HIP_FLAGS:STRING=-I/nix/store/3nhzcsblh6dr0lh66kx8gvxgipfw3gca-rocwmma-7.2.2/include
+llama-cpp-mtp> -- The C compiler identification is GNU 15.2.0
+llama-cpp-mtp> -- The CXX compiler identification is GNU 15.2.0
+llama-cpp-mtp> -- Detecting C compiler ABI info
+llama-cpp-mtp> -- Detecting C compiler ABI info - done
+llama-cpp-mtp> -- Check for working C compiler: /nix/store/qd70v8g0561vm8m33kmnp79z00cgyi5n-gcc-wrapper-15.2.0/bin/gcc - skipped
+llama-cpp-mtp> -- Detecting C compile features
+llama-cpp-mtp> -- Detecting C compile features - done
+llama-cpp-mtp> -- Detecting CXX compiler ABI info
+llama-cpp-mtp> -- Detecting CXX compiler ABI info - done
+llama-cpp-mtp> -- Check for working CXX compiler: /nix/store/qd70v8g0561vm8m33kmnp79z00cgyi5n-gcc-wrapper-15.2.0/bin/g++ - skipped
+llama-cpp-mtp> -- Detecting CXX compile features
+llama-cpp-mtp> -- Detecting CXX compile features - done
+llama-cpp-mtp> CMAKE_BUILD_TYPE=Release
+llama-cpp-mtp> -- Could NOT find Git (missing: GIT_EXECUTABLE)
+llama-cpp-mtp> -- Could NOT find Git (missing: GIT_EXECUTABLE)
+llama-cpp-mtp> CMake Warning at cmake/build-info.cmake:14 (message):
+llama-cpp-mtp>   Git not found.  Build info will not be accurate.
+llama-cpp-mtp> Call Stack (most recent call first):
+llama-cpp-mtp>   CMakeLists.txt:132 (include)
+llama-cpp-mtp> 
+llama-cpp-mtp> 
+llama-cpp-mtp> -- The ASM compiler identification is GNU
+llama-cpp-mtp> -- Found assembler: /nix/store/qd70v8g0561vm8m33kmnp79z00cgyi5n-gcc-wrapper-15.2.0/bin/gcc
+llama-cpp-mtp> -- Setting GGML_NATIVE_DEFAULT to OFF
+llama-cpp-mtp> -- Performing Test CMAKE_HAVE_LIBC_PTHREAD
+llama-cpp-mtp> -- Performing Test CMAKE_HAVE_LIBC_PTHREAD - Success
+llama-cpp-mtp> -- Found Threads: TRUE
+llama-cpp-mtp> -- Warning: ccache not found - consider installing it for faster compilation or disable this warning with GGML_CCACHE=OFF
+llama-cpp-mtp> -- CMAKE_SYSTEM_PROCESSOR: x86_64
+llama-cpp-mtp> -- GGML_SYSTEM_ARCH: x86
+llama-cpp-mtp> -- Including CPU backend
+llama-cpp-mtp> -- Found OpenMP_C: -fopenmp (found version "4.5")
+llama-cpp-mtp> -- Found OpenMP_CXX: -fopenmp (found version "4.5")
+llama-cpp-mtp> -- Found OpenMP: TRUE (found version "4.5")
+llama-cpp-mtp> -- x86 detected
+llama-cpp-mtp> -- Adding CPU backend variant ggml-cpu:
+llama-cpp-mtp> -- The HIP compiler identification is Clang 22.0.0
+llama-cpp-mtp> -- Detecting HIP compiler ABI info
+llama-cpp-mtp> -- Detecting HIP compiler ABI info - done
+llama-cpp-mtp> -- Check for working HIP compiler: /nix/store/l0kzlxlym9lana84fhm3z2am6qrgprcy-hipClang/bin/clang++ - skipped
+llama-cpp-mtp> -- Detecting HIP compile features
+llama-cpp-mtp> -- Detecting HIP compile features - done
+llama-cpp-mtp> -- HIP and hipBLAS found
+llama-cpp-mtp> -- Including HIP backend
+llama-cpp-mtp> -- ggml version: 0.12.0
+llama-cpp-mtp> -- ggml commit:  unknown
+llama-cpp-mtp> CMake Warning at common/CMakeLists.txt:33 (message):
+llama-cpp-mtp>   Git repository not found; to enable automatic generation of build info,
+llama-cpp-mtp>   make sure Git is installed and the project is a Git repository.
+llama-cpp-mtp> 
+llama-cpp-mtp> 
+llama-cpp-mtp> -- Found OpenSSL: /nix/store/wbyqkb1vpm41s4jb8pv0i9h4jv08xdrv-openssl-3.6.1/lib/libcrypto.so (found version "3.6.1")
+llama-cpp-mtp> -- Performing Test OPENSSL_VERSION_SUPPORTED
+llama-cpp-mtp> -- Performing Test OPENSSL_VERSION_SUPPORTED - Success
+llama-cpp-mtp> -- OpenSSL found: 3.6.1
+llama-cpp-mtp> -- UI: using local build from /build/source/build/tools/ui/dist
+llama-cpp-mtp> -- UI: embedded with source: local
+llama-cpp-mtp> -- Generating embedded license file for target: llama-common
+llama-cpp-mtp> -- Configuring done (2.3s)
+llama-cpp-mtp> -- Generating done (0.0s)
+llama-cpp-mtp> CMake Warning:
+llama-cpp-mtp>   Manually-specified variables were not used by the project:
+llama-cpp-mtp> 
+llama-cpp-mtp>     BUILD_TESTING
+llama-cpp-mtp>     CMAKE_EXPORT_NO_PACKAGE_REGISTRY
+llama-cpp-mtp> 
+llama-cpp-mtp> 
+llama-cpp-mtp> -- Build files have been written to: /build/source/build
+llama-cpp-mtp> cmake: enabled parallel building
+llama-cpp-mtp> cmake: enabled parallel installing
+llama-cpp-mtp> Running phase: buildPhase
+llama-cpp-mtp> build flags: -j4
+llama-cpp-mtp> [1/463] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml.cpp.o
+llama-cpp-mtp> [2/463] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-alloc.c.o
+llama-cpp-mtp> [3/463] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend.cpp.o
+llama-cpp-mtp> [4/463] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-threading.cpp.o
+llama-cpp-mtp> [5/463] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-opt.cpp.o
+llama-cpp-mtp> [6/463] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml.c.o
+llama-cpp-mtp> [7/463] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.c.o
+llama-cpp-mtp> [8/463] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/ggml-backend-meta.cpp.o
+llama-cpp-mtp> [9/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ggml-cpu.cpp.o
+llama-cpp-mtp> [10/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/hbm.cpp.o
+llama-cpp-mtp> [11/463] Building CXX object ggml/src/CMakeFiles/ggml-base.dir/gguf.cpp.o
+llama-cpp-mtp> [12/463] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/quants.c.o
+llama-cpp-mtp> [13/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/traits.cpp.o
+llama-cpp-mtp> [14/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/amx.cpp.o
+llama-cpp-mtp> [15/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/amx/mmq.cpp.o
+llama-cpp-mtp> [16/463] Building C object ggml/src/CMakeFiles/ggml-base.dir/ggml-quants.c.o
+llama-cpp-mtp> [17/463] Linking CXX shared library bin/libggml-base.so.0.12.0
+llama-cpp-mtp> [18/463] Creating library symlink bin/libggml-base.so.0 bin/libggml-base.so
+llama-cpp-mtp> [19/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/vec.cpp.o
+llama-cpp-mtp> [20/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/binary-ops.cpp.o
+llama-cpp-mtp> [21/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/llamafile/sgemm.cpp.o
+llama-cpp-mtp> [22/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/unary-ops.cpp.o
+llama-cpp-mtp> [23/463] Building C object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/x86/quants.c.o
+llama-cpp-mtp> [24/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/repack.cpp.o
+llama-cpp-mtp> [25/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/arch/x86/repack.cpp.o
+llama-cpp-mtp> [26/463] Building CXX object ggml/src/CMakeFiles/ggml-cpu.dir/ggml-cpu/ops.cpp.o
+llama-cpp-mtp> [27/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/add-id.cu.o
+llama-cpp-mtp> [28/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/acc.cu.o
+llama-cpp-mtp> [29/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/allreduce.cu.o
+llama-cpp-mtp> [30/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/arange.cu.o
+llama-cpp-mtp> [31/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/argmax.cu.o
+llama-cpp-mtp> [32/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/argsort.cu.o
+llama-cpp-mtp> [33/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/clamp.cu.o
+llama-cpp-mtp> [34/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/conv-transpose-1d.cu.o
+llama-cpp-mtp> [35/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/concat.cu.o
+llama-cpp-mtp> [36/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/conv2d-dw.cu.o
+llama-cpp-mtp> [37/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/conv2d-transpose.cu.o
+llama-cpp-mtp> [38/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/conv2d.cu.o
+llama-cpp-mtp> [39/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/binbcast.cu.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx1150-b89c42.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx1151-c969d2.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx1200-d6a5c9.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx1201-969266.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx900-23728e.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx906-fc62d2.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx908-df4a40.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx90a-39ab74.o
+llama-cpp-mtp> Job completed: /build/binbcast-gfx942-1319db.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/binbcast.cu.o
+llama-cpp-mtp> [40/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/count-equal.cu.o
+llama-cpp-mtp> [41/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/convert.cu.o
+llama-cpp-mtp> Job completed: /build/convert-gfx906-249dc0.o
+llama-cpp-mtp> Job completed: /build/convert-gfx908-fd199d.o
+llama-cpp-mtp> Job completed: /build/convert-gfx90a-6aeb69.o
+llama-cpp-mtp> Job completed: /build/convert-gfx942-98e9ba.o
+llama-cpp-mtp> [42/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/cross-entropy-loss.cu.o
+llama-cpp-mtp> [43/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/cumsum.cu.o
+llama-cpp-mtp> [44/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/diag.cu.o
+llama-cpp-mtp> [45/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/cpy.cu.o
+llama-cpp-mtp> Job completed: /build/cpy-gfx1201-e9af3b.o
+llama-cpp-mtp> Job completed: /build/cpy-gfx900-3aff0a.o
+llama-cpp-mtp> Job completed: /build/cpy-gfx906-0157a4.o
+llama-cpp-mtp> Job completed: /build/cpy-gfx908-bf5436.o
+llama-cpp-mtp> Job completed: /build/cpy-gfx90a-9c958b.o
+llama-cpp-mtp> Job completed: /build/cpy-gfx942-7dd2a5.o
+llama-cpp-mtp> [46/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/diagmask.cu.o
+llama-cpp-mtp> [47/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/fattn-tile.cu.o
+llama-cpp-mtp> [48/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/fill.cu.o
+llama-cpp-mtp> [49/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/gated_delta_net.cu.o
+llama-cpp-mtp> [50/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/getrows.cu.o
+llama-cpp-mtp> Job completed: /build/getrows-gfx908-22bae1.o
+llama-cpp-mtp> Job completed: /build/getrows-gfx90a-e5cf8d.o
+llama-cpp-mtp> Job completed: /build/getrows-gfx942-3f1294.o
+llama-cpp-mtp> [51/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/fattn.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-gfx1201-d413a9.o
+llama-cpp-mtp> Job completed: /build/fattn-gfx900-de89df.o
+llama-cpp-mtp> Job completed: /build/fattn-gfx906-56a87a.o
+llama-cpp-mtp> Job completed: /build/fattn-gfx908-a842aa.o
+llama-cpp-mtp> Job completed: /build/fattn-gfx90a-78d640.o
+llama-cpp-mtp> Job completed: /build/fattn-gfx942-1e0c8f.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/fattn.cu.o
+llama-cpp-mtp> [52/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/ggml-cuda.cu.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/ggml-cuda.cu.o
+llama-cpp-mtp> [53/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/gla.cu.o
+llama-cpp-mtp> [54/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/im2col.cu.o
+llama-cpp-mtp> [55/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mean.cu.o
+llama-cpp-mtp> [56/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmf.cu.o
+llama-cpp-mtp> [57/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmid.cu.o
+llama-cpp-mtp> [58/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmq.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1100-7f9134.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1101-e7363b.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1102-2efa52.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1150-a91de3.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1151-a1c67a.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1200-db968b.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx1201-4aa223.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx900-995fab.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx906-e88c84.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx908-3ce50d.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx90a-f8d0bd.o
+llama-cpp-mtp> Job completed: /build/mmq-gfx942-d05dd1.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmq.cu.o
+llama-cpp-mtp> [59/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/norm.cu.o
+llama-cpp-mtp> [60/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/opt-step-adamw.cu.o
+llama-cpp-mtp> [61/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/opt-step-sgd.cu.o
+llama-cpp-mtp> [62/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmvf.cu.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1030-47b21f.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1100-5b41e9.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1101-5bb879.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1102-b2cf6d.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1150-ab4c91.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1151-663892.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1200-925d55.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx1201-9ad958.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx900-f6ff6e.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx906-bbf9f3.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx908-8e11bf.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx90a-346771.o
+llama-cpp-mtp> Job completed: /build/mmvf-gfx942-b243f4.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmvf.cu.o
+llama-cpp-mtp> [63/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/out-prod.cu.o
+llama-cpp-mtp> [64/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/pad.cu.o
+llama-cpp-mtp> [65/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/fattn-wmma-f16.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1100-f40381.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1101-a364aa.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1102-2a365c.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1150-43f1e5.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1151-798f68.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1200-7ad4e8.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx1201-36e572.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx900-9123af.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx906-50b012.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx908-b1d903.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx90a-37352d.o
+llama-cpp-mtp> Job completed: /build/fattn-wmma-f16-gfx942-98bf71.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/fattn-wmma-f16.cu.o
+llama-cpp-mtp> [66/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/pad_reflect_1d.cu.o
+llama-cpp-mtp> [67/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/pool2d.cu.o
+llama-cpp-mtp> [68/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/quantize.cu.o
+llama-cpp-mtp> [69/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/roll.cu.o
+llama-cpp-mtp> [70/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/scale.cu.o
+llama-cpp-mtp> [71/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/set-rows.cu.o
+llama-cpp-mtp> [72/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/rope.cu.o
+llama-cpp-mtp> Job completed: /build/rope-gfx1151-b71113.o
+llama-cpp-mtp> Job completed: /build/rope-gfx1200-9ef5d5.o
+llama-cpp-mtp> Job completed: /build/rope-gfx1201-d770df.o
+llama-cpp-mtp> Job completed: /build/rope-gfx900-e88874.o
+llama-cpp-mtp> Job completed: /build/rope-gfx906-b6036f.o
+llama-cpp-mtp> Job completed: /build/rope-gfx908-47adf0.o
+llama-cpp-mtp> Job completed: /build/rope-gfx90a-672a82.o
+llama-cpp-mtp> Job completed: /build/rope-gfx942-5bb88d.o
+llama-cpp-mtp> [73/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/set.cu.o
+llama-cpp-mtp> [74/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmvq.cu.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1010-952951.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1030-450c82.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1100-630b17.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1101-3cff0f.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1102-631725.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1150-1f504e.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1151-0737ac.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1200-edcad1.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx1201-a45ada.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx900-372392.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx906-f492f9.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx908-d764a4.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx90a-fd2adb.o
+llama-cpp-mtp> Job completed: /build/mmvq-gfx942-efceda.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/mmvq.cu.o
+llama-cpp-mtp> [75/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/snake.cu.o
+llama-cpp-mtp> [76/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/softcap.cu.o
+llama-cpp-mtp> [77/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/softmax.cu.o
+llama-cpp-mtp> Job completed: /build/softmax-gfx900-3d1aea.o
+llama-cpp-mtp> Job completed: /build/softmax-gfx906-1b7d89.o
+llama-cpp-mtp> Job completed: /build/softmax-gfx908-3c9672.o
+llama-cpp-mtp> Job completed: /build/softmax-gfx90a-29a957.o
+llama-cpp-mtp> Job completed: /build/softmax-gfx942-a7dfcb.o
+llama-cpp-mtp> [78/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/ssm-conv.cu.o
+llama-cpp-mtp> Job completed: /build/ssm-conv-gfx900-e86985.o
+llama-cpp-mtp> Job completed: /build/ssm-conv-gfx906-49284f.o
+llama-cpp-mtp> Job completed: /build/ssm-conv-gfx908-8b158b.o
+llama-cpp-mtp> Job completed: /build/ssm-conv-gfx90a-065574.o
+llama-cpp-mtp> Job completed: /build/ssm-conv-gfx942-9d7ef5.o
+llama-cpp-mtp> [79/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/ssm-scan.cu.o
+llama-cpp-mtp> Job completed: /build/ssm-scan-gfx906-ec0050.o
+llama-cpp-mtp> Job completed: /build/ssm-scan-gfx908-18e1cd.o
+llama-cpp-mtp> Job completed: /build/ssm-scan-gfx90a-fb4706.o
+llama-cpp-mtp> Job completed: /build/ssm-scan-gfx942-b15baf.o
+llama-cpp-mtp> [80/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/sum.cu.o
+llama-cpp-mtp> [81/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/solve_tri.cu.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx1151-722ebd.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx1200-373564.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx1201-00be9e.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx900-416f0d.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx906-e19af8.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx908-76ee64.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx90a-c3badb.o
+llama-cpp-mtp> Job completed: /build/solve_tri-gfx942-2dcc22.o
+llama-cpp-mtp> [82/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/sumrows.cu.o
+llama-cpp-mtp> [83/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/top-k.cu.o
+llama-cpp-mtp> [84/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/tri.cu.o
+llama-cpp-mtp> [85/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/tsembd.cu.o
+llama-cpp-mtp> [86/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/topk-moe.cu.o
+llama-cpp-mtp> Job completed: /build/topk-moe-gfx1201-242a9d.o
+llama-cpp-mtp> Job completed: /build/topk-moe-gfx900-663bd8.o
+llama-cpp-mtp> Job completed: /build/topk-moe-gfx906-10be10.o
+llama-cpp-mtp> Job completed: /build/topk-moe-gfx908-c2c126.o
+llama-cpp-mtp> Job completed: /build/topk-moe-gfx90a-c2142a.o
+llama-cpp-mtp> Job completed: /build/topk-moe-gfx942-061a19.o
+llama-cpp-mtp> [87/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/unary.cu.o
+llama-cpp-mtp> [88/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/upscale.cu.o
+llama-cpp-mtp> [89/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/wkv.cu.o
+llama-cpp-mtp> Job completed: /build/wkv-gfx900-75034b.o
+llama-cpp-mtp> Job completed: /build/wkv-gfx906-0fbb06.o
+llama-cpp-mtp> Job completed: /build/wkv-gfx908-2268d0.o
+llama-cpp-mtp> Job completed: /build/wkv-gfx90a-5b7224.o
+llama-cpp-mtp> Job completed: /build/wkv-gfx942-fffc37.o
+llama-cpp-mtp> [90/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq192-dv128.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx1102-99d69e.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx1150-342846.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx1151-ef8a4c.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx1200-585cc6.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx1201-b7dd5b.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx900-ab4b44.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx906-400c6a.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx908-9f9d9a.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx90a-874806.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq192-dv128-gfx942-6868c0.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq192-dv128.cu.o
+llama-cpp-mtp> [91/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq320-dv256.cu.o
+llama-cpp-mtp> In file included from /build/source/ggml/src/ggml-cuda/template-instances/fattn-tile-instance-dkq320-dv256.cu:3:
+llama-cpp-mtp> /build/source/ggml/src/ggml-cuda/template-instances/../fattn-tile.cuh:790:24: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
+llama-cpp-mtp>   790 | static __global__ void flash_attn_tile(
+llama-cpp-mtp>       |                        ^
+llama-cpp-mtp> /build/source/ggml/src/ggml-cuda/template-instances/../fattn-tile.cuh:790:24: warning: loop not unrolled: the optimizer was unable to perform the requested transformation; the transformation might be disabled or specified as part of an unsupported transformation ordering [-Wpass-failed=transform-warning]
+llama-cpp-mtp> 2 warnings generated when compiling for gfx1010.
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq320-dv256-gfx900-32ea33.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq320-dv256-gfx906-63d31f.o
+llama-cpp-mtp> [92/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq112-dv112.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1030-5eabc7.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1100-9ddc51.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1101-3755fc.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1102-a94a05.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1150-b024e3.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1151-27ae33.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1200-65b6e9.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx1201-d229f8.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx900-eb913d.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx906-37213b.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx908-2defef.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx90a-d53fdf.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq112-dv112-gfx942-11f4fd.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq112-dv112.cu.o
+llama-cpp-mtp> [93/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq40-dv40.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1100-80913f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1101-8981e8.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1102-a8550d.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1150-6aab74.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1151-358b64.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1200-87692e.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx1201-5cc218.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx900-9f9dba.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx906-62c2e0.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx908-6b6088.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx90a-c7d252.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq40-dv40-gfx942-9ddaf3.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq40-dv40.cu.o
+llama-cpp-mtp> [94/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq256-dv256.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1010-af24b2.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1030-d8c3e0.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1100-e61000.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1101-467b8f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1102-cda6ae.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1150-b7bf8d.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1151-f19c9f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1200-baaa71.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx1201-4e6c41.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx900-d7781f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx906-07757f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx908-71fddf.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx90a-ebe345.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq256-dv256-gfx942-e0ec09.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq256-dv256.cu.o
+llama-cpp-mtp> [95/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq128-dv128.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1010-8e4f2c.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1030-851798.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1100-81c96b.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1101-040eb8.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1102-c94ce7.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1150-ebd0a7.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1151-d3450a.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1200-0c4464.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx1201-cbfbb3.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx900-c51a56.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx906-d55c34.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx908-29358d.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx90a-6ed0fc.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq128-dv128-gfx942-f3b948.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq128-dv128.cu.o
+llama-cpp-mtp> [96/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq512-dv512.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1010-ee0249.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1030-e23583.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1100-420a10.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1101-d028db.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1102-56cfa9.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1150-12d3de.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1151-62183e.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1200-277dd7.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx1201-860610.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx900-13939a.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx906-f749e4.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx908-5225cc.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx90a-f02066.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq512-dv512-gfx942-8c4407.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq512-dv512.cu.o
+llama-cpp-mtp> [97/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq64-dv64.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1010-6d1569.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1030-587f77.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1100-2cb0c1.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1101-5e34fe.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1102-5b1383.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1150-91d278.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1151-24651f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1200-55bfab.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx1201-3e25ec.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx900-a1333c.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx906-7a10b9.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx908-0e04bf.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx90a-25770b.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq64-dv64-gfx942-b529c7.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq64-dv64.cu.o
+llama-cpp-mtp> [98/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq72-dv72.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1100-496154.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1101-5f6586.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1102-ae5a1a.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1150-ac3cc8.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1151-e17c80.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1200-a021bb.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx1201-895767.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx900-9f756b.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx906-003ea0.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx908-7479c8.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx90a-a10eb4.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq72-dv72-gfx942-928a20.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq72-dv72.cu.o
+llama-cpp-mtp> [99/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq576-dv512.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1010-352a58.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1030-9d97b1.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1100-84885c.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1101-e5e6f8.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1102-9937fe.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1150-fd7910.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1151-e79c31.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1200-1a808d.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx1201-f6d44b.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx900-e56bb7.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx906-434327.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx908-dbe6c4.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx90a-cf7866.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq576-dv512-gfx942-50a565.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq576-dv512.cu.o
+llama-cpp-mtp> [100/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq80-dv80.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1100-2a60df.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1101-256cb0.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1102-9b9112.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1150-02fd57.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1151-d3f5aa.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1200-82fa46.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx1201-764c1a.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx900-49c161.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx906-d389cc.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx908-de388f.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx90a-6f4e83.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq80-dv80-gfx942-abca3d.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq80-dv80.cu.o
+llama-cpp-mtp> [101/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_32.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_32-gfx90a-b81295.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_32-gfx942-cbf79f.o
+llama-cpp-mtp> [102/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_16.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_16-gfx908-13d9ee.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_16-gfx90a-230c37.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_16-gfx942-a72594.o
+llama-cpp-mtp> [103/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_8.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx1200-14378e.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx1201-a547eb.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx900-e07936.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx906-f8f8c7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx908-9e393c.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx90a-4ae39e.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_1-ncols2_8-gfx942-2d2849.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_1-ncols2_8.cu.o
+llama-cpp-mtp> [104/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq96-dv96.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1100-1acd06.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1101-61ef84.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1102-838ed6.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1150-563fe5.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1151-4632eb.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1200-a7c8b2.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx1201-16c30e.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx900-8d1432.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx906-962942.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx908-0a8c04.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx90a-bc6a30.o
+llama-cpp-mtp> Job completed: /build/fattn-tile-instance-dkq96-dv96-gfx942-64eed3.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-tile-instance-dkq96-dv96.cu.o
+llama-cpp-mtp> [105/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_1.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_1-gfx1201-934478.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_1-gfx900-59beb2.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_1-gfx906-3627dc.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_1-gfx908-c0e480.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_1-gfx90a-d5791c.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_1-gfx942-5cc711.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_1.cu.o
+llama-cpp-mtp> [106/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_16.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_16-gfx908-2a4df6.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_16-gfx90a-a962f7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_16-gfx942-4e8d35.o
+llama-cpp-mtp> [107/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_32.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_32-gfx90a-7b5460.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_32-gfx942-8fe6e3.o
+llama-cpp-mtp> [108/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_4.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_4-gfx1201-99d055.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_4-gfx900-bc1a55.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_4-gfx906-af3657.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_4-gfx908-f0f131.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_4-gfx90a-909326.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_4-gfx942-f75211.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_4.cu.o
+llama-cpp-mtp> [109/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_2.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1100-7538a5.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1101-742934.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1102-00038d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1150-ae6821.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1151-9deae8.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1200-fe4772.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx1201-232110.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx900-877342.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx906-61e2f0.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx908-2978fc.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx90a-16ab74.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_2-gfx942-dceab8.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_2.cu.o
+llama-cpp-mtp> [110/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_1.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_1-gfx1201-fa6112.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_1-gfx900-f5c818.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_1-gfx906-a68b22.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_1-gfx908-332fba.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_1-gfx90a-2ff456.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_1-gfx942-4778cd.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_1.cu.o
+llama-cpp-mtp> [111/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_16.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_16-gfx908-b367c9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_16-gfx90a-4e4f7f.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_16-gfx942-ca0f62.o
+llama-cpp-mtp> [112/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_8.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx1101-fc19d7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx1102-17ffd2.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx1150-b31a5e.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx1151-4cdb19.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx1200-001ec0.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx1201-6acfc4.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx900-5803bf.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx906-efa346.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx908-49360e.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx90a-c56887.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_2-ncols2_8-gfx942-0621b5.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_2-ncols2_8.cu.o
+llama-cpp-mtp> [113/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_2.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_2-gfx1201-31b8b4.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_2-gfx900-2792f1.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_2-gfx906-471f2d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_2-gfx908-54ea1d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_2-gfx90a-93de56.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_2-gfx942-341667.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_2.cu.o
+llama-cpp-mtp> [114/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_4.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1100-ca01c9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1101-9c642b.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1102-a03753.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1150-32833b.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1151-b55fe9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1200-72691a.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx1201-d2367d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx900-a71c6f.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx906-78f4d9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx908-70d976.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx90a-35a717.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_16-ncols2_4-gfx942-88660d.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_16-ncols2_4.cu.o
+llama-cpp-mtp> [115/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_64-ncols2_1.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_64-ncols2_1-gfx1201-9a9dc1.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_64-ncols2_1-gfx900-b03fa7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_64-ncols2_1-gfx906-196221.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_64-ncols2_1-gfx908-93a13d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_64-ncols2_1-gfx90a-f70bc5.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_64-ncols2_1-gfx942-e94ce7.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_64-ncols2_1.cu.o
+llama-cpp-mtp> [116/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_4.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx1101-079892.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx1102-78e9e1.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx1150-caeda9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx1151-de6c55.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx1200-a1686d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx1201-4d58c0.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx900-a99c09.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx906-e84933.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx908-759921.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx90a-b9c0c1.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_4-gfx942-342339.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_4.cu.o
+llama-cpp-mtp> [117/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_1.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_1-gfx1201-745ed2.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_1-gfx900-b14ee2.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_1-gfx906-fbbeb9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_1-gfx908-985539.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_1-gfx90a-85ff55.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_1-gfx942-51dede.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_1.cu.o
+llama-cpp-mtp> [118/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_2.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1100-e4535b.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1101-ea70d8.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1102-423d59.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1150-e581d9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1151-ce88f4.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1200-359b75.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx1201-d38f4e.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx900-39a085.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx906-0c2452.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx908-9f7574.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx90a-04e3a7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_32-ncols2_2-gfx942-e92701.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_32-ncols2_2.cu.o
+llama-cpp-mtp> [119/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_8.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1100-daddda.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1101-5f894a.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1102-397aef.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1150-048ed7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1151-0d76cf.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1200-566554.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx1201-f8b529.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx900-d9a4af.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx906-0b1868.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx908-5d9c8a.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx90a-a60fd9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_4-ncols2_8-gfx942-b40643.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_4-ncols2_8.cu.o
+llama-cpp-mtp> [120/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_2.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx1101-11c3e4.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx1102-bc03c7.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx1150-b1362d.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx1151-899f77.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx1200-9b274c.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx1201-b595ae.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx900-134be2.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx906-4885cf.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx908-cfbdd6.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx90a-e69bdf.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_2-gfx942-89837b.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_2.cu.o
+llama-cpp-mtp> [121/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq1_s.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1100-382f14.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1101-745ba4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1102-c921eb.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1150-eab4b1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1151-f27685.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1200-04b98b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx1201-fef562.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx900-8c28df.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx906-53f8e4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx908-b87aeb.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx90a-7fb801.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq1_s-gfx942-a75b24.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq1_s.cu.o
+llama-cpp-mtp> [122/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_4.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1100-8309aa.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1101-3c8d75.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1102-0814d9.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1150-82cc7f.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1151-56e27a.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1200-ecdcaf.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx1201-3a59f1.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx900-1a9611.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx906-fdb445.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx908-138329.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx90a-47fb4f.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_4-gfx942-18f2f6.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_4.cu.o
+llama-cpp-mtp> [123/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_8.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1100-5ccec8.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1101-a6dd1c.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1102-b7ee01.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1150-741d5b.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1151-4155a0.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1200-7ed756.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx1201-62b860.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx900-898883.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx906-39e529.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx908-240674.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx90a-507338.o
+llama-cpp-mtp> Job completed: /build/fattn-mma-f16-instance-ncols1_8-ncols2_8-gfx942-e10c18.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-mma-f16-instance-ncols1_8-ncols2_8.cu.o
+llama-cpp-mtp> [124/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq2_s.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1100-877263.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1101-b67b75.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1102-2f4aea.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1150-e6e76a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1151-834213.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1200-a29ccd.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx1201-47a5e7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx900-6bbac2.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx906-5ce989.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx908-a2d481.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx90a-2ee773.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_s-gfx942-e867cf.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq2_s.cu.o
+llama-cpp-mtp> [125/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq2_xs.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1100-fd6687.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1101-6ca8c4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1102-c91f6e.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1150-e666d3.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1151-e4727a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1200-90d96c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx1201-323235.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx900-863857.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx906-be57d9.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx908-d821b9.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx90a-233b27.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xs-gfx942-1296f1.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq2_xs.cu.o
+llama-cpp-mtp> [126/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq2_xxs.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1100-2dafe8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1101-96e356.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1102-1ed6ff.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1150-f01208.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1151-0d339c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1200-93d041.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx1201-fdbdad.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx900-7dbab4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx906-fcdef2.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx908-15ee7d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx90a-fbcb37.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq2_xxs-gfx942-d64b7a.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq2_xxs.cu.o
+llama-cpp-mtp> [127/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq3_s.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1100-1bb4f1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1101-8d6faa.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1102-1b0a5c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1150-f25c46.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1151-395653.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1200-1062e8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx1201-b399fb.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx900-0ed482.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx906-59c7c7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx908-4742ca.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx90a-a4be0a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_s-gfx942-186f2c.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq3_s.cu.o
+llama-cpp-mtp> [128/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq3_xxs.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1100-1e33e4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1101-e7073a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1102-aa86d1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1150-072b7f.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1151-4b0eb7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1200-35d0d3.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx1201-3c317c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx900-1b84c0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx906-f016d8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx908-c9fa76.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx90a-174792.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq3_xxs-gfx942-96e4c7.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq3_xxs.cu.o
+llama-cpp-mtp> [129/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq4_nl.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1100-04354d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1101-286f80.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1102-e348de.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1150-b7b98d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1151-06b5bc.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1200-0faa70.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx1201-cd3ef3.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx900-2cf951.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx906-c3bf06.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx908-30a256.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx90a-c0b6d4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_nl-gfx942-b40fe4.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq4_nl.cu.o
+llama-cpp-mtp> [130/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq4_xs.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1100-e41e86.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1101-204212.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1102-1f5efe.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1150-258970.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1151-2c742c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1200-b57b74.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx1201-5ede44.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx900-e2ccf1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx906-a5dd7e.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx908-a4eb22.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx90a-284ef7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-iq4_xs-gfx942-a9bb3f.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-iq4_xs.cu.o
+llama-cpp-mtp> [131/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-mxfp4.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1100-249472.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1101-9406c1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1102-7d8d41.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1150-aeabf1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1151-92b1b8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1200-d1c1eb.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx1201-4a5cd0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx900-ccb690.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx906-4e3043.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx908-f9b418.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx90a-50415a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-mxfp4-gfx942-dc3a7b.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-mxfp4.cu.o
+llama-cpp-mtp> [132/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-nvfp4.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1100-cbe9b7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1101-470fe0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1102-3f78fd.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1150-01ee61.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1151-3b069b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1200-b9c89b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx1201-5c139c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx900-73b07b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx906-89807b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx908-a02526.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx90a-7c5e79.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-nvfp4-gfx942-90c4be.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-nvfp4.cu.o
+llama-cpp-mtp> [133/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q1_0.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1100-2beced.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1101-ce55d7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1102-00efbf.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1150-87e0c2.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1151-504422.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1200-e230fc.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx1201-16c4b1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx900-29273b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx906-71ad9d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx908-fbfe7d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx90a-e8dcae.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q1_0-gfx942-5ddcc8.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q1_0.cu.o
+llama-cpp-mtp> [134/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q2_k.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1030-b18b09.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1100-651c25.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1101-a57f10.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1102-9ae1b8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1150-c7e309.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1151-be115f.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1200-14a145.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx1201-6b4907.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx900-43f85f.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx906-8f4ef0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx908-d0fdee.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx90a-738173.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q2_k-gfx942-348ec4.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q2_k.cu.o
+llama-cpp-mtp> [135/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q4_0.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx1101-fa9996.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx1102-948e44.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx1150-72d160.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx1151-9b9e51.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx1200-f68fe2.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx1201-1bad7a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx900-ed7939.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx906-444e36.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx908-9781bf.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx90a-f81516.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_0-gfx942-f96eaf.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q4_0.cu.o
+llama-cpp-mtp> [136/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q3_k.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1100-f84e01.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1101-af71a2.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1102-d02fb7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1150-8909df.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1151-385154.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1200-1323c0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx1201-632de7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx900-bde6f6.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx906-49121d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx908-4558d5.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx90a-3088c3.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q3_k-gfx942-ecc6b3.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q3_k.cu.o
+llama-cpp-mtp> [137/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q4_1.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1100-d4bd00.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1101-a78a7c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1102-9a3491.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1150-688fa8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1151-973443.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1200-331655.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx1201-3f6622.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx900-42a540.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx906-ebbe35.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx908-9dbb3e.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx90a-7178fd.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_1-gfx942-0a6473.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q4_1.cu.o
+llama-cpp-mtp> [138/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q4_k.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1100-12022f.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1101-127642.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1102-ad0030.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1150-687eed.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1151-dd0756.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1200-14f34b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx1201-6deecc.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx900-6ee46a.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx906-4ed66d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx908-a8ce77.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx90a-a591f2.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q4_k-gfx942-378e93.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q4_k.cu.o
+llama-cpp-mtp> [139/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q5_1.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1100-8e3ebe.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1101-884e2c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1102-970327.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1150-48d154.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1151-2590ef.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1200-e54e81.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx1201-0f7276.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx900-736a11.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx906-92e886.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx908-493b72.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx90a-83b679.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_1-gfx942-9f7479.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q5_1.cu.o
+llama-cpp-mtp> [140/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q5_0.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1100-c284df.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1101-e7372c.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1102-c08355.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1150-6566db.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1151-3314a7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1200-8307ad.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx1201-1da324.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx900-865931.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx906-dbd7ce.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx908-8329f4.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx90a-0b30da.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_0-gfx942-ba8663.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q5_0.cu.o
+llama-cpp-mtp> [141/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q5_k.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1100-257c27.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1101-9a53ff.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1102-2e8a61.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1150-e50f89.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1151-45a7ed.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1200-fae406.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx1201-1646fb.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx900-5a4c10.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx906-e0a019.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx908-cd76f6.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx90a-67e2fc.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q5_k-gfx942-1b671c.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q5_k.cu.o
+llama-cpp-mtp> [142/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_1.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx1102-323db3.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx1150-dbd19c.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx1151-286129.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx1200-9bba4c.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx1201-5cdac6.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx908-9ba899.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx90a-266a65.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_1-gfx942-c6bcef.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_1.cu.o
+llama-cpp-mtp> [143/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q6_k.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1100-2c7fb8.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1101-51c967.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1102-588d78.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1150-b98889.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1151-50f7cd.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1200-cc4d5b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx1201-eb2df0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx900-d57f0b.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx906-aa19c1.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx908-585550.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx90a-e04b5d.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q6_k-gfx942-390374.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q6_k.cu.o
+llama-cpp-mtp> [144/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q8_0.cu.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1100-c8e901.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1101-212f26.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1102-5a8548.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1150-dc81e0.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1151-5b8e34.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1200-237ca6.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx1201-94d5e7.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx900-b4430f.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx906-818107.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx908-d60601.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx90a-e68719.o
+llama-cpp-mtp> Job completed: /build/mmq-instance-q8_0-gfx942-cb4c89.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmq-instance-q8_0.cu.o
+llama-cpp-mtp> [145/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_10.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx1102-b06b2a.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx1150-0570f0.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx1151-af1ecf.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx1200-b3ef7b.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx1201-9231c9.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx908-d23f09.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx90a-9790d3.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_10-gfx942-9e2414.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_10.cu.o
+llama-cpp-mtp> [146/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_11.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx1102-775e9c.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx1150-2e2b15.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx1151-21b4fa.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx1200-5e0bed.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx1201-563dfe.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx908-31ecb1.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx90a-aab905.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_11-gfx942-57893a.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_11.cu.o
+llama-cpp-mtp> [147/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_12.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx1102-77a3bf.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx1150-1df10b.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx1151-bb5588.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx1200-3df9a9.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx1201-fdedb2.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx908-7006f0.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx90a-1f5141.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_12-gfx942-bd8aa2.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_12.cu.o
+llama-cpp-mtp> [148/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_13.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx1102-f5f053.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx1150-82f90f.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx1151-bfd4c2.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx1200-12a793.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx1201-a67aae.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx908-447511.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx90a-76fd11.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_13-gfx942-896c3f.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_13.cu.o
+llama-cpp-mtp> [149/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_14.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx1102-9b227a.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx1150-e4667d.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx1151-21ec51.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx1200-879a16.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx1201-b767d0.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx900-2c1450.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx908-4067fa.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx90a-72bc97.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_14-gfx942-314036.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_14.cu.o
+llama-cpp-mtp> [150/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_15.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx1102-72b202.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx1150-d2a115.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx1151-87be5a.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx1200-935a84.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx1201-97f501.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx908-5e0564.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx90a-7c7475.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_15-gfx942-2375a7.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_15.cu.o
+llama-cpp-mtp> [151/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_2.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx1102-388c49.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx1150-4a5dc2.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx1151-6ba7a4.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx1200-854e5d.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx1201-c9ad56.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx908-80a654.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx90a-01bf24.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_2-gfx942-836719.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_2.cu.o
+llama-cpp-mtp> [152/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_3.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx1102-a9a1fd.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx1150-a44b24.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx1151-e2c6d3.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx1200-55ecb6.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx1201-b98ade.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx908-95d94b.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx90a-661a32.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_3-gfx942-6166ad.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_3.cu.o
+llama-cpp-mtp> [153/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_16.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx1102-bd51ac.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx1150-d1e211.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx1151-d223ca.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx1200-c35dcb.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx1201-fb23cd.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx908-6e5e73.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx90a-07bf72.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_16-gfx942-0cd52e.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_16.cu.o
+llama-cpp-mtp> [154/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_4.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx1102-5da403.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx1150-03c3ea.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx1151-c8300f.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx1200-c3148d.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx1201-b4a25e.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx908-55fd26.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx90a-fe3514.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_4-gfx942-5adcb1.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_4.cu.o
+llama-cpp-mtp> [155/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_5.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx1102-6aae44.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx1150-855324.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx1151-d6cc15.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx1200-a062f9.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx1201-82da44.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx908-b4f770.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx90a-ba62e7.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_5-gfx942-28e79f.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_5.cu.o
+llama-cpp-mtp> [156/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_6.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx1102-c2ad41.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx1150-088040.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx1151-71e07c.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx1200-efde70.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx1201-790e18.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx908-3ec93d.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx90a-724290.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_6-gfx942-d5fbbc.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_6.cu.o
+llama-cpp-mtp> [157/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_7.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx1102-98a9f3.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx1150-ff695a.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx1151-1fd06d.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx1200-2fe378.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx1201-341ff2.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx908-f0f293.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx90a-684813.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_7-gfx942-0b53d5.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_7.cu.o
+llama-cpp-mtp> [158/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx1102-0362d1.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx1150-895c3b.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx1151-0ea912.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx1200-0ab318.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx1201-556377.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx900-aa7255.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx906-790127.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx908-eb4686.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx90a-4de1a4.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-f16-f16-gfx942-5cfe07.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-f16-f16.cu.o
+llama-cpp-mtp> [159/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_8.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx1102-98dc58.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx1150-28840b.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx1151-70cda4.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx1200-1d3b19.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx1201-35485b.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx908-115130.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx90a-83c68f.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_8-gfx942-690af8.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_8.cu.o
+llama-cpp-mtp> [160/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_9.cu.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx1102-8f639e.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx1150-1f9caa.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx1151-47b673.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx1200-bfe61a.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx1201-91d233.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx908-67c5a8.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx90a-c1b894.o
+llama-cpp-mtp> Job completed: /build/mmf-instance-ncols_9-gfx942-3b4b6f.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/mmf-instance-ncols_9.cu.o
+llama-cpp-mtp> [161/463] Linking CXX shared library bin/libggml-cpu.so.0.12.0
+llama-cpp-mtp> [162/463] Building CXX object ggml/src/CMakeFiles/ggml.dir/ggml-backend-dl.cpp.o
+llama-cpp-mtp> [163/463] Building CXX object ggml/src/CMakeFiles/ggml.dir/ggml-backend-reg.cpp.o
+llama-cpp-mtp> [164/463] Creating library symlink bin/libggml-cpu.so.0 bin/libggml-cpu.so
+llama-cpp-mtp> [165/463] Building CXX object src/CMakeFiles/llama.dir/llama.cpp.o
+llama-cpp-mtp> [166/463] Building CXX object src/CMakeFiles/llama.dir/llama-adapter.cpp.o
+llama-cpp-mtp> [167/463] Building CXX object src/CMakeFiles/llama.dir/llama-arch.cpp.o
+llama-cpp-mtp> [168/463] Building CXX object src/CMakeFiles/llama.dir/llama-batch.cpp.o
+llama-cpp-mtp> [169/463] Building CXX object src/CMakeFiles/llama.dir/llama-chat.cpp.o
+llama-cpp-mtp> [170/463] Building CXX object src/CMakeFiles/llama.dir/llama-context.cpp.o
+llama-cpp-mtp> [171/463] Building CXX object src/CMakeFiles/llama.dir/llama-cparams.cpp.o
+llama-cpp-mtp> [172/463] Building CXX object src/CMakeFiles/llama.dir/llama-grammar.cpp.o
+llama-cpp-mtp> [173/463] Building CXX object src/CMakeFiles/llama.dir/llama-graph.cpp.o
+llama-cpp-mtp> [174/463] Building CXX object src/CMakeFiles/llama.dir/llama-hparams.cpp.o
+llama-cpp-mtp> [175/463] Building CXX object src/CMakeFiles/llama.dir/llama-impl.cpp.o
+llama-cpp-mtp> [176/463] Building CXX object src/CMakeFiles/llama.dir/llama-io.cpp.o
+llama-cpp-mtp> [177/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1100-7b49b8.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1101-1e5612.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1102-15af11.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1150-8170cf.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1151-787fa5.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1200-1009fc.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx1201-e9027f.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx900-909e79.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx906-d30f6e.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx908-e008df.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx90a-528e5e.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q4_0-q4_0-gfx942-826c69.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-q4_0-q4_0.cu.o
+llama-cpp-mtp> [178/463] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache-iswa.cpp.o
+llama-cpp-mtp> [179/463] Building CXX object src/CMakeFiles/llama.dir/llama-memory.cpp.o
+llama-cpp-mtp> [180/463] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid.cpp.o
+llama-cpp-mtp> [181/463] Building CXX object src/CMakeFiles/llama.dir/llama-kv-cache.cpp.o
+llama-cpp-mtp> [182/463] Building CXX object src/CMakeFiles/llama.dir/llama-memory-hybrid-iswa.cpp.o
+llama-cpp-mtp> [183/463] Building CXX object src/CMakeFiles/llama.dir/llama-mmap.cpp.o
+llama-cpp-mtp> [184/463] Building CXX object src/CMakeFiles/llama.dir/llama-memory-recurrent.cpp.o
+llama-cpp-mtp> [185/463] Building CXX object src/CMakeFiles/llama.dir/llama-model-saver.cpp.o
+llama-cpp-mtp> [186/463] Building CXX object src/CMakeFiles/llama.dir/llama-model-loader.cpp.o
+llama-cpp-mtp> [187/463] Building CXX object src/CMakeFiles/llama.dir/llama-model.cpp.o
+llama-cpp-mtp> [188/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx1101-5206d1.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx1102-b44fd6.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx1150-1f29ae.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx1151-b7385f.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx1200-997871.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx1201-7fed26.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx900-f4775a.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx906-a269a4.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx908-7cd6e0.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx90a-cd7362.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-q8_0-q8_0-gfx942-04d989.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-q8_0-q8_0.cu.o
+llama-cpp-mtp> [189/463] Building CXX object src/CMakeFiles/llama.dir/llama-quant.cpp.o
+llama-cpp-mtp> [190/463] Building CXX object src/CMakeFiles/llama.dir/unicode-data.cpp.o
+llama-cpp-mtp> [191/463] Building CXX object src/CMakeFiles/llama.dir/llama-vocab.cpp.o
+llama-cpp-mtp> [192/463] Building CXX object src/CMakeFiles/llama.dir/models/afmoe.cpp.o
+llama-cpp-mtp> [193/463] Building CXX object src/CMakeFiles/llama.dir/llama-sampler.cpp.o
+llama-cpp-mtp> [194/463] Building CXX object src/CMakeFiles/llama.dir/models/apertus.cpp.o
+llama-cpp-mtp> [195/463] Building CXX object src/CMakeFiles/llama.dir/models/arcee.cpp.o
+llama-cpp-mtp> [196/463] Building CXX object src/CMakeFiles/llama.dir/models/arctic.cpp.o
+llama-cpp-mtp> [197/463] Building CXX object src/CMakeFiles/llama.dir/models/arwkv7.cpp.o
+llama-cpp-mtp> [198/463] Building HIP object ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx1102-d0d7a1.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx1150-2d5161.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx1151-931b89.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx1200-07e11d.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx1201-8c008a.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx900-abfecc.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx906-04f5d4.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx908-ed8bec.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx90a-369c74.o
+llama-cpp-mtp> Job completed: /build/fattn-vec-instance-bf16-bf16-gfx942-622259.o
+llama-cpp-mtp> Job completed: ggml/src/ggml-hip/CMakeFiles/ggml-hip.dir/__/ggml-cuda/template-instances/fattn-vec-instance-bf16-bf16.cu.o
+llama-cpp-mtp> [199/463] Linking HIP shared library bin/libggml-hip.so.0.12.0
+llama-cpp-mtp> [200/463] Building CXX object src/CMakeFiles/llama.dir/models/baichuan.cpp.o
+llama-cpp-mtp> [201/463] Creating library symlink bin/libggml-hip.so.0 bin/libggml-hip.so
+llama-cpp-mtp> [202/463] Linking CXX shared library bin/libggml.so.0.12.0
+llama-cpp-mtp> [203/463] Creating library symlink bin/libggml.so.0 bin/libggml.so
+llama-cpp-mtp> [204/463] Building CXX object src/CMakeFiles/llama.dir/models/bailingmoe.cpp.o
+llama-cpp-mtp> [205/463] Building CXX object src/CMakeFiles/llama.dir/models/bailingmoe2.cpp.o
+llama-cpp-mtp> [206/463] Building CXX object src/CMakeFiles/llama.dir/models/bert.cpp.o
+llama-cpp-mtp> [207/463] Building CXX object src/CMakeFiles/llama.dir/models/bitnet.cpp.o
+llama-cpp-mtp> [208/463] Building CXX object src/CMakeFiles/llama.dir/models/bloom.cpp.o
+llama-cpp-mtp> [209/463] Building CXX object src/CMakeFiles/llama.dir/models/chameleon.cpp.o
+llama-cpp-mtp> [210/463] Building CXX object src/CMakeFiles/llama.dir/models/chatglm.cpp.o
+llama-cpp-mtp> [211/463] Building CXX object src/CMakeFiles/llama.dir/models/codeshell.cpp.o
+llama-cpp-mtp> [212/463] Building CXX object src/CMakeFiles/llama.dir/models/cogvlm.cpp.o
+llama-cpp-mtp> [213/463] Building CXX object src/CMakeFiles/llama.dir/models/cohere2.cpp.o
+llama-cpp-mtp> [214/463] Building CXX object src/CMakeFiles/llama.dir/models/command-r.cpp.o
+llama-cpp-mtp> [215/463] Building CXX object src/CMakeFiles/llama.dir/models/dbrx.cpp.o
+llama-cpp-mtp> [216/463] Building CXX object src/CMakeFiles/llama.dir/models/deci.cpp.o
+llama-cpp-mtp> [217/463] Building CXX object src/CMakeFiles/llama.dir/models/deepseek.cpp.o
+llama-cpp-mtp> [218/463] Building CXX object src/CMakeFiles/llama.dir/models/deepseek2ocr.cpp.o
+llama-cpp-mtp> [219/463] Building CXX object src/CMakeFiles/llama.dir/models/deepseek2.cpp.o
+llama-cpp-mtp> [220/463] Building CXX object src/CMakeFiles/llama.dir/unicode.cpp.o
+llama-cpp-mtp> [221/463] Building CXX object src/CMakeFiles/llama.dir/models/delta-net-base.cpp.o
+llama-cpp-mtp> [222/463] Building CXX object src/CMakeFiles/llama.dir/models/dots1.cpp.o
+llama-cpp-mtp> [223/463] Building CXX object src/CMakeFiles/llama.dir/models/dream.cpp.o
+llama-cpp-mtp> [224/463] Building CXX object src/CMakeFiles/llama.dir/models/ernie4-5-moe.cpp.o
+llama-cpp-mtp> [225/463] Building CXX object src/CMakeFiles/llama.dir/models/ernie4-5.cpp.o
+llama-cpp-mtp> [226/463] Building CXX object src/CMakeFiles/llama.dir/models/eurobert.cpp.o
+llama-cpp-mtp> [227/463] Building CXX object src/CMakeFiles/llama.dir/models/exaone-moe.cpp.o
+llama-cpp-mtp> [228/463] Building CXX object src/CMakeFiles/llama.dir/models/exaone.cpp.o
+llama-cpp-mtp> [229/463] Building CXX object src/CMakeFiles/llama.dir/models/falcon-h1.cpp.o
+llama-cpp-mtp> [230/463] Building CXX object src/CMakeFiles/llama.dir/models/exaone4.cpp.o
+llama-cpp-mtp> [231/463] Building CXX object src/CMakeFiles/llama.dir/models/falcon.cpp.o
+llama-cpp-mtp> [232/463] Building CXX object src/CMakeFiles/llama.dir/models/gemma-embedding.cpp.o
+llama-cpp-mtp> [233/463] Building CXX object src/CMakeFiles/llama.dir/models/gemma.cpp.o
+llama-cpp-mtp> [234/463] Building CXX object src/CMakeFiles/llama.dir/models/gemma2.cpp.o
+llama-cpp-mtp> [235/463] Building CXX object src/CMakeFiles/llama.dir/models/gemma3.cpp.o
+llama-cpp-mtp> [236/463] Building CXX object src/CMakeFiles/llama.dir/models/glm-dsa.cpp.o
+llama-cpp-mtp> [237/463] Building CXX object src/CMakeFiles/llama.dir/models/gemma3n.cpp.o
+llama-cpp-mtp> [238/463] Building CXX object src/CMakeFiles/llama.dir/models/gemma4.cpp.o
+llama-cpp-mtp> [239/463] Building CXX object src/CMakeFiles/llama.dir/models/glm4-moe.cpp.o
+llama-cpp-mtp> [240/463] Building CXX object src/CMakeFiles/llama.dir/models/gpt2.cpp.o
+llama-cpp-mtp> [241/463] Building CXX object src/CMakeFiles/llama.dir/models/glm4.cpp.o
+llama-cpp-mtp> [242/463] Building CXX object src/CMakeFiles/llama.dir/models/gptneox.cpp.o
+llama-cpp-mtp> [243/463] Building CXX object src/CMakeFiles/llama.dir/models/granite-hybrid.cpp.o
+llama-cpp-mtp> [244/463] Building CXX object src/CMakeFiles/llama.dir/models/granite-moe.cpp.o
+llama-cpp-mtp> [245/463] Building CXX object src/CMakeFiles/llama.dir/models/grok.cpp.o
+llama-cpp-mtp> [246/463] Building CXX object src/CMakeFiles/llama.dir/models/granite.cpp.o
+llama-cpp-mtp> [247/463] Building CXX object src/CMakeFiles/llama.dir/models/grovemoe.cpp.o
+llama-cpp-mtp> [248/463] Building CXX object src/CMakeFiles/llama.dir/models/hunyuan-dense.cpp.o
+llama-cpp-mtp> [249/463] Building CXX object src/CMakeFiles/llama.dir/models/hunyuan-moe.cpp.o
+llama-cpp-mtp> [250/463] Building CXX object src/CMakeFiles/llama.dir/models/hunyuan-vl.cpp.o
+llama-cpp-mtp> [251/463] Building CXX object src/CMakeFiles/llama.dir/models/internlm2.cpp.o
+llama-cpp-mtp> [252/463] Building CXX object src/CMakeFiles/llama.dir/models/jais.cpp.o
+llama-cpp-mtp> [253/463] Building CXX object src/CMakeFiles/llama.dir/models/jais2.cpp.o
+llama-cpp-mtp> [254/463] Building CXX object src/CMakeFiles/llama.dir/models/jamba.cpp.o
+llama-cpp-mtp> [255/463] Building CXX object src/CMakeFiles/llama.dir/models/jina-bert-v2.cpp.o
+llama-cpp-mtp> [256/463] Building CXX object src/CMakeFiles/llama.dir/models/jina-bert-v3.cpp.o
+llama-cpp-mtp> [257/463] Building CXX object src/CMakeFiles/llama.dir/models/kimi-linear.cpp.o
+llama-cpp-mtp> [258/463] Building CXX object src/CMakeFiles/llama.dir/models/lfm2moe.cpp.o
+llama-cpp-mtp> [259/463] Building CXX object src/CMakeFiles/llama.dir/models/lfm2.cpp.o
+llama-cpp-mtp> [260/463] Building CXX object src/CMakeFiles/llama.dir/models/llada-moe.cpp.o
+llama-cpp-mtp> [261/463] Building CXX object src/CMakeFiles/llama.dir/models/llama-embed.cpp.o
+llama-cpp-mtp> [262/463] Building CXX object src/CMakeFiles/llama.dir/models/llada.cpp.o
+llama-cpp-mtp> [263/463] Building CXX object src/CMakeFiles/llama.dir/models/llama.cpp.o
+llama-cpp-mtp> [264/463] Building CXX object src/CMakeFiles/llama.dir/models/llama4.cpp.o
+llama-cpp-mtp> [265/463] Building CXX object src/CMakeFiles/llama.dir/models/maincoder.cpp.o
+llama-cpp-mtp> [266/463] Building CXX object src/CMakeFiles/llama.dir/models/mamba-base.cpp.o
+llama-cpp-mtp> [267/463] Building CXX object src/CMakeFiles/llama.dir/models/mamba.cpp.o
+llama-cpp-mtp> [268/463] Building CXX object src/CMakeFiles/llama.dir/models/mamba2.cpp.o
+llama-cpp-mtp> [269/463] Building CXX object src/CMakeFiles/llama.dir/models/mimo2.cpp.o
+llama-cpp-mtp> [270/463] Building CXX object src/CMakeFiles/llama.dir/models/minicpm.cpp.o
+llama-cpp-mtp> [271/463] Building CXX object src/CMakeFiles/llama.dir/models/minicpm3.cpp.o
+llama-cpp-mtp> [272/463] Building CXX object src/CMakeFiles/llama.dir/models/minimax-m2.cpp.o
+llama-cpp-mtp> [273/463] Building CXX object src/CMakeFiles/llama.dir/models/mistral4.cpp.o
+llama-cpp-mtp> [274/463] Building CXX object src/CMakeFiles/llama.dir/models/mistral3.cpp.o
+llama-cpp-mtp> [275/463] Building CXX object src/CMakeFiles/llama.dir/models/modern-bert.cpp.o
+llama-cpp-mtp> [276/463] Building CXX object src/CMakeFiles/llama.dir/models/mpt.cpp.o
+llama-cpp-mtp> [277/463] Building CXX object src/CMakeFiles/llama.dir/models/nemotron-h-moe.cpp.o
+llama-cpp-mtp> [278/463] Building CXX object src/CMakeFiles/llama.dir/models/nemotron-h.cpp.o
+llama-cpp-mtp> [279/463] Building CXX object src/CMakeFiles/llama.dir/models/nemotron.cpp.o
+llama-cpp-mtp> [280/463] Building CXX object src/CMakeFiles/llama.dir/models/neo-bert.cpp.o
+llama-cpp-mtp> [281/463] Building CXX object src/CMakeFiles/llama.dir/models/nomic-bert-moe.cpp.o
+llama-cpp-mtp> [282/463] Building CXX object src/CMakeFiles/llama.dir/models/nomic-bert.cpp.o
+llama-cpp-mtp> [283/463] Building CXX object src/CMakeFiles/llama.dir/models/olmo.cpp.o
+llama-cpp-mtp> [284/463] Building CXX object src/CMakeFiles/llama.dir/models/olmo2.cpp.o
+llama-cpp-mtp> [285/463] Building CXX object src/CMakeFiles/llama.dir/models/olmoe.cpp.o
+llama-cpp-mtp> [286/463] Building CXX object src/CMakeFiles/llama.dir/models/openai-moe.cpp.o
+llama-cpp-mtp> [287/463] Building CXX object src/CMakeFiles/llama.dir/models/openelm.cpp.o
+llama-cpp-mtp> [288/463] Building CXX object src/CMakeFiles/llama.dir/models/orion.cpp.o
+llama-cpp-mtp> [289/463] Building CXX object src/CMakeFiles/llama.dir/models/paddleocr.cpp.o
+llama-cpp-mtp> [290/463] Building CXX object src/CMakeFiles/llama.dir/models/pangu-embed.cpp.o
+llama-cpp-mtp> [291/463] Building CXX object src/CMakeFiles/llama.dir/models/phi2.cpp.o
+llama-cpp-mtp> [292/463] Building CXX object src/CMakeFiles/llama.dir/models/phi3.cpp.o
+llama-cpp-mtp> [293/463] Building CXX object src/CMakeFiles/llama.dir/models/phimoe.cpp.o
+llama-cpp-mtp> [294/463] Building CXX object src/CMakeFiles/llama.dir/models/plamo.cpp.o
+llama-cpp-mtp> [295/463] Building CXX object src/CMakeFiles/llama.dir/models/plamo2.cpp.o
+llama-cpp-mtp> [296/463] Building CXX object src/CMakeFiles/llama.dir/models/plamo3.cpp.o
+llama-cpp-mtp> [297/463] Building CXX object src/CMakeFiles/llama.dir/models/plm.cpp.o
+llama-cpp-mtp> [298/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen.cpp.o
+llama-cpp-mtp> [299/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen2.cpp.o
+llama-cpp-mtp> [300/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen2moe.cpp.o
+llama-cpp-mtp> [301/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen2vl.cpp.o
+llama-cpp-mtp> [302/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen3.cpp.o
+llama-cpp-mtp> [303/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen35.cpp.o
+llama-cpp-mtp> [304/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen3moe.cpp.o
+llama-cpp-mtp> [305/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen35moe.cpp.o
+llama-cpp-mtp> [306/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen3next.cpp.o
+llama-cpp-mtp> [307/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen3vlmoe.cpp.o
+llama-cpp-mtp> [308/463] Building CXX object src/CMakeFiles/llama.dir/models/qwen3vl.cpp.o
+llama-cpp-mtp> [309/463] Building CXX object src/CMakeFiles/llama.dir/models/refact.cpp.o
+llama-cpp-mtp> [310/463] Building CXX object src/CMakeFiles/llama.dir/models/rnd1.cpp.o
+llama-cpp-mtp> [311/463] Building CXX object src/CMakeFiles/llama.dir/models/rwkv6-base.cpp.o
+llama-cpp-mtp> [312/463] Building CXX object src/CMakeFiles/llama.dir/models/rwkv6.cpp.o
+llama-cpp-mtp> [313/463] Building CXX object src/CMakeFiles/llama.dir/models/rwkv6qwen2.cpp.o
+llama-cpp-mtp> [314/463] Building CXX object src/CMakeFiles/llama.dir/models/rwkv7-base.cpp.o
+llama-cpp-mtp> [315/463] Building CXX object src/CMakeFiles/llama.dir/models/seed-oss.cpp.o
+llama-cpp-mtp> [316/463] Building CXX object src/CMakeFiles/llama.dir/models/rwkv7.cpp.o
+llama-cpp-mtp> [317/463] Building CXX object src/CMakeFiles/llama.dir/models/smallthinker.cpp.o
+llama-cpp-mtp> [318/463] Building CXX object src/CMakeFiles/llama.dir/models/smollm3.cpp.o
+llama-cpp-mtp> [319/463] Building CXX object src/CMakeFiles/llama.dir/models/stablelm.cpp.o
+llama-cpp-mtp> [320/463] Building CXX object src/CMakeFiles/llama.dir/models/starcoder.cpp.o
+llama-cpp-mtp> [321/463] Building CXX object src/CMakeFiles/llama.dir/models/starcoder2.cpp.o
+llama-cpp-mtp> [322/463] Building CXX object src/CMakeFiles/llama.dir/models/step35.cpp.o
+llama-cpp-mtp> [323/463] Building CXX object src/CMakeFiles/llama.dir/models/t5encoder.cpp.o
+llama-cpp-mtp> [324/463] Building CXX object src/CMakeFiles/llama.dir/models/t5.cpp.o
+llama-cpp-mtp> [325/463] Building CXX object src/CMakeFiles/llama.dir/models/wavtokenizer-dec.cpp.o
+llama-cpp-mtp> [326/463] Building CXX object common/CMakeFiles/llama-common-base.dir/build-info.cpp.o
+llama-cpp-mtp> [327/463] Linking CXX static library common/libllama-common-base.a
+llama-cpp-mtp> [328/463] Building CXX object src/CMakeFiles/llama.dir/models/xverse.cpp.o
+llama-cpp-mtp> [329/463] Linking CXX shared library bin/libllama.so.0.0.9213
+llama-cpp-mtp> [330/463] Creating library symlink bin/libllama.so.0 bin/libllama.so
+llama-cpp-mtp> [331/463] Building CXX object common/CMakeFiles/llama-common.dir/chat-auto-parser-helpers.cpp.o
+llama-cpp-mtp> [332/463] Building CXX object common/CMakeFiles/llama-common.dir/chat-auto-parser-generator.cpp.o
+llama-cpp-mtp> [333/463] Building CXX object common/CMakeFiles/llama-common.dir/chat-peg-parser.cpp.o
+llama-cpp-mtp> [334/463] Building CXX object common/CMakeFiles/llama-common.dir/chat-diff-analyzer.cpp.o
+llama-cpp-mtp> [335/463] Building CXX object common/CMakeFiles/llama-common.dir/arg.cpp.o
+llama-cpp-mtp> [336/463] Building CXX object common/CMakeFiles/llama-common.dir/console.cpp.o
+llama-cpp-mtp> [337/463] Building CXX object common/CMakeFiles/llama-common.dir/common.cpp.o
+llama-cpp-mtp> [338/463] Building CXX object vendor/cpp-httplib/CMakeFiles/cpp-httplib.dir/httplib.cpp.o
+llama-cpp-mtp> [339/463] Building CXX object common/CMakeFiles/llama-common.dir/debug.cpp.o
+llama-cpp-mtp> [340/463] Building CXX object common/CMakeFiles/llama-common.dir/chat.cpp.o
+llama-cpp-mtp> [341/463] Building CXX object common/CMakeFiles/llama-common.dir/fit.cpp.o
+llama-cpp-mtp> [342/463] Building CXX object common/CMakeFiles/llama-common.dir/download.cpp.o
+llama-cpp-mtp> [343/463] Building CXX object common/CMakeFiles/llama-common.dir/llguidance.cpp.o
+llama-cpp-mtp> [344/463] Building CXX object common/CMakeFiles/llama-common.dir/json-partial.cpp.o
+llama-cpp-mtp> [345/463] Building CXX object common/CMakeFiles/llama-common.dir/log.cpp.o
+llama-cpp-mtp> [346/463] Building CXX object common/CMakeFiles/llama-common.dir/ngram-map.cpp.o
+llama-cpp-mtp> [347/463] Building CXX object common/CMakeFiles/llama-common.dir/ngram-cache.cpp.o
+llama-cpp-mtp> [348/463] Building CXX object common/CMakeFiles/llama-common.dir/ngram-mod.cpp.o
+llama-cpp-mtp> [349/463] Building CXX object common/CMakeFiles/llama-common.dir/hf-cache.cpp.o
+llama-cpp-mtp> [350/463] Building CXX object common/CMakeFiles/llama-common.dir/json-schema-to-grammar.cpp.o
+llama-cpp-mtp> [351/463] Building CXX object common/CMakeFiles/llama-common.dir/reasoning-budget.cpp.o
+llama-cpp-mtp> [352/463] Building CXX object common/CMakeFiles/llama-common.dir/preset.cpp.o
+llama-cpp-mtp> [353/463] Building CXX object common/CMakeFiles/llama-common.dir/sampling.cpp.o
+llama-cpp-mtp> [354/463] Building CXX object common/CMakeFiles/llama-common.dir/unicode.cpp.o
+llama-cpp-mtp> [355/463] Building CXX object common/CMakeFiles/llama-common.dir/regex-partial.cpp.o
+llama-cpp-mtp> [356/463] Building CXX object common/CMakeFiles/llama-common.dir/jinja/lexer.cpp.o
+llama-cpp-mtp> [357/463] Building CXX object common/CMakeFiles/llama-common.dir/speculative.cpp.o
+llama-cpp-mtp> [358/463] Building CXX object common/CMakeFiles/llama-common.dir/jinja/parser.cpp.o
+llama-cpp-mtp> [359/463] Building CXX object common/CMakeFiles/llama-common.dir/jinja/runtime.cpp.o
+llama-cpp-mtp> [360/463] Building CXX object common/CMakeFiles/llama-common.dir/jinja/string.cpp.o
+llama-cpp-mtp> [361/463] Building CXX object common/CMakeFiles/llama-common.dir/__/license.cpp.o
+llama-cpp-mtp> [362/463] Linking CXX static library vendor/cpp-httplib/libcpp-httplib.a
+llama-cpp-mtp> [363/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd.cpp.o
+llama-cpp-mtp> [364/463] Building CXX object common/CMakeFiles/llama-common.dir/jinja/value.cpp.o
+llama-cpp-mtp> [365/463] Building CXX object common/CMakeFiles/llama-common.dir/jinja/caps.cpp.o
+llama-cpp-mtp> [366/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-audio.cpp.o
+llama-cpp-mtp> [367/463] Building CXX object common/CMakeFiles/llama-common.dir/peg-parser.cpp.o
+llama-cpp-mtp> [368/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/cogvlm.cpp.o
+llama-cpp-mtp> [369/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-image.cpp.o
+llama-cpp-mtp> [370/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/conformer.cpp.o
+llama-cpp-mtp> [371/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/dotsocr.cpp.o
+llama-cpp-mtp> [372/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4a.cpp.o
+llama-cpp-mtp> [373/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/gemma4v.cpp.o
+llama-cpp-mtp> [374/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/glm4v.cpp.o
+llama-cpp-mtp> [375/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/granite-speech.cpp.o
+llama-cpp-mtp> [376/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/hunyuanocr.cpp.o
+llama-cpp-mtp> [377/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/internvl.cpp.o
+llama-cpp-mtp> [378/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/kimivl.cpp.o
+llama-cpp-mtp> [379/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/kimik25.cpp.o
+llama-cpp-mtp> [380/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/nemotron-v2-vl.cpp.o
+llama-cpp-mtp> [381/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/llama4.cpp.o
+llama-cpp-mtp> [382/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/llava.cpp.o
+llama-cpp-mtp> [383/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/minicpmv.cpp.o
+llama-cpp-mtp> [384/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/paddleocr.cpp.o
+llama-cpp-mtp> [385/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/pixtral.cpp.o
+llama-cpp-mtp> [386/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen2vl.cpp.o
+llama-cpp-mtp> [387/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3vl.cpp.o
+llama-cpp-mtp> [388/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/clip.cpp.o
+llama-cpp-mtp> [389/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mimovl.cpp.o
+llama-cpp-mtp> [390/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/qwen3a.cpp.o
+llama-cpp-mtp> [391/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/step3vl.cpp.o
+llama-cpp-mtp> [392/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/siglip.cpp.o
+llama-cpp-mtp> [393/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/whisper-enc.cpp.o
+llama-cpp-mtp> [394/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/deepseekocr.cpp.o
+llama-cpp-mtp> [395/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/youtuvl.cpp.o
+llama-cpp-mtp> [396/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/mobilenetv5.cpp.o
+llama-cpp-mtp> [397/463] Generating index.html.hpp
+llama-cpp-mtp> [398/463] Linking CXX shared library bin/libllama-common.so.0.0.9213
+llama-cpp-mtp> [399/463] Generating bundle.css.hpp
+llama-cpp-mtp> [400/463] Generating loading.html.hpp
+llama-cpp-mtp> [401/463] Creating library symlink bin/libllama-common.so.0 bin/libllama-common.so
+llama-cpp-mtp> [402/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/models/yasa2.cpp.o
+llama-cpp-mtp> [403/463] Building CXX object tools/mtmd/CMakeFiles/mtmd.dir/mtmd-helper.cpp.o
+llama-cpp-mtp> [404/463] Linking CXX shared library bin/libmtmd.so.0.0.9213
+llama-cpp-mtp> [405/463] Generating bundle.js.hpp
+llama-cpp-mtp> [406/463] Building CXX object tools/ui/CMakeFiles/llama-ui.dir/ui.cpp.o
+llama-cpp-mtp> [407/463] Building CXX object tools/server/CMakeFiles/server-context.dir/server-chat.cpp.o
+llama-cpp-mtp> [408/463] Building CXX object tools/server/CMakeFiles/server-context.dir/server-queue.cpp.o
+llama-cpp-mtp> [409/463] Building CXX object tools/server/CMakeFiles/server-context.dir/server-common.cpp.o
+llama-cpp-mtp> [410/463] Creating library symlink bin/libmtmd.so.0 bin/libmtmd.so
+llama-cpp-mtp> [411/463] Building CXX object tools/batched-bench/CMakeFiles/llama-batched-bench.dir/batched-bench.cpp.o
+llama-cpp-mtp> [412/463] Building CXX object tools/gguf-split/CMakeFiles/llama-gguf-split.dir/gguf-split.cpp.o
+llama-cpp-mtp> [413/463] Building CXX object tools/server/CMakeFiles/server-context.dir/server-task.cpp.o
+llama-cpp-mtp> [414/463] Building CXX object tools/server/CMakeFiles/server-context.dir/server-tools.cpp.o
+llama-cpp-mtp> [415/463] Building CXX object tools/completion/CMakeFiles/llama-completion.dir/completion.cpp.o
+llama-cpp-mtp> [416/463] Building CXX object tools/imatrix/CMakeFiles/llama-imatrix.dir/imatrix.cpp.o
+llama-cpp-mtp> [417/463] Building CXX object tools/server/CMakeFiles/server-context.dir/server-context.cpp.o
+llama-cpp-mtp> [418/463] Linking CXX static library tools/ui/libllama-ui.a
+llama-cpp-mtp> [419/463] Building CXX object tools/quantize/CMakeFiles/llama-quantize.dir/quantize.cpp.o
+llama-cpp-mtp> [420/463] Linking CXX static library tools/server/libserver-context.a
+llama-cpp-mtp> [421/463] Building CXX object tools/llama-bench/CMakeFiles/llama-bench.dir/llama-bench.cpp.o
+llama-cpp-mtp> [422/463] Building CXX object tools/perplexity/CMakeFiles/llama-perplexity.dir/perplexity.cpp.o
+llama-cpp-mtp> [423/463] Building CXX object tools/cli/CMakeFiles/llama-cli.dir/cli.cpp.o
+llama-cpp-mtp> [424/463] Building CXX object tools/tokenize/CMakeFiles/llama-tokenize.dir/tokenize.cpp.o
+llama-cpp-mtp> [425/463] Building CXX object tools/server/CMakeFiles/llama-server.dir/server.cpp.o
+llama-cpp-mtp> [426/463] Building CXX object tools/server/CMakeFiles/llama-server.dir/server-http.cpp.o
+llama-cpp-mtp> [427/463] Building CXX object tools/server/CMakeFiles/llama-server.dir/server-models.cpp.o
+llama-cpp-mtp> [428/463] Building CXX object tools/mtmd/CMakeFiles/llama-llava-cli.dir/deprecation-warning.cpp.o
+llama-cpp-mtp> [429/463] Building CXX object tools/parser/CMakeFiles/llama-debug-template-parser.dir/debug-template-parser.cpp.o
+llama-cpp-mtp> [430/463] Building CXX object tools/mtmd/CMakeFiles/llama-gemma3-cli.dir/deprecation-warning.cpp.o
+llama-cpp-mtp> [431/463] Building CXX object tools/mtmd/CMakeFiles/llama-minicpmv-cli.dir/deprecation-warning.cpp.o
+llama-cpp-mtp> [432/463] Building CXX object tools/mtmd/CMakeFiles/llama-qwen2vl-cli.dir/deprecation-warning.cpp.o
+llama-cpp-mtp> [433/463] Building CXX object tools/parser/CMakeFiles/llama-template-analysis.dir/template-analysis.cpp.o
+llama-cpp-mtp> [434/463] Building CXX object tools/mtmd/CMakeFiles/llama-mtmd-debug.dir/debug/mtmd-debug.cpp.o
+llama-cpp-mtp> [435/463] Building CXX object tools/cvector-generator/CMakeFiles/llama-cvector-generator.dir/cvector-generator.cpp.o
+llama-cpp-mtp> [436/463] Building CXX object tools/mtmd/CMakeFiles/llama-mtmd-cli.dir/mtmd-cli.cpp.o
+llama-cpp-mtp> [437/463] Building CXX object tools/fit-params/CMakeFiles/llama-fit-params.dir/fit-params.cpp.o
+llama-cpp-mtp> [438/463] Building CXX object tools/export-lora/CMakeFiles/llama-export-lora.dir/export-lora.cpp.o
+llama-cpp-mtp> [439/463] Building CXX object tools/results/CMakeFiles/llama-results.dir/results.cpp.o
+llama-cpp-mtp> [440/463] Linking CXX executable bin/llama-batched-bench
+llama-cpp-mtp> [441/463] Linking CXX executable bin/llama-gguf-split
+llama-cpp-mtp> [442/463] Linking CXX executable bin/llama-imatrix
+llama-cpp-mtp> [443/463] Linking CXX executable bin/llama-bench
+llama-cpp-mtp> [444/463] Linking CXX executable bin/llama-completion
+llama-cpp-mtp> [445/463] Linking CXX executable bin/llama-perplexity
+llama-cpp-mtp> [446/463] Linking CXX executable bin/llama-quantize
+llama-cpp-mtp> [447/463] Linking CXX executable bin/llama-cli
+llama-cpp-mtp> [448/463] Linking CXX executable bin/llama-server
+llama-cpp-mtp> [449/463] Linking CXX executable bin/llama-tokenize
+llama-cpp-mtp> [450/463] Linking CXX executable bin/llama-debug-template-parser
+llama-cpp-mtp> [451/463] Linking CXX executable bin/llama-llava-cli
+llama-cpp-mtp> [452/463] Linking CXX executable bin/llama-gemma3-cli
+llama-cpp-mtp> [453/463] Linking CXX executable bin/llama-minicpmv-cli
+llama-cpp-mtp> [454/463] Linking CXX executable bin/llama-qwen2vl-cli
+llama-cpp-mtp> [455/463] Linking CXX executable bin/llama-template-analysis
+llama-cpp-mtp> [456/463] Building CXX object tools/tts/CMakeFiles/llama-tts.dir/tts.cpp.o
+llama-cpp-mtp> [457/463] Linking CXX executable bin/llama-mtmd-cli
+llama-cpp-mtp> [458/463] Linking CXX executable bin/llama-mtmd-debug
+llama-cpp-mtp> [459/463] Linking CXX executable bin/llama-cvector-generator
+llama-cpp-mtp> [460/463] Linking CXX executable bin/llama-tts
+llama-cpp-mtp> [461/463] Linking CXX executable bin/llama-fit-params
+llama-cpp-mtp> [462/463] Linking CXX executable bin/llama-export-lora
+llama-cpp-mtp> [463/463] Linking CXX executable bin/llama-results
+llama-cpp-mtp> buildPhase completed in 25 minutes 43 seconds
+llama-cpp-mtp> Running phase: installPhase
+llama-cpp-mtp> install flags: -j4 install
+llama-cpp-mtp> [0/1] Install the project...
+llama-cpp-mtp> -- Install configuration: "Release"
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-cpu.so.0.12.0
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-cpu.so.0
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-cpu.so.0.12.0" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-cpu.so
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-hip.so.0.12.0
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-hip.so.0
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-hip.so.0.12.0" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-hip.so
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml.so.0.12.0
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml.so.0
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml.so.0.12.0" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml.so
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-cpu.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-alloc.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-backend.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-blas.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-cann.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-cpp.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-cuda.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-opt.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-metal.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-rpc.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-virtgpu.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-sycl.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-vulkan.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-webgpu.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-zendnn.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/ggml-openvino.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/gguf.h
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-base.so.0.12.0
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-base.so.0
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-base.so
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/cmake/ggml/ggml-config.cmake
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/cmake/ggml/ggml-version.cmake
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-batched-bench
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-batched-bench" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-gguf-split
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-gguf-split" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-imatrix
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-imatrix" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-bench
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-bench" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-completion
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-completion" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-perplexity
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-perplexity" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-quantize
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-quantize" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-cli
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-cli" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-server
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-server" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-tokenize
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-tokenize" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-debug-template-parser
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-debug-template-parser" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-template-analysis
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-template-analysis" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-tts
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-tts" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libmtmd.so.0.0.9213
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libmtmd.so.0
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libmtmd.so.0.0.9213" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libmtmd.so
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/mtmd-debug.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/mtmd.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/mtmd-helper.h
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-mtmd-cli
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-mtmd-cli" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-cvector-generator
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-cvector-generator" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-export-lora
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-export-lora" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-fit-params
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-fit-params" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-results
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-results" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama.so.0.0.9213
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama.so.0
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama.so.0.0.9213" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama.so
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/llama.h
+llama-cpp-mtp> -- Installing: /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include/llama-cpp.h
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama-common.so.0.0.9213
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama-common.so.0
+llama-cpp-mtp> -- Set non-toolchain portion of runtime path of "/nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama-common.so.0.0.9213" to ""
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama-common.so
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/cmake/llama/llama-config.cmake
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/cmake/llama/llama-version.cmake
+llama-cpp-mtp> -- Installing: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/pkgconfig/llama.pc
+llama-cpp-mtp> 0.00.000.523 E ggml_cuda_init: failed to initialize ROCm: no ROCm-capable device is detected
+llama-cpp-mtp> Running phase: fixupPhase
+llama-cpp-mtp> Moving /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/include to /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/include
+llama-cpp-mtp> Moving /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/pkgconfig to /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/lib/pkgconfig
+llama-cpp-mtp> Moving /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/cmake to /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/lib/cmake
+llama-cpp-mtp> Patching '/nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/lib/pkgconfig/llama.pc' includedir to output /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev
+llama-cpp-mtp> shrinking RPATHs of ELF executables and libraries in /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-cpu.so.0.12.0
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-hip.so.0.12.0
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml.so.0.12.0
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libggml-base.so.0.12.0
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libmtmd.so.0.0.9213
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama.so.0.0.9213
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib/libllama-common.so.0.0.9213
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-batched-bench
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-gguf-split
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-imatrix
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-bench
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-completion
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-perplexity
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-quantize
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-cli
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-server
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-tokenize
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-debug-template-parser
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-template-analysis
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-tts
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-mtmd-cli
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-cvector-generator
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-export-lora
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-fit-params
+llama-cpp-mtp> shrinking /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama-results
+llama-cpp-mtp> checking for references to /build/ in /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213...
+llama-cpp-mtp> patching script interpreter paths in /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213
+llama-cpp-mtp> stripping (with command strip and flags -S -p) in  /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/lib /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin
+llama-cpp-mtp> shrinking RPATHs of ELF executables and libraries in /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev
+llama-cpp-mtp> checking for references to /build/ in /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev...
+llama-cpp-mtp> patching script interpreter paths in /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev
+llama-cpp-mtp> stripping (with command strip and flags -S -p) in  /nix/store/a92fyyqr4sbfrm4x0pph6qci2k4bnl5g-llama-cpp-mtp-9213-dev/lib
+llama-cpp-mtp> making symlink relative: /nix/store/zhg1rv893gshing473hdh8xn8m650a8q-llama-cpp-mtp-9213/bin/llama
