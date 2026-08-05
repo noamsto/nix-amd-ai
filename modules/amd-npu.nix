@@ -199,15 +199,30 @@ in {
       '';
     };
 
-    vllmGpuTarget = mkOption {
+    gpuTarget = mkOption {
       type = types.enum ["gfx1150" "gfx1151"];
       default = "gfx1150";
       description = ''
+        The host's actual iGPU: gfx1150 (Strix Point) or gfx1151 (Strix
+        Halo). Drives the gfx1151 CWSR-kernel warning below and the default
+        for vllmGpuTarget — set this instead of vllmGpuTarget on
+        llamacpp/sd-cpp-only hosts, since vllmGpuTarget's own default never
+        applies without enableVllm.
+      '';
+    };
+
+    vllmGpuTarget = mkOption {
+      type = types.enum ["gfx1150" "gfx1151"];
+      default = cfg.gpuTarget;
+      defaultText = lib.literalExpression "config.hardware.amd-npu.gpuTarget";
+      description = ''
         Which lemonade-sdk/vllm-rocm prebuilt to install: gfx1150 (Strix Point)
         or gfx1151 (Strix Halo). Each bundles a TheRock ROCm built for that
-        exact target. gfx1151 needs a kernel with the CWSR fix, backported or
-        not, or ROCm can crash any ROCm backend, not just vLLM (see the
-        eval-time warning this module emits when enableROCm is also set).
+        exact target. Defaults to gpuTarget; override only if vLLM needs a
+        different target than the host's real chip (e.g. testing). gfx1151
+        needs a kernel with the CWSR fix, backported or not, or ROCm can
+        crash any ROCm backend, not just vLLM (see the eval-time warning
+        this module emits when enableROCm is also set).
       '';
     };
 
@@ -425,15 +440,17 @@ in {
       (cfg.enableLemonade && cfg.lemonade.allowedOrigins == [] && !builtins.elem cfg.lemonade.host ["localhost" "127.0.0.1" "::1"])
       "hardware.amd-npu.lemonade.host is non-loopback but lemonade.allowedOrigins is empty; browsers on other machines will get a 403 'Origin not allowed' error. Set lemonade.allowedOrigins to the origins that should reach it."
       # gfx1151 requires a kernel with the CWSR VGPR-count fix or ROCm can crash
-      # any ROCm backend (llamacpp:rocm, sd-cpp:rocm, vllm:rocm), not just vllm.
+      # any ROCm backend (llamacpp:rocm, sd-cpp:rocm, vllm:rocm), not just vllm,
+      # so this checks gpuTarget (the host's real chip) too — vllmGpuTarget
+      # alone misses llamacpp/sd-cpp-only hosts that never touch it.
       # A warning, not an assertion: the fix can be backported to a kernel older
       # than 6.18.4, which a bare version check cannot detect.
       ++ optional
       (cfg.enableLemonade
         && cfg.enableROCm
-        && cfg.vllmGpuTarget == "gfx1151"
+        && (cfg.gpuTarget == "gfx1151" || cfg.vllmGpuTarget == "gfx1151")
         && !versionAtLeast config.boot.kernelPackages.kernel.version "6.18.4")
-      "hardware.amd-npu.vllmGpuTarget = \"gfx1151\" needs Linux kernel >= 6.18.4 (or the CWSR fix backported) or ROCm can miscalculate VGPR counts and crash llamacpp:rocm, sd-cpp:rocm, and vllm:rocm. Kernel ${config.boot.kernelPackages.kernel.version} is below that; if it carries a backported fix, verify on the host with: grep -E \"cwsr_size|ctl_stack_size\" /sys/class/kfd/kfd/topology/nodes/*/properties";
+      "A gfx1151 target is selected (hardware.amd-npu.gpuTarget / vllmGpuTarget), which needs Linux kernel >= 6.18.4 (or the CWSR fix backported) or ROCm can miscalculate VGPR counts and crash llamacpp:rocm, sd-cpp:rocm, and vllm:rocm. Kernel ${config.boot.kernelPackages.kernel.version} is below that; if it carries a backported fix, verify on the host with: grep -E \"cwsr_size|ctl_stack_size\" /sys/class/kfd/kfd/topology/nodes/*/properties";
 
     # Kernel configuration (NPU-only)
     boot.kernelModules = optionals cfg.enableNPU ["amdxdna"];

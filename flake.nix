@@ -326,8 +326,10 @@
               }).config.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
 
             # gfx1151 + ROCm below the CWSR-fix kernel version must warn (not
-            # assert — the fix may be backported to an older kernel); gfx1150
-            # and an already-new-enough kernel must both stay silent.
+            # assert — the fix may be backported to an older kernel), whether the
+            # signal is gpuTarget (the real-hardware knob) or the legacy
+            # vllmGpuTarget (kept for back-compat); gfx1150 and an already-new-
+            # enough kernel must both stay silent.
             module-eval-cwsr-warning = let
               mkSys = extraModule:
                 (inputs.nixpkgs.lib.nixosSystem {
@@ -335,45 +337,67 @@
                   modules = [
                     inputs.self.nixosModules.default
                     (pkgs.lib.recursiveUpdate {
-                      boot.loader.grub.enable = false;
-                      fileSystems."/" = {
-                        device = "/dev/sda1";
-                        fsType = "ext4";
-                      };
-                      hardware.amd-npu = {
-                        enable = true;
-                        enableNPU = false;
-                        enableFastFlowLM = false;
-                        enableLemonade = true;
-                        enableROCm = true;
-                        lemonade.user = "testuser";
-                      };
-                      users.users.testuser = {
-                        isNormalUser = true;
-                        extraGroups = ["video" "render"];
-                      };
-                    } extraModule)
+                        boot.loader.grub.enable = false;
+                        fileSystems."/" = {
+                          device = "/dev/sda1";
+                          fsType = "ext4";
+                        };
+                        hardware.amd-npu = {
+                          enable = true;
+                          enableNPU = false;
+                          enableFastFlowLM = false;
+                          enableLemonade = true;
+                          enableROCm = true;
+                          lemonade.user = "testuser";
+                        };
+                        users.users.testuser = {
+                          isNormalUser = true;
+                          extraGroups = ["video" "render"];
+                        };
+                      }
+                      extraModule)
                   ];
                 }).config.warnings;
-              oldKernelGfx1151 = mkSys {
+              # The bug this check guards: an llamacpp-only gfx1151 host that
+              # never touches vllmGpuTarget used to get no warning at all.
+              oldKernelGfx1151NoVllm = mkSys {
+                hardware.amd-npu.gpuTarget = "gfx1151";
+                boot.kernelPackages = pkgs.linuxPackages_6_12;
+              };
+              oldKernelGfx1151VllmOn = mkSys {
+                hardware.amd-npu = {
+                  gpuTarget = "gfx1151";
+                  enableVllm = true;
+                  vllmGpuTarget = "gfx1151";
+                };
+                boot.kernelPackages = pkgs.linuxPackages_6_12;
+              };
+              # Back-compat: an existing config that only ever set the legacy
+              # vLLM-only knob must keep warning, even though gpuTarget defaults
+              # to gfx1150.
+              oldKernelExplicitVllmTargetOnly = mkSys {
                 hardware.amd-npu.vllmGpuTarget = "gfx1151";
                 boot.kernelPackages = pkgs.linuxPackages_6_12;
               };
               oldKernelGfx1150 = mkSys {
-                hardware.amd-npu.vllmGpuTarget = "gfx1150";
+                hardware.amd-npu.gpuTarget = "gfx1150";
                 boot.kernelPackages = pkgs.linuxPackages_6_12;
               };
               newKernelGfx1151 = mkSys {
-                hardware.amd-npu.vllmGpuTarget = "gfx1151";
+                hardware.amd-npu.gpuTarget = "gfx1151";
               };
             in
               pkgs.runCommand "module-eval-cwsr-warning" {
-                old1151 = builtins.toJSON oldKernelGfx1151;
+                old1151NoVllm = builtins.toJSON oldKernelGfx1151NoVllm;
+                old1151VllmOn = builtins.toJSON oldKernelGfx1151VllmOn;
+                oldExplicitVllmTargetOnly = builtins.toJSON oldKernelExplicitVllmTargetOnly;
                 old1150 = builtins.toJSON oldKernelGfx1150;
                 new1151 = builtins.toJSON newKernelGfx1151;
-                passAsFile = ["old1151" "old1150" "new1151"];
+                passAsFile = ["old1151NoVllm" "old1151VllmOn" "oldExplicitVllmTargetOnly" "old1150" "new1151"];
               } "
-                grep -q cwsr_size \"$old1151Path\" || { echo \"gfx1151 + old kernel must warn\"; exit 1; }
+                grep -q cwsr_size \"$old1151NoVllmPath\" || { echo \"gfx1151 + old kernel, vLLM off, via gpuTarget must warn\"; exit 1; }
+                grep -q cwsr_size \"$old1151VllmOnPath\" || { echo \"gfx1151 + old kernel + vLLM on must warn\"; exit 1; }
+                grep -q cwsr_size \"$oldExplicitVllmTargetOnlyPath\" || { echo \"legacy vllmGpuTarget-only config must still warn\"; exit 1; }
                 grep -q cwsr_size \"$old1150Path\" && { echo \"gfx1150 must not warn\"; exit 1; }
                 grep -q cwsr_size \"$new1151Path\" && { echo \"gfx1151 + new kernel must not warn\"; exit 1; }
                 touch $out
