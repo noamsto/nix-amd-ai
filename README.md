@@ -113,12 +113,14 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 ## Requirements
 
 - NixOS with kernel >= 6.14 (has `amdxdna` driver built-in) — only required when `enableNPU = true`
-- AMD Ryzen AI processor with XDNA 2 NPU (Strix Point / Strix Halo) for the NPU path; the GPU backends run on any supported AMD GPU with `enableNPU = false` (see "Other hardware")
+- AMD Ryzen AI processor with XDNA 2 NPU (Strix Point / Strix Halo; Krackan Point untested) for the NPU path; the GPU backends run on any supported AMD GPU with `enableNPU = false` (see "Other hardware")
 - User in `video` and `render` groups
 
 ## Other hardware (RDNA3 iGPUs / Hawk Point)
 
 The module splits into an NPU half and a GPU half. The NPU half (XRT + `amdxdna` + FastFlowLM) is built and tested for **XDNA 2** (Strix Point / Strix Halo) — that's what FastFlowLM targets. The GPU backends are independent and run on other AMD GPUs.
+
+**Krackan Point** (Ryzen AI 7 350 / 5 340, PCI `1022:17f0` rev `0x20`) is XDNA 2 with the same 8-column AIE array, but `amdxdna` gives it its own device profile (`dev_npu6_info`, vs `dev_npu4_info` for Strix Point) and nothing here has been tested on it. Reported failing at model load with `DRM_IOCTL_AMDXDNA_CREATE_HWCTX` — see #79.
 
 Set `enableNPU = false` to drop the XRT/`amdxdna` closure (kernel module, IOMMU param, udev rules, memlock limits) and run GPU-only. Example for a **Hawk Point** APU (Ryzen 9 8945HS, Radeon 780M / `gfx1103`):
 
