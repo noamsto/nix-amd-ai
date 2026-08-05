@@ -9,6 +9,19 @@ LEM_NEW="$3" LEM_OLD="$4"
 XDNA_NEW="$5" XDNA_OLD="$6"
 VLLM_NEW="${7:-}" VLLM_OLD="${8:-}"
 
+# The unstable-YYYY-MM-DD date names the pinned rev, so it has to move with it.
+update_unstable_date() {
+  local repo="$1" rev="$2" file="$3"
+  local date
+  date=$(gh api "repos/$repo/commits/$rev" --jq '.commit.committer.date[0:10]' || true)
+  if [ -n "$date" ]; then
+    sed -i "s/\(version = \"[^\"]*unstable-\)[0-9-]\{10\}\"/\1$date\"/" "$file"
+    echo "  Version date updated: $date"
+  else
+    echo "  WARNING: could not resolve commit date for $repo@${rev:0:12}"
+  fi
+}
+
 update_hash() {
   local pkg="$1"
   echo "  Prefetching hash for $pkg..."
@@ -59,6 +72,7 @@ if [ "$XDNA_NEW" != "$XDNA_OLD" ]; then
   echo "Bumping xdna-driver: ${XDNA_OLD:0:12} -> ${XDNA_NEW:0:12}"
   sed -i "s/rev = \"$XDNA_OLD\"/rev = \"$XDNA_NEW\"/" pkgs/xrt-plugin-amdxdna/default.nix
   sed -i 's/hash = "sha256-[^"]*"/hash = ""/' pkgs/xrt-plugin-amdxdna/default.nix
+  update_unstable_date amd/xdna-driver "$XDNA_NEW" pkgs/xrt-plugin-amdxdna/default.nix
 
   # Check if XRT submodule also changed
   NEW_XRT_REV=$(gh api "repos/amd/xdna-driver/contents/xrt?ref=$XDNA_NEW" --jq '.sha' || true)
@@ -68,6 +82,7 @@ if [ "$XDNA_NEW" != "$XDNA_OLD" ]; then
       echo "  XRT submodule also changed: ${OLD_XRT_REV:0:12} -> ${NEW_XRT_REV:0:12}"
       sed -i "s/rev = \"$OLD_XRT_REV\"/rev = \"$NEW_XRT_REV\"/" pkgs/xrt/default.nix
       sed -i 's/hash = "sha256-[^"]*"/hash = ""/' pkgs/xrt/default.nix
+      update_unstable_date Xilinx/XRT "$NEW_XRT_REV" pkgs/xrt/default.nix
       update_hash xrt
     fi
   fi

@@ -21,7 +21,7 @@ let
 in
   stdenv.mkDerivation rec {
     pname = "xrt-plugin-amdxdna";
-    version = "1.7-unstable-2025-06-06";
+    version = "1.7-unstable-2026-07-22";
     pluginVersion = "2.21.0";
 
     src = fetchFromGitHub {

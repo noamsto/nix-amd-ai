@@ -27,7 +27,7 @@
 stdenv.mkDerivation rec {
   pname = "xrt";
   # Pinned to the commit that amd/xdna-driver branch 1.7 references as a submodule
-  version = "unstable-2025-06-06";
+  version = "unstable-2026-06-04";
 
   src = fetchFromGitHub {
     owner = "Xilinx";
