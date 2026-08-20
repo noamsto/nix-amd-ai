@@ -4,16 +4,16 @@
 # weekly update workflow (scripts/check-updates.sh + bump-versions.sh).
 {
   gfx1150 = {
-    version = "0.23.1.dev0";
-    releaseTag = "vllm0.23.1.dev0+rocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1150";
+    version = "-omni0.25.0rc1-rocm7.15.0";
+    releaseTag = "vllm-omni0.25.0rc1-rocm7.15.0-gfx1150";
     parts = [
       {
-        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1150/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1150-x64.part01-of-02.tar.gz";
-        hash = "sha256-aS8oZUecBTiod1lPoFpy9QfC+T9GXZnHeQc86zmdHbk=";
+        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm-omni0.25.0rc1-rocm7.15.0-gfx1150/vllm-omni0.25.0rc1-rocm7.15.0-gfx1150-x64.part01-of-02.tar.gz";
+        hash = "sha256-u//73yU/m1yzHGezQ052mrAnqhTxaTXQxzbMCYjQx70=";
       }
       {
-        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1150/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1150-x64.part02-of-02.tar.gz";
-        hash = "sha256-tIXcYaMcpPOnVCx64id6+Lpiv9Qzsu5M09smYSDV2gM=";
+        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm-omni0.25.0rc1-rocm7.15.0-gfx1150/vllm-omni0.25.0rc1-rocm7.15.0-gfx1150-x64.part02-of-02.tar.gz";
+        hash = "sha256-4McKgPoXgqC3OGBl6g6B5B9TUxifpK0haDORx7JWS9U=";
       }
     ];
   };
@@ -23,16 +23,16 @@
   # gfx1151 kernel has ever executed though — we have no Halo host. Validate
   # inference before treating it as confirmed. See noamsto/nix-amd-ai#63, #68.
   gfx1151 = {
-    version = "0.23.1.dev0";
-    releaseTag = "vllm0.23.1.dev0+rocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1151";
+    version = "-omni0.25.0rc1-rocm7.15.0";
+    releaseTag = "vllm-omni0.25.0rc1-rocm7.15.0-gfx1151";
     parts = [
       {
-        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1151/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1151-x64.part01-of-02.tar.gz";
-        hash = "sha256-sFPe3SEB46FJWZ03ukzYfUeZQ+J/S52tDk1rrKKIh78=";
+        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm-omni0.25.0rc1-rocm7.15.0-gfx1151/vllm-omni0.25.0rc1-rocm7.15.0-gfx1151-x64.part01-of-02.tar.gz";
+        hash = "";
       }
       {
-        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1151/vllm0.23.1.dev0%2Brocm7.15.0a20260710.g0fc695fc6.d20260710-rocm7.15.0-gfx1151-x64.part02-of-02.tar.gz";
-        hash = "sha256-w/J1I0X1RZon+vBBkAIqQELEl1tphS6t+nBuCJ9W+2w=";
+        url = "https://github.com/lemonade-sdk/vllm-rocm/releases/download/vllm-omni0.25.0rc1-rocm7.15.0-gfx1151/vllm-omni0.25.0rc1-rocm7.15.0-gfx1151-x64.part02-of-02.tar.gz";
+        hash = "";
       }
     ];
   };
