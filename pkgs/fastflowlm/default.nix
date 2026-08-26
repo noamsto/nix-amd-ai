@@ -65,12 +65,6 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     # Cargo.lock is not committed upstream; inject our copy
     cp ${./Cargo.lock} third_party/tokenizers-cpp/rust/Cargo.lock
-
-    # Remove the attempt to create /usr/local/bin symlink at install time
-    substituteInPlace src/CMakeLists.txt \
-      --replace-fail \
-        'NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr" AND NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr/local"' \
-        'FALSE'
   '';
 
   dontUseCmakeConfigure = true;
