@@ -6,9 +6,27 @@ set -euo pipefail
 FLM_LATEST=$(gh api repos/FastFlowLM/FastFlowLM/releases/latest --jq '.tag_name' | sed 's/^v//')
 LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name' | sed 's/^v//')
 XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=1.7&per_page=1" --jq '.[0].sha')
-# vLLM-ROCm cuts one dated nightly per gfx target; strip the -gfxNNNN suffix to
-# get the shared base tag every target pins to.
-VLLM_LATEST=$(gh api repos/lemonade-sdk/vllm-rocm/releases/latest --jq '.tag_name' | sed 's/-gfx[^-]*$//')
+# vLLM-ROCm cuts one release per gfx target, so `releases/latest` returns
+# whichever target shipped last — routinely one we don't consume (gfx950,
+# gfx942). Its base tag may have no build for our targets at all, which then
+# 404s at prefetch time and downgrades the pin. Walk releases newest-first and
+# take the first base tag built for every target sources.nix consumes.
+mapfile -t VLLM_TARGETS < <(sed -n 's/^  \(gfx[0-9a-zA-Z]*\) = {$/\1/p' pkgs/vllm-rocm/sources.nix)
+VLLM_TAGS=$(gh api "repos/lemonade-sdk/vllm-rocm/releases?per_page=100" \
+  --jq '.[] | select(.draft | not) | .tag_name')
+VLLM_LATEST=""
+while read -r base; do
+  for target in "${VLLM_TARGETS[@]}"; do
+    grep -qxF "${base}-${target}" <<<"$VLLM_TAGS" || continue 2
+  done
+  VLLM_LATEST="$base"
+  break
+done < <(sed -n 's/-gfx[^-]*$//p' <<<"$VLLM_TAGS" | awk '!seen[$0]++')
+
+if [ -z "$VLLM_LATEST" ]; then
+  echo "ERROR: no vllm-rocm release covers all targets: ${VLLM_TARGETS[*]}" >&2
+  exit 1
+fi
 
 FLM_CURRENT=$(grep 'version = ' pkgs/fastflowlm/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
 LEM_CURRENT=$(sed -n 's/.*"\(.*\)".*/\1/p' pkgs/lemonade/version.nix | head -1)

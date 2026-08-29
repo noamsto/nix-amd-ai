@@ -22,17 +22,44 @@ update_unstable_date() {
   fi
 }
 
+# The workflow opens — and on the clean path auto-merges — whatever tree this
+# leaves behind, so a hash we could not prefetch has to fail the job.
 update_hash() {
   local pkg="$1"
   echo "  Prefetching hash for $pkg..."
   local new_hash
   new_hash=$(nix build ".#$pkg" 2>&1 | grep -oP 'got:\s+\K\S+' || true)
-  if [ -n "$new_hash" ]; then
-    sed -i "s|hash = \"\"|hash = \"$new_hash\"|" "pkgs/$pkg/default.nix"
-    echo "  Hash updated: $new_hash"
-  else
-    echo "  WARNING: could not auto-prefetch hash for $pkg"
+  if [ -z "$new_hash" ]; then
+    echo "ERROR: could not auto-prefetch hash for $pkg" >&2
+    exit 1
   fi
+  sed -i "s|hash = \"\"|hash = \"$new_hash\"|" "pkgs/$pkg/default.nix"
+  echo "  Hash updated: $new_hash"
+}
+
+# Release tags come in two shapes — `vllm<ver>+rocm<...>` nightlies and
+# `vllm-omni<ver>-rocm<...>` cuts. Both reduce to the bare version.
+vllm_version() {
+  local v="${1#vllm}"
+  v="${v#-}"
+  v="${v%%+*}"
+  printf '%s' "${v%-rocm*}"
+}
+
+# Keyed by URL rather than file position: a positional fill shifts every later
+# hash into the wrong part as soon as one prefetch fails.
+set_part_hash() {
+  local file="$1" url="$2" hash="$3"
+  grep -qF "$url" "$file" || {
+    echo "ERROR: no part in $file has url $url" >&2
+    exit 1
+  }
+  awk -v url="$url" -v h="$hash" '
+    index($0, url) {found = 1}
+    found && /hash = / {sub(/hash = "[^"]*"/, "hash = \"" h "\""); found = 0}
+    {print}
+  ' "$file" >"$file.tmp"
+  mv "$file.tmp" "$file"
 }
 
 # FastFlowLM
@@ -58,13 +85,12 @@ if [ "$LEM_NEW" != "$LEM_OLD" ]; then
   # (works on the Linux CI runner, where the aarch64-darwin package can't build).
   echo "  Prefetching macOS embeddable hash..."
   darwin_url="https://github.com/lemonade-sdk/lemonade/releases/download/v${LEM_NEW}/lemonade-embeddable-${LEM_NEW}-macos-arm64.tar.gz"
-  darwin_hash=$(nix store prefetch-file --json "$darwin_url" | jq -r .hash || true)
-  if [ -n "$darwin_hash" ]; then
-    sed -i "s|hash = \"sha256-[^\"]*\"|hash = \"$darwin_hash\"|" pkgs/lemonade/darwin.nix
-    echo "  macOS hash updated: $darwin_hash"
-  else
-    echo "  WARNING: could not prefetch macOS embeddable hash for $LEM_NEW"
+  if ! darwin_hash=$(nix store prefetch-file --json "$darwin_url" | jq -er .hash); then
+    echo "ERROR: could not prefetch macOS embeddable hash for $LEM_NEW" >&2
+    exit 1
   fi
+  sed -i "s|hash = \"sha256-[^\"]*\"|hash = \"$darwin_hash\"|" pkgs/lemonade/darwin.nix
+  echo "  macOS hash updated: $darwin_hash"
 fi
 
 # xdna-driver (also check XRT submodule)
@@ -92,33 +118,35 @@ fi
 
 # vLLM-ROCm — prebuilt per-gfx split bundles. The base tag (minus -gfxNNNN)
 # appears plain in each releaseTag and URL-encoded (+ -> %2B) in each URL, so
-# swap both, then blank and refill the four hashes in file order (gfx1150 p1/p2,
-# gfx1151 p1/p2) via direct prefetch — nix build can't emit per-part hashes.
+# swap both, then refetch every part's hash by URL — nix build can't emit
+# per-part hashes.
 if [ -n "$VLLM_NEW" ] && [ "$VLLM_NEW" != "$VLLM_OLD" ]; then
   echo "Bumping vLLM-ROCm: $VLLM_OLD -> $VLLM_NEW"
   src=pkgs/vllm-rocm/sources.nix
   old_enc="${VLLM_OLD//+/%2B}"
   new_enc="${VLLM_NEW//+/%2B}"
-  old_ver="${VLLM_OLD#vllm}"; old_ver="${old_ver%%+*}"
-  new_ver="${VLLM_NEW#vllm}"; new_ver="${new_ver%%+*}"
+  old_ver=$(vllm_version "$VLLM_OLD")
+  new_ver=$(vllm_version "$VLLM_NEW")
 
   sed -i "s|$old_enc|$new_enc|g; s|$VLLM_OLD|$VLLM_NEW|g" "$src"
-  [ "$old_ver" != "$new_ver" ] && sed -i "s/version = \"$old_ver\"/version = \"$new_ver\"/g" "$src"
-  sed -i 's/hash = "sha256-[^"]*"/hash = ""/' "$src"
+  if [ "$old_ver" != "$new_ver" ]; then
+    sed -i "s/version = \"$old_ver\"/version = \"$new_ver\"/g" "$src"
+  fi
 
   base_url="https://github.com/lemonade-sdk/vllm-rocm/releases/download"
-  for target in gfx1150 gfx1151; do
+  mapfile -t targets < <(sed -n 's/^  \(gfx[0-9a-zA-Z]*\) = {$/\1/p' "$src")
+  for target in "${targets[@]}"; do
     enctag="${new_enc}-${target}"
     for part in part01-of-02 part02-of-02; do
       url="${base_url}/${enctag}/${enctag}-x64.${part}.tar.gz"
       echo "  Prefetching $target $part..."
-      h=$(nix store prefetch-file --json "$url" | jq -r .hash || true)
-      if [ -n "$h" ]; then
-        sed -i "0,/hash = \"\"/s||hash = \"$h\"|" "$src"
-        echo "    $h"
-      else
-        echo "  WARNING: could not prefetch $target $part"
+      if ! h=$(nix store prefetch-file --json "$url" | jq -er .hash); then
+        echo "ERROR: could not prefetch $target $part" >&2
+        echo "       $url" >&2
+        exit 1
       fi
+      set_part_hash "$src" "$url" "$h"
+      echo "    $h"
     done
   done
 fi

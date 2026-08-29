@@ -150,8 +150,6 @@ jobs:
             BODY+=$'\n'"### ⚠️ Build failures"$'\n'"$BUILD_FAILED"
           fi
 
-          BODY+=$'\n'"**Note:** Hashes may need manual correction if auto-prefetch failed."
-
           PR_URL=$(echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -)
           echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
 
