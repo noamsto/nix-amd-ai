@@ -156,7 +156,29 @@ half so the two arches sit together.
       re-quantization moved throughput on Halo. His Llama rows are unaffected.
 - [ ] Sanity-check the concurrency result — NPU model + iGPU model at once, the
       claim being the iGPU pays nothing measurable.
-- [ ] While here: #79 hypothesised that two NPU models can't co-exist because
-      each FLM context requests all 8 columns. Loading two FLM models at once
-      on this box would confirm or kill that cheaply, and it's the open question
-      on [ROCm/FastFlowLM#655](https://github.com/ROCm/FastFlowLM/issues/655).
+### Settled: NPU contexts are not column-exclusive
+
+#79 hypothesised that two NPU models can't co-exist because each FLM context
+requests all 8 columns. **That is wrong** — measured twice:
+
+- Halo (rev 0x11 / npu5), FLM 0.9.43: three separate `flm serve` processes
+  loaded and answered concurrently (@expelledboy).
+- Strix Point (rev 0x10 / npu4), FLM 1.0.3: `--asr 1 --embed 1` on one serve —
+  #655's exact trigger — loaded Whisper + Embedding-Gemma + Llama-3.2-1B and
+  served clean.
+
+`flm validate` printing "8 columns" describes the array, not a claim on it.
+Don't re-test this; the open question is what changed after FLM 0.9.44 and
+whether it is gated on the `npu6` device profile:
+
+| rev | profile | `--asr 1 --embed 1` |
+|---|---|---|
+| 0x10 | npu4 (Strix Point) | works on 1.0.3 |
+| 0x11 | npu5 (Halo) | works on 0.9.43; **1.0.3 pending** |
+| 0x20 | npu6 (Krackan) | broken from 0.9.45 |
+
+- [ ] Fill the npu5-on-1.0.3 cell. If it passes, [ROCm/FastFlowLM#655](https://github.com/ROCm/FastFlowLM/issues/655)
+      is an npu6-profile bug; if it fails, the regression isn't Krackan-specific
+      and npu4 is the outlier. Test Llama-3.2-1B first — it's untouched by the
+      Q4_1→Q4_K re-quant, so a load failure can't be confused with a weights
+      problem.
