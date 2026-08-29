@@ -412,6 +412,24 @@ All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600
 
 Notes: FLM's TTFT is dominated by a one-off NPU compile-to-cache; steady-state decode is the useful number. FLM's GGUF-vs-proprietary format means quantization isn't bit-identical to the llamacpp row, so treat these as same-family, not same-weights.
 
+### Strix Halo (gfx1151 / XDNA2 NPU5): NPU measured
+
+The tables above are Strix Point. These rows are from a Strix Halo host: ASUS ROG Flow Z13 (GZ302EA), Ryzen AI MAX+ 395, 128 GB, NixOS 26.11, kernel 7.1.0 with in-tree `amdxdna` 0.8, NPU firmware 1.1.2.65, `fastflowlm` 0.9.43. These figures run ahead of community Strix Point numbers for the same model, but the cause is not established here and nothing below depends on it. (It is not the column count: Strix Point, Krackan and Halo are all XDNA2 with the same 8-column array, as noted above for Krackan.)
+
+| Test | Result |
+| ---- | ------ |
+| `flm validate` | rc=0, 8-column NPU, FW 1.1.2.65, `Memlock Limit: infinity` |
+| Llama-3.2-1B (q4nx, `--pmode performance`) | **~49–50 t/s** decode |
+| Llama-3.1-8B | ~8 t/s decode |
+| Package power (RAPL), idle → 1B inference | 5.1 W → 19.5 W (**+14.4 W**, includes CPU serving overhead) |
+| **NPU 1B + iGPU ROCm 7B concurrently** | NPU ~40 t/s, **iGPU 37.1 t/s (full speed, no degradation)**, 36.2 W total |
+
+The concurrency row is the interesting one: an NPU workload running alongside an iGPU ROCm workload costs the iGPU nothing measurable and costs the NPU about 20%. That is a genuine low-power co-processor for small models while the iGPU handles 7B and up — not a way to make one model faster.
+
+**The NPU niche on Halo is genuinely small models (1–3B).** At 8B the NPU manages ~8 t/s while the iGPU runs the same class of model several times faster, so the NPU is a power and concurrency play, never a throughput win. Route big models to Vulkan/ROCm and keep the NPU for the small resident one.
+
+**Firmware on kernel ≥7.0 needs no DKMS.** In-tree `amdxdna` prefers `amdnpu/17f0_11/npu_7.sbin` (→ `1.1.2.65`) over the default `npu.sbin` (→ `1.0.0.166`), so FastFlowLM's ≥1.1.0.0 requirement is met out of the box. Check with `cat /sys/class/accel/accel0/device/fw_version`.
+
 **Recommendation:**
 
 - **General LLM inference (7B–26B Q4):** use **Vulkan**. On Strix Point 890M with llama.cpp b8770, Vulkan wins decode at every size tested and ties or wins prefill. The previous "ROCm for prefill-heavy" advice no longer holds now that ROCm targets gfx1150 natively (the gfx1102 Tensile arch-logic was apparently more tuned than gfx1150's is today).
