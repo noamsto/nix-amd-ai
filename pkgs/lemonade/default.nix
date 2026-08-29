@@ -39,7 +39,7 @@
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-vt1BFdNKpM6OM15jatxJbBduClibKdbcON9AGcZ0Rtc=";
+    hash = "sha256-n6h4LbWUUyxv2e99gCB2hjx8bEMtiMK4kpTtUxKQGbc=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
@@ -94,12 +94,14 @@ in stdenv.mkDerivation {
     # singular/plural tolerant: v10.8.1 pluralized the comment ("symlinks ... search paths").
     sed -i '/Create symlinks\? in standard systemd search paths\? only if not installing to/,/^    endif()$/d' CMakeLists.txt
 
-    # secrets.conf install rule writes to absolute /etc/lemonade/conf.d. The
-    # NixOS module is what owns /etc, not us — relocate the template under
-    # $out so it ships with the derivation but doesn't try to populate /etc.
+    # secrets.conf install rule writes to an absolute /etc path (11.8.0 moved it
+    # from /etc/lemonade/conf.d to /etc/default, loaded via
+    # EnvironmentFile=-/etc/default/lemond). The NixOS module is what owns /etc,
+    # not us — relocate the template under $out so it ships with the derivation
+    # but doesn't try to populate /etc.
     substituteInPlace CMakeLists.txt \
       --replace-fail \
-        'DESTINATION /etc/lemonade/conf.d' \
+        'DESTINATION /etc/default' \
         'DESTINATION share/lemonade/conf.d.example'
 
     # Let a packager point lemonade at a defaults.json outside the FHS path.
