@@ -250,6 +250,44 @@ schemes are always allowed, so this only matters once `lemonade.host` is
 bound to something a LAN or remote browser can reach; the module warns if
 you set the former without the latter.
 
+### Declarative models: `lemonade.models`
+
+Models to keep downloaded, named as `lemonade list` reports them:
+
+```nix
+hardware.amd-npu.lemonade.models = [
+  "Qwen3.5-4B-MTP-GGUF"
+  "llama3.2-1b-FLM"
+];
+```
+
+A `lemond-models` unit pulls whatever is missing. Models already on disk are
+skipped, so re-activating an unchanged list costs nothing.
+
+**Activation does not block.** The unit is `Type=simple`, so systemd calls it
+started the moment it forks and `nixos-rebuild switch` returns immediately
+rather than sitting on multi-GiB downloads. Follow the pull with:
+
+```bash
+journalctl -fu lemond-models
+```
+
+It has to be a unit rather than an activation script because `lemonade pull` is
+an HTTP client — it needs `lemond` already answering, which is also why the
+unit waits for `lemonade status` before doing anything. A model that fails to
+pull is logged and skipped, so one bad name can't block the rest of the list.
+
+To make the set on disk *exactly* the declared one, add:
+
+```nix
+hardware.amd-npu.lemonade.pruneUnlistedModels = true;
+```
+
+This deletes downloaded models the list doesn't mention. It's off by default —
+models are large and slow to re-fetch, and anything pulled by hand for an
+experiment would vanish on the next activation. It requires a non-empty
+`lemonade.models`, so an empty list can never be read as "delete everything".
+
 ### Tauri desktop app: download progress is fragile when backgrounded
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.

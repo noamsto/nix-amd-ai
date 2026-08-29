@@ -139,6 +139,57 @@
       fi
     '';
   };
+
+  # `lemonade pull` is an HTTP client for lemond, so models can only be
+  # reconciled against a running server — an activation script can't do it.
+  lemonadeModelSync = pkgs.writeShellApplication {
+    name = "lemond-sync-models";
+    runtimeInputs = [lemonadePackage pkgs.gawk pkgs.coreutils];
+    text = ''
+      declared=(${lib.escapeShellArgs cfg.lemonade.models})
+
+      # Unit ordering only guarantees lemond's process started, not that its
+      # port answers.
+      for _ in $(seq 60); do
+        if lemonade status >/dev/null 2>&1; then break; fi
+        sleep 2
+      done
+      if ! lemonade status >/dev/null 2>&1; then
+        echo "lemond unreachable after 120s; leaving models alone" >&2
+        exit 1
+      fi
+
+      # Column 1 of the `list` table, minus its header and rule lines.
+      downloaded() {
+        lemonade list --downloaded \
+          | awk 'NR > 2 && NF && $1 !~ /^-+$/ {print $1}'
+      }
+
+      have=$(downloaded)
+      for model in "''${declared[@]}"; do
+        if grep -qxF "$model" <<<"$have"; then
+          continue
+        fi
+        echo "pulling $model"
+        lemonade pull "$model" || echo "failed to pull $model" >&2
+      done
+    ''
+    + optionalString cfg.lemonade.pruneUnlistedModels ''
+
+      for model in $(downloaded); do
+        keep=false
+        for want in "''${declared[@]}"; do
+          if [ "$model" = "$want" ]; then
+            keep=true
+            break
+          fi
+        done
+        if [ "$keep" = true ]; then continue; fi
+        echo "deleting unlisted $model"
+        lemonade delete "$model" || echo "failed to delete $model" >&2
+      done
+    '';
+  };
 in {
   options.hardware.amd-npu = {
     enable = mkEnableOption "AMD NPU (AI Engine) support";
@@ -305,6 +356,37 @@ in {
           site the browser visits.
         '';
       };
+
+      models = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        example = ["Qwen3.5-4B-MTP-GGUF" "llama3.2-1b-FLM"];
+        description = ''
+          Models to keep downloaded, named as `lemonade list` reports them.
+          Missing ones are pulled by a `lemond-models` unit; models already on
+          disk are left alone, so re-activating costs nothing.
+
+          The pull runs in the background — the unit is `Type=simple`, so
+          systemd calls it started the moment it forks and `nixos-rebuild
+          switch` returns without waiting on multi-GiB downloads. Follow it
+          with `journalctl -fu lemond-models`. A model that fails to pull is
+          logged and skipped rather than failing the unit, so one bad name
+          can't block the rest.
+        '';
+      };
+
+      pruneUnlistedModels = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Also delete downloaded models that `lemonade.models` does not list,
+          making the set on disk exactly the declared one.
+
+          Off by default: models are large and slow to re-fetch, and anything
+          pulled by hand for an experiment would disappear on the next
+          activation. Requires a non-empty `lemonade.models`.
+        '';
+      };
     };
 
     ds4 = {
@@ -419,6 +501,14 @@ in {
       {
         assertion = !cfg.ds4.enable || cfg.ds4.model != null;
         message = "hardware.amd-npu.ds4.enable requires hardware.amd-npu.ds4.model (path to a DeepSeek V4 GGUF).";
+      }
+      {
+        assertion = cfg.lemonade.models == [] || cfg.enableLemonade;
+        message = "hardware.amd-npu.lemonade.models requires enableLemonade = true (models are pulled through a running lemond).";
+      }
+      {
+        assertion = !cfg.lemonade.pruneUnlistedModels || cfg.lemonade.models != [];
+        message = "hardware.amd-npu.lemonade.pruneUnlistedModels requires a non-empty lemonade.models; against an empty list it would delete every downloaded model.";
       }
       {
         assertion =
@@ -582,6 +672,22 @@ in {
         LimitMEMLOCK = "infinity";
         # WhisperServer resolves its writable runtime dir from RUNTIME_DIRECTORY.
         RuntimeDirectory = "lemond";
+      };
+    };
+
+    # systemd calls a Type=simple unit started as soon as it forks, so
+    # `nixos-rebuild switch` returns instead of waiting out multi-GiB pulls.
+    # A oneshot would make activation block on them.
+    systemd.services.lemond-models = mkIf (cfg.enableLemonade && cfg.lemonade.models != []) {
+      description = "Reconcile downloaded lemonade models";
+      after = ["lemond.service"];
+      requires = ["lemond.service"];
+      wantedBy = ["multi-user.target"];
+      serviceConfig = {
+        Type = "simple";
+        User = cfg.lemonade.user;
+        ExecStart = "${lemonadeModelSync}/bin/lemond-sync-models";
+        Restart = "no";
       };
     };
 

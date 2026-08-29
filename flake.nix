@@ -464,6 +464,65 @@
                 touch $out
               '';
 
+            module-eval-lemonade-models = let
+              mkSys = lemonadeExtra:
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu = {
+                        enable = true;
+                        enableLemonade = true;
+                        lemonade = {user = "testuser";} // lemonadeExtra;
+                      };
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config;
+              declared = mkSys {models = ["Qwen3.5-4B-MTP-GGUF" "llama3.2-1b-FLM"];};
+              pruning = mkSys {
+                models = ["Qwen3.5-4B-MTP-GGUF"];
+                pruneUnlistedModels = true;
+              };
+              none = mkSys {};
+            in
+              pkgs.runCommand "module-eval-lemonade-models" {
+                unit = declared.systemd.units."lemond-models.service".unit;
+                pruneUnit = pruning.systemd.units."lemond-models.service".unit;
+                noneUnits = builtins.toJSON (builtins.attrNames none.systemd.units);
+              } ''
+                sync=$(sed -n 's/^ExecStart=//p' "$unit"/lemond-models.service)
+
+                # The pull must not block activation on multi-GiB downloads.
+                grep -qF 'Type=simple' "$unit"/lemond-models.service
+                grep -qF 'After=lemond.service' "$unit"/lemond-models.service
+
+                grep -qF 'Qwen3.5-4B-MTP-GGUF' "$sync"
+                grep -qF 'llama3.2-1b-FLM' "$sync"
+
+                # Deleting models is opt-in, so the prune branch must be absent
+                # unless pruneUnlistedModels asked for it.
+                ! grep -qF 'lemonade delete' "$sync"
+                grep -qF 'lemonade delete' "$(sed -n 's/^ExecStart=//p' "$pruneUnit"/lemond-models.service)"
+
+                # An empty models list generates no unit at all.
+                if grep -qF 'lemond-models.service' <<<"$noneUnits"; then
+                  echo "lemond-models.service generated with an empty lemonade.models" >&2
+                  exit 1
+                fi
+
+                touch $out
+              '';
+
             module-eval-lemonade-allowed-origins = let
               sys =
                 (inputs.nixpkgs.lib.nixosSystem {
