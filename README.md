@@ -269,12 +269,14 @@ computes the `ttm` page counts for you (`pages = GiB × 262144`):
 ```nix
 hardware.amd-npu.gpuMemory = {
   ttmSizeGiB = 96;        # GTT pool ceiling  → ttm pages_limit
-  pagePoolSizeGiB = 48;   # pre-cached pool   → ttm page_pool_size
+  pagePoolSizeGiB = 96;   # pre-cached pool   → ttm page_pool_size
 };
 ```
 
-This emits `options ttm pages_limit=25165824 page_pool_size=12582912` via
-`boot.extraModprobeConfig`.
+This emits `options ttm pages_limit=25165824 page_pool_size=25165824` via
+`boot.extraModprobeConfig`, and is the pair the measurements below were taken
+on — the Halo host runs `page_pool_size` equal to `pages_limit`, not a fraction
+of it.
 
 **`ttmSizeGiB` alone sets the ceiling, and the arithmetic is exact.** Measured
 on a 128 GB Halo host (ASUS ROG Flow Z13 GZ302EA, Ryzen AI MAX+ 395, NixOS
@@ -317,7 +319,9 @@ CPU and OS still need their share.
 the ceiling, and three sources say `pages_limit` alone is sufficient — the Strix
 Halo wiki ("in theory you could set this to 0"), `hellas-ai/nix-strix-halo`,
 and AMD's `amd-ttm` utility. None of that is an A/B on this hardware, so the
-option stays documented rather than deprecated. See #42.
+option stays documented rather than deprecated, and the example above sets it
+equal to `ttmSizeGiB` because that is the configuration the numbers came from —
+not because the ratio has been shown to matter. See #42.
 
 Halo measurements above contributed by [@expelledboy](https://github.com/expelledboy) (#42).
 
