@@ -450,8 +450,8 @@
                 # direction — a broken jq expression would otherwise ship green.
                 reconcile=$(sed -n 's/^ExecStartPre=//p' "$unit"/lemond.service)
                 export HOME=$TMPDIR/home
-                mkdir -p "$HOME/.cache/lemonade"
-                cfg=$HOME/.cache/lemonade/config.json
+                mkdir -p "$HOME/.config/lemonade"
+                cfg=$HOME/.config/lemonade/config.json
                 echo '{"host":"0.0.0.0","max_loaded_models":1,"llamacpp":{"args":"--stale"}}' >"$cfg"
                 chmod 600 "$cfg"
                 "$reconcile"
@@ -542,7 +542,7 @@
                   systemd.services.lemond.wantedBy = lib.mkForce [];
                 };
                 testScript = ''
-                  cfg = "/home/tester/.cache/lemonade/config.json"
+                  cfg = "/home/tester/.config/lemonade/config.json"
 
                   machine.wait_for_unit("multi-user.target")
 
@@ -551,13 +551,13 @@
                   # user-only key is ctx_size rather than host/port because lemond
                   # persists those two from its own flags after the hook has run
                   # (main.cpp:82-99), so they would prove nothing here.
-                  machine.succeed("mkdir -p /home/tester/.cache/lemonade")
+                  machine.succeed("mkdir -p /home/tester/.config/lemonade")
                   machine.succeed(
                       "printf '%s' "
                       "'{\"ctx_size\":8192,\"max_loaded_models\":1,\"llamacpp\":{\"args\":\"--stale\"}}'"
                       " > " + cfg
                   )
-                  machine.succeed("chown -R tester:users /home/tester/.cache")
+                  machine.succeed("chown -R tester:users /home/tester/.config")
 
                   machine.succeed("systemctl start lemond")
                   machine.wait_for_unit("lemond.service")
