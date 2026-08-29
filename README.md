@@ -268,25 +268,58 @@ computes the `ttm` page counts for you (`pages = GiB × 262144`):
 
 ```nix
 hardware.amd-npu.gpuMemory = {
-  ttmSizeGiB = 120;       # GTT pool ceiling  → ttm pages_limit
-  pagePoolSizeGiB = 60;   # pre-cached pool   → ttm page_pool_size
+  ttmSizeGiB = 96;        # GTT pool ceiling  → ttm pages_limit
+  pagePoolSizeGiB = 48;   # pre-cached pool   → ttm page_pool_size
 };
 ```
 
-This emits `options ttm pages_limit=31457280 page_pool_size=15728640` via
-`boot.extraModprobeConfig`. Recommended starting point for 128 GB:
+This emits `options ttm pages_limit=25165824 page_pool_size=12582912` via
+`boot.extraModprobeConfig`.
 
-| Option | Value (128 GB) | Meaning |
-|---|---|---|
-| `ttmSizeGiB` | 120 | Hard ceiling on the GTT pool; leaves ~8 GiB for the OS/CPU. |
-| `pagePoolSizeGiB` | 60 | Pre-cached pool inside that ceiling. |
+**`ttmSizeGiB` alone sets the ceiling, and the arithmetic is exact.** Measured
+on a 128 GB Halo host (ASUS ROG Flow Z13 GZ302EA, Ryzen AI MAX+ 395, NixOS
+26.11, kernel 7.1.0) running `ttm.pages_limit=25165824`:
 
-> **Note:** these Halo values are guidance from the [Strix Halo wiki](https://strixhalo.wiki/AI/AI_Capabilities_Overview),
-> **not measured on a Halo host by this flake** (the development target is a
-> 64 GB Strix Point P14s). Treat them as a starting point, not a validated tune.
+```
+$ cat /sys/class/drm/card1/device/mem_info_gtt_total
+103079215104        # 96.00 GiB exactly = 25165824 × 4096
+```
+
+ROCm agrees — llama.cpp's HIP backend reports `Total VRAM: 98304 MiB`. Nothing
+else is needed to reach the ceiling.
+
+> **Do not also set `amdgpu.gttsize`.** Several third-party Halo guides tell you
+> to — including [`antirez/ds4`'s `STRIXHALO.md`](https://github.com/antirez/ds4/blob/main/STRIXHALO.md),
+> which the ds4 section below links — but ROCm#5595 warns against setting
+> `gttsize` and `pages_limit` together, and the measurement above shows
+> `pages_limit` is sufficient on its own.
+
+Pick `ttmSizeGiB` by the largest model you actually intend to load:
+
+| `ttmSizeGiB` (128 GB host) | When it's right |
+| ---: | --- |
+| ~96 | General use. Leaves ~32 GB for CPU/OS. Comfortable to ~70 GB models — a 67 GB Q4_K_M sat at `mem_info_gtt_used` ≈ 66 GB. |
+| ~120 | Models of 75 GiB+. The OS margin gets thin, but the alternative is a kernel fallback or a failed load. |
+
+The 120 row is not theoretical: at a 96 GiB ceiling, loading the 80.76 GiB
+DeepSeek-V4-Flash GGUF through `ds4` still ran, but fell back from fp16 to q8
+kernels for want of room —
+
+```
+ds4: ROCm q8 fp16 cache budget exhausted; using q8 kernels
+     (request=64.00 MiB cached=3.34 GiB free=4.80 GiB reserve=4.80 GiB total=96.00 GiB)
+```
 
 **Leave RAM headroom** — don't set `ttmSizeGiB` to your full physical RAM; the
-CPU and OS still need their share (the 120/128 example keeps a margin).
+CPU and OS still need their share.
+
+**`pagePoolSizeGiB` is unmeasured.** `page_pool_size` only pre-allocates inside
+the ceiling, and three sources say `pages_limit` alone is sufficient — the Strix
+Halo wiki ("in theory you could set this to 0"), `hellas-ai/nix-strix-halo`,
+and AMD's `amd-ttm` utility. None of that is an A/B on this hardware, so the
+option stays documented rather than deprecated. See #42.
+
+Halo measurements above contributed by [@expelledboy](https://github.com/expelledboy) (#42).
 
 ## Tuning tradeoffs we don't automate
 
@@ -296,6 +329,12 @@ The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
 **Do not do this on a host that uses the NPU.** amdxdna needs the IOMMU present
 for PASID; with `amd_iommu=off` there is no IOMMU at all and the NPU dies.
 `amd_iommu=off` is only viable on a GPU-only host that has given up XDNA.
+
+You also don't need it for large-model headroom, which is the usual reason
+people reach for it. The 128 GB Halo host measured above boots
+`iommu.passthrough=0` — full IOMMU translation, the demanding case — with the
+NPU driver loaded, and still loads both a 67 GB llama.cpp model and an 80.76 GiB
+`ds4` model into the GTT pool.
 
 The IOMMU default-domain *mode* is a separate knob. amdxdna historically
 required *Translated* mode (SVA/PASID), so the module used to pin
