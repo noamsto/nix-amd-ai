@@ -22,13 +22,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "0.9.46";
+  version = "1.0.3";
 
   src = fetchFromGitHub {
-    owner = "FastFlowLM";
+    owner = "ROCm";
     repo = "FastFlowLM";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-e8lDEW6pMaypLj3+VcEfX2EtsFhxu1IsF8xPm/n0SX4=";
+    hash = "sha256-d9YbAruZ1LdfoK+/M4IQe4/9ejYCuNVVxahEKHspYBw=";
     fetchSubmodules = true;
   };
 
@@ -65,12 +65,6 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     # Cargo.lock is not committed upstream; inject our copy
     cp ${./Cargo.lock} third_party/tokenizers-cpp/rust/Cargo.lock
-
-    # Remove the attempt to create /usr/local/bin symlink at install time
-    substituteInPlace src/CMakeLists.txt \
-      --replace-fail \
-        'NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr" AND NOT CMAKE_INSTALL_PREFIX STREQUAL "/usr/local"' \
-        'FALSE'
   '';
 
   dontUseCmakeConfigure = true;

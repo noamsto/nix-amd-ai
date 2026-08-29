@@ -125,7 +125,12 @@
     name = "lemond-reconcile-config";
     runtimeInputs = [pkgs.jq pkgs.coreutils];
     text = ''
-      config="''${LEMONADE_CACHE_DIR:-''${HOME:-}/.cache/lemonade}/config.json"
+      # 11.8.0 moved config.json out of the cache dir: ConfigFile::load reads it
+      # only from config_dir, which lemond resolves as
+      # $XDG_CONFIG_HOME/lemonade with a $HOME/.config fallback. Reconciling the
+      # old cache path writes a file nothing reads, and module keys go inert the
+      # moment lemond persists anything of its own.
+      config="''${XDG_CONFIG_HOME:-''${HOME:-}/.config}/lemonade/config.json"
       [ -f "$config" ] || exit 0
 
       tmp="$config.nix-reconcile"
@@ -336,7 +341,7 @@ in {
 
           These keys are re-applied on every `lemond` start, so they stay
           declarative; keys not listed here are left to whatever the web UI
-          persisted in `''${LEMONADE_CACHE_DIR:-~/.cache/lemonade}/config.json`.
+          persisted in `''${XDG_CONFIG_HOME:-~/.config}/lemonade/config.json`.
         '';
       };
 

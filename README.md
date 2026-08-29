@@ -154,7 +154,7 @@ hardware.amd-npu = {
 
 ### Why the module flags matter on NixOS
 
-The lemonade source build deliberately doesn't bundle backend `llama-server` / `whisper-server` / `sd-server` binaries — it expects host-provided paths. The module exports the matching env vars from the `lemond` service `Environment` and the user session, then lemonade migrates them into `~/.cache/lemonade/config.json`:
+The lemonade source build deliberately doesn't bundle backend `llama-server` / `whisper-server` / `sd-server` binaries — it expects host-provided paths. The module exports the matching env vars from the `lemond` service `Environment` and the user session, then lemonade migrates them into `~/.config/lemonade/config.json`:
 
 | Flag | What gets wired |
 |---|---|
@@ -196,7 +196,7 @@ If `lemonade backends` reports a backend as `installed` but benchmarks report <5
 
 ### Runtime config: `lemonade.settings`
 
-`LEMONADE_DEFAULTS_PATH` only seeds `~/.cache/lemonade/config.json` on lemond's
+`LEMONADE_DEFAULTS_PATH` only seeds `~/.config/lemonade/config.json` on lemond's
 **first** run — afterwards `ConfigFile::load` merges the packaged defaults
 *under* the persisted file, so every key the module declares goes inert. Backend
 bin paths survived that because they point at stable `/etc/lemonade/backends/*`
@@ -207,6 +207,12 @@ budget and turns into zero poll attempts ([#68](https://github.com/noamsto/nix-a
 The lemond unit therefore re-applies the module-declared keys on every start,
 leaving everything else to whatever the web UI persisted. `lemonade.settings`
 rides the same path for keys the module has no dedicated option for:
+
+> **Moved in lemonade 11.8.0:** `config.json` lives in the *config* dir
+> (`$XDG_CONFIG_HOME/lemonade`, falling back to `~/.config/lemonade`), not the
+> cache dir. lemond migrates an existing `~/.cache/lemonade/config.json` on
+> first start — content is preserved and the old copy removed — so nothing is
+> lost on upgrade. The cache dir still holds downloaded backends and models.
 
 ```nix
 hardware.amd-npu.lemonade.settings = {
@@ -418,13 +424,13 @@ ignores the nix-provided `flm`, marks the NPU backend `installable`/"not
 installed", and lists no FLM models even after `flm pull`. The module now seeds
 `flm.prefer_system = true` (with `enableFastFlowLM`), so fresh installs work.
 
-A **cached `~/.cache/lemonade/config.json` wins over that seed** (lemonade merges
+A **cached `~/.config/lemonade/config.json` wins over that seed** (lemonade merges
 user config over defaults), so hosts that ran an older lemonade keep the stale
 `prefer_system: false`. Fix an existing host once, after rebuilding, by deleting
 the cached config so the module's defaults reseed it:
 
 ```bash
-rm ~/.cache/lemonade/config.json
+rm ~/.config/lemonade/config.json
 sudo systemctl restart lemond
 ```
 
