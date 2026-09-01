@@ -167,6 +167,33 @@
             ];
           }).config.systemd.units."lemond.service".unit;
 
+        # Same host as lemondUnit but with lemonade.cacheDir set — consumed by
+        # the lemond-cachedir-unit-render check.
+        lemondCacheDirUnit =
+          (inputs.nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              inputs.self.nixosModules.default
+              {
+                boot.loader.grub.enable = false;
+                fileSystems."/" = {
+                  device = "/dev/sda1";
+                  fsType = "ext4";
+                };
+                hardware.amd-npu = {
+                  enable = true;
+                  enableLemonade = true;
+                  lemonade.user = "testuser";
+                  lemonade.cacheDir = "/var/lib/models";
+                };
+                users.users.testuser = {
+                  isNormalUser = true;
+                  extraGroups = ["video" "render"];
+                };
+              }
+            ];
+          }).config.systemd.units."lemond.service".unit;
+
         # Rendered ds4-server.service for a minimal ds4.enable host — consumed by
         # the ds4-server-unit-render check.
         ds4ServerUnit =
@@ -264,6 +291,18 @@
                   }
                 ];
               }).config.system.build.etc;
+
+            # cacheDir must put both caches on the given root: HF_HOME gains the
+            # /hf suffix (lemonade appends hub/ itself) and LEMONADE_CACHE_DIR the
+            # /lemonade one. The absence case is asserted in lemond-unit-render.
+            lemond-cachedir-unit-render = pkgs.runCommand "lemond-cachedir-unit-render" {} ''
+              unit=${lemondCacheDirUnit}/lemond.service
+              grep -q 'HF_HOME=/var/lib/models/hf' "$unit" \
+                || { echo "missing/changed HF_HOME"; exit 1; }
+              grep -q 'LEMONADE_CACHE_DIR=/var/lib/models/lemonade' "$unit" \
+                || { echo "missing/changed LEMONADE_CACHE_DIR"; exit 1; }
+              touch $out
+            '';
 
             module-eval-vulkan-true =
               (inputs.nixpkgs.lib.nixosSystem {
@@ -696,6 +735,8 @@
                 || { echo "missing/changed NIX_LD_LIBRARY_PATH"; exit 1; }
               ! grep -q 'LEMONADE_ALLOWED_ORIGINS' "$unit" \
                 || { echo "LEMONADE_ALLOWED_ORIGINS set on a host that never listed origins"; exit 1; }
+              ! grep -qE 'HF_HOME|LEMONADE_CACHE_DIR' "$unit" \
+                || { echo "cache env set on a host that never set cacheDir"; exit 1; }
               touch $out
             '';
 

@@ -299,6 +299,31 @@ in {
         description = "User account to run the Lemonade server as.";
       };
 
+      cacheDir = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "/var/lib/models";
+        description = ''
+          Root for lemond's two model caches, relocating them off the service
+          user's home: `HF_HOME` becomes `''${cacheDir}/hf` (weights land in
+          `hf/hub`, per the Hugging Face convention lemonade's `models_dir =
+          "auto"` follows) and `LEMONADE_CACHE_DIR` becomes
+          `''${cacheDir}/lemonade`.
+
+          Worth setting on any host with storage tuned for weights, because
+          both caches get large — 147 GB and 9.9 GB respectively on a host that
+          has been serving for a while — and `$HOME` is rarely the subvolume you
+          want them on.
+
+          A runtime path, deliberately a string so it is not copied into the Nix
+          store. The `hf` and `lemonade` subdirectories must exist and be
+          writable by `user`; the unit does not create them, since this is
+          typically a mountpoint the host manages.
+
+          Setting `settings.models_dir` explicitly overrides the `HF_HOME` half.
+        '';
+      };
+
       desktopApp.enable = mkOption {
         type = types.bool;
         default = true;
@@ -660,6 +685,10 @@ in {
           # them, so koko's loader can't find them without re-exporting here.
           NIX_LD = config.environment.sessionVariables.NIX_LD;
           NIX_LD_LIBRARY_PATH = config.environment.sessionVariables.NIX_LD_LIBRARY_PATH;
+        }
+        // optionalAttrs (cfg.lemonade.cacheDir != null) {
+          HF_HOME = "${cfg.lemonade.cacheDir}/hf";
+          LEMONADE_CACHE_DIR = "${cfg.lemonade.cacheDir}/lemonade";
         }
         // optionalAttrs (cfg.lemonade.allowedOrigins != []) {
           # env-only in lemonade >=11.5.0 — no config.json key to route this
