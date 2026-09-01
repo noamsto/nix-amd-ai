@@ -512,8 +512,9 @@ in {
       user = mkOption {
         type = types.str;
         description = ''
-          User account to run ds4-server as. Must be in the `render` and
-          `video` groups for ROCm GPU access.
+          User account to run ds4-server as. Needs no group setup: the unit
+          grants `render` and `video` itself via `SupplementaryGroups`, unlike
+          lemond, whose `user` must be in them already.
         '';
       };
 
@@ -786,6 +787,13 @@ in {
       # Declared on one side only: systemd derives the inverse, so starting
       # either unit stops the other.
       conflicts = optional (cfg.exclusiveInference && cfg.enableLemonade) "lemond.service";
+      # Nothing provisions ds4.model - lemonade.models has its reconcile units,
+      # this has no equivalent - so an absent GGUF is the expected first-boot
+      # state on a new host. Without this the unit retries forever: RestartSec=5s
+      # against systemd's default 5-starts-per-10s limiter never trips it, so it
+      # spins silently rather than failing. The condition makes systemd skip it
+      # and say why.
+      unitConfig.ConditionPathExists = cfg.ds4.model;
       serviceConfig = {
         Type = "simple";
         User = cfg.ds4.user;

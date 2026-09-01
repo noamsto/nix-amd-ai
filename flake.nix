@@ -820,6 +820,8 @@
               grep -q 'SupplementaryGroups=video' "$unit" || { echo "missing video group"; exit 1; }
               grep -q 'SupplementaryGroups=render' "$unit" || { echo "missing render group"; exit 1; }
               grep -q 'StateDirectory=ds4' "$unit" || { echo "missing StateDirectory"; exit 1; }
+              grep -q 'ConditionPathExists=/var/lib/ds4/DeepSeek-V4-Flash.gguf' "$unit" \
+                || { echo "missing ConditionPathExists on the model"; exit 1; }
               touch $out
             '';
 
