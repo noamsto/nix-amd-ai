@@ -525,6 +525,21 @@ The concurrency row is the interesting one: an NPU workload running alongside an
 
 Enable all three and let lemonade pick the recipe per model.
 
+### Running ds4 beside lemond
+
+Both servers draw from the same GTT pool, and a DeepSeek-V4-Flash-sized model leaves no room for a second resident one. Measured on a 128 GB Strix Halo (gfx1151) at `ttmSizeGiB = 104`: the 80.76 GiB `IQ2XXS-w2Q2K` quant answers in 1.3 s with ds4 alone, but with a 4B model also loaded under lemond there is nothing left for page cache — lemond fell from 53 tok/s to 0.11 (71 s to process 8 prompt tokens), and shortly after that *both* endpoints stopped answering. Stopping either one restores the other immediately.
+
+`exclusiveInference` makes that explicit instead of leaving the machine to thrash, and `autoStart` picks which server the host boots with:
+
+```nix
+hardware.amd-npu = {
+  exclusiveInference = true;   # Conflicts=: starting either stops the other
+  ds4.autoStart = false;       # boot into lemond, run ds4 on demand
+};
+```
+
+`systemctl start ds4-server` then stops lemond, and `systemctl start lemond` stops ds4. Both options default to the previous behaviour — every server autostarts, nothing conflicts — so this is opt-in for hosts where the models genuinely don't fit together. On a box with headroom for both, leave it off.
+
 ## Coding agents and client timeouts
 
 Coding agents (Claude Code, opencode) ship large system prompts — 10k+ tokens once MCP servers, skills, and tool schemas are loaded. On a Strix Point iGPU, prompt processing runs at ~350 t/s, so the agent's first turn spends 25–35 s before the first token is emitted. Neither lemonade nor the agents send SSE keep-alive events during that silent window, and most clients close the socket after ~30 s, yielding:

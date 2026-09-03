@@ -599,6 +599,74 @@
                 touch $out
               '';
 
+            module-eval-server-autostart = let
+              mkSys = npuExtra:
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      # recursiveUpdate, not //: npuExtra overrides a single
+                      # nested key like ds4.autoStart without dropping the
+                      # enable/user/model siblings beside it.
+                      hardware.amd-npu = inputs.nixpkgs.lib.recursiveUpdate {
+                        enable = true;
+                        enableLemonade = true;
+                        lemonade = {
+                          user = "testuser";
+                          models = ["Qwen3.5-4B-MTP-GGUF"];
+                        };
+                        ds4 = {
+                          enable = true;
+                          user = "testuser";
+                          model = "/var/lib/ds4/model.gguf";
+                        };
+                      }
+                      npuExtra;
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config;
+              defaults = mkSys {};
+              exclusive = mkSys {
+                exclusiveInference = true;
+                ds4.autoStart = false;
+              };
+              lemonadeOff = mkSys {lemonade.autoStart = false;};
+            in
+              pkgs.runCommand "module-eval-server-autostart" {
+                dsDefault = defaults.systemd.units."ds4-server.service".unit;
+                dsExclusive = exclusive.systemd.units."ds4-server.service".unit;
+                lemondDefault = defaults.systemd.units."lemond.service".unit;
+                lemondOff = lemonadeOff.systemd.units."lemond.service".unit;
+                modelsOff = lemonadeOff.systemd.units."lemond-models.service".unit;
+              } ''
+                # Defaults unchanged: both servers still come up at boot and
+                # nothing conflicts, so existing hosts see no behaviour change.
+                grep -qF 'WantedBy=multi-user.target' "$dsDefault"/ds4-server.service
+                grep -qF 'WantedBy=multi-user.target' "$lemondDefault"/lemond.service
+                ! grep -qF 'Conflicts=lemond.service' "$dsDefault"/ds4-server.service
+
+                # autoStart=false leaves the unit built but out of every target.
+                ! grep -qF 'WantedBy=multi-user.target' "$dsExclusive"/ds4-server.service
+                grep -qF 'Conflicts=lemond.service' "$dsExclusive"/ds4-server.service
+
+                # lemond-models has Requires=lemond, so it has to leave the boot
+                # target too — otherwise it drags lemond back up behind autoStart.
+                ! grep -qF 'WantedBy=multi-user.target' "$lemondOff"/lemond.service
+                ! grep -qF 'WantedBy=multi-user.target' "$modelsOff"/lemond-models.service
+
+                touch $out
+              '';
+
             # The checks above prove the unit renders and that the hook behaves
             # when invoked by hand. This one boots it: lemond must actually reach
             # active with the ExecStartPre in front of it. That is the failure
@@ -615,7 +683,6 @@
             .testers.runNixOSTest {
                 name = "lemond-reconcile";
                 nodes.machine = {
-                  lib,
                   pkgs,
                   ...
                 }: {
@@ -631,13 +698,13 @@
                     lemonade = {
                       user = "tester";
                       settings.max_loaded_models = -1;
+                      # Hold lemond back so the stale config is in place before
+                      # its first start; left to boot it would seed a fresh
+                      # config, the one path that never exercises reconciliation.
+                      autoStart = false;
                     };
                   };
                   users.users.tester.isNormalUser = true;
-                  # Hold lemond back so the stale config is in place before its
-                  # first start; left to boot it would seed a fresh config, the one
-                  # path that never exercises reconciliation.
-                  systemd.services.lemond.wantedBy = lib.mkForce [];
                 };
                 testScript = ''
                   cfg = "/home/tester/.config/lemonade/config.json"

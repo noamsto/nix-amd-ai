@@ -281,7 +281,42 @@ in {
       '';
     };
 
+    exclusiveInference = mkOption {
+      type = types.bool;
+      default = false;
+      description = ''
+        Make `lemond` and `ds4-server` mutually exclusive: starting either one
+        stops the other, via systemd `Conflicts=`. No-op unless both are
+        enabled.
+
+        Off by default, because whether the two fit side by side is a property
+        of the host rather than of the module — the sum of their resident models
+        against physical RAM and the GTT pool they both draw from. Turn it on
+        where they do not fit. Measured on a 128 GB Strix Halo at
+        `ttmSizeGiB = 104`: an 80.76 GiB DeepSeek-V4-Flash under ds4 answers in
+        1.3 s on its own, but with a 4B model also resident under lemond there
+        is nothing left for page cache — lemond fell from 53 tok/s to 0.11, and
+        then both endpoints stopped answering. Stopping either restores the
+        other immediately.
+
+        Pair it with `autoStart` to choose which server owns the box at boot.
+      '';
+    };
+
     lemonade = {
+      autoStart = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether `lemond` (and the `lemond-models` puller, which requires it)
+          start at boot.
+
+          Set false to leave lemond built and available but idle, started on
+          demand with `systemctl start lemond`. Useful with
+          `exclusiveInference`, where only one server can own the box.
+        '';
+      };
+
       port = mkOption {
         type = types.port;
         default = 13305;
@@ -421,6 +456,19 @@ in {
 
     ds4 = {
       enable = mkEnableOption "the ds4-server DeepSeek V4 inference server as a systemd unit";
+
+      autoStart = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Whether `ds4-server` starts at boot.
+
+          Set false on a host where ds4 serves a model too large to keep
+          resident all the time — the unit stays built and startable with
+          `systemctl start ds4-server`, but the machine comes up without 80+
+          GiB of weights loaded. See `exclusiveInference`.
+        '';
+      };
 
       package = mkOption {
         type = types.package;
@@ -654,7 +702,7 @@ in {
       description = "Lemonade AI Server";
       after = ["network-online.target"];
       wants = ["network-online.target"];
-      wantedBy = ["multi-user.target"];
+      wantedBy = optional cfg.lemonade.autoStart "multi-user.target";
       path = pathList ++ ["/run/current-system/sw"];
       environment =
         {
@@ -716,7 +764,8 @@ in {
       description = "Reconcile downloaded lemonade models";
       after = ["lemond.service"];
       requires = ["lemond.service"];
-      wantedBy = ["multi-user.target"];
+      # Requires= would otherwise pull lemond back up at boot behind autoStart.
+      wantedBy = optional cfg.lemonade.autoStart "multi-user.target";
       serviceConfig = {
         Type = "simple";
         User = cfg.lemonade.user;
@@ -733,7 +782,10 @@ in {
       description = "ds4 DeepSeek V4 inference server";
       after = ["network-online.target"];
       wants = ["network-online.target"];
-      wantedBy = ["multi-user.target"];
+      wantedBy = optional cfg.ds4.autoStart "multi-user.target";
+      # Declared on one side only: systemd derives the inverse, so starting
+      # either unit stops the other.
+      conflicts = optional (cfg.exclusiveInference && cfg.enableLemonade) "lemond.service";
       serviceConfig = {
         Type = "simple";
         User = cfg.ds4.user;
