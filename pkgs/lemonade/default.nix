@@ -129,14 +129,26 @@ in stdenv.mkDerivation {
     # losing GBs of partial download. Let the download finish in the
     # background; the next client poll will see it as installed. See
     # noamsto/nix-amd-ai#5.
+    #
+    # progress_cb fires per progress tick, not per disconnect, so logging on
+    # every failed write buries the journal once the socket is gone: 149998 of
+    # 150010 lines in a 3-minute window during one download, with journald
+    # dropping up to 529815 more per 30s. Latch it to one line per stream.
     substituteInPlace src/cpp/server/server.cpp \
+      --replace-fail \
+        'bool complete_sent = false;
+                DownloadProgressCallback progress_cb = [&sink, &complete_sent](const DownloadProgress& p) -> bool {' \
+        'bool complete_sent = false;
+                bool disconnect_logged = false;
+                DownloadProgressCallback progress_cb = [&sink, &complete_sent, &disconnect_logged](const DownloadProgress& p) -> bool {' \
       --replace-fail \
         'if (!sink.write(event.c_str(), event.size())) {
                         LOG(INFO, "Server") << "Client disconnected, cancelling download" << std::endl;
                         return false;
                     }
                     return true;' \
-        'if (!sink.write(event.c_str(), event.size())) {
+        'if (!sink.write(event.c_str(), event.size()) && !disconnect_logged) {
+                        disconnect_logged = true;
                         LOG(INFO, "Server") << "Client disconnected; download continues in background" << std::endl;
                     }
                     return true;'
@@ -154,6 +166,19 @@ in stdenv.mkDerivation {
         'bool will_install_therock(const std::string& os, const json& backend_versions) {' \
         'bool will_install_therock(const std::string& os, const json& backend_versions) {
     return false;  // nix-amd-ai#57: ship self-contained ROCm binaries, never fetch TheRock'
+
+    # ggml-org/gpt-oss-120b-GGUF gained EAGLE3 speculative-decoding drafts after
+    # upstream registered this model with a ":*" checkpoint glob, so the glob now
+    # resolves to eagle3-gpt-oss-120b-BF16.gguf (1.5 GB) instead of the 59 GiB
+    # weights. A draft head can't load standalone -- llama-server exits with
+    # "eagle3 requires ctx_other to be set" -- so `lemonade load` fails. Name the
+    # file, the form the other 227 entries use. The drafts stay unused: lemonade
+    # only emits --spec-type for dflash/mtp, and llama.cpp defaults it to none.
+    # See noamsto/nix-amd-ai#106; drop once upstream fixes the entry.
+    substituteInPlace src/cpp/resources/server_models.json \
+      --replace-fail \
+        '"checkpoint": "ggml-org/gpt-oss-120b-GGUF:*"' \
+        '"checkpoint": "ggml-org/gpt-oss-120b-GGUF:gpt-oss-120b-MXFP4.gguf"'
 
     # Pin backend_versions.json to whatever fastflowlm / llama-cpp /
     # whisper-cpp / sd-cpp builds we ship, so lemonade's "installed vs

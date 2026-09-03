@@ -503,6 +503,68 @@
                 touch $out
               '';
 
+            # customModels must reach user_models.json even on a host that has no
+            # config.json (nothing else creates that file), must not clobber a
+            # model the web UI registered, and must re-apply a stale entry --
+            # otherwise a declared checkpoint silently rots to whatever lemond
+            # last persisted.
+            module-eval-lemonade-custom-models = let
+              sys =
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu = {
+                        enable = true;
+                        enableLemonade = true;
+                        lemonade = {
+                          user = "testuser";
+                          customModels."Declared-GGUF" = {
+                            checkpoints.main = "org/repo:declared.gguf";
+                            recipe = "llamacpp";
+                          };
+                        };
+                      };
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config;
+            in
+              pkgs.runCommand "module-eval-lemonade-custom-models" {
+                nativeBuildInputs = [pkgs.jq];
+                unit = sys.systemd.units."lemond.service".unit;
+              } ''
+                reconcile=$(sed -n 's/^ExecStartPre=//p' "$unit"/lemond.service)
+                export HOME=$TMPDIR/home
+                mkdir -p "$HOME/.config/lemonade"
+                models=$HOME/.config/lemonade/user_models.json
+
+                # No config.json and no user_models.json: the reconcile must still
+                # create the latter rather than bailing out early.
+                "$reconcile"
+                jq -e '."Declared-GGUF".checkpoints.main == "org/repo:declared.gguf"' "$models" >/dev/null
+
+                # A UI-registered model survives, and a drifted declared entry is restored.
+                echo '{"UI-GGUF":{"recipe":"llamacpp"},"Declared-GGUF":{"checkpoints":{"main":"org/repo:stale.gguf"}}}' >"$models"
+                chmod 600 "$models"
+                "$reconcile"
+
+                jq -e '."Declared-GGUF".checkpoints.main == "org/repo:declared.gguf"' "$models" >/dev/null
+                jq -e '."UI-GGUF".recipe == "llamacpp"' "$models" >/dev/null
+                [ "$(stat -c %a "$models")" = 600 ]
+
+                touch $out
+              '';
+
             module-eval-lemonade-models = let
               mkSys = lemonadeExtra:
                 (inputs.nixpkgs.lib.nixosSystem {
