@@ -118,6 +118,10 @@
     (pkgs.formats.json {}).generate "lemonade-defaults.json"
     (lib.recursiveUpdate lemonadeDefaults cfg.lemonade.settings);
 
+  lemonadeCustomModelsFile =
+    (pkgs.formats.json {}).generate "lemonade-user-models.json"
+    cfg.lemonade.customModels;
+
   # LEMONADE_DEFAULTS_PATH only seeds config.json on lemond's first run — after
   # that the persisted file wins for every key it holds, so module-declared
   # values rot. Re-apply ours each start. See noamsto/nix-amd-ai#67 and #68.
@@ -130,17 +134,37 @@
       # $XDG_CONFIG_HOME/lemonade with a $HOME/.config fallback. Reconciling the
       # old cache path writes a file nothing reads, and module keys go inert the
       # moment lemond persists anything of its own.
-      config="''${XDG_CONFIG_HOME:-''${HOME:-}/.config}/lemonade/config.json"
-      [ -f "$config" ] || exit 0
+      configDir="''${XDG_CONFIG_HOME:-''${HOME:-}/.config}/lemonade"
 
-      tmp="$config.nix-reconcile"
-      if jq -s '.[0] * .[1]' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
-        # lemond may have tightened the mode; rename would silently widen it back.
-        chmod --reference="$config" "$tmp"
-        mv "$tmp" "$config"
+      config="$configDir/config.json"
+      if [ -f "$config" ]; then
+        tmp="$config.nix-reconcile"
+        if jq -s '.[0] * .[1]' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
+          # lemond may have tightened the mode; rename would silently widen it back.
+          chmod --reference="$config" "$tmp"
+          mv "$tmp" "$config"
+        else
+          rm -f "$tmp"
+          echo "lemond: $config is unreadable, leaving it untouched" >&2
+        fi
+      fi
+    ''
+    + optionalString (cfg.lemonade.customModels != {}) ''
+
+      # Unlike config.json, this file is ours to create: lemond treats a missing
+      # user_models.json as an empty registry rather than seeding one, so nothing
+      # else makes it exist on a host that never opened the web UI.
+      models="$configDir/user_models.json"
+      mkdir -p "$configDir"
+      [ -f "$models" ] || echo '{}' >"$models"
+
+      tmp="$models.nix-reconcile"
+      if jq -s '.[0] * .[1]' "$models" ${lemonadeCustomModelsFile} >"$tmp"; then
+        chmod --reference="$models" "$tmp"
+        mv "$tmp" "$models"
       else
         rm -f "$tmp"
-        echo "lemond: $config is unreadable, leaving it untouched" >&2
+        echo "lemond: $models is unreadable, leaving it untouched" >&2
       fi
     '';
   };
@@ -419,6 +443,35 @@ in {
           machines reaching a non-loopback `lemonade.host`. `["*"]` allows
           any origin, which without an API key leaves the server open to any
           site the browser visits.
+        '';
+      };
+
+      customModels = mkOption {
+        type = (pkgs.formats.json {}).type;
+        default = {};
+        example = lib.literalExpression ''
+          {
+            "gpt-oss-120b-MXFP4-GGUF" = {
+              checkpoints.main = "ggml-org/gpt-oss-120b-GGUF:gpt-oss-120b-MXFP4.gguf";
+              recipe = "llamacpp";
+              recipe_options.ctx_size = 131072;
+              labels = ["chat" "reasoning" "tool-calling"];
+              size = 63.4;
+            };
+          }
+        '';
+        description = ''
+          Models registered by checkpoint rather than by registry name, merged
+          into `''${XDG_CONFIG_HOME:-~/.config}/lemonade/user_models.json`.
+          Reaches quantizations and repos the built-in registry doesn't carry.
+
+          Re-applied on every `lemond` start, so these stay declarative; models
+          registered through the web UI are left alone. An entry's
+          `recipe_options` block is that model's default — `recipe_options.json`
+          still layers the UI's per-model overrides on top of it.
+
+          A built-in of the same name is not replaced: lemond keys built-ins
+          bare and these as `user.<name>`, so both show in `lemonade list`.
         '';
       };
 
