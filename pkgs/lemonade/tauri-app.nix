@@ -4,6 +4,7 @@
   pkg-config,
   wrapGAppsHook3,
   webkitgtk_4_1,
+  glib-networking,
   openssl,
   libayatana-appindicator,
   glib,
@@ -41,6 +42,10 @@ rustPlatform.buildRustPackage {
 
   buildInputs = [
     webkitgtk_4_1
+    # libsoup has no TLS of its own - it resolves a GTlsBackend through GIO at
+    # runtime, so without glib-networking every https:// fetch in the webview
+    # fails. wrapGAppsHook3 puts it on GIO_EXTRA_MODULES.
+    glib-networking
     openssl
     libayatana-appindicator
     glib
