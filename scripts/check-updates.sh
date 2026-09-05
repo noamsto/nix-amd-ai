@@ -75,10 +75,13 @@ MTP_CLEANUP=false
 MTP_REQUIRED=""
 MTP_CURRENT=""
 if grep -q "llamaCppMtpOverride" flake.nix; then
-  MTP_CURRENT=$(grep -A1 'LLAMA_BUILD_NUMBER' flake.nix | grep 'version =' | sed 's/.*"\([0-9]*\)".*/\1/')
+  # || true : an empty MTP_REQUIRED/MTP_CURRENT is an expected state, tested
+  # just below. Without it a 404 (tag not pushed yet, file moved upstream) or a
+  # missing version line kills the whole job under `set -o pipefail`.
+  MTP_CURRENT=$(grep -A1 'LLAMA_BUILD_NUMBER' flake.nix | grep 'version =' | sed 's/.*"\([0-9]*\)".*/\1/' || true)
   MTP_REQUIRED=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/resources/backend_versions.json?ref=v${LEM_LATEST}" \
     -H "Accept: application/vnd.github.v3.raw" \
-    --jq '.llamacpp.vulkan' 2>/dev/null | sed 's/^b//')
+    --jq '.llamacpp.vulkan' 2>/dev/null | sed 's/^b//' || true)
 
   if [ -n "$MTP_REQUIRED" ] && [ -n "$MTP_CURRENT" ] && [ "$MTP_REQUIRED" != "$MTP_CURRENT" ]; then
     MTP_OVERRIDE_NEEDS_UPDATE=true
@@ -101,25 +104,45 @@ fi
 GAIA_CURRENT=$(sed -n 's/^  version = "\(.*\)";$/\1/p' pkgs/gaia/default.nix | head -1)
 GAIA_SCRIPTS_CURRENT=$(sed -n 's/^  bins = \[\(.*\)\];$/\1/p' pkgs/gaia/default.nix \
   | tr -d '"' | tr ' ' '\n' | grep -v '^$' | sort | paste -sd' ' -)
-GAIA_LATEST=$(curl -fsSL https://pypi.org/pypi/amd-gaia/json | jq -r '.info.version')
-
-# Read the entry points from the published wheel rather than from the
-# changelog: the wheel is what uvx installs at run time.
-GAIA_WHEEL=$(mktemp -u /tmp/gaia-XXXXXX.whl)
-curl -fsSL "$(curl -fsSL "https://pypi.org/pypi/amd-gaia/${GAIA_LATEST}/json" \
-  | jq -r 'first(.urls[] | select(.filename | endswith(".whl")) | .url)')" -o "$GAIA_WHEEL"
-GAIA_SCRIPTS_LATEST=$(unzip -p "$GAIA_WHEEL" '*.dist-info/entry_points.txt' \
-  | awk '/^\[console_scripts\]/{f=1;next} /^\[/{f=0} f && /=/{sub(/=.*/,""); gsub(/[ \t]/,""); if ($0) print}' \
-  | sort | paste -sd' ' -)
-rm -f "$GAIA_WHEEL"
+# gaia is the only check that reaches out to PyPI. Keep a PyPI hiccup from
+# taking down the run: flm/lem/xdna/vllm are already resolved above and must
+# not be lost to a network blip here. gaia_check sets GAIA_LATEST and
+# GAIA_SCRIPTS_LATEST and returns non-zero if any step fails to fetch or read
+# the wheel. Each fallible step is guarded explicitly because `set -e` is
+# suspended inside a function called from an `if` condition. Read the entry
+# points from the published wheel, not the changelog: the wheel is what uvx
+# installs at run time.
+gaia_check() {
+  GAIA_LATEST=$(curl -fsSL https://pypi.org/pypi/amd-gaia/json | jq -r '.info.version') || return 1
+  # jq prints the literal "null" for a missing .info.version and still exits 0,
+  # so guard it here rather than letting "null" flow into the wheel URL below.
+  [ -n "$GAIA_LATEST" ] && [ "$GAIA_LATEST" != null ] || return 1
+  local wheel url
+  wheel=$(mktemp "${RUNNER_TEMP:-/tmp}/gaia-XXXXXX.whl") || return 1
+  url=$(curl -fsSL "https://pypi.org/pypi/amd-gaia/${GAIA_LATEST}/json" \
+    | jq -r 'first(.urls[] | select(.filename | endswith(".whl")) | .url)') || { rm -f "$wheel"; return 1; }
+  curl -fsSL "$url" -o "$wheel" || { rm -f "$wheel"; return 1; }
+  GAIA_SCRIPTS_LATEST=$(unzip -p "$wheel" '*.dist-info/entry_points.txt' \
+    | awk '/^\[console_scripts\]/{f=1;next} /^\[/{f=0} f && /=/{sub(/=.*/,""); gsub(/[ \t]/,""); if ($0) print}' \
+    | sort | paste -sd' ' -) || { rm -f "$wheel"; return 1; }
+  rm -f "$wheel"
+}
 
 GAIA_NEEDS_UPDATE=false
-if [ "$GAIA_LATEST" != "$GAIA_CURRENT" ] || [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_SCRIPTS_CURRENT" ]; then
-  GAIA_NEEDS_UPDATE=true
-  NEEDS_UPDATE=true
-  echo "gaia: $GAIA_CURRENT -> $GAIA_LATEST"
-  [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_SCRIPTS_CURRENT" ] \
-    && echo "  console scripts: [$GAIA_SCRIPTS_CURRENT] -> [$GAIA_SCRIPTS_LATEST]"
+if gaia_check; then
+  if [ "$GAIA_LATEST" != "$GAIA_CURRENT" ] || [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_SCRIPTS_CURRENT" ]; then
+    GAIA_NEEDS_UPDATE=true
+    NEEDS_UPDATE=true
+    echo "gaia: $GAIA_CURRENT -> $GAIA_LATEST"
+    [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_SCRIPTS_CURRENT" ] \
+      && echo "  console scripts: [$GAIA_SCRIPTS_CURRENT] -> [$GAIA_SCRIPTS_LATEST]"
+  fi
+else
+  # latest := current, so the comparison is a no-op and no spurious PR section
+  # is emitted; just skip gaia this run rather than abort the others.
+  echo "gaia: version/wheel fetch failed, skipping gaia check this run" >&2
+  GAIA_LATEST="$GAIA_CURRENT"
+  GAIA_SCRIPTS_LATEST="$GAIA_SCRIPTS_CURRENT"
 fi
 
 # Everything above came from an upstream release tag or from names read out of
