@@ -141,6 +141,14 @@ jobs:
             BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up to b${{ steps.check.outputs.mtp_required }} (what Lemonade pins)."$'\n'
           fi
 
+          if [ "${{ steps.check.outputs.gaia_needs_update }}" = "true" ]; then
+            BODY+=$'\n'"### ⚠️ gaia needs a hand-bump"$'\n'
+            BODY+="\`pkgs/gaia/default.nix\` names \`${{ steps.check.outputs.gaia_current }}\`; PyPI has \`${{ steps.check.outputs.gaia_latest }}\`."$'\n'
+            BODY+="Console scripts in the published wheel: \`${{ steps.check.outputs.gaia_scripts_latest }}\`"$'\n'
+            BODY+="Currently in \`bins\`: \`${{ steps.check.outputs.gaia_scripts_current }}\`"$'\n'
+            BODY+="Update \`version\`, and \`bins\` if those two lists differ. gaia is a uvx wrapper with no hash to prefetch and it builds green either way, so nothing else catches this."$'\n'
+          fi
+
           if [ "${{ steps.flake_check.outputs.status }}" = "fail" ]; then
             BODY+=$'\n'"### ⚠️ \`nix flake check\` failed"$'\n'
             BODY+=$'\n''```'$'\n'"$FLAKE_CHECK_LOG"$'\n''```'$'\n'
@@ -164,7 +172,8 @@ jobs:
           steps.pr.outputs.pr_url != '' &&
           steps.flake_check.outputs.status == 'pass' &&
           steps.build.outputs.failed == '' &&
-          steps.check.outputs.mtp_override_needs_update != 'true'
+          steps.check.outputs.mtp_override_needs_update != 'true' &&
+          steps.check.outputs.gaia_needs_update != 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: gh pr merge --squash --delete-branch "${{ steps.pr.outputs.pr_url }}"
