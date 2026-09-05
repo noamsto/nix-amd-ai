@@ -7,7 +7,10 @@ on:
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Never cancel a push to main: the release job below tags only on push, so a
+  # run cancelled by the next merge drops that release for good and nothing
+  # retries it. Superseded PR runs are still worth cancelling.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
