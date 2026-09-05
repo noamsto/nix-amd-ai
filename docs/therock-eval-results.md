@@ -267,9 +267,10 @@ premise "latest ROCm ⇒ better llama.cpp" is **falsified on this hardware**.
 backends already work. The real target is **gfx1151 (Strix Halo)**, and two
 questions remain genuinely open there, both hardware-gated:
 
-1. **gfx1151 llama.cpp:** old nixpkgs ROCm 7.2.3 is *broken* on gfx1151 (VRAM
-   faults), and TheRock ships *native gfx1151 kernels*. The gfx1150 numbers
-   strongly suggest Vulkan still wins — but only the gfx1151 A/B settles it.
+1. **gfx1151 llama.cpp:** TheRock ships *native gfx1151 kernels*. The gfx1150
+   numbers strongly suggest Vulkan still wins — but only the gfx1151 A/B
+   settles it. (This item previously said nixpkgs ROCm 7.2.3 was broken on
+   gfx1151 with VRAM faults. It is not — see "Correction" below.)
 2. **Image gen (sd-cpp):** not yet tested; the likeliest place ROCm still
    beats Vulkan. Needs a Vulkan-sd-cpp-vs-TheRock-ROCm-sd A/B.
 
@@ -302,8 +303,10 @@ that flip the picture for the coding-agent (long-context) goal:
    hipBLASLt**. The flake's `llama-cpp-rocm` is plain (rocWMMA off — it
    *regressed* on gfx1150). Realizing the gfx1151 win needs a **per-arch
    build: rocWMMA ON for gfx1151, OFF for gfx1150.**
-3. On gfx1151 nixpkgs ROCm 7.2.3 *faults*, so the long-context win likely
-   needs **newer ROCm (TheRock) + rocWMMA + FA + hipBLASLt** together — a
+3. The winning config may need **rocWMMA + FA + hipBLASLt** together. It does
+   *not* obviously need TheRock: `rocmPackages.rocwmma` is in nixpkgs at the
+   same 7.2.3, so the optimized build is reachable as an override on the
+   existing package. Test that before reopening the vendoring question — a
    narrow, specific case for up-to-date ROCm, not the vague "newer is better"
    premise (which this gfx1150 run correctly falsified).
 
@@ -312,3 +315,36 @@ that flip the picture for the coding-agent (long-context) goal:
 not pp512/tg128 plain-HIP — otherwise it measures ROCm's worst case and
 misses its only win. Image-gen (sd-cpp) is unaffected (not long-token-decode)
 — Vulkan sd-cpp remains the right cheap path there.
+
+## Correction (2026-09-05): nixpkgs ROCm 7.2.3 is not broken on gfx1151
+
+The "7.2.3 faults on gfx1151 (VRAM faults)" claim above was written before this
+project had Strix Halo hardware. It is now measured, and it is wrong.
+
+Host: Ryzen AI MAX+ 395 (gfx1151), 128 GB, `ttmSizeGiB = 104`, kernel 7.2.2,
+linux-firmware 20260810. Stock `llama-cpp-rocm` from the flake's pinned nixpkgs
+(llama.cpp build 10566, ROCm 7.2.3), no override:
+
+```
+$ llama-bench -m Qwen3.5-4B-UD-Q4_K_XL.gguf -p 512 -n 32 -r 2 -fa 1
+ggml_cuda_init: found 1 ROCm devices (Total VRAM: 106496 MiB):
+  Device 0: AMD Radeon 8060S Graphics, gfx1151 (0x1151), VMM: no, Wave Size: 32
+
+| qwen35 4B Q4_K | ROCm | fa 1 | pp512 | 1893.44 ± 52.29 |
+| qwen35 4B Q4_K | ROCm | fa 1 |  tg32 |    57.87 ± 0.14 |
+```
+
+It enumerates the device with the right arch, addresses the full GTT pool, and
+completes both passes. No fault.
+
+**Treat these as a crash/no-crash result, not as performance data.** This host
+runs the kernel + firmware pair reported in #105 as making models misbehave, so
+throughput measured on it today is not trustworthy. "It does not fault" survives
+that doubt; "it runs at 1893 t/s" does not, and must not be quoted as a baseline.
+
+What this changes: the argument for vendoring TheRock rested partly on gfx1151
+being unusable without it. That leg is gone. Combined with the gfx1150 A/B above
+(newer ROCm lost) and the fact that nixpkgs-unstable is *also* at 7.2.3 — so
+there is no cheap bump, only vendoring — the remaining case for TheRock is the
+narrow rocWMMA + FA + hipBLASLt long-context one, and even that should first be
+tried as an override on nixpkgs, which already carries `rocmPackages.rocwmma`.

@@ -177,6 +177,13 @@ Do not start until the gfx1151 machine is in hand. This is the run that actually
 **METHODOLOGY CORRECTION (from community gfx1151 data — see `docs/therock-eval-results.md` "Community gfx1151 data" section):** the gfx1150 run measured ROCm's *worst* case (short ctx, plain HIP). On gfx1151, ROCm's win is at **long context with a fully-optimized build**. So Task 5 MUST:
 - Bench at **long context (8K / 16K / 32K)**, not just pp512/tg128. Report pp and tg at each length — the crossover is the whole point (Vulkan decode collapses ~32 t/s @ 8K while HIP+rocWMMA holds ~51 t/s).
 - Build the ROCm/HIP side **fully optimized: rocWMMA ON + Flash-Attention + hipBLASLt** (not plain HIP). Use TheRock ROCm (nixpkgs 7.2.3 faults on gfx1151). Vulkan side keeps `-fa` too.
+
+> **Correction (2026-09-05):** the "nixpkgs ROCm 7.2.3 faults on gfx1151"
+> premise in this dated document is false — measured on a Ryzen AI MAX+ 395,
+> stock `llama-cpp-rocm` runs there without faulting. See the Correction
+> section in `docs/therock-eval-results.md`. Left otherwise unedited as a
+> record of what was believed at the time.
+
 - Frame the go/no-go around the **coding-agent (long-context) regime**, which is the actual reason for Strix Halo — not short-context chat.
 
 **Files:**
