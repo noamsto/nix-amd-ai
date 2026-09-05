@@ -1,11 +1,17 @@
 # Strix Halo (gfx1151) bring-up checklist
 
 Everything in this repo that is blocked on Halo hardware, ordered so each step
-unblocks the next. Written before the box was set up; nothing here has been run.
+unblocks the next.
+
+**Status (2026-09-05): the box exists and Phases 0-2 are done.** What blocks the
+rest is no longer hardware — it is #105. This host runs kernel 7.2.2 with
+linux-firmware 20260810, the pair reported there as making models misbehave on
+Strix Halo, so any number measured today would have to be thrown away. Settle
+#105 before Phase 3.
 
 The point of the ordering is that **#61's decisive long-context A/B is the
 expensive one**, and it is worthless if the GTT ceiling or the kernel is wrong.
-Phases 0–2 are cheap and make the phase-3 numbers trustworthy.
+Phases 0-2 are cheap and make the phase-3 numbers trustworthy.
 
 Open issues this closes: #42 (partly — the NPU half landed in #94), #61, #63,
 #68.
@@ -30,10 +36,14 @@ Record the rev byte. #79 turned on `rev 0x10` (npu4) vs `rev 0x20` (npu6/Krackan
 mapping to different driver profiles, and README line 123 already carries a
 "Krackan is untested" caveat. Halo should be npu5.
 
-- [ ] Kernel is in the known-good gfx1151 window (~6.18.6–6.18.14). **Avoid
-      6.19.x** — it misidentifies gfx1151 as gfx1100 (#61). If the box ships
-      something newer, pin before benchmarking or every number below is suspect.
-- [ ] `rocminfo` reports `gfx1151`, not `gfx1100`.
+- [x] `rocminfo` reports `gfx1151`, not `gfx1100`. Confirmed: `gfx1151` and
+      `amdgcn-amd-amdhsa--gfx1151`. NPU is `rev 0x11` (npu5, as predicted), fw
+      `1.1.2.65`. IOMMU on, group 34.
+- [ ] Kernel window. The original entry named ~6.18.6-6.18.14 and said to avoid
+      6.19.x, which misidentifies gfx1151 as gfx1100. **This host runs 7.2.2**,
+      far outside that window, and `rocminfo` identifies the arch correctly — so
+      the 6.19.x misidentification bug is not present here and that window is
+      stale rather than violated. The live kernel question is #105, not this one.
 
 ## Phase 1 — GTT ceiling (#42)
 
@@ -46,8 +56,12 @@ answer.
 cat /sys/class/drm/card1/device/mem_info_gtt_total   # expect 103079215104
 ```
 
-- [ ] `mem_info_gtt_total` == `ttmSizeGiB × 262144 × 4096` exactly.
-- [ ] ROCm agrees (`llama.cpp` HIP backend prints `Total VRAM: 98304 MiB`).
+- [x] `mem_info_gtt_total` == `ttmSizeGiB × 262144 × 4096` exactly. Measured:
+      `ttmSizeGiB = 104` gives `111669149696`, which is `104 × 262144 × 4096`.
+      Reproduces @expelledboy's result on our own box.
+- [x] ROCm agrees. `llama-bench` on the HIP backend reports `Total VRAM: 106496
+      MiB`, and a vLLM run profiled **35.8 GiB** of KV cache out of that pool,
+      so the headroom is usable and not just advertised.
 - [ ] **Settle `pagePoolSizeGiB`** — the open question from #42. Drop the line
       entirely, reboot, and re-read `mem_info_gtt_total`. If unchanged, the
       option is decorative and the README should say so instead of hedging on
@@ -71,9 +85,19 @@ lemonade pull Qwen3.5-0.8B-FP16-vLLM
 lemonade run Qwen3.5-0.8B-FP16-vLLM
 ```
 
-- [ ] One successful completion end-to-end. That alone closes the "never
-      executed" caveat and lets the comment in `sources.nix` be rewritten.
+- [x] One successful completion end-to-end. Done 2026-09-05, though not by the
+      route above: `enableVllm` is off on this host, so the bundle was built
+      directly for `gpuTarget = "gfx1151"` and `vllm-server` run against
+      `facebook/opt-125m`. `Application startup complete`, coherent completion
+      returned. torch reports `gfx1151` / ROCm 7.15.0a and executed an fp16
+      2048x2048 matmul whose mean matches the analytic value, so the kernel
+      computed rather than merely not crashing.
+      **It did not work as packaged** — `torch/lib/libaotriton_v2.so` needs a
+      plain `liblzma.so.5` that the bundle only ships renamed, so `import torch`
+      died. Fixed in #114; without that the caveat below could not have been
+      closed at all.
 - [ ] Then a 9B (`Qwen3.5-9B-FP16-vLLM`) to prove it isn't only toy-sized.
+      ~18 GB pull, not yet done.
 
 Note the vllm pin is stale and will move once #95 lands and the weekly workflow
 picks a tag that actually has gfx1150 **and** gfx1151 builds. Prefer testing
@@ -127,6 +151,27 @@ Flash-Attention + hipBLASLt**. Per-arch matters:
 
 Do not reuse the gfx1150 rocWMMA conclusion here; different arch, opposite
 expected sign.
+
+**This does not need TheRock.** The earlier assumption was that an optimized
+gfx1151 ROCm build required vendoring TheRock, because nixpkgs 7.2.3 was
+believed to fault on gfx1151. It does not — measured 2026-09-05, see the
+Correction in `docs/therock-eval-results.md`. `rocmPackages.rocwmma` is in
+nixpkgs at the same 7.2.3, so the rocWMMA + FA build is reachable as an override
+on the existing `llama-cpp-rocm`. Try that before reopening vendoring: the
+gfx1150 A/B already showed newer ROCm losing, and nixpkgs-unstable is also at
+7.2.3, so vendoring is the only route to anything newer and costs a 16 GB fetch
+at ~350 KB/s plus four undocumented NixOS build fixes.
+
+**Second candidate that could flip the gate.** A community ROCm fork
+(`halo-box/strix-llama.cpp`) claims large MoE prefill gains on gfx1151. Treat as
+unreplicated: it has no releases, its own README documents a gfx1151 HIP
+async-execution correctness bug (perplexity ~88 vs ~9.4 on batched inference,
+worked around with `HIP_LAUNCH_BLOCKING=1` at a performance cost) and names
+Vulkan the default recommendation, and a sibling project in the same community
+retracted a 25% pp claim that turned out to be a work-skipping bug on q4_K/q5_K
+MoE. Its numbers are also on ROCm 7.14, which nixpkgs does not have. The bar for
+it to matter here: beat Vulkan on **decode at >=32K depth with perplexity
+checked**, not beat ROCm master on prefill.
 
 - [ ] Bench 8K, 16K, 32K — not just pp512/tg128. Short context was already
       answered on gfx1150 and is not the regime that motivates Halo.
