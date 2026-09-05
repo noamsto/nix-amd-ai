@@ -97,8 +97,8 @@ stdenv.mkDerivation (finalAttrs: {
 
   meta = {
     description = "NPU-optimized LLM runtime for AMD Ryzen AI";
-    homepage = "https://github.com/FastFlowLM/FastFlowLM";
-    license = lib.licenses.asl20;
+    homepage = "https://github.com/ROCm/FastFlowLM";
+    license = lib.licenses.mit;
     platforms = ["x86_64-linux"];
     mainProgram = "flm";
   };

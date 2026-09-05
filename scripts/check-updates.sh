@@ -3,7 +3,7 @@
 # Outputs GitHub Actions variables via GITHUB_OUTPUT.
 set -euo pipefail
 
-FLM_LATEST=$(gh api repos/FastFlowLM/FastFlowLM/releases/latest --jq '.tag_name' | sed 's/^v//')
+FLM_LATEST=$(gh api repos/ROCm/FastFlowLM/releases/latest --jq '.tag_name' | sed 's/^v//')
 LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name' | sed 's/^v//')
 XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=1.7&per_page=1" --jq '.[0].sha')
 # vLLM-ROCm cuts one release per gfx target, so `releases/latest` returns

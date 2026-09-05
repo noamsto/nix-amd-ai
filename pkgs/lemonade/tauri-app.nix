@@ -84,7 +84,7 @@ rustPlatform.buildRustPackage {
   meta = {
     description = "Lemonade desktop app (Tauri shell around the React UI)";
     homepage = "https://github.com/lemonade-sdk/lemonade";
-    license = lib.licenses.mit;
+    license = lib.licenses.asl20;
     platforms = ["x86_64-linux"];
     mainProgram = "lemonade-app";
   };
