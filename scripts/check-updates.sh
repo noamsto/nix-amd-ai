@@ -93,6 +93,35 @@ if grep -q "llamaCppMtpOverride" flake.nix; then
   fi
 fi
 
+# gaia is a uvx wrapper: no hash to prefetch, and it builds green whatever
+# version it names, so nothing already here would ever notice it going stale.
+# The console scripts it re-exports are version-dependent — 0.21.0 dropped
+# gaia-emr and gaia-code — so report the script list alongside the version. A
+# version-only bump would ship wrappers for entry points that no longer exist.
+GAIA_CURRENT=$(sed -n 's/^  version = "\(.*\)";$/\1/p' pkgs/gaia/default.nix | head -1)
+GAIA_SCRIPTS_CURRENT=$(sed -n 's/^  bins = \[\(.*\)\];$/\1/p' pkgs/gaia/default.nix \
+  | tr -d '"' | tr ' ' '\n' | grep -v '^$' | sort | paste -sd' ' -)
+GAIA_LATEST=$(curl -fsSL https://pypi.org/pypi/amd-gaia/json | jq -r '.info.version')
+
+# Read the entry points from the published wheel rather than from the
+# changelog: the wheel is what uvx installs at run time.
+GAIA_WHEEL=$(mktemp -u /tmp/gaia-XXXXXX.whl)
+curl -fsSL "$(curl -fsSL "https://pypi.org/pypi/amd-gaia/${GAIA_LATEST}/json" \
+  | jq -r 'first(.urls[] | select(.filename | endswith(".whl")) | .url)')" -o "$GAIA_WHEEL"
+GAIA_SCRIPTS_LATEST=$(unzip -p "$GAIA_WHEEL" '*.dist-info/entry_points.txt' \
+  | awk '/^\[console_scripts\]/{f=1;next} /^\[/{f=0} f && /=/{sub(/=.*/,""); gsub(/[ \t]/,""); if ($0) print}' \
+  | sort | paste -sd' ' -)
+rm -f "$GAIA_WHEEL"
+
+GAIA_NEEDS_UPDATE=false
+if [ "$GAIA_LATEST" != "$GAIA_CURRENT" ] || [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_SCRIPTS_CURRENT" ]; then
+  GAIA_NEEDS_UPDATE=true
+  NEEDS_UPDATE=true
+  echo "gaia: $GAIA_CURRENT -> $GAIA_LATEST"
+  [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_SCRIPTS_CURRENT" ] \
+    && echo "  console scripts: [$GAIA_SCRIPTS_CURRENT] -> [$GAIA_SCRIPTS_LATEST]"
+fi
+
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   {
     echo "flm_latest=$FLM_LATEST"
@@ -110,6 +139,11 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "mtp_override_needs_update=$MTP_OVERRIDE_NEEDS_UPDATE"
     echo "mtp_required=$MTP_REQUIRED"
     echo "mtp_current=$MTP_CURRENT"
+    echo "gaia_current=$GAIA_CURRENT"
+    echo "gaia_latest=$GAIA_LATEST"
+    echo "gaia_needs_update=$GAIA_NEEDS_UPDATE"
+    echo "gaia_scripts_current=$GAIA_SCRIPTS_CURRENT"
+    echo "gaia_scripts_latest=$GAIA_SCRIPTS_LATEST"
     # Multi-line outputs need the heredoc form (GitHub Actions docs).
     echo "nixpkgs_backend_diffs<<NIXPKGS_EOF"
     printf '%s' "$NIXPKGS_BACKEND_DIFFS"
