@@ -6,10 +6,13 @@ on:
   pull_request:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  # Never cancel a push to main: the release job below tags only on push, so a
-  # run cancelled by the next merge drops that release for good and nothing
-  # retries it. Superseded PR runs are still worth cancelling.
+  # Each push to main gets its own group, so main runs never contend. A shared
+  # group keeps only ONE pending run: a third merge arriving while one run is
+  # in progress and another is queued evicts the queued one, and the release it
+  # would have tagged goes with it. cancel-in-progress does not cover that --
+  # it protects in-progress runs, not pending ones. PRs still share a per-ref
+  # group, where superseding a force-pushed run is the point.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event_name == 'push' && github.sha || 'pr' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
@@ -110,6 +113,10 @@ jobs:
             title="$tag"
           fi
 
-          git tag "$tag" "$SHA"
-          git push origin "$tag"
-          printf '%s\n' "$notes" | gh release create "$tag" --title "$title" --notes-file -
+          # Create the tag through the release API rather than `git push`. A tag
+          # push from GITHUB_TOKEN is rejected -- "refusing to allow a GitHub App
+          # to create or update workflow ... without workflows permission" --
+          # whenever the tagged commit's .github/workflows differ from the branch
+          # tip, which happens as soon as a later merge lands while this job is
+          # still queued. --target takes the full SHA; an abbreviated one 422s.
+          printf '%s\n' "$notes" | gh release create "$tag" --target "$SHA" --title "$title" --notes-file -
