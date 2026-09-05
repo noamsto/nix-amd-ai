@@ -43,12 +43,20 @@ jobs:
         if: steps.check.outputs.needs_update == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
+          FLM_LATEST: ${{ steps.check.outputs.flm_latest }}
+          FLM_CURRENT: ${{ steps.check.outputs.flm_current }}
+          LEM_LATEST: ${{ steps.check.outputs.lem_latest }}
+          LEM_CURRENT: ${{ steps.check.outputs.lem_current }}
+          XDNA_LATEST: ${{ steps.check.outputs.xdna_latest }}
+          XDNA_CURRENT: ${{ steps.check.outputs.xdna_current }}
+          VLLM_LATEST: ${{ steps.check.outputs.vllm_latest }}
+          VLLM_CURRENT: ${{ steps.check.outputs.vllm_current }}
         run: |
           ./scripts/bump-versions.sh \
-            "${{ steps.check.outputs.flm_latest }}" "${{ steps.check.outputs.flm_current }}" \
-            "${{ steps.check.outputs.lem_latest }}" "${{ steps.check.outputs.lem_current }}" \
-            "${{ steps.check.outputs.xdna_latest }}" "${{ steps.check.outputs.xdna_current }}" \
-            "${{ steps.check.outputs.vllm_latest }}" "${{ steps.check.outputs.vllm_current }}"
+            "$FLM_LATEST" "$FLM_CURRENT" \
+            "$LEM_LATEST" "$LEM_CURRENT" \
+            "$XDNA_LATEST" "$XDNA_CURRENT" \
+            "$VLLM_LATEST" "$VLLM_CURRENT"
 
       # vllm-rocm builds unpack ~7.6 GB; the runner's ~14 GB default isn't enough.
       # Reclaim the preinstalled Android/.NET/GHC toolchains (~25 GB) so the
@@ -66,23 +74,30 @@ jobs:
             echo "status=pass" >> "$GITHUB_OUTPUT"
           else
             echo "status=fail" >> "$GITHUB_OUTPUT"
+            # Random delimiter: this is nix output, so a line reading
+            # CHECK_EOF would close the block early and let whatever follows
+            # write arbitrary step outputs -- including the `status` that
+            # gates auto-merge below.
+            delim="EOF_$(openssl rand -hex 16)"
             {
-              echo "log<<CHECK_EOF"
+              echo "log<<$delim"
               tail -40 /tmp/flake-check.log
-              echo "CHECK_EOF"
+              echo "$delim"
             } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Build updated packages
         if: steps.check.outputs.needs_update == 'true'
         id: build
+        env:
+          VLLM_NEEDS_UPDATE: ${{ steps.check.outputs.vllm_needs_update }}
         run: |
           FAILED=""
           PKGS="xrt xrt-plugin-amdxdna fastflowlm lemonade"
           # Validate the vllm-rocm bump only when it moved — building it (and
           # re-fetching 2.25 GB) every run when unchanged is pure waste since it
           # isn't in the cache. A build failure here blocks the auto-merge below.
-          if [ "${{ steps.check.outputs.vllm_needs_update }}" = "true" ]; then
+          if [ "$VLLM_NEEDS_UPDATE" = "true" ]; then
             PKGS="$PKGS vllm-rocm"
           fi
           for pkg in $PKGS; do
@@ -90,10 +105,11 @@ jobs:
               FAILED+="- ${pkg}"$'\n'
             fi
           done
+          delim="EOF_$(openssl rand -hex 16)"
           {
-            echo "failed<<BUILD_EOF"
+            echo "failed<<$delim"
             printf '%s' "$FAILED"
-            echo "BUILD_EOF"
+            echo "$delim"
           } >> "$GITHUB_OUTPUT"
 
       - name: Create PR
@@ -102,7 +118,27 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           FLAKE_CHECK_LOG: ${{ steps.flake_check.outputs.log }}
+          FLAKE_CHECK_STATUS: ${{ steps.flake_check.outputs.status }}
           BUILD_FAILED: ${{ steps.build.outputs.failed }}
+          FLM_LATEST: ${{ steps.check.outputs.flm_latest }}
+          FLM_CURRENT: ${{ steps.check.outputs.flm_current }}
+          LEM_LATEST: ${{ steps.check.outputs.lem_latest }}
+          LEM_CURRENT: ${{ steps.check.outputs.lem_current }}
+          XDNA_LATEST: ${{ steps.check.outputs.xdna_latest }}
+          XDNA_CURRENT: ${{ steps.check.outputs.xdna_current }}
+          VLLM_LATEST: ${{ steps.check.outputs.vllm_latest }}
+          VLLM_CURRENT: ${{ steps.check.outputs.vllm_current }}
+          VLLM_NEEDS_UPDATE: ${{ steps.check.outputs.vllm_needs_update }}
+          NIXPKGS_DIFFS: ${{ steps.check.outputs.nixpkgs_backend_diffs }}
+          MTP_OVERRIDE_NEEDS_UPDATE: ${{ steps.check.outputs.mtp_override_needs_update }}
+          MTP_CLEANUP: ${{ steps.check.outputs.mtp_cleanup }}
+          MTP_REQUIRED: ${{ steps.check.outputs.mtp_required }}
+          MTP_CURRENT: ${{ steps.check.outputs.mtp_current }}
+          GAIA_NEEDS_UPDATE: ${{ steps.check.outputs.gaia_needs_update }}
+          GAIA_CURRENT: ${{ steps.check.outputs.gaia_current }}
+          GAIA_LATEST: ${{ steps.check.outputs.gaia_latest }}
+          GAIA_SCRIPTS_LATEST: ${{ steps.check.outputs.gaia_scripts_latest }}
+          GAIA_SCRIPTS_CURRENT: ${{ steps.check.outputs.gaia_scripts_current }}
         run: |
           git diff --quiet && echo "No changes" && exit 0
 
@@ -115,41 +151,40 @@ jobs:
           git push origin "$BRANCH"
 
           BODY="## Upstream updates detected"$'\n\n'
-          [ "${{ steps.check.outputs.flm_latest }}" != "${{ steps.check.outputs.flm_current }}" ] && \
-            BODY+="- FastFlowLM: ${{ steps.check.outputs.flm_current }} -> ${{ steps.check.outputs.flm_latest }}"$'\n'
-          [ "${{ steps.check.outputs.lem_latest }}" != "${{ steps.check.outputs.lem_current }}" ] && \
-            BODY+="- Lemonade: ${{ steps.check.outputs.lem_current }} -> ${{ steps.check.outputs.lem_latest }}"$'\n'
-          [ "${{ steps.check.outputs.xdna_latest }}" != "${{ steps.check.outputs.xdna_current }}" ] && \
-            BODY+="- xdna-driver: ${{ steps.check.outputs.xdna_current }} -> ${{ steps.check.outputs.xdna_latest }}"$'\n'
-          if [ "${{ steps.check.outputs.vllm_needs_update }}" = "true" ]; then
-            BODY+="- vLLM-ROCm: \`${{ steps.check.outputs.vllm_current }}\` -> \`${{ steps.check.outputs.vllm_latest }}\` (built to validate; not GPU-tested)"$'\n'
+          [ "$FLM_LATEST" != "$FLM_CURRENT" ] && \
+            BODY+="- FastFlowLM: $FLM_CURRENT -> $FLM_LATEST"$'\n'
+          [ "$LEM_LATEST" != "$LEM_CURRENT" ] && \
+            BODY+="- Lemonade: $LEM_CURRENT -> $LEM_LATEST"$'\n'
+          [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && \
+            BODY+="- xdna-driver: $XDNA_CURRENT -> $XDNA_LATEST"$'\n'
+          if [ "$VLLM_NEEDS_UPDATE" = "true" ]; then
+            BODY+="- vLLM-ROCm: \`$VLLM_CURRENT\` -> \`$VLLM_LATEST\` (built to validate; not GPU-tested)"$'\n'
           fi
 
-          NIXPKGS_DIFFS='${{ steps.check.outputs.nixpkgs_backend_diffs }}'
           if [ -n "$NIXPKGS_DIFFS" ]; then
             BODY+=$'\n'"### nixpkgs backend versions"$'\n'
             BODY+="$NIXPKGS_DIFFS"
           fi
 
-          if [ "${{ steps.check.outputs.mtp_override_needs_update }}" = "true" ]; then
+          if [ "$MTP_OVERRIDE_NEEDS_UPDATE" = "true" ]; then
             BODY+=$'\n'"### ⚠️ MTP override needs hand-bump"$'\n'
-            BODY+="Lemonade v${{ steps.check.outputs.lem_latest }} pins \`llamacpp.vulkan = b${{ steps.check.outputs.mtp_required }}\`, but \`llamaCppMtpOverride\` in \`flake.nix\` is at \`b${{ steps.check.outputs.mtp_current }}\`."$'\n'
-            BODY+="Update \`version\`, \`rev\` (commit for tag \`b${{ steps.check.outputs.mtp_required }}\` in \`ggml-org/llama.cpp\`), and both hashes in the \`llamaCppMtpSrc\` / \`llamaCppMtpOverride\` blocks."$'\n'
+            BODY+="Lemonade v$LEM_LATEST pins \`llamacpp.vulkan = b$MTP_REQUIRED\`, but \`llamaCppMtpOverride\` in \`flake.nix\` is at \`b$MTP_CURRENT\`."$'\n'
+            BODY+="Update \`version\`, \`rev\` (commit for tag \`b$MTP_REQUIRED\` in \`ggml-org/llama.cpp\`), and both hashes in the \`llamaCppMtpSrc\` / \`llamaCppMtpOverride\` blocks."$'\n'
           fi
 
-          if [ "${{ steps.check.outputs.mtp_cleanup }}" = "true" ]; then
-            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up to b${{ steps.check.outputs.mtp_required }} (what Lemonade pins)."$'\n'
+          if [ "$MTP_CLEANUP" = "true" ]; then
+            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up to b$MTP_REQUIRED (what Lemonade pins)."$'\n'
           fi
 
-          if [ "${{ steps.check.outputs.gaia_needs_update }}" = "true" ]; then
+          if [ "$GAIA_NEEDS_UPDATE" = "true" ]; then
             BODY+=$'\n'"### ⚠️ gaia needs a hand-bump"$'\n'
-            BODY+="\`pkgs/gaia/default.nix\` names \`${{ steps.check.outputs.gaia_current }}\`; PyPI has \`${{ steps.check.outputs.gaia_latest }}\`."$'\n'
-            BODY+="Console scripts in the published wheel: \`${{ steps.check.outputs.gaia_scripts_latest }}\`"$'\n'
-            BODY+="Currently in \`bins\`: \`${{ steps.check.outputs.gaia_scripts_current }}\`"$'\n'
+            BODY+="\`pkgs/gaia/default.nix\` names \`$GAIA_CURRENT\`; PyPI has \`$GAIA_LATEST\`."$'\n'
+            BODY+="Console scripts in the published wheel: \`$GAIA_SCRIPTS_LATEST\`"$'\n'
+            BODY+="Currently in \`bins\`: \`$GAIA_SCRIPTS_CURRENT\`"$'\n'
             BODY+="Update \`version\`, and \`bins\` if those two lists differ. gaia is a uvx wrapper with no hash to prefetch and it builds green either way, so nothing else catches this."$'\n'
           fi
 
-          if [ "${{ steps.flake_check.outputs.status }}" = "fail" ]; then
+          if [ "$FLAKE_CHECK_STATUS" = "fail" ]; then
             BODY+=$'\n'"### ⚠️ \`nix flake check\` failed"$'\n'
             BODY+=$'\n''```'$'\n'"$FLAKE_CHECK_LOG"$'\n''```'$'\n'
           fi
@@ -176,4 +211,5 @@ jobs:
           steps.check.outputs.gaia_needs_update != 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
-        run: gh pr merge --squash --delete-branch "${{ steps.pr.outputs.pr_url }}"
+          PR_URL: ${{ steps.pr.outputs.pr_url }}
+        run: gh pr merge --squash --delete-branch "$PR_URL"
