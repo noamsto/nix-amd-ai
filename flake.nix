@@ -850,6 +850,64 @@
                 touch $out
               '';
 
+            # The openmoss TTS backends are runtime-downloaded foreign ELFs, so
+            # they resolve through nix-ld like koko does -- but they need more
+            # than koko: without libvulkan (and libomp/hipblas under enableROCm)
+            # moss-tts-server exits 127 and lemond reports "openmoss-server
+            # failed to start or become ready".
+            #
+            # The base set must survive too. programs.nix-ld.libraries is a
+            # listOf, so definitions concatenate; a definition that replaced the
+            # nixpkgs one instead of extending it would strip zlib/openssl/
+            # systemd and take koko down with it. Hence the zlib/openssl/systemd
+            # assertions below, which fail loudly on that regression.
+            module-eval-nix-ld-libraries = let
+              mkSys = extra:
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu =
+                        {
+                          enable = true;
+                          enableLemonade = true;
+                          lemonade.user = "testuser";
+                        }
+                        // extra;
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config.programs.nix-ld.libraries;
+              names = extra:
+                builtins.concatStringsSep " "
+                (map (p: p.pname or p.name) (mkSys extra));
+              plain = names {};
+              withRocm = names {enableROCm = true;};
+              lemonadeOff = names {enableLemonade = false;};
+            in
+              pkgs.runCommand "module-eval-nix-ld-libraries" {
+                inherit plain withRocm lemonadeOff;
+              } ''
+                for lib in vulkan-loader zlib openssl systemd; do
+                  echo "$plain" | grep -qw "$lib"                     || { echo "$lib missing from the lemonade nix-ld set"; exit 1; }
+                done
+                for lib in openmp clr rocblas hipblas; do
+                  echo "$withRocm" | grep -qw "$lib"                     || { echo "$lib missing under enableROCm"; exit 1; }
+                  ! echo "$plain" | grep -qw "$lib"                     || { echo "$lib pulled in without enableROCm"; exit 1; }
+                done
+                ! echo "$lemonadeOff" | grep -qw vulkan-loader                   || { echo "vulkan-loader added on a host with lemonade off"; exit 1; }
+                touch $out
+              '';
+
             # The lemond unit must keep its writable runtime dir + nix-ld loader
             # env, else omni backends (WhisperServer, koko TTS) fail to load. The
             # NIX_LD paths track the values nix-ld exports as session vars.
