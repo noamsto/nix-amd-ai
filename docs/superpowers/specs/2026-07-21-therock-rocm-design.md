@@ -8,7 +8,14 @@
 
 The flake's own README benchmarks (gfx1150) recommend **Vulkan** for general LLM inference: Vulkan wins decode at every size tested (+26% on Gemma-26B tg128) and ties/wins prefill; ROCm is "kept as a fallback and for ecosystem tooling." whisper already runs Vulkan; RADV/Vulkan is arch-agnostic and works on gfx1151.
 
-**But that data is Vulkan vs *nixpkgs ROCm 7.2.3*** — the old runtime with known gfx1151 VRAM faults. The open question is whether **up-to-date TheRock ROCm (native gfx1151 kernels)** changes that verdict. Nobody has that A/B. Vendoring a whole per-arch SDK + rebuilding backends is a large, ongoing, solo-maintained cost (see "Integration cost" below); we do not pay it on an unmeasured premise.
+**But that data is Vulkan vs *nixpkgs ROCm 7.2.3*** — the old runtime with known gfx1151 VRAM faults.
+
+> **Correction (2026-09-05):** the "nixpkgs ROCm 7.2.3 faults on gfx1151"
+> premise in this dated document is false — measured on a Ryzen AI MAX+ 395,
+> stock `llama-cpp-rocm` runs there without faulting. See the Correction
+> section in `docs/therock-eval-results.md`. Left otherwise unedited as a
+> record of what was believed at the time.
+ The open question is whether **up-to-date TheRock ROCm (native gfx1151 kernels)** changes that verdict. Nobody has that A/B. Vendoring a whole per-arch SDK + rebuilding backends is a large, ongoing, solo-maintained cost (see "Integration cost" below); we do not pay it on an unmeasured premise.
 
 So: **measure first (Phase 0). Integrate only if TheRock ROCm meaningfully beats Vulkan on the backend that matters.**
 
