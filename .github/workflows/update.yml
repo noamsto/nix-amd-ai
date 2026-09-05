@@ -139,6 +139,9 @@ jobs:
           GAIA_LATEST: ${{ steps.check.outputs.gaia_latest }}
           GAIA_SCRIPTS_LATEST: ${{ steps.check.outputs.gaia_scripts_latest }}
           GAIA_SCRIPTS_CURRENT: ${{ steps.check.outputs.gaia_scripts_current }}
+          XDNA_BRANCH: ${{ steps.check.outputs.xdna_branch }}
+          XDNA_BRANCH_LATEST: ${{ steps.check.outputs.xdna_branch_latest }}
+          XDNA_BRANCH_NEEDS_UPDATE: ${{ steps.check.outputs.xdna_branch_needs_update }}
         run: |
           git diff --quiet && echo "No changes" && exit 0
 
@@ -193,6 +196,16 @@ jobs:
             BODY+=$'\n'"### ⚠️ Build failures"$'\n'"$BUILD_FAILED"
           fi
 
+          if [ "$XDNA_BRANCH_NEEDS_UPDATE" = "true" ]; then
+            if [ -n "$XDNA_BRANCH_LATEST" ] && [ "$XDNA_BRANCH_LATEST" != "$XDNA_BRANCH" ]; then
+              BODY+=$'\n'"### ⚠️ xdna-driver: newer release branch available"$'\n'
+              BODY+="Tracking \`$XDNA_BRANCH\`, but \`$XDNA_BRANCH_LATEST\` exists -- a cross-release jump (hundreds of kernel-driver commits). Bump \`XDNA_BRANCH\` in \`scripts/check-updates.sh\` and the \`rev\`/\`hash\` in \`pkgs/xrt-plugin-amdxdna/default.nix\` by hand after review."$'\n'
+            else
+              BODY+=$'\n'"### ⚠️ xdna-driver: pinned rev out of sync with branch \`$XDNA_BRANCH\`"$'\n'
+              BODY+="The pinned rev is not a linear ancestor of the head of branch \`$XDNA_BRANCH\` (a half-done bump, or an upstream rebase/force-push). Realign the \`rev\`/\`hash\` in \`pkgs/xrt-plugin-amdxdna/default.nix\` with branch \`$XDNA_BRANCH\` by hand after review."$'\n'
+            fi
+          fi
+
           PR_URL=$(echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -)
           echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
 
@@ -208,7 +221,8 @@ jobs:
           steps.flake_check.outputs.status == 'pass' &&
           steps.build.outputs.failed == '' &&
           steps.check.outputs.mtp_override_needs_update != 'true' &&
-          steps.check.outputs.gaia_needs_update != 'true'
+          steps.check.outputs.gaia_needs_update != 'true' &&
+          steps.check.outputs.xdna_branch_needs_update != 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           PR_URL: ${{ steps.pr.outputs.pr_url }}
