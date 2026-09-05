@@ -751,6 +751,20 @@ in {
     # mkDefault so hosts managing nix-ld themselves can still opt out.
     programs.nix-ld.enable = mkIf cfg.enableLemonade (mkDefault true);
 
+    # The openmoss TTS backends need more than that base set. Both moss-tts-server
+    # builds exit 127 without these, and lemond reports "openmoss-server failed to
+    # start or become ready". Seen by running the binaries directly: the vulkan
+    # build stops at libvulkan.so.1, rocm-stable at libomp.so and then
+    # libhipblas.so.3. ldd is not a usable check here -- it does not go through
+    # nix-ld, so it prints "not found" for libraries that do resolve at runtime.
+    #
+    # libraries is a listOf, so definitions from every module concatenate: this
+    # adds to the nixpkgs base set rather than replacing it.
+    programs.nix-ld.libraries = mkIf cfg.enableLemonade (
+      [pkgs.vulkan-loader]
+      ++ optionals cfg.enableROCm (with pkgs.rocmPackages; [llvm.openmp clr rocblas hipblas])
+    );
+
     # Lemonade systemd service
     systemd.services.lemond = mkIf cfg.enableLemonade {
       description = "Lemonade AI Server";
