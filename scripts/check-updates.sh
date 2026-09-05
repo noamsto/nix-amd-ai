@@ -5,7 +5,26 @@ set -euo pipefail
 
 FLM_LATEST=$(gh api repos/ROCm/FastFlowLM/releases/latest --jq '.tag_name' | sed 's/^v//')
 LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name' | sed 's/^v//')
-XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=1.7&per_page=1" --jq '.[0].sha')
+# xdna-driver ships no releases and its newest tag predates our pin, so we
+# follow a release branch by name. XDNA_BRANCH is the single source of truth
+# for which one: a new commit on it is a routine bump that may auto-merge, but
+# a *newer branch* appearing (1.7 -> 1.9) is a cross-release jump of hundreds
+# of kernel-driver commits that must not -- surface it and gate the auto-merge,
+# like the gaia/MTP hand-bumps. bump XDNA_BRANCH here and the rev/hash in
+# pkgs/xrt-plugin-amdxdna/default.nix together when moving to a new branch.
+XDNA_BRANCH="1.7"
+XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=${XDNA_BRANCH}&per_page=1" --jq '.[0].sha')
+# highest N.M branch upstream; ignore main / VAI_* / ve2_* etc. The grep is
+# wrapped so matching nothing (no N.M branch at all) leaves the var empty for
+# the guard below, instead of failing the pipe under pipefail and killing the
+# whole run; a real gh-api failure still propagates, as everywhere else here.
+XDNA_BRANCH_LATEST=$(gh api --paginate repos/amd/xdna-driver/branches --jq '.[].name' \
+  | { grep -E '^[0-9]+\.[0-9]+$' || true; } | sort -V | tail -1)
+XDNA_BRANCH_NEEDS_UPDATE=false
+if [ -n "$XDNA_BRANCH_LATEST" ] && [ "$XDNA_BRANCH_LATEST" != "$XDNA_BRANCH" ]; then
+  XDNA_BRANCH_NEEDS_UPDATE=true
+  echo "xdna-driver: tracking branch $XDNA_BRANCH, but $XDNA_BRANCH_LATEST exists (cross-release, review needed)"
+fi
 # vLLM-ROCm cuts one release per gfx target, so `releases/latest` returns
 # whichever target shipped last — routinely one we don't consume (gfx950,
 # gfx942). Its base tag may have no build for our targets at all, which then
@@ -31,9 +50,22 @@ fi
 FLM_CURRENT=$(grep 'version = ' pkgs/fastflowlm/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
 LEM_CURRENT=$(sed -n 's/.*"\(.*\)".*/\1/p' pkgs/lemonade/version.nix | head -1)
 XDNA_CURRENT=$(grep 'rev = ' pkgs/xrt-plugin-amdxdna/default.nix | head -1 | sed 's/.*"\(.*\)".*/\1/')
+# Guard the auto-mergeable commit bump: if the pinned rev is not a linear
+# ancestor of the tracked branch's head (XDNA_BRANCH moved without the
+# rev/hash, or vice versa), a plain commit bump would jump across release
+# branches and auto-merge it. Arm the review gate until a human realigns them.
+# Fail-safe: if the compare can't be fetched, arm the gate rather than merge.
+if [ "$XDNA_LATEST" != "$XDNA_CURRENT" ]; then
+  xdna_cmp=$(gh api "repos/amd/xdna-driver/compare/${XDNA_CURRENT}...${XDNA_BRANCH}" --jq '.status' 2>/dev/null || true)
+  if [ "$xdna_cmp" != "ahead" ]; then
+    XDNA_BRANCH_NEEDS_UPDATE=true
+    echo "xdna-driver: pinned rev is not a linear ancestor of branch $XDNA_BRANCH (compare: ${xdna_cmp:-unavailable}); realign rev/hash and XDNA_BRANCH by hand"
+  fi
+fi
 VLLM_CURRENT=$(grep 'releaseTag = ' pkgs/vllm-rocm/sources.nix | head -1 | sed 's/.*"\(.*\)".*/\1/; s/-gfx[^-]*$//')
 
 NEEDS_UPDATE=false
+[ "$XDNA_BRANCH_NEEDS_UPDATE" = "true" ] && NEEDS_UPDATE=true
 [ "$FLM_LATEST" != "$FLM_CURRENT" ] && NEEDS_UPDATE=true
 [ "$LEM_LATEST" != "$LEM_CURRENT" ] && NEEDS_UPDATE=true
 [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && NEEDS_UPDATE=true
@@ -181,6 +213,9 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "flm_current=$FLM_CURRENT"
     echo "lem_current=$LEM_CURRENT"
     echo "xdna_current=$XDNA_CURRENT"
+    echo "xdna_branch=$XDNA_BRANCH"
+    echo "xdna_branch_latest=$XDNA_BRANCH_LATEST"
+    echo "xdna_branch_needs_update=$XDNA_BRANCH_NEEDS_UPDATE"
     echo "vllm_current=$VLLM_CURRENT"
     echo "needs_update=$NEEDS_UPDATE"
     echo "vllm_needs_update=$VLLM_NEEDS_UPDATE"
