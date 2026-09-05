@@ -122,6 +122,33 @@ if [ "$GAIA_LATEST" != "$GAIA_CURRENT" ] || [ "$GAIA_SCRIPTS_LATEST" != "$GAIA_S
     && echo "  console scripts: [$GAIA_SCRIPTS_CURRENT] -> [$GAIA_SCRIPTS_LATEST]"
 fi
 
+# Everything above came from an upstream release tag or from names read out of
+# a published wheel, and it flows on into sed expressions in bump-versions.sh
+# and into the PR body. Git tag names and wheel entry-point names are far more
+# permissive than either consumer assumes: a / or & silently corrupts the sed,
+# and $(...) or a backtick reaches a shell. Refuse anything outside a
+# conservative charset rather than pass it along.
+reject_odd() {
+  [[ "$2" =~ ^[A-Za-z0-9._+-]+$ ]] || {
+    echo "ERROR: unexpected characters in $1: $2" >&2
+    exit 1
+  }
+}
+reject_odd_list() {
+  [[ "$2" =~ ^([A-Za-z0-9._+-]+( [A-Za-z0-9._+-]+)*)?$ ]] || {
+    echo "ERROR: unexpected characters in $1: $2" >&2
+    exit 1
+  }
+}
+
+reject_odd FLM_LATEST "$FLM_LATEST"
+reject_odd LEM_LATEST "$LEM_LATEST"
+reject_odd XDNA_LATEST "$XDNA_LATEST"
+reject_odd VLLM_LATEST "$VLLM_LATEST"
+reject_odd GAIA_LATEST "$GAIA_LATEST"
+reject_odd_list GAIA_SCRIPTS_LATEST "$GAIA_SCRIPTS_LATEST"
+[ -z "$MTP_REQUIRED" ] || reject_odd MTP_REQUIRED "$MTP_REQUIRED"
+
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   {
     echo "flm_latest=$FLM_LATEST"
@@ -144,9 +171,13 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "gaia_needs_update=$GAIA_NEEDS_UPDATE"
     echo "gaia_scripts_current=$GAIA_SCRIPTS_CURRENT"
     echo "gaia_scripts_latest=$GAIA_SCRIPTS_LATEST"
-    # Multi-line outputs need the heredoc form (GitHub Actions docs).
-    echo "nixpkgs_backend_diffs<<NIXPKGS_EOF"
+    # Multi-line output needs the heredoc form (GitHub Actions docs). Random
+    # delimiter: the content is nix-eval output, and a line equal to a fixed
+    # delimiter would close the block early and let the rest write arbitrary
+    # step outputs -- same reason the flake-check log uses one in update.yml.
+    nixpkgs_delim="NIXPKGS_EOF_$(openssl rand -hex 16)"
+    echo "nixpkgs_backend_diffs<<$nixpkgs_delim"
     printf '%s' "$NIXPKGS_BACKEND_DIFFS"
-    echo "NIXPKGS_EOF"
+    echo "$nixpkgs_delim"
   } >> "$GITHUB_OUTPUT"
 fi
