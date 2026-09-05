@@ -5,13 +5,18 @@
 # resulting `vllm-server` via the `vllm.rocm_bin` config override wired in the
 # NixOS module. See noamsto/nix-amd-ai#63.
 #
-# NOTE: deliberately NOT autoPatchelf'd. The bundle is self-contained — it ships
-# its own `rocm_sysdeps` (numa/drm/elf/lzma) and resolves its .so via internal
-# $ORIGIN runpaths. autoPatchelfHook rewrites those runpaths and injects nixpkgs
-# libs (gcc-15 libstdc++/libatomic) that mismatch the Ubuntu-built torch, which
-# segfaults on `import torch`. Instead we only repoint the ELF interpreter to the
-# nix loader and supply the two genuinely-missing system libs (libstdc++, libz)
-# via the launcher's LD_LIBRARY_PATH.
+# NOTE: deliberately NOT autoPatchelf'd. The bundle is mostly self-contained — it
+# ships its own `rocm_sysdeps` and resolves its .so via internal $ORIGIN runpaths.
+# autoPatchelfHook rewrites those runpaths and injects nixpkgs libs (gcc-15
+# libstdc++/libatomic) that mismatch the Ubuntu-built torch, which segfaults on
+# `import torch`. Instead we only repoint the ELF interpreter to the nix loader
+# and supply the genuinely-missing system libs via the launcher's
+# LD_LIBRARY_PATH.
+#
+# The `rocm_sysdeps` set does not count as shipping those libs: every member is
+# renamed (`librocm_sysdeps_liblzma.so.5`), so a plain `liblzma.so.5` DT_NEEDED
+# does not resolve against it. torch/lib/libaotriton_v2.so has exactly that,
+# which is why xz is here.
 {
   lib,
   stdenv,
@@ -21,6 +26,7 @@
   bash,
   coreutils,
   zlib,
+  xz,
   gpuTarget ? "gfx1150",
 }: let
   sources = import ./sources.nix;
@@ -29,7 +35,7 @@
     or (throw "vllm-rocm: no prebuilt for gpuTarget '${gpuTarget}' (have: ${lib.concatStringsSep ", " (lib.attrNames sources)})");
   parts = map (p: fetchurl {inherit (p) url hash;}) src.parts;
   # Ubuntu-built torch/ROCm want these from the system; the bundle omits them.
-  runtimeLibs = lib.makeLibraryPath [stdenv.cc.cc.lib zlib];
+  runtimeLibs = lib.makeLibraryPath [stdenv.cc.cc.lib zlib xz.out];
 in
   stdenv.mkDerivation {
     pname = "vllm-rocm";
