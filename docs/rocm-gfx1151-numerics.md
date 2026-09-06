@@ -104,9 +104,27 @@ gibberish", the offload boundary that localises the blowup to the output head,
 and the `-ub` dependence. If this is filed upstream, those are the parts worth
 carrying.
 
-**Not yet checked: whether a current llama.cpp still reproduces this.** Given how
-fast this area is being fixed, that is the first thing to do before filing —
-build master and re-run the loop above.
+## Current master still reproduces it — and the per-layer defect is worse
+
+Built llama.cpp master `465e49b9` (build 10830, 2026-09-06) against the same
+ROCm 7.2.3, `CMAKE_HIP_ARCHITECTURES=gfx1151`, and ran the identical loop. That
+is 264 commits ahead of the shipped build; nothing else changed.
+
+| `-ngl` | b10566 (shipped, 2026-08-21) | **b10830 (master, 2026-09-06)** |
+| --- | ---: | ---: |
+| 0 (CPU) | 6.7926 | 6.8024 |
+| 32 (layers, head on CPU) | 9.0662 | **15.6257** |
+| 99 (head on GPU) | 1334.0014 | **1326.8934** |
+
+The output-head blowup is unchanged. The per-layer corruption has **regressed**,
+from 9.07 to 15.63 — 2.3x the CPU reference where it used to be 1.3x. So this is
+a live bug on current master, not something already fixed and merely absent from
+our pin, and bumping llama.cpp would make one half of it worse.
+
+That makes it worth filing upstream. The open reports
+([llama.cpp#21416](https://github.com/ggml-org/llama.cpp/issues/21416) in
+particular) describe the same "ROCm garbage on gfx1151, Vulkan fine" shape but
+carry no numeric metric, no offload boundary, and no shape sweep.
 
 ## What this says about #105
 
