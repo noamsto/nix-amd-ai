@@ -41,9 +41,11 @@ Sweeping `-ngl` (how many layers go to the GPU) separates them.
 
 **A catastrophic output head.** The model has 32 layers, and `-ngl 33` logs
 `offloaded 33/33`: layers plus the output head. Everything from `-ngl 33` to
-`-ngl 99` is byte-identical, so the entire 196x blowup is one tensor — `lm_head`
-— moving to the GPU. It produces the logits directly, which is why corrupting it
-randomises output instead of merely dulling it.
+`-ngl 99` is byte-identical, so the entire 196x blowup is **one tensor** moving
+to the GPU. Qwen3.5 ties its embeddings, so that tensor is `token_embd.weight`
+(`Q6_K`, `2560 x 248320`) doing double duty as the head — not a separate
+`output.weight`. It produces the logits directly, which is why corrupting it
+randomises token choice instead of merely dulling output.
 
 ## It is shape-dependent
 
@@ -70,15 +72,35 @@ used, its presence in the loaded library was verified first with `grep -a`
 | SDMA copy path | `HSA_ENABLE_SDMA=0` | unchanged (var confirmed read by ROCr) |
 | Kernel fusion | `GGML_CUDA_DISABLE_FUSION=1` | unchanged |
 | CUDA graphs | `GGML_CUDA_DISABLE_GRAPHS=1` | unchanged |
+| Quant-specific kernel | uniform Q8_0 and Q4_0 requants | both equally broken; Q8_0 worst |
 | Wrong ISA / arch override | `HSA_OVERRIDE_GFX_VERSION` unset | not in play |
 | Races, preemption, thermal | repeat runs byte-identical | deterministic, so excluded |
 
-**Not tested, and the best remaining lead:** a quant-specific dequant/GEMM
-kernel. The clean experiment is the same model in BF16 vs Q8_0 vs Q4_K; the only
-non-K-quant models on this host are eagle3 speculative drafts, which cannot run
-standalone (`eagle3 requires ctx_other to be set`). `GGML_CUDA_FORCE_MMQ` /
-`GGML_CUDA_FORCE_CUBLAS` would have discriminated the GEMM path but no longer
-exist in this llama.cpp version.
+**Quantization is not the cause.** `llama-quantize --allow-requantize` turned the
+mixed UD quant into uniform `Q8_0` and uniform `Q4_0`, sidestepping the K-quant
+family entirely. Each model is compared against its *own* CPU run, so the lossy
+requantization cancels and only the CPU-to-GPU gap is read. All rows on master
+b10830:
+
+| Model | CPU | `-ngl 32` | `-ngl 99` |
+| --- | ---: | ---: | ---: |
+| UD-Q4_K_XL (mixed; Q6_K head) | 6.8024 | 15.6257 | 1326.89 |
+| **uniform Q8_0** | 6.8149 | 15.6392 | **1615.93** |
+| **uniform Q4_0** | 7.2878 | 18.8125 | **1337.73** |
+
+Every quant is healthy on CPU and equally broken on GPU, and `Q8_0` — the
+highest-precision and a completely different dequant path from the K-quants — is
+the *worst* of the three at full offload. So this is not a K-quant kernel, not a
+precision effect, and not specific to the head's `Q6_K`.
+
+Note what the head actually is: Qwen3.5-4B ties its embeddings, so there is no
+separate `output.weight`. The head is `token_embd.weight`, `Q6_K`,
+`2560 x 248320` — a 635M-parameter tensor, by far the largest matmul in the model
+and a shape unlike any layer GEMM. With quantization eliminated, **size/shape is
+the remaining suspect**, which is exactly what the `-ub` sweep already implied.
+
+`GGML_CUDA_FORCE_MMQ` / `GGML_CUDA_FORCE_CUBLAS` would have discriminated the
+GEMM path directly, but no longer exist in this llama.cpp version.
 
 ## Prior art upstream
 
