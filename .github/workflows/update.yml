@@ -144,11 +144,12 @@ jobs:
           XDNA_BRANCH_LATEST: ${{ steps.check.outputs.xdna_branch_latest }}
           XDNA_BRANCH_NEEDS_UPDATE: ${{ steps.check.outputs.xdna_branch_needs_update }}
         run: |
-          # A new xdna release branch (or a rev/branch drift) needs a human
-          # decision but changes no pinned file, so git diff is clean here.
-          # Don't exit on that case -- carry the notice on an empty commit so a
-          # PR still exists; the auto-merge gate keeps it open for review. Any
-          # other no-op run still exits early as before.
+          # A new xdna release branch needs a human decision but changes no
+          # pinned file, so git diff is clean here (a rev/branch drift, by
+          # contrast, rewrites rev/hash -- its tree is dirty and never reaches
+          # this path). Don't exit on the clean case -- carry the notice on an
+          # empty commit so a PR still exists; the auto-merge gate keeps it open
+          # for review. Any other no-op run still exits early as before.
           PR_TITLE="chore: bump upstream package versions"
           COMMIT_OPTS=()
           if git diff --quiet; then
@@ -251,7 +252,7 @@ jobs:
               BODY+="Tracking \`$XDNA_BRANCH\`, but \`$XDNA_BRANCH_LATEST\` exists -- a cross-release jump (hundreds of kernel-driver commits). Bump \`XDNA_BRANCH\` in \`scripts/check-updates.sh\` and the \`rev\`/\`hash\` in \`pkgs/xrt-plugin-amdxdna/default.nix\` by hand after review."$'\n'
             else
               BODY+=$'\n'"### ⚠️ xdna-driver: pinned rev out of sync with branch \`$XDNA_BRANCH\`"$'\n'
-              BODY+="The pinned rev is not a linear ancestor of the head of branch \`$XDNA_BRANCH\` (a half-done bump, or an upstream rebase/force-push). Realign the \`rev\`/\`hash\` in \`pkgs/xrt-plugin-amdxdna/default.nix\` with branch \`$XDNA_BRANCH\` by hand after review."$'\n'
+              BODY+="This run auto-advanced the \`rev\`/\`hash\` in \`pkgs/xrt-plugin-amdxdna/default.nix\` to the head of branch \`$XDNA_BRANCH\`, which is not a linear descendant of the previous pin (an upstream rebase/force-push, or a cross-branch jump). That bump is in this PR's diff -- verify it and merge, or revert it; do not merge it unreviewed."$'\n'
             fi
           fi
 
