@@ -80,6 +80,34 @@ standalone (`eagle3 requires ctx_other to be set`). `GGML_CUDA_FORCE_MMQ` /
 `GGML_CUDA_FORCE_CUBLAS` would have discriminated the GEMM path but no longer
 exist in this llama.cpp version.
 
+## Prior art upstream
+
+"ROCm produces garbage on gfx1151 while Vulkan is fine on the same box" is a
+known, recurring class of bug in llama.cpp — not one bug, a family of them, each
+found and fixed per model architecture or per kernel:
+
+| Upstream | Symptom | State |
+| --- | --- | --- |
+| [llama.cpp#17797](https://github.com/ggml-org/llama.cpp/issues/17797) | gfx1151 ROCm gibberish, Vulkan unaffected | **closed** by [#17817](https://github.com/ggml-org/llama.cpp/pull/17817), merged 2025-12-06 — MMF fp16/bf16 matmul was being used on RDNA3 where it computes wrong results; fix restricts MMF to RDNA4 |
+| [llama.cpp#21416](https://github.com/ggml-org/llama.cpp/issues/21416) | gfx1151 ROCm endless loop of garbage tokens on gemma-4-26B-A4B; Vulkan *and* CUDA correct | **open** |
+| [llama.cpp#27856](https://github.com/ggml-org/llama.cpp/issues/27856) / [#27941](https://github.com/ggml-org/llama.cpp/pull/27941) | qwen4exp garbage on gfx1151 over ROCm 7.x, traced to the KV/QSA indexer | fixed ~2026-08-31 |
+| [TheRock#7714](https://github.com/ROCm/TheRock/issues/7714) | Gemma-4-E4B emits only `<unused49>` past ~7k ctx on gfx1151, ROCm 10.1.0a nightly; the 7.14 release build is correct | open |
+
+Two things follow for this host. The #17797 fix predates our build by eight
+months, so this is **not** that bug. And our build is llama.cpp `bb4caa7`
+(2026-08-21), which **predates** the qwen4exp fix — though that one is specific
+to a different architecture than the qwen35 model measured here.
+
+So the finding above is not a novel class. What it adds is the part the upstream
+reports do not have: a deterministic numeric metric instead of "looks like
+gibberish", the offload boundary that localises the blowup to the output head,
+and the `-ub` dependence. If this is filed upstream, those are the parts worth
+carrying.
+
+**Not yet checked: whether a current llama.cpp still reproduces this.** Given how
+fast this area is being fixed, that is the first thing to do before filing —
+build master and re-run the loop above.
+
 ## What this says about #105
 
 [#105](https://github.com/noamsto/nix-amd-ai/issues/105) reports models
