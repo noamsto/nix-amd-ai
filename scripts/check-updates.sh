@@ -204,6 +204,18 @@ reject_odd GAIA_LATEST "$GAIA_LATEST"
 reject_odd_list GAIA_SCRIPTS_LATEST "$GAIA_SCRIPTS_LATEST"
 [ -z "$MTP_REQUIRED" ] || reject_odd MTP_REQUIRED "$MTP_REQUIRED"
 
+# A run needs the validation build only when a bump actually changes a file:
+# FLM/Lemonade/xdna-driver rev/vLLM, or a nixpkgs lock refresh. The review-only
+# flags (xdna_branch, mtp_override, gaia) change nothing on disk, so building on
+# them is building an unchanged tree -- a full 4-package rebuild every week for
+# no diff. needs_update still opens the notice PR; build_needed gates the build.
+BUILD_NEEDED=false
+[ "$FLM_LATEST" != "$FLM_CURRENT" ] && BUILD_NEEDED=true
+[ "$LEM_LATEST" != "$LEM_CURRENT" ] && BUILD_NEEDED=true
+[ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && BUILD_NEEDED=true
+[ "$VLLM_LATEST" != "$VLLM_CURRENT" ] && BUILD_NEEDED=true
+[ "$NIXPKGS_NEEDS_UPDATE" = "true" ] && BUILD_NEEDED=true
+
 if [ -n "${GITHUB_OUTPUT:-}" ]; then
   {
     echo "flm_latest=$FLM_LATEST"
@@ -218,6 +230,7 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "xdna_branch_needs_update=$XDNA_BRANCH_NEEDS_UPDATE"
     echo "vllm_current=$VLLM_CURRENT"
     echo "needs_update=$NEEDS_UPDATE"
+    echo "build_needed=$BUILD_NEEDED"
     echo "vllm_needs_update=$VLLM_NEEDS_UPDATE"
     echo "nixpkgs_needs_update=$NIXPKGS_NEEDS_UPDATE"
     echo "mtp_cleanup=$MTP_CLEANUP"

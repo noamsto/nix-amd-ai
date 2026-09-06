@@ -40,7 +40,7 @@ jobs:
         run: nix flake update nixpkgs
 
       - name: Bump versions
-        if: steps.check.outputs.needs_update == 'true'
+        if: steps.check.outputs.build_needed == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
           FLM_LATEST: ${{ steps.check.outputs.flm_latest }}
@@ -66,7 +66,7 @@ jobs:
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
 
       - name: Validate flake eval
-        if: steps.check.outputs.needs_update == 'true'
+        if: steps.check.outputs.build_needed == 'true'
         id: flake_check
         continue-on-error: true
         run: |
@@ -87,7 +87,7 @@ jobs:
           fi
 
       - name: Build updated packages
-        if: steps.check.outputs.needs_update == 'true'
+        if: steps.check.outputs.build_needed == 'true'
         id: build
         env:
           VLLM_NEEDS_UPDATE: ${{ steps.check.outputs.vllm_needs_update }}
@@ -130,6 +130,7 @@ jobs:
           VLLM_CURRENT: ${{ steps.check.outputs.vllm_current }}
           VLLM_NEEDS_UPDATE: ${{ steps.check.outputs.vllm_needs_update }}
           NIXPKGS_DIFFS: ${{ steps.check.outputs.nixpkgs_backend_diffs }}
+          NIXPKGS_NEEDS_UPDATE: ${{ steps.check.outputs.nixpkgs_needs_update }}
           MTP_OVERRIDE_NEEDS_UPDATE: ${{ steps.check.outputs.mtp_override_needs_update }}
           MTP_CLEANUP: ${{ steps.check.outputs.mtp_cleanup }}
           MTP_REQUIRED: ${{ steps.check.outputs.mtp_required }}
@@ -160,6 +161,36 @@ jobs:
             fi
           fi
 
+          # Don't stack a fresh notice PR every week while an earlier one for the
+          # same decision is still open and unactioned -- one is enough.
+          if [ ${#COMMIT_OPTS[@]} -gt 0 ]; then
+            # `--search ... in:title` is fuzzy/tokenized, so confirm an exact
+            # title match before treating a hit as our standing notice --
+            # otherwise an unrelated PR sharing these words would suppress it.
+            existing=$(gh pr list --state open --search "\"$PR_TITLE\" in:title" \
+              --json number,title \
+              --jq "map(select(.title == \"$PR_TITLE\")) | .[0].number // empty" \
+              2>/dev/null || true)
+            if [ -n "$existing" ]; then
+              echo "notice PR #$existing already open for this decision; not opening another"
+              exit 0
+            fi
+          fi
+
+          # Did a real version actually move (vs. a bare lock refresh or a
+          # review-only notice)? Drives the honest title and header below.
+          HAS_UPDATE=""
+          [ "$FLM_LATEST" != "$FLM_CURRENT" ] && HAS_UPDATE=1
+          [ "$LEM_LATEST" != "$LEM_CURRENT" ] && HAS_UPDATE=1
+          [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && HAS_UPDATE=1
+          [ "$VLLM_NEEDS_UPDATE" = "true" ] && HAS_UPDATE=1
+          [ -n "$NIXPKGS_DIFFS" ] && HAS_UPDATE=1
+          # A committed run that only refreshed the lock (no version/backend
+          # diff) isn't a "bump" -- name it honestly in the title and commit.
+          if [ ${#COMMIT_OPTS[@]} -eq 0 ] && [ -z "$HAS_UPDATE" ] && [ "$NIXPKGS_NEEDS_UPDATE" = "true" ]; then
+            PR_TITLE="chore: refresh nixpkgs lock"
+          fi
+
           BRANCH="update/$(date +%Y%m%d)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -168,13 +199,10 @@ jobs:
           git commit "${COMMIT_OPTS[@]}" -m "$PR_TITLE"
           git push origin "$BRANCH"
 
-          # A notice-only run (empty commit) bumped nothing, so don't lead with
-          # "updates detected" over an empty list -- name the decision instead.
-          if [ ${#COMMIT_OPTS[@]} -gt 0 ]; then
-            BODY="## xdna-driver: a release-branch decision is needed"$'\n\n'
-          else
-            BODY="## Upstream updates detected"$'\n\n'
-          fi
+          # Build the body first, then pick a header that matches what actually
+          # accumulated (below) -- so we never lead with "Upstream updates
+          # detected" over an empty list.
+          BODY=""
           [ "$FLM_LATEST" != "$FLM_CURRENT" ] && \
             BODY+="- FastFlowLM: $FLM_CURRENT -> $FLM_LATEST"$'\n'
           [ "$LEM_LATEST" != "$LEM_CURRENT" ] && \
@@ -225,6 +253,25 @@ jobs:
               BODY+=$'\n'"### ⚠️ xdna-driver: pinned rev out of sync with branch \`$XDNA_BRANCH\`"$'\n'
               BODY+="The pinned rev is not a linear ancestor of the head of branch \`$XDNA_BRANCH\` (a half-done bump, or an upstream rebase/force-push). Realign the \`rev\`/\`hash\` in \`pkgs/xrt-plugin-amdxdna/default.nix\` with branch \`$XDNA_BRANCH\` by hand after review."$'\n'
             fi
+          fi
+
+          # Header reflects what actually changed, not what triggered the run: a
+          # review-only run (empty commit) names the decision; a real version
+          # move is an update; a bare lock refresh is neither. Keyed on
+          # HAS_UPDATE, not on -n "$BODY", so a body holding only a warning
+          # (e.g. a failed build on a lock refresh) isn't mislabelled "updates".
+          if [ ${#COMMIT_OPTS[@]} -gt 0 ]; then
+            HEADER="## xdna-driver: a release-branch decision is needed"
+          elif [ -n "$HAS_UPDATE" ]; then
+            HEADER="## Upstream updates detected"
+          else
+            HEADER="## nixpkgs lock refreshed (no packaged version changes)"
+          fi
+          BODY="${BODY#$'\n'}"
+          if [ -n "$BODY" ]; then
+            BODY="$HEADER"$'\n\n'"$BODY"
+          else
+            BODY="$HEADER"
           fi
 
           PR_URL=$(echo "$BODY" | gh pr create --title "$PR_TITLE" --body-file -)
