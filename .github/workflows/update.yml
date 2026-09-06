@@ -186,9 +186,14 @@ jobs:
           [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && HAS_UPDATE=1
           [ "$VLLM_NEEDS_UPDATE" = "true" ] && HAS_UPDATE=1
           [ -n "$NIXPKGS_DIFFS" ] && HAS_UPDATE=1
-          # A committed run that only refreshed the lock (no version/backend
-          # diff) isn't a "bump" -- name it honestly in the title and commit.
-          if [ ${#COMMIT_OPTS[@]} -eq 0 ] && [ -z "$HAS_UPDATE" ] && [ "$NIXPKGS_NEEDS_UPDATE" = "true" ]; then
+          # A pending xdna release-branch decision is the headline regardless of
+          # what else moved this run -- surface it in the title (the PR list),
+          # not just the body, so a coinciding lock refresh can't bury it.
+          # Otherwise a committed run that only refreshed the lock (no
+          # version/backend diff) isn't a "bump" -- name it honestly.
+          if [ "$XDNA_BRANCH_NEEDS_UPDATE" = "true" ]; then
+            PR_TITLE="chore: xdna-driver release branch needs review"
+          elif [ ${#COMMIT_OPTS[@]} -eq 0 ] && [ -z "$HAS_UPDATE" ] && [ "$NIXPKGS_NEEDS_UPDATE" = "true" ]; then
             PR_TITLE="chore: refresh nixpkgs lock"
           fi
 
@@ -257,11 +262,12 @@ jobs:
           fi
 
           # Header reflects what actually changed, not what triggered the run: a
-          # review-only run (empty commit) names the decision; a real version
-          # move is an update; a bare lock refresh is neither. Keyed on
-          # HAS_UPDATE, not on -n "$BODY", so a body holding only a warning
-          # (e.g. a failed build on a lock refresh) isn't mislabelled "updates".
-          if [ ${#COMMIT_OPTS[@]} -gt 0 ]; then
+          # a pending xdna decision leads (even on a dirty tree, so a coinciding
+          # lock refresh can't relabel it "no changes"); else a real version
+          # move is an update; else a bare lock refresh. The update header is
+          # keyed on HAS_UPDATE, not -n "$BODY", so a body holding only a
+          # warning (e.g. a failed build on a lock refresh) isn't mislabelled.
+          if [ "$XDNA_BRANCH_NEEDS_UPDATE" = "true" ]; then
             HEADER="## xdna-driver: a release-branch decision is needed"
           elif [ -n "$HAS_UPDATE" ]; then
             HEADER="## Upstream updates detected"
