@@ -122,7 +122,7 @@ The module splits into an NPU half and a GPU half. The NPU half (XRT + `amdxdna`
 
 **Krackan Point** (Ryzen AI 7 350 / 5 340, PCI `1022:17f0` rev `0x20`) is XDNA 2 with the same 8-column AIE array, but `amdxdna` gives it its own device profile (`dev_npu6_info`, vs `dev_npu4_info` for Strix Point) and nothing here has been tested on it. Reported failing at model load with `DRM_IOCTL_AMDXDNA_CREATE_HWCTX` — see #79.
 
-Set `enableNPU = false` to drop the XRT/`amdxdna` closure (kernel module, IOMMU param, udev rules, memlock limits) and run GPU-only. Example for a **Hawk Point** APU (Ryzen 9 8945HS, Radeon 780M / `gfx1103`):
+Set `enableNPU = false` to drop the XRT/`amdxdna` closure (kernel module, udev rules, memlock limits) and run GPU-only. Example for a **Hawk Point** APU (Ryzen 9 8945HS, Radeon 780M / `gfx1103`):
 
 ```nix
 hardware.amd-npu = {
@@ -377,6 +377,16 @@ The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
 **Do not do this on a host that uses the NPU.** amdxdna needs the IOMMU present
 for PASID; with `amd_iommu=off` there is no IOMMU at all and the NPU dies.
 `amd_iommu=off` is only viable on a GPU-only host that has given up XDNA.
+
+`enableNPU` asserts on this, because the param does not always come from the
+line you wrote: any module in the closure can contribute to `boot.kernelParams`,
+and Jovian-NixOS ships `amd_iommu=off` in the SteamOS cmdline defaults that
+`jovian.steamos.useSteamOSConfig` turns on. Enabling Steam Gaming Mode on an NPU
+host is enough to do it. To see the merged list:
+
+```console
+$ nix eval --json .#nixosConfigurations.<host>.config.boot.kernelParams
+```
 
 You also don't need it for large-model headroom, which is the usual reason
 people reach for it. The 128 GB Halo host measured above boots

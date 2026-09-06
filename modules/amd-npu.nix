@@ -4,7 +4,7 @@
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkIf mkDefault types optionalString optional optionals optionalAttrs versionAtLeast concatStringsSep;
+  inherit (lib) mkEnableOption mkOption mkIf mkDefault types optionalString optional optionals optionalAttrs versionAtLeast concatStringsSep any;
   cfg = config.hardware.amd-npu;
 
   # The Tauri desktop app is the only part of lemonade that pulls a Rust/npm
@@ -617,6 +617,12 @@ in {
       {
         assertion = !cfg.enableNPU || versionAtLeast config.boot.kernelPackages.kernel.version "6.14";
         message = "AMD NPU (amdxdna) requires kernel >= 6.14.";
+      }
+      {
+        assertion =
+          !cfg.enableNPU
+          || !(any (p: builtins.elem p ["amd_iommu=off" "iommu=off"]) config.boot.kernelParams);
+        message = "hardware.amd-npu.enableNPU needs the IOMMU, but boot.kernelParams disables it. amdxdna uses PASID/SVA and aborts at probe with 'aie2_init: Running without IOMMU not supported', leaving the NPU unbound and no /dev/accel. Remove amd_iommu=off / iommu=off (note another module may be contributing it), or set enableNPU = false.";
       }
       {
         assertion = !cfg.enableFastFlowLM || cfg.enableNPU;
