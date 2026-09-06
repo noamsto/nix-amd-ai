@@ -1,0 +1,107 @@
+# llamacpp:rocm is numerically broken on gfx1151
+
+**Do not use the `llamacpp:rocm` recipe on Strix Halo.** Use `llamacpp:vulkan`.
+It is not a speed question: the ROCm backend returns wrong numbers, and a model
+served through it produces near-random tokens.
+
+Measured 2026-09-06 on **this** Halo host and nowhere else — Ryzen AI MAX+ 395,
+gfx1151 (Radeon 8060S), kernel 7.2.2, `linux-firmware` 20260810, rocm-runtime
+7.2.3, nixpkgs `llama-cpp` 0.3.0 (llama.cpp build b10566). Nothing here is
+claimed for gfx1150, for other kernels, or for other ROCm versions.
+
+## The measurement
+
+`llama-perplexity` over a fixed 51 KB corpus, `-c 512 --chunks 6 --seed 42 -t 8`,
+Qwen3.5-4B `UD-Q4_K_XL` (`n_layer = 32`). Same model, same corpus, same flags —
+only the backend changes. Repeat runs are byte-identical, so every number below
+is deterministic rather than a sample.
+
+| Backend (as wired in `/etc/lemonade/backends`) | PPL | |
+| --- | ---: | --- |
+| CPU | 6.8056 | reference |
+| Vulkan, `-ngl 99` | 6.8067 | 0.02% from CPU — correct |
+| **ROCm, `-ngl 99`** | **1334.0014** | **196x worse — garbage** |
+
+A perplexity of 1334 against a reference of 6.81 is not degraded output, it is
+noise. That is what the reports of tool-call loops and mid-task stalls look like
+from inside a harness: the logits themselves are wrong, so token selection is
+effectively random.
+
+## Two separate defects
+
+Sweeping `-ngl` (how many layers go to the GPU) separates them.
+
+| `-ngl` | 0 | 1 | 4 | 8 | 16 | 24 | 32 | 33 | 99 |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| PPL | 6.79 | 6.79 | 6.85 | 7.86 | 8.90 | 9.13 | 9.07 | **1334.00** | **1334.00** |
+
+**Per-layer corruption.** Error accumulates with each offloaded layer: already
+~15% degraded at 8 layers, which is far outside floating-point noise — Vulkan at
+*full* offload stays within 0.02% of CPU.
+
+**A catastrophic output head.** The model has 32 layers, and `-ngl 33` logs
+`offloaded 33/33`: layers plus the output head. Everything from `-ngl 33` to
+`-ngl 99` is byte-identical, so the entire 196x blowup is one tensor — `lm_head`
+— moving to the GPU. It produces the logits directly, which is why corrupting it
+randomises output instead of merely dulling it.
+
+## It is shape-dependent
+
+Micro-batch size moves the error by four orders of magnitude, and moves the two
+defects in *opposite* directions:
+
+| `-ub` | 64 | 128 | 256 | 512 | 1024 |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| PPL, `-ngl 99` (head on GPU) | 229,871 | 251,392 | 38,075 | 1,334 | 14.24 |
+| PPL, `-ngl 32` (head on CPU) | — | 7.15 | — | 9.07 | — |
+
+That signature — deterministic, shape-keyed, opposite-signed — points at a
+tiling/remainder bug in a kernel, not at general numerical noise.
+
+## Ruled out
+
+Each tested by changing one variable against the same loop. Where an env var was
+used, its presence in the loaded library was verified first with `grep -a`
+(`strings` is not installed on this host and silently returns nothing).
+
+| Hypothesis | Test | Result |
+| --- | --- | --- |
+| Flash attention | `-fa off` / `-fa on` | both garbage (1332 / 1334) |
+| SDMA copy path | `HSA_ENABLE_SDMA=0` | unchanged (var confirmed read by ROCr) |
+| Kernel fusion | `GGML_CUDA_DISABLE_FUSION=1` | unchanged |
+| CUDA graphs | `GGML_CUDA_DISABLE_GRAPHS=1` | unchanged |
+| Wrong ISA / arch override | `HSA_OVERRIDE_GFX_VERSION` unset | not in play |
+| Races, preemption, thermal | repeat runs byte-identical | deterministic, so excluded |
+
+**Not tested, and the best remaining lead:** a quant-specific dequant/GEMM
+kernel. The clean experiment is the same model in BF16 vs Q8_0 vs Q4_K; the only
+non-K-quant models on this host are eagle3 speculative drafts, which cannot run
+standalone (`eagle3 requires ctx_other to be set`). `GGML_CUDA_FORCE_MMQ` /
+`GGML_CUDA_FORCE_CUBLAS` would have discriminated the GEMM path but no longer
+exist in this llama.cpp version.
+
+## What this says about #105
+
+[#105](https://github.com/noamsto/nix-amd-ai/issues/105) reports models
+misbehaving on this exact kernel + firmware pair and recommends pinning
+`linux-firmware` to 20260622 and the kernel to 7.1.8. The symptom is real and the
+report was worth filing — it is what led here. The proposed cause is not
+supported by these measurements:
+
+- Firmware and kernel are shared by all three backends, and **two of the three
+  are numerically perfect** on the suspect firmware. A shared cause cannot
+  produce a backend-specific failure.
+- The one firmware-carried path that Vulkan never exercises is SDMA, and
+  disabling it changes nothing.
+
+So the firmware downgrade is an expensive remedy — it rebuilds a large part of
+the system — for a fault it probably does not touch, and it leaves the actual
+broken path in place. Switching the recipe to `llamacpp:vulkan` costs nothing
+and is measurably correct.
+
+This does **not** prove firmware is irrelevant: the A/B against 20260622 has not
+been run, and it is now cheap to run, because the loop above is a ~25 s
+red/green signal. `scripts/` carries no harness for this; the commands are all in
+this document.
+
+Symptom reported by [@rabejens](https://github.com/rabejens) in #105.

@@ -522,8 +522,16 @@ The concurrency row is the interesting one: an NPU workload running alongside an
 - **General LLM inference (7B–26B Q4):** use **Vulkan**. On Strix Point 890M with llama.cpp b8770, Vulkan wins decode at every size tested and ties or wins prefill. The previous "ROCm for prefill-heavy" advice no longer holds now that ROCm targets gfx1150 natively (the gfx1102 Tensile arch-logic was apparently more tuned than gfx1150's is today).
 - **Power-budget / idle-GPU scenarios:** use **FLM/NPU** — decode is competitive with Vulkan and offloads the GPU, but the compile-on-first-load TTFT is noticeable.
 - **ROCm** is kept installed as a fallback and for ecosystem tooling (`rocminfo`, profiling, HIP apps); re-evaluate when newer rocBLAS/Tensile logic for gfx1150 lands.
+- **On gfx1151, `llamacpp:rocm` is not a fallback — it returns wrong numbers.**
+  Perplexity 1334 where CPU and Vulkan both give 6.81, deterministic, on kernel
+  7.2.2 with `linux-firmware` 20260810. Use `llamacpp:vulkan`. Method, the `-ngl`
+  and `-ub` sweeps, and what is ruled out:
+  [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md). Measured on a
+  Halo host only — the gfx1150 rows above are unaffected, and being throughput
+  tests they would not have caught this.
 
-Enable all three and let lemonade pick the recipe per model.
+Enable all three and let lemonade pick the recipe per model (on gfx1151, leave
+`llamacpp:rocm` unused until the above is fixed).
 
 ### Running ds4 beside lemond
 
