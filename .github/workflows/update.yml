@@ -143,17 +143,38 @@ jobs:
           XDNA_BRANCH_LATEST: ${{ steps.check.outputs.xdna_branch_latest }}
           XDNA_BRANCH_NEEDS_UPDATE: ${{ steps.check.outputs.xdna_branch_needs_update }}
         run: |
-          git diff --quiet && echo "No changes" && exit 0
+          # A new xdna release branch (or a rev/branch drift) needs a human
+          # decision but changes no pinned file, so git diff is clean here.
+          # Don't exit on that case -- carry the notice on an empty commit so a
+          # PR still exists; the auto-merge gate keeps it open for review. Any
+          # other no-op run still exits early as before.
+          PR_TITLE="chore: bump upstream package versions"
+          COMMIT_OPTS=()
+          if git diff --quiet; then
+            if [ "$XDNA_BRANCH_NEEDS_UPDATE" = "true" ]; then
+              echo "No file bumps, but xdna-driver needs review -- opening a notice-only PR"
+              COMMIT_OPTS=(--allow-empty)
+              PR_TITLE="chore: xdna-driver release branch needs review"
+            else
+              echo "No changes" && exit 0
+            fi
+          fi
 
           BRANCH="update/$(date +%Y%m%d)"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
           git add -A
-          git commit -m "chore: bump upstream package versions"
+          git commit "${COMMIT_OPTS[@]}" -m "$PR_TITLE"
           git push origin "$BRANCH"
 
-          BODY="## Upstream updates detected"$'\n\n'
+          # A notice-only run (empty commit) bumped nothing, so don't lead with
+          # "updates detected" over an empty list -- name the decision instead.
+          if [ ${#COMMIT_OPTS[@]} -gt 0 ]; then
+            BODY="## xdna-driver: a release-branch decision is needed"$'\n\n'
+          else
+            BODY="## Upstream updates detected"$'\n\n'
+          fi
           [ "$FLM_LATEST" != "$FLM_CURRENT" ] && \
             BODY+="- FastFlowLM: $FLM_CURRENT -> $FLM_LATEST"$'\n'
           [ "$LEM_LATEST" != "$LEM_CURRENT" ] && \
@@ -206,7 +227,7 @@ jobs:
             fi
           fi
 
-          PR_URL=$(echo "$BODY" | gh pr create --title "chore: bump upstream package versions" --body-file -)
+          PR_URL=$(echo "$BODY" | gh pr create --title "$PR_TITLE" --body-file -)
           echo "pr_url=$PR_URL" >> "$GITHUB_OUTPUT"
 
       # Auto-merge only the clean path: this job already built the 4 packages and
