@@ -24,14 +24,43 @@ The rest of this document is the diagnosis that led there. It is kept because
 the eliminations are what make the conclusion trustworthy, and because the same
 loop re-runs in ~25 s if this ever regresses.
 
+## Post-fix throughput (gfx1151, patched ROCm vs Vulkan)
+
+The patch moves tensors out of host memory into device memory, and upstream
+framed that as avoiding *"UMA prefill latency regressions"* — so it is worth
+knowing what it costs. `llama-bench`, Qwen3.5-4B `UD-Q4_K_XL`, `-ngl 99 -r 3`,
+on this Halo host (Ryzen AI MAX+ 395, gfx1151, kernel 7.2.2, ROCm 7.2.3,
+nixpkgs llama.cpp 0.3.0 **with the patch**):
+
+| Backend | pp512 | tg128 |
+| --- | ---: | ---: |
+| ROCm (patched) | 1900.72 ± 33.74 t/s | 58.38 ± 0.11 t/s |
+| Vulkan | 2001.00 ± 2.60 t/s | 62.39 ± 0.04 t/s |
+| | Vulkan +5.3% | Vulkan +6.9% |
+
+**Vulkan still wins, but now for the ordinary reason.** The old advice to prefer
+Vulkan on this part stands; what changed is that it rests on a few percent of
+throughput rather than on ROCm being wrong.
+
+**The patch shows no prefill blow-up.** ROCm prefill sits 5% behind Vulkan, in
+the same range as the gfx1150 tables in the README. Note there is no meaningful
+"before" to difference against: pre-patch throughput was the speed of a backend
+computing garbage, so it is not a baseline. ROCm's prefill variance is ~13x
+Vulkan's (±33.74 vs ±2.60), which is worth remembering before leaning on a
+single ROCm prefill figure.
+
+Different model and host from the README's benchmark tables, so this is recorded
+here rather than substituted into them.
+
 ## Follow-ups this opens
 
-- **Re-measure the gfx1151 ROCm benchmarks.** The patch moves tensors out of
-  host memory into device memory, and its own commit message frames that as
-  avoiding *"UMA prefill latency regressions"* — a performance-relevant change on
-  a UMA part. The `NPU 1B + iGPU ROCm 7B concurrently` row in the README, and the
-  conclusion drawn from it, were measured through the old path on the other Halo
-  host, and should be re-run.
+- **Re-measure the gfx1151 ROCm benchmarks.** Partly done — "Post-fix
+  throughput" above covers a 4B `llama-bench` run on a patched build, and shows
+  no prefill regression. Still open: the `NPU 1B + iGPU ROCm 7B concurrently`
+  row in the README and the conclusion drawn from it. That was measured through
+  the old host-memory path on the *other* Halo host (ASUS ROG Flow Z13, kernel
+  7.1.0), so it needs that machine and the NPU workload to redo — it cannot be
+  regenerated from this box.
 - **Check gfx1150.** The broken condition was `integrated && is_cuda_host(buft)`,
   which applies to *any* integrated GPU; the fix exempts gfx1151 by name only.
   Strix Point is also integrated and also RDNA3.5, so it may be affected and
