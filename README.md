@@ -492,6 +492,8 @@ Binds `127.0.0.1:8000` by default (`host`/`port`); the unit runs with `render`/`
 
 All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600). Prompt 256 tokens, generation 128 tokens, 3 iterations after 1 warmup.
 
+> **⚠️ The ROCm rows below were measured on a numerically broken backend.** gfx1150 is hit by the same RDNA3.5 host-access bug as gfx1151: on this host, ROCm reads perplexity 250,459 against a CPU reference of 385 for the very Gemma-4-26B-A4B model benchmarked here (and 1,638 vs 6.79 for Qwen3.5-4B), while CPU and Vulkan are correct. The throughput figures are real, but they time a backend producing garbage, so the ROCm-vs-Vulkan comparison is not a choice worth making from these numbers. This flake now patches it (`llamaCppRocmOverride`); the rows are left in place, unrevised, until they can be re-measured on a patched build. Vulkan and FLM rows are unaffected. See [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
+
 ### Large: Gemma-4-26B-A4B-it-GGUF (~15.7 GB, via `llama-bench`, llama.cpp b8770)
 
 | Metric | ROCm | Vulkan | Winner |
@@ -532,22 +534,23 @@ The concurrency row is the interesting one: an NPU workload running alongside an
 - **General LLM inference (7B–26B Q4):** use **Vulkan**. On Strix Point 890M with llama.cpp b8770, Vulkan wins decode at every size tested and ties or wins prefill. The previous "ROCm for prefill-heavy" advice no longer holds now that ROCm targets gfx1150 natively (the gfx1102 Tensile arch-logic was apparently more tuned than gfx1150's is today).
 - **Power-budget / idle-GPU scenarios:** use **FLM/NPU** — decode is competitive with Vulkan and offloads the GPU, but the compile-on-first-load TTFT is noticeable.
 - **ROCm** is kept installed as a fallback and for ecosystem tooling (`rocminfo`, profiling, HIP apps); re-evaluate when newer rocBLAS/Tensile logic for gfx1150 lands.
-- **gfx1151 ROCm needed a patch to be correct at all, and this flake carries
-  it.** Stock `llamacpp:rocm` on Strix Halo returned perplexity 1334 where CPU
-  and Vulkan both give 6.81 — near-random tokens, not merely slow ones. Cause:
-  gfx1151 reports as an integrated GPU, so ggml let tensors live in host memory
-  for the GPU to read directly, which hands back wrong data on this chip.
-  `llamaCppRocmOverride` in `flake.nix` applies `865374bb` from
-  [llama.cpp#28211](https://github.com/ggml-org/llama.cpp/issues/28211); with it
-  ROCm reads 6.8182 at every offload depth. Full diagnosis:
+- **RDNA3.5 iGPUs needed a patch to be numerically correct at all, and this
+  flake carries it.** Stock `llamacpp:rocm` returned near-random tokens on both
+  chips — perplexity 1334 on gfx1151 and 1638 on gfx1150, where CPU and Vulkan
+  both give 6.81. Cause: RDNA3.5 parts report as integrated GPUs, so ggml let
+  tensors live in host memory for the GPU to read directly, which hands back
+  wrong data on them. `llamaCppRocmOverride` in `flake.nix` carries `865374bb`
+  from [llama.cpp#28211](https://github.com/ggml-org/llama.cpp/issues/28211),
+  **widened from gfx1151-only to the whole RDNA3.5 family** because upstream's
+  version misses gfx1150. With it, both chips read 6.8182 at every offload
+  depth. Full diagnosis:
   [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md). The patch
   retires itself — the build fails with instructions once nixpkgs ships a
   llama.cpp that already carries the fix.
 
-  Two things this leaves open, both tracked in that doc: the gfx1151 ROCm rows
-  above were measured through the old host-memory path and want re-running, and
-  **gfx1150 has not been checked** — it is also integrated and also RDNA3.5, but
-  the upstream fix exempts gfx1151 by name only.
+  Still open, tracked in that doc: the gfx1151 and gfx1150 ROCm benchmark rows
+  were all measured through the old host-memory path and want re-running on a
+  patched build.
 
 Enable all three and let lemonade pick the recipe per model.
 
