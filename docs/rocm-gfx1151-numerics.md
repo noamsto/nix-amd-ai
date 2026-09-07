@@ -70,6 +70,8 @@ used, its presence in the loaded library was verified first with `grep -a`
 | --- | --- | --- |
 | Flash attention | `-fa off` / `-fa on` | both garbage (1332 / 1334) |
 | SDMA copy path | `HSA_ENABLE_SDMA=0` | unchanged (var confirmed read by ROCr) |
+| hipBLASLt | `ROCBLAS_USE_HIPBLASLT=0` vs `=1` | 1326.89 vs 1310.89 -- path changed, both garbage |
+| Our packaging / ROCm version | AMD lemonade prebuilt gfx1151, ROCm 10.1.0a | reproduces both defects |
 | Kernel fusion | `GGML_CUDA_DISABLE_FUSION=1` | unchanged |
 | CUDA graphs | `GGML_CUDA_DISABLE_GRAPHS=1` | unchanged |
 | Quant-specific kernel | uniform Q8_0 and Q4_0 requants | both equally broken; Q8_0 worst |
@@ -125,6 +127,31 @@ reports do not have: a deterministic numeric metric instead of "looks like
 gibberish", the offload boundary that localises the blowup to the output head,
 and the `-ub` dependence. If this is filed upstream, those are the parts worth
 carrying.
+
+## It is not our packaging: AMD's own gfx1151 build reproduces it
+
+[`lemonade-sdk/llamacpp-rocm`](https://github.com/lemonade-sdk/llamacpp-rocm)
+publishes daily prebuilt ROCm binaries per GPU target, including a dedicated
+`gfx1151` one. Release `b1325` bundles its own ROCm runtime
+(`libamdhip64.so.7.16.26332`, ROCm **10.1.0a20260822**) and builds llama.cpp
+`3ad1b`. Run under `steam-run` with the same model, corpus and flags:
+
+| `-ngl` | ours (nixpkgs, ROCm 7.2.3, b10830) | lemonade b1325 (ROCm 10.1.0a, `3ad1b`) |
+| --- | ---: | ---: |
+| 0 | 6.8024 | 6.8288 |
+| 32 | 15.6257 | **15.6608** |
+| 99 | 1326.89 | **1334.57** |
+
+Both defects reproduce at near-identical magnitude across **two ROCm major
+versions**, a different llama.cpp commit, and a vendor-produced binary. That
+rules out our nixpkgs derivation, our build flags, and ROCm 7.2.3 specifically.
+
+It also closes off the obvious escape hatch: the `llamacpp:system` recipe wired
+through `LEMONADE_GGML_HIP_PATH` points at exactly this build, so switching to it
+does not help.
+
+Their `-ngl 32` figure matches our *master* (15.63), not our shipped b10566
+(9.07) — independent corroboration of the regression recorded below.
 
 ## Current master still reproduces it — and the per-layer defect is worse
 
