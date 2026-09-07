@@ -3,17 +3,18 @@
 Everything in this repo that is blocked on Halo hardware, ordered so each step
 unblocks the next.
 
-**Status (2026-09-06): the box exists, Phases 0-2 are done, and #105 is
-diagnosed — Phase 3 is unblocked for Vulkan and CPU, not for ROCm.** The
-misbehaviour reported in #105 is not the kernel/firmware pair corrupting
-everything: on this host `llamacpp:rocm` returns garbage (perplexity 1334) while
-Vulkan (6.8067) and CPU (6.8056) are correct on that same kernel 7.2.2 and
-linux-firmware 20260810. See [rocm-gfx1151-numerics.md](rocm-gfx1151-numerics.md).
+**Status (2026-09-07): the box exists, Phases 0-2 are done, #105 is diagnosed
+and fixed — Phase 3 is unblocked on all three backends.** The misbehaviour in
+#105 was not the kernel/firmware pair: stock `llamacpp:rocm` returned garbage
+(perplexity 1334) while Vulkan (6.8067) and CPU (6.8056) were correct on that
+same kernel 7.2.2 and linux-firmware 20260810. The cause was ggml letting
+gfx1151 read tensors straight out of host memory; this flake now patches it
+(`llamaCppRocmOverride`, llama.cpp#28211) and ROCm reads 6.8182.
+See [rocm-gfx1151-numerics.md](rocm-gfx1151-numerics.md).
 
-So a Vulkan or CPU number measured today is trustworthy and need not be thrown
-away. **Any ROCm number is not** — which lands directly on #61, whose whole point
-is a ROCm-vs-Vulkan A/B. Establish ROCm's *correctness* first (nixpkgs ROCm is
-broken here; TheRock may not be) or #61 measures the speed of a wrong answer.
+**#61's ROCm-vs-Vulkan A/B is now worth running — but only against a patched
+build.** An unpatched ROCm measures the speed of a wrong answer, so any ROCm
+number taken on this host before 2026-09-07 is void.
 
 The point of the ordering is that **#61's decisive long-context A/B is the
 expensive one**, and it is worthless if the GTT ceiling or the kernel is wrong.
