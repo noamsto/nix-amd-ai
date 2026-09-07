@@ -19,6 +19,30 @@
     # upgrade response (missing the empty CRLF after the last header) for
     # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
     # python-websockets) reject with code 1006.
+    # gfx1151 reports as an integrated GPU, so ggml lets tensors sit in host
+    # memory for the GPU to read directly -- which returns wrong data on this
+    # chip. Measured on Halo: perplexity 1334 vs 6.81 on CPU/Vulkan, reproduced
+    # on AMD's own prebuilt, 6.82 with this patch. ggml-org/llama.cpp#28211;
+    # the patch is 865374bb from that thread.
+    #
+    # The prePatch guard retires this by itself: once the pinned nixpkgs carries
+    # a llama.cpp that already has the fix, the build fails telling you to
+    # delete the override rather than silently double-applying it.
+    llamaCppRocmOverride = pkgs:
+      pkgs.llama-cpp-rocm.overrideAttrs (old: {
+        patches = (old.patches or []) ++ [./patches/llamacpp-gfx1151-host-access.patch];
+        prePatch =
+          (old.prePatch or "")
+          + ''
+            if grep -q ggml_cuda_is_gfx1151 ggml/src/ggml-cuda/ggml-cuda.cu; then
+              echo "llama-cpp-rocm: upstream now carries the gfx1151 host-access fix." >&2
+              echo "Drop llamaCppRocmOverride and patches/llamacpp-gfx1151-host-access.patch." >&2
+              echo "See https://github.com/ggml-org/llama.cpp/issues/28211" >&2
+              exit 1
+            fi
+          '';
+      });
+
     libwebsocketsOverride = pkgs:
       pkgs.libwebsockets.overrideAttrs (old: rec {
         version = "4.5.8";
@@ -72,7 +96,7 @@
             fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
             llama-cpp = pinned.llama-cpp;
             llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
-            llama-cpp-rocm = pinned.llama-cpp-rocm;
+            llama-cpp-rocm = llamaCppRocmOverride pinned;
             whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
             stable-diffusion-cpp-vulkan = pinned.stable-diffusion-cpp.override {vulkanSupport = true;};
@@ -114,7 +138,7 @@
           fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
           llama-cpp = pkgs.llama-cpp;
           llama-cpp-vulkan = pkgs.llama-cpp.override {vulkanSupport = true;};
-          llama-cpp-rocm = pkgs.llama-cpp-rocm;
+          llama-cpp-rocm = llamaCppRocmOverride pkgs;
           whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
           stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};

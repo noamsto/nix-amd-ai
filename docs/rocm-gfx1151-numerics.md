@@ -1,13 +1,52 @@
-# llamacpp:rocm is numerically broken on gfx1151
+# llamacpp:rocm was numerically broken on gfx1151 — fixed, patch carried here
 
-**Do not use the `llamacpp:rocm` recipe on Strix Halo.** Use `llamacpp:vulkan`.
-It is not a speed question: the ROCm backend returns wrong numbers, and a model
-served through it produces near-random tokens.
+**Status (2026-09-07): fixed.** This flake patches `llama-cpp-rocm` with
+`865374bb` from [ggml-org/llama.cpp#28211](https://github.com/ggml-org/llama.cpp/issues/28211)
+— *"hip: disable direct host access on gfx1151"* — and ROCm now agrees with CPU
+and Vulkan to 0.2%. `llamacpp:rocm` is usable again on Strix Halo.
 
-Measured 2026-09-06 on **this** Halo host and nowhere else — Ryzen AI MAX+ 395,
+**Root cause.** gfx1151 reports as an integrated GPU, so ggml allowed tensors to
+live in *host* memory for the GPU to read directly. On this chip that hands back
+wrong data. Nothing downstream can recover from it — which is why the corruption
+was independent of quantization, of the matmul path, and of the ROCm version.
+
+| | before | after |
+| --- | ---: | ---: |
+| `-ngl 0` | 6.8024 | 6.8182 |
+| `-ngl 32` | 15.6257 | **6.8182** |
+| `-ngl 99` | 1326.89 | **6.8182** |
+
+Identical at every offload depth, as a correct backend must be. The `-ub` shape
+dependence below — four orders of magnitude — also collapses, to
+6.8171/6.8171/6.8298/6.8182, i.e. ordinary floating-point noise.
+
+The rest of this document is the diagnosis that led there. It is kept because
+the eliminations are what make the conclusion trustworthy, and because the same
+loop re-runs in ~25 s if this ever regresses.
+
+## Follow-ups this opens
+
+- **Re-measure the gfx1151 ROCm benchmarks.** The patch moves tensors out of
+  host memory into device memory, and its own commit message frames that as
+  avoiding *"UMA prefill latency regressions"* — a performance-relevant change on
+  a UMA part. The `NPU 1B + iGPU ROCm 7B concurrently` row in the README, and the
+  conclusion drawn from it, were measured through the old path on the other Halo
+  host, and should be re-run.
+- **Check gfx1150.** The broken condition was `integrated && is_cuda_host(buft)`,
+  which applies to *any* integrated GPU; the fix exempts gfx1151 by name only.
+  Strix Point is also integrated and also RDNA3.5, so it may be affected and
+  unpatched. The README's main ROCm-vs-Vulkan tables are gfx1150 and are
+  throughput-only, so their correctness half has never been checked. One
+  `llama-perplexity` run (CPU vs Vulkan vs ROCm) on that host settles it; if it
+  is also broken, `ggml_cuda_is_gfx1151` needs widening to RDNA3.5 upstream.
+
+## What was measured
+
+Measured 2026-09-06/07 on **this** Halo host and nowhere else — Ryzen AI MAX+ 395,
 gfx1151 (Radeon 8060S), kernel 7.2.2, `linux-firmware` 20260810, rocm-runtime
-7.2.3, nixpkgs `llama-cpp` 0.3.0 (llama.cpp build b10566). Nothing here is
-claimed for gfx1150, for other kernels, or for other ROCm versions.
+7.2.3, nixpkgs `llama-cpp` 0.3.0 (llama.cpp build b10566, plus master b10830).
+Nothing here is claimed for gfx1150, for other kernels, or for other ROCm
+versions. Every number below is the **pre-fix** state.
 
 ## The measurement
 
