@@ -54,20 +54,49 @@ here rather than substituted into them.
 
 ## Follow-ups this opens
 
-- **Re-measure the gfx1151 ROCm benchmarks.** Partly done — "Post-fix
-  throughput" above covers a 4B `llama-bench` run on a patched build, and shows
-  no prefill regression. Still open: the `NPU 1B + iGPU ROCm 7B concurrently`
-  row in the README and the conclusion drawn from it. That was measured through
-  the old host-memory path on the *other* Halo host (ASUS ROG Flow Z13, kernel
-  7.1.0), so it needs that machine and the NPU workload to redo — it cannot be
-  regenerated from this box.
-- **Check gfx1150.** The broken condition was `integrated && is_cuda_host(buft)`,
-  which applies to *any* integrated GPU; the fix exempts gfx1151 by name only.
-  Strix Point is also integrated and also RDNA3.5, so it may be affected and
-  unpatched. The README's main ROCm-vs-Vulkan tables are gfx1150 and are
-  throughput-only, so their correctness half has never been checked. One
-  `llama-perplexity` run (CPU vs Vulkan vs ROCm) on that host settles it; if it
-  is also broken, `ggml_cuda_is_gfx1151` needs widening to RDNA3.5 upstream.
+- **Re-measure the ROCm benchmarks.** Partly done — "Post-fix throughput" above
+  covers a 4B `llama-bench` run on a patched gfx1151 build, and shows no prefill
+  regression. Still open: the `NPU 1B + iGPU ROCm 7B concurrently` row in the
+  README (measured on the *other* Halo host, ASUS ROG Flow Z13, kernel 7.1.0, so
+  it needs that machine and the NPU workload to redo), and the gfx1150 tables,
+  whose ROCm rows were measured through the old path — see below.
+- **Check gfx1150.** *Done — it is affected too. See the next section.*
+
+## gfx1150 (Strix Point) is affected too, and upstream's fix misses it
+
+The broken condition is `integrated && is_cuda_host(buft)`, which applies to
+*any* integrated GPU, while upstream's `865374bb` exempts gfx1151 alone
+(`cc == GGML_CUDA_CC_RDNA3_5 + 1`). Strix Point is equally integrated and
+equally RDNA3.5, so it was worth checking. Measured on `tp-g6` (Ryzen AI 9 HX
+PRO 370, Radeon 890M, gfx1150, kernel 7.2.2) with the **deployed** backends:
+
+| Model | CPU | Vulkan | ROCm |
+| --- | ---: | ---: | ---: |
+| Gemma-4-26B-A4B UD-Q4_K_M | 384.86 | 367.26 | **250,459.96** |
+| Qwen3.5-4B UD-Q4_K_XL | 6.7926 | — | **1,638.55** |
+
+Deterministic (a repeat run of the 26B gave byte-identical 250,459.9596), CPU
+path clean (`-ngl 0` reproduces the CPU figure exactly), and corruption present
+at partial offload too. Two unrelated model families, so this is not a MoE or
+Gemma quirk.
+
+Widening the predicate from gfx1151 to the existing `GGML_CUDA_CC_IS_RDNA3_5`
+fixes it, with no regression on gfx1151:
+
+| Qwen3.5-4B, widened patch | `-ngl 0` | `-ngl 16` | `-ngl 99` |
+| --- | ---: | ---: | ---: |
+| gfx1150 | 6.8182 | 6.8182 | 6.8182 |
+| gfx1151 | — | — | 6.8182 |
+
+Identical at every offload depth and identical across both chips. This repo
+carries the widened form; upstream has been told on
+[#28211](https://github.com/ggml-org/llama.cpp/issues/28211).
+
+**Consequence for the README benchmarks.** The `Large: Gemma-4-26B-A4B` and
+`Qwen3.5-9B` tables are gfx1150 and their ROCm rows were measured through the
+broken path — real throughput, but for a backend returning garbage. They are
+annotated in place rather than deleted, since the Vulkan and FLM rows are
+unaffected.
 
 ## What was measured
 

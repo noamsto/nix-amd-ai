@@ -19,25 +19,36 @@
     # upgrade response (missing the empty CRLF after the last header) for
     # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
     # python-websockets) reject with code 1006.
-    # gfx1151 reports as an integrated GPU, so ggml lets tensors sit in host
-    # memory for the GPU to read directly -- which returns wrong data on this
-    # chip. Measured on Halo: perplexity 1334 vs 6.81 on CPU/Vulkan, reproduced
-    # on AMD's own prebuilt, 6.82 with this patch. ggml-org/llama.cpp#28211;
-    # the patch is 865374bb from that thread.
+    # RDNA3.5 iGPUs report as integrated, so ggml lets tensors sit in host
+    # memory for the GPU to read directly -- and that returns wrong data on
+    # them. Measured, CPU reference vs ROCm, same corpus and flags:
     #
-    # The prePatch guard retires this by itself: once the pinned nixpkgs carries
-    # a llama.cpp that already has the fix, the build fails telling you to
-    # delete the override rather than silently double-applying it.
+    #   gfx1151 Halo,        Qwen3.5-4B:      6.79 vs 1334      -> 6.8182 patched
+    #   gfx1150 Strix Point, Qwen3.5-4B:      6.79 vs 1638      -> 6.8182 patched
+    #   gfx1150 Strix Point, Gemma-4-26B-A4B: 385  vs 250459    (deployed build)
+    #
+    # Vulkan and CPU are correct on both chips throughout, and AMD's own gfx1151
+    # prebuilt reproduces it, so this is neither our packaging nor ROCm version.
+    #
+    # ggml-org/llama.cpp#28211 carries 865374bb for this, but that patch gates on
+    # gfx1151 alone (`cc == GGML_CUDA_CC_RDNA3_5 + 1`) and gfx1150 is equally
+    # affected. We widen it to the whole family via GGML_CUDA_CC_IS_RDNA3_5.
+    #
+    # The prePatch guard retires this by itself: `direct_host_access` is the
+    # variable both our patch and upstream's introduce, so when the pinned
+    # nixpkgs carries either form of the fix the build fails telling you to
+    # delete the override, rather than silently double-applying it.
     llamaCppRocmOverride = pkgs:
       pkgs.llama-cpp-rocm.overrideAttrs (old: {
-        patches = (old.patches or []) ++ [./patches/llamacpp-gfx1151-host-access.patch];
+        patches = (old.patches or []) ++ [./patches/llamacpp-rdna35-host-access.patch];
         prePatch =
           (old.prePatch or "")
           + ''
-            if grep -q ggml_cuda_is_gfx1151 ggml/src/ggml-cuda/ggml-cuda.cu; then
-              echo "llama-cpp-rocm: upstream now carries the gfx1151 host-access fix." >&2
-              echo "Drop llamaCppRocmOverride and patches/llamacpp-gfx1151-host-access.patch." >&2
-              echo "See https://github.com/ggml-org/llama.cpp/issues/28211" >&2
+            if grep -q direct_host_access ggml/src/ggml-cuda/ggml-cuda.cu; then
+              echo "llama-cpp-rocm: upstream now carries the host-access fix." >&2
+              echo "Drop llamaCppRocmOverride and patches/llamacpp-rdna35-host-access.patch." >&2
+              echo "Check it covers gfx1150 too, not just gfx1151:" >&2
+              echo "  https://github.com/ggml-org/llama.cpp/issues/28211" >&2
               exit 1
             fi
           '';
