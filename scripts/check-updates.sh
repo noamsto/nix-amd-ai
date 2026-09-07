@@ -7,11 +7,11 @@ FLM_LATEST=$(gh api repos/ROCm/FastFlowLM/releases/latest --jq '.tag_name' | sed
 LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name' | sed 's/^v//')
 # xdna-driver ships no releases and its newest tag predates our pin, so we
 # follow a release branch by name. XDNA_BRANCH is the single source of truth
-# for which one: a new commit on it is a routine bump that may auto-merge, but
-# a *newer branch* appearing (1.7 -> 1.9) is a cross-release jump of hundreds
-# of kernel-driver commits that must not -- surface it and gate the auto-merge,
-# like the gaia/MTP hand-bumps. bump XDNA_BRANCH here and the rev/hash in
-# pkgs/xrt-plugin-amdxdna/default.nix together when moving to a new branch.
+# for which one: a new commit on it is a routine bump that may auto-merge. A
+# *newer branch* appearing (1.7 -> 1.9) is a different thing entirely -- a
+# cross-release jump of hundreds of kernel-driver commits, and a decision rather
+# than a bump, since nothing here moves until someone bumps XDNA_BRANCH and the
+# rev/hash in pkgs/xrt-plugin-amdxdna/default.nix together, by hand.
 XDNA_BRANCH="1.7"
 XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=${XDNA_BRANCH}&per_page=1" --jq '.[0].sha')
 # highest N.M branch upstream; ignore main / VAI_* / ve2_* etc. The grep is
@@ -20,9 +20,9 @@ XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=${XDNA_BRANCH}&per_page=
 # whole run; a real gh-api failure still propagates, as everywhere else here.
 XDNA_BRANCH_LATEST=$(gh api --paginate repos/amd/xdna-driver/branches --jq '.[].name' \
   | { grep -E '^[0-9]+\.[0-9]+$' || true; } | sort -V | tail -1)
-XDNA_BRANCH_NEEDS_UPDATE=false
+XDNA_BRANCH_NEW=false
 if [ -n "$XDNA_BRANCH_LATEST" ] && [ "$XDNA_BRANCH_LATEST" != "$XDNA_BRANCH" ]; then
-  XDNA_BRANCH_NEEDS_UPDATE=true
+  XDNA_BRANCH_NEW=true
   echo "xdna-driver: tracking branch $XDNA_BRANCH, but $XDNA_BRANCH_LATEST exists (cross-release, review needed)"
 fi
 # vLLM-ROCm cuts one release per gfx target, so `releases/latest` returns
@@ -55,17 +55,19 @@ XDNA_CURRENT=$(grep 'rev = ' pkgs/xrt-plugin-amdxdna/default.nix | head -1 | sed
 # rev/hash, or vice versa), a plain commit bump would jump across release
 # branches and auto-merge it. Arm the review gate until a human realigns them.
 # Fail-safe: if the compare can't be fetched, arm the gate rather than merge.
+# Unlike XDNA_BRANCH_NEW, this rewrites rev/hash -- it has a diff, and the
+# auto-merge gate keys on it.
+XDNA_REV_DRIFT=false
 if [ "$XDNA_LATEST" != "$XDNA_CURRENT" ]; then
   xdna_cmp=$(gh api "repos/amd/xdna-driver/compare/${XDNA_CURRENT}...${XDNA_BRANCH}" --jq '.status' 2>/dev/null || true)
   if [ "$xdna_cmp" != "ahead" ]; then
-    XDNA_BRANCH_NEEDS_UPDATE=true
+    XDNA_REV_DRIFT=true
     echo "xdna-driver: pinned rev is not a linear ancestor of branch $XDNA_BRANCH (compare: ${xdna_cmp:-unavailable}); realign rev/hash and XDNA_BRANCH by hand"
   fi
 fi
 VLLM_CURRENT=$(grep 'releaseTag = ' pkgs/vllm-rocm/sources.nix | head -1 | sed 's/.*"\(.*\)".*/\1/; s/-gfx[^-]*$//')
 
 NEEDS_UPDATE=false
-[ "$XDNA_BRANCH_NEEDS_UPDATE" = "true" ] && NEEDS_UPDATE=true
 [ "$FLM_LATEST" != "$FLM_CURRENT" ] && NEEDS_UPDATE=true
 [ "$LEM_LATEST" != "$LEM_CURRENT" ] && NEEDS_UPDATE=true
 [ "$XDNA_LATEST" != "$XDNA_CURRENT" ] && NEEDS_UPDATE=true
@@ -206,9 +208,9 @@ reject_odd_list GAIA_SCRIPTS_LATEST "$GAIA_SCRIPTS_LATEST"
 
 # A run needs the validation build only when a bump actually changes a file:
 # FLM/Lemonade/xdna-driver rev/vLLM, or a nixpkgs lock refresh. The review-only
-# flags (xdna_branch, mtp_override, gaia) change nothing on disk, so building on
-# them is building an unchanged tree -- a full 4-package rebuild every week for
-# no diff. needs_update still opens the notice PR; build_needed gates the build.
+# flags (xdna_branch_new, mtp_override, gaia) change nothing on disk, so building
+# on them is building an unchanged tree -- a full 4-package rebuild every week
+# for no diff. needs_update still opens the PR; build_needed gates the build.
 BUILD_NEEDED=false
 [ "$FLM_LATEST" != "$FLM_CURRENT" ] && BUILD_NEEDED=true
 [ "$LEM_LATEST" != "$LEM_CURRENT" ] && BUILD_NEEDED=true
@@ -227,7 +229,8 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "xdna_current=$XDNA_CURRENT"
     echo "xdna_branch=$XDNA_BRANCH"
     echo "xdna_branch_latest=$XDNA_BRANCH_LATEST"
-    echo "xdna_branch_needs_update=$XDNA_BRANCH_NEEDS_UPDATE"
+    echo "xdna_branch_new=$XDNA_BRANCH_NEW"
+    echo "xdna_rev_drift=$XDNA_REV_DRIFT"
     echo "vllm_current=$VLLM_CURRENT"
     echo "needs_update=$NEEDS_UPDATE"
     echo "build_needed=$BUILD_NEEDED"
