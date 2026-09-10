@@ -26,14 +26,14 @@
 }:
 stdenv.mkDerivation rec {
   pname = "xrt";
-  # Pinned to the commit that amd/xdna-driver branch 1.7 references as a submodule
-  version = "unstable-2026-06-04";
+  # Pinned to the commit that amd/xdna-driver branch 1.9 references as a submodule
+  version = "unstable-2026-08-13";
 
   src = fetchFromGitHub {
     owner = "Xilinx";
     repo = "XRT";
-    rev = "8661761775a266b11992a3bd6eb08209d88aa845";
-    hash = "sha256-JrqJIGJoQiXTwXjZpqAXVaHx+6i09B1qtqkJzoRPZKw=";
+    rev = "e9db9ab15f10173f8d2fc93ff92ab4c7eb09d2e6";
+    hash = "sha256-C/PQDHH8t41pUYZv2PB8iCOKkXQ9Af5NX8QK98NvI7k=";
     fetchSubmodules = true;
   };
 

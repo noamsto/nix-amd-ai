@@ -12,7 +12,7 @@ LEM_LATEST=$(gh api repos/lemonade-sdk/lemonade/releases/latest --jq '.tag_name'
 # cross-release jump of hundreds of kernel-driver commits, and a decision rather
 # than a bump, since nothing here moves until someone bumps XDNA_BRANCH and the
 # rev/hash in pkgs/xrt-plugin-amdxdna/default.nix together, by hand.
-XDNA_BRANCH="1.7"
+XDNA_BRANCH="1.9"
 XDNA_LATEST=$(gh api "repos/amd/xdna-driver/commits?sha=${XDNA_BRANCH}&per_page=1" --jq '.[0].sha')
 # highest N.M branch upstream; ignore main / VAI_* / ve2_* etc. The grep is
 # wrapped so matching nothing (no N.M branch at all) leaves the var empty for
