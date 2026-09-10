@@ -28,7 +28,7 @@ in
       owner = "amd";
       repo = "xdna-driver";
       rev = "c4052fc30322f8fa0a7f388f171bcb065d6dab6b";
-      hash = "sha256-1PxTWwYC1I+EzQkWckPLWzRiT0rEQ5oTHf8hdU5Gyb0=";
+      hash = "sha256-cGSURJPOy7v/UoH1YpEfaN7CAx8F8yxo/t5OPX3GNWc=";
       fetchSubmodules = true;
     };
 
