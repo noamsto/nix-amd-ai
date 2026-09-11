@@ -75,10 +75,33 @@ cat /sys/class/drm/card1/device/mem_info_gtt_total   # expect 103079215104
       three unmeasured sources.
 - [ ] Confirm `amdgpu.gttsize` is genuinely unnecessary (it should already be
       unset; just verify nothing else set it).
+- [ ] **Check the BIOS graphics carve-out before tuning anything else.** A UMA
+      frame buffer assigned in firmware is taken before the kernel boots and
+      appears nowhere in `/proc/meminfo` — the machine just reports itself
+      smaller, and the file cache takes the loss. The iGPU allocates through GTT
+      either way, so the carve-out buys nothing here. Auto or minimum reports
+      about 512 MiB on this hardware. **Ours is above that**, measured
+      2026-09-11: `cat /sys/class/drm/card1/device/mem_info_vram_total` returns
+      `2147483648`, a 2.00 GiB carve-out. 1.5 GiB over the floor is too small to
+      explain anything we have seen, and dropping it has not been A/B'd.
 
 Do **not** set `amd_iommu=off`. It kills the NPU, and expelledboy showed it
 isn't needed for headroom anyway — his host runs `iommu.passthrough=0` and still
 loads an 80 GiB model.
+
+**What it costs to keep the IOMMU is now a live question rather than a rounding
+error.** peonist-ai measured 13-16% of prefill on their gfx1151 host, off
+against passthrough, with the mechanism being package power rather than the
+memory path — see [halogen-flash-teardown.md](halogen-flash-teardown.md). They
+never measured Translated mode, and Translated is what this host runs, so the
+number that matters to us does not exist yet. The A/B worth running, once Phase
+3 has a stable prefill harness:
+
+- [ ] Prefill at pp2048 under Translated (today's default), then `iommu=pt`,
+      then `amd_iommu=off`, sampling package power and shader clock alongside
+      each arm. Three arms, one kernel, NPU expected dead in the third.
+      Settles both whether their result reproduces here and whether the
+      passthrough compromise recovers any of it.
 
 ## Phase 2 — vLLM gfx1151 has never executed a kernel (#63, #68)
 
