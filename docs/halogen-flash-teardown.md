@@ -6,9 +6,8 @@ container image under a bespoke EULA. It serves one model family
 (Qwen3.8-Flash-Next) and hard-rejects other architectures.
 
 Nothing here is packageable — there is no source, and the flake builds from
-source. It is worth a document anyway, because it is the only expert-tuned
-gfx1151 engine with published numbers, and two of its claims bear directly on
-settings this repo recommends.
+source. It is the only expert-tuned gfx1151 engine with published numbers, and
+two of its claims bear directly on settings this repo recommends.
 
 **Everything under "What they publish" is their measurement on their machine,
 not ours.** Their reference host is a Ryzen AI Max+ 395 with 128 GB at ROCm
@@ -17,15 +16,9 @@ has been reproduced here.
 
 ## What we verified ourselves
 
-The image is 16 layers and about 850 MiB compressed; weights are downloaded
-separately and are not in it. Pulling the blobs needs no container runtime:
-
-```bash
-curl -sf "https://ghcr.io/token?scope=repository:peonist-ai/halogen-flash-server:pull&service=ghcr.io"
-# then GET /v2/peonist-ai/halogen-flash-server/manifests/0.5.6 with the token
-```
-
-Reading the engine binary out of the layer and inspecting it:
+The image is 16 layers and about 850 MiB compressed; weights download
+separately and are not in it. An anonymous ghcr token and the blob endpoint are
+enough to unpack it, so no container runtime is needed to look.
 
 | fact | value |
 | --- | --- |
@@ -35,15 +28,14 @@ Reading the engine binary out of the layer and inspecting it:
 | GEMM plan | `/opt/halogen/flash-tune.plan`, 30,644 bytes, magic `HGNTUNE3` |
 | HTTP front-end | `serve_api.py`, 149,064 bytes of plain Python source |
 
-**The hipBLASLt finding is the useful one, and it took `readelf -d` rather than
-a disassembler.** The fastest published gfx1151 engine routes every GEMM through
-hipBLASLt with an offline-tuned per-shape plan baked into the image. llama.cpp's
-HIP backend reaches for rocBLAS through hipBLAS instead. Whether swapping that
-path is worth anything for llama.cpp on this hardware is **unmeasured** — the
-observation is a lead, not a result.
+**hipBLASLt is the lead worth following.** The fastest published gfx1151 engine
+routes every GEMM through it with an offline-tuned per-shape plan baked into the
+image, while llama.cpp's HIP backend reaches for rocBLAS through hipBLAS
+instead. Whether that path is worth anything for llama.cpp on this hardware is
+**unmeasured**, and nothing here says it is.
 
 The tuning plan is their own container format rather than a hipBLASLt tuning
-file, so it cannot be dropped into another stack as-is. Their own docs describe
+file, so it cannot be dropped into another stack as-is. Their docs describe
 regenerating one by running with `HALOGEN_MATMUL_ALGOS=8` against a path that
 does not exist yet, which is the shape of hipBLASLt's offline algo selection.
 The method transfers even though the file does not.
@@ -77,10 +69,10 @@ yet; it needs a 118 GiB weights download.
 
 ### The IOMMU costs more than "a small memory-read speedup"
 
-This repo has described `amd_iommu=off` as buying a small memory-read win, and
-tells hosts that want it to set `iommu=pt`. Their measurement disagrees on both
-the size and the mechanism. On a compute-bound prefill they report a power
-budget tax rather than a memory path cost:
+The Strix Halo wiki's framing, which this repo carried, is that `amd_iommu=off`
+buys a small memory-read win. On a compute-bound prefill peonist-ai measured
+something both larger and differently caused — a power budget the translation
+machinery spends and the shaders then do not get:
 
 | arm | package power | shader clock | prefill @ 2048 |
 | --- | --- | --- | --- |
@@ -90,10 +82,10 @@ budget tax rather than a memory path cost:
 Every bandwidth-bound figure held exactly across the two arms, and they bisected
 it on one kernel, so it is the IOMMU rather than the kernel version.
 
-Two things follow. Passthrough is the **slow** arm here, so recommending
-`iommu=pt` for a memory-read win rests on a mechanism this contradicts. And the
-NPU trade is larger than this repo has implied: keeping the IOMMU is worth 13 to
-16 percent of prefill on their host.
+Passthrough is the **slow** arm here, so recommending `iommu=pt` for a
+memory-read win rests on a mechanism this contradicts, and the NPU trade is
+bigger than a rounding error: keeping the IOMMU costs 13 to 16 percent of
+prefill on their host.
 
 Their caveats are load-bearing: one machine, and they compared off against
 passthrough only. **Translated mode was never measured, and Translated is what
@@ -118,8 +110,8 @@ $ cat /sys/class/drm/card1/device/mem_info_gtt_total
 ```
 
 1.5 GiB above the minimum is small enough not to explain anything we have seen,
-and it has not been A/B'd here. It is listed so the next person checks the BIOS
-before tuning anything else.
+and dropping it has not been A/B'd here. Check the BIOS before tuning anything
+else regardless: on a host that carves out 16 GiB the effect is not small.
 
 ### Free memory can be plentiful and the wrong shape
 
@@ -130,11 +122,10 @@ from a hang. They also report that locked weights are counted as reclaimable
 page cache, so `free` and `MemAvailable` overstate available memory by the size
 of the model while `Mlocked` and `Unevictable` both stay at zero.
 
-**This is a candidate mechanism for something already recorded in the README**
-and never explained: running ds4 beside lemond ended with *both* endpoints
-unresponsive rather than one failing cleanly. Contiguous-block exhaustion
-produces exactly that signature. It is a hypothesis, not a diagnosis — the
-original event was not instrumented and has not been reproduced.
+That is a candidate mechanism for the one thing the README records and cannot
+explain: running ds4 beside lemond ended with *both* endpoints unresponsive
+rather than the second one failing to load. It stays a hypothesis — the original
+event was not instrumented and has not been reproduced.
 
 Our halo host is healthy on this metric at idle, for a baseline. From
 `/proc/buddyinfo`, zone Normal, 2026-09-11:
@@ -153,7 +144,7 @@ it is not, and this repo publishes numbers under the same pressures:
 
 - **Never quote an engine-side fixture number as a serving number.** They got
   this wrong twice, most sharply when a fixture put speculative decoding at
-  −23% on chat and live traffic measured +5 to +7 percent.
+  -23% on chat and live traffic measured +5 to +7 percent.
 - **Split the two benchmarks and never read across them**: real prompt shapes
   for the number of record, a synthetic size sweep for anything placed beside a
   llama-bench pp/tg table.
