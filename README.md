@@ -374,6 +374,14 @@ Halo measurements above contributed by [@expelledboy](https://github.com/expelle
 ### `amd_iommu=off` would kill the NPU
 
 The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
+It is not small, and on a compute-bound prefill it is not a memory-read effect:
+peonist-ai measured the IOMMU costing 13-16% of prefill on their gfx1151 host,
+by way of a power budget the translation machinery spends and the shaders then
+do not get. Their numbers, mechanism, and caveats are in
+[halogen-flash-teardown.md](docs/halogen-flash-teardown.md); none of it is
+reproduced here, and they never measured Translated mode, which is what our
+hosts run.
+
 **Do not do this on a host that uses the NPU.** amdxdna needs the IOMMU present
 for PASID; with `amd_iommu=off` there is no IOMMU at all and the NPU dies.
 `amd_iommu=off` is only viable on a GPU-only host that has given up XDNA.
@@ -400,8 +408,14 @@ required *Translated* mode (SVA/PASID), so the module used to pin
 "skip PASID tag in non-SVA mode") the driver no longer tags DMA with an invalid
 PASID under an identity default domain, so the NPU works with `iommu=pt` too.
 The module no longer forces the mode — it leaves the kernel default (Translated
-on NixOS), and hosts that want passthrough for a memory-read win can set
-`iommu=pt` themselves.
+on NixOS), and hosts that want passthrough can set `iommu=pt` themselves.
+
+> **Don't expect a prefill win from `iommu=pt`.** peonist-ai's A/B makes
+> passthrough the *slow* arm: it measured `iommu=pt` at 385 tok/s against 460
+> with the IOMMU off entirely, on more package power and lower shader clocks.
+> If that generalises, passthrough keeps the NPU alive without recovering the
+> prefill that `amd_iommu=off` buys. Unmeasured here, and unmeasured against
+> Translated anywhere.
 
 ### CPU performance tuning (not implemented — pending A/B)
 
@@ -557,6 +571,13 @@ Enable all three and let lemonade pick the recipe per model.
 ### Running ds4 beside lemond
 
 Both servers draw from the same GTT pool, and a DeepSeek-V4-Flash-sized model leaves no room for a second resident one. Measured on a 128 GB Strix Halo (gfx1151) at `ttmSizeGiB = 104`: the 80.76 GiB `IQ2XXS-w2Q2K` quant answers in 1.3 s with ds4 alone, but with a 4B model also loaded under lemond there is nothing left for page cache — lemond fell from 53 tok/s to 0.11 (71 s to process 8 prompt tokens), and shortly after that *both* endpoints stopped answering. Stopping either one restores the other immediately.
+
+Why *both* died, rather than the second one failing to load, was never
+established. Contiguous-memory exhaustion is a candidate: peonist-ai report that
+a host with plenty of free bytes and few free 2 MiB blocks stalls for minutes at
+100% of one core with no disk activity, which is the signature we saw. See
+[halogen-flash-teardown.md](docs/halogen-flash-teardown.md). The original event
+was not instrumented, so this is a hypothesis rather than a diagnosis.
 
 `exclusiveInference` makes that explicit instead of leaving the machine to thrash, and `autoStart` picks which server the host boots with:
 
