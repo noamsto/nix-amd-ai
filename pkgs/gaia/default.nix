@@ -4,12 +4,12 @@
   writeShellScriptBin,
   uv,
 }: let
-  version = "0.23.0";
+  version = "0.24.1";
 
   # Upstream dropped the gaia-emr and gaia-code console scripts in 0.21.0
   # (changelog: "drop stale gaia-emr smoke check", amd/gaia#1563). Verified
   # against the published wheels' entry_points.txt: 0.20.0 still ships all
-  # five, 0.21.0 through 0.23.0 ship only these three. Keeping the other two
+  # five, 0.21.0 through 0.24.1 ship only these three. Keeping the other two
   # would generate wrappers that fail at run time with "executable not found".
   bins = ["gaia" "gaia-cli" "gaia-mcp"];
 
