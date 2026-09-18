@@ -17,7 +17,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
-| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`, `gaia-emr`, `gaia-code`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
+| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
 CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`. The GPU backends track nixpkgs too; the `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944), backed by llama.cpp [#22673](https://github.com/ggml-org/llama.cpp/pull/22673) — fires on any nixpkgs llama.cpp past `b9175`.
@@ -466,18 +466,19 @@ Harmless. `aie2_get_info` handles the NPU's `GET_INFO` ioctl, and the mainline `
 
 ## GAIA agent framework
 
-[AMD GAIA](https://github.com/amd/gaia) is a Python agent framework that uses lemond as its inference backend (Email Triage / Code / Jira / Blender / RAG / MCP agents, plus a built-in web UI). Upstream targets pip / electron installers, neither of which fits a NixOS host cleanly, and the Python dependency tree is large and fast-moving (weekly-ish releases, torch + transformers + ~60 transitive deps). The flake therefore ships a thin `uvx` wrapper rather than a from-source Nix build:
+[AMD GAIA](https://github.com/amd/gaia) is a Python agent framework that uses lemond as its inference backend, plus a built-in web UI. Upstream targets pip / electron installers, neither of which fits a NixOS host cleanly, and the Python dependency tree is large and fast-moving (weekly-ish releases, torch + transformers; the `[ui]` extra resolves to ~120 packages on x86_64-linux). The flake therefore ships a thin `uvx` wrapper rather than a from-source Nix build:
 
 ```bash
-nix run .#gaia                     # interactive CLI; falls back to printing help
-nix run .#gaia -- ui               # launch the web UI (FastAPI + bundled SPA)
+nix run .#gaia                     # launch the Agent UI (the default experience)
+nix run .#gaia -- --cli            # interactive CLI chat
 nix shell .#gaia -c gaia-mcp       # MCP bridge server
-nix shell .#gaia -c gaia-code      # code-agent CLI
 ```
 
-The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~60 transitive deps into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
+It exports the three console scripts the wheel declares — `gaia`, `gaia-cli`, `gaia-mcp`. 0.24.0 deleted the thirteen per-task agents (`analyst`, `blender`, `browser`, `code`, `doc-search`, `docker`, `docqa`, `emr`, `fileio`, `jira`, `routing`, `sd`, `summarize`), so there is no per-task command left to invoke: install the flagship agent with `gaia hub install gaia --trust` and it loads the matching `SKILL.md`.
 
-Bump the pinned version in `pkgs/gaia/default.nix` when a new GAIA release lands and you want it. CI doesn't auto-bump GAIA today (only lemonade / fastflowlm / xdna are wired into `scripts/check-updates.sh`).
+The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~120 packages into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
+
+Bump the pinned version in `pkgs/gaia/default.nix` by hand when a new GAIA release lands — that is by design, not an oversight. `scripts/check-updates.sh` reads the version from PyPI and the console scripts out of the published wheel's `entry_points.txt` (a version-only bump would otherwise ship wrappers for entry points upstream removed), reports both in the weekly update PR, and withholds that PR from auto-merge so the edit stays a human's.
 
 ## ds4 (DeepSeek V4 on Strix Halo)
 
