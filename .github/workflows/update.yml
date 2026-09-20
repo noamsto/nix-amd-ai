@@ -64,7 +64,7 @@ jobs:
       # validation build below fits. Only when vllm actually moved.
       - name: Free disk space for vllm-rocm build
         if: steps.check.outputs.vllm_needs_update == 'true'
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+        uses: jlumbroso/free-disk-space@ceedf095f4ec1a097402bc6bd80831f2e1a6fde6 # v2.0.0
 
       - name: Validate flake eval
         if: steps.check.outputs.build_needed == 'true'
