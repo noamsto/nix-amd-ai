@@ -54,6 +54,30 @@
           '';
       });
 
+    # nixpkgs builds llama.cpp's embedded server UI (tools/ui) with npm, which
+    # pulls `nodejs_latest` -- the newest Node by definition, hence the
+    # attribute least likely to be on cache.nixos.org. A nixpkgs bump whose
+    # Node Hydra hasn't finished then costs a ~40 min V8 compile, and Node's
+    # check phase fails in this sandbox regardless (parallel/
+    # test-fs-cp-async-file-modes chmods a setuid file, which the sandbox
+    # refuses). We use lemond's web UI, not llama.cpp's, so build without it:
+    # tools/ui/CMakeLists.txt documents this as "building without an embedded
+    # UI", emitting empty ui.cpp/ui.h. A later overlay can put it back.
+    llamaCppNoWebUi = pkgs: pkg:
+      pkg.overrideAttrs (old: {
+        nativeBuildInputs = builtins.filter
+          (d: d != pkgs.nodejs_latest && d != pkgs.npmHooks.npmConfigHook)
+          old.nativeBuildInputs;
+        # npmDeps is only read by the hook above; left in place it stays a
+        # derivation input and is fetched for nothing.
+        npmDeps = null;
+        preConfigure = "";
+        cmakeFlags = (old.cmakeFlags or []) ++ [
+          "-DLLAMA_BUILD_UI=OFF"
+          "-DLLAMA_USE_PREBUILT_UI=OFF"
+        ];
+      });
+
     libwebsocketsOverride = pkgs:
       pkgs.libwebsockets.overrideAttrs (old: rec {
         version = "4.5.8";
@@ -105,9 +129,9 @@
             libwebsockets = libwebsocketsOverride pinned;
             xrt = pinned.callPackage ./pkgs/xrt {};
             fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
-            llama-cpp = pinned.llama-cpp;
-            llama-cpp-vulkan = pinned.llama-cpp.override {vulkanSupport = true;};
-            llama-cpp-rocm = llamaCppRocmOverride pinned;
+            llama-cpp = llamaCppNoWebUi pinned pinned.llama-cpp;
+            llama-cpp-vulkan = llamaCppNoWebUi pinned (pinned.llama-cpp.override {vulkanSupport = true;});
+            llama-cpp-rocm = llamaCppNoWebUi pinned (llamaCppRocmOverride pinned);
             whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
             stable-diffusion-cpp-vulkan = pinned.stable-diffusion-cpp.override {vulkanSupport = true;};
@@ -147,9 +171,9 @@
         linuxPackages = let
           xrt = pkgs.callPackage ./pkgs/xrt {};
           fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          llama-cpp = pkgs.llama-cpp;
-          llama-cpp-vulkan = pkgs.llama-cpp.override {vulkanSupport = true;};
-          llama-cpp-rocm = llamaCppRocmOverride pkgs;
+          llama-cpp = llamaCppNoWebUi pkgs pkgs.llama-cpp;
+          llama-cpp-vulkan = llamaCppNoWebUi pkgs (pkgs.llama-cpp.override {vulkanSupport = true;});
+          llama-cpp-rocm = llamaCppNoWebUi pkgs (llamaCppRocmOverride pkgs);
           whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
           stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};
