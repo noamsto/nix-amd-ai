@@ -16,7 +16,28 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # The two ROCm backends are the critical path -- 33 of the 35 minutes a cold
+  # `build` job takes, sharing its 4 cores. A runner each doubles that, and
+  # standard runners are free and unmetered on public repos, so the only cost
+  # is two extra checkouts; `build` then substitutes both instead of building.
+  rocm:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [llama-cpp-rocm, stable-diffusion-cpp-rocm]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: nix-amd-ai
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Build ${{ matrix.package }}
+        run: nix build -L .#${{ matrix.package }}
+
   build:
+    needs: rocm
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
