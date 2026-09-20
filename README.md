@@ -57,6 +57,8 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
     enableROCm = true;        # ROCm GPU backends (llamacpp + sd-cpp)
     enableVulkan = true;      # Vulkan GPU backends (llamacpp + whispercpp)
     enableImageGen = true;    # default true; set false to drop sd-cpp from closure
+    # rocmGpuTargets = ["gfx1103"];  # only to reach a GPU the shipped
+    #                                # gfx1150+gfx1151 build doesn't cover
     lemonade.user = "youruser";
   };
 
@@ -136,11 +138,19 @@ hardware.amd-npu = {
 
 - **Vulkan** is the recommended path: RADV is arch-agnostic, so llama.cpp / whisper.cpp run on any RDNA3 iGPU including the Radeon 780M (Phoenix / Hawk Point).
 - **NPU** (`enableFastFlowLM`) is XDNA-2 only; the assertion blocks it unless `enableNPU = true`.
-- **ROCm** (`enableROCm`): the shipped `llama-cpp-rocm` is compiled with `gfx1103` in its `CMAKE_HIP_ARCHITECTURES` list, so it carries native 780M kernels — no `HSA_OVERRIDE_GFX_VERSION` workaround should be needed. This is **untested on actual Hawk Point hardware**, and rocBLAS coverage for `gfx1103` APUs can be uneven, so Vulkan remains the recommended path. If ROCm misbehaves, the usual fallback is to alias the arch to `gfx1100`:
+- **ROCm** (`enableROCm`): the shipped `llama-cpp-rocm` and `sd-cpp-rocm` are compiled for `gfx1150` and `gfx1151` only, so they carry **no 780M kernels** and the backend will fail to load on one. Name your own target to get them:
+
+  ```nix
+  hardware.amd-npu.rocmGpuTargets = ["gfx1103"];
+  ```
+
+  This is **untested on actual Hawk Point hardware**, and rocBLAS coverage for `gfx1103` APUs can be uneven, so Vulkan remains the recommended path. If ROCm misbehaves, the usual fallback is to alias the arch to `gfx1100`:
 
   ```nix
   systemd.services.lemond.environment.HSA_OVERRIDE_GFX_VERSION = "11.0.0";
   ```
+
+  The value is part of the derivation, so naming a target means a store path no substituter has: native kernels for your chip, bought with a local llama.cpp and sd.cpp build. The cache carries the gfx1150+gfx1151 pair and nothing else, which is also what `#llama-cpp-rocm` and `#stable-diffusion-cpp-rocm` build.
 
 ## What the module configures
 

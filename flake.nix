@@ -15,6 +15,11 @@
   };
 
   outputs = inputs @ {flake-parts, ...}: let
+    # The chips this repo supports, as one derivation rather than one each, so
+    # both kinds of host substitute the single entry CI pushes. nixpkgs' own
+    # default is every target clr advertises -- 16 in the pinned nixpkgs.
+    rocmGpuTargets = ["gfx1150" "gfx1151"];
+
     # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
     # upgrade response (missing the empty CRLF after the last header) for
     # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
@@ -39,7 +44,10 @@
     # nixpkgs carries either form of the fix the build fails telling you to
     # delete the override, rather than silently double-applying it.
     llamaCppRocmOverride = pkgs:
-      pkgs.llama-cpp-rocm.overrideAttrs (old: {
+      (pkgs.llama-cpp-rocm.override {
+        llama-cpp = pkgs.llama-cpp.override {inherit rocmGpuTargets;};
+      })
+      .overrideAttrs (old: {
         patches = (old.patches or []) ++ [./patches/llamacpp-rdna35-host-access.patch];
         prePatch =
           (old.prePatch or "")
@@ -133,7 +141,10 @@
             llama-cpp-vulkan = llamaCppNoWebUi pinned (pinned.llama-cpp.override {vulkanSupport = true;});
             llama-cpp-rocm = llamaCppNoWebUi pinned (llamaCppRocmOverride pinned);
             whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
-            stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {rocmSupport = true;};
+            stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {
+              rocmSupport = true;
+              inherit rocmGpuTargets;
+            };
             stable-diffusion-cpp-vulkan = pinned.stable-diffusion-cpp.override {vulkanSupport = true;};
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
@@ -175,7 +186,10 @@
           llama-cpp-vulkan = llamaCppNoWebUi pkgs (pkgs.llama-cpp.override {vulkanSupport = true;});
           llama-cpp-rocm = llamaCppNoWebUi pkgs (llamaCppRocmOverride pkgs);
           whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
-          stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {rocmSupport = true;};
+          stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {
+            rocmSupport = true;
+            inherit rocmGpuTargets;
+          };
           stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};
           libwebsockets = libwebsocketsOverride pkgs;
         in {
