@@ -15,6 +15,28 @@
 
   vllmPkg = pkgs.vllm-rocm.override {gpuTarget = cfg.vllmGpuTarget;};
 
+  # `null` is the overlay's build, whose target list flake.nix owns and CI
+  # caches -- spelling that list out again here is what would drift.
+  #
+  # Both rocm packages are thin `pkg.override {rocmSupport = true;}` wrappers,
+  # so the target list is overridden a level down. llama-cpp goes through the
+  # wrapper on purpose: that keeps the overlay's `overrideAttrs` on it -- the
+  # RDNA3.5 host-access patch. sd-cpp carries no such patch and its wrapper
+  # forwards `.override` to the inner package, so it is built directly.
+  llamaCppRocm =
+    if cfg.rocmGpuTargets == null
+    then pkgs.llama-cpp-rocm
+    else pkgs.llama-cpp-rocm.override {
+      llama-cpp = pkgs.llama-cpp.override {rocmGpuTargets = cfg.rocmGpuTargets;};
+    };
+  stableDiffusionCppRocm =
+    if cfg.rocmGpuTargets == null
+    then pkgs.stable-diffusion-cpp-rocm
+    else pkgs.stable-diffusion-cpp.override {
+      rocmSupport = true;
+      rocmGpuTargets = cfg.rocmGpuTargets;
+    };
+
   # 4096-byte pages: pages = GiB * 1024^3 / 4096 = GiB * 262144.
   gttPages = gib: gib * 262144;
 
@@ -58,10 +80,10 @@
       "lemonade/backends/sdcpp-cpu".source = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
-      "lemonade/backends/llamacpp-rocm".source = "${pkgs.llama-cpp-rocm}/bin/llama-server";
+      "lemonade/backends/llamacpp-rocm".source = "${llamaCppRocm}/bin/llama-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableROCm && cfg.enableImageGen) {
-      "lemonade/backends/sdcpp-rocm".source = "${pkgs.stable-diffusion-cpp-rocm}/bin/sd-server";
+      "lemonade/backends/sdcpp-rocm".source = "${stableDiffusionCppRocm}/bin/sd-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableROCm && cfg.enableVllm) {
       "lemonade/backends/vllm-rocm".source = "${vllmPkg}/bin/vllm-server";
@@ -287,6 +309,24 @@ in {
         Halo). Drives the gfx1151 CWSR-kernel warning and the default for
         vllmGpuTarget, so a llamacpp/sd-cpp-only host still declares its
         chip without touching a vLLM option.
+      '';
+    };
+
+    rocmGpuTargets = mkOption {
+      type = types.nullOr (types.listOf types.str);
+      default = null;
+      defaultText = lib.literalMD "the shipped `llama-cpp-rocm` / `sd-cpp-rocm`, built for gfx1150 and gfx1151";
+      example = ["gfx1103"];
+      description = ''
+        clr targets to compile the ROCm backends (llama-cpp-rocm,
+        sd-cpp-rocm) for. Unset takes this flake's own build, which covers
+        Strix Point and Strix Halo in one derivation - the entry its CI
+        pushes, so both kinds of host substitute rather than compile.
+
+        Set it to compile for a GPU that pair does not cover, such as a
+        Radeon 780M on `["gfx1103"]`. The value is part of the derivation,
+        so any list here is a store path no substituter has: it buys native
+        kernels for your chip with a local llama.cpp and sd.cpp build.
       '';
     };
 
@@ -671,7 +711,16 @@ in {
         && cfg.enableROCm
         && (cfg.gpuTarget == "gfx1151" || cfg.vllmGpuTarget == "gfx1151")
         && !versionAtLeast config.boot.kernelPackages.kernel.version "6.18.4")
-      "A gfx1151 target is selected (hardware.amd-npu.gpuTarget / vllmGpuTarget), which needs Linux kernel >= 6.18.4 (or the CWSR fix backported) or ROCm can miscalculate VGPR counts and crash llamacpp:rocm, sd-cpp:rocm, and vllm:rocm. Kernel ${config.boot.kernelPackages.kernel.version} is below that; if it carries a backported fix, verify on the host with: grep -E \"cwsr_size|ctl_stack_size\" /sys/class/kfd/kfd/topology/nodes/*/properties";
+      "A gfx1151 target is selected (hardware.amd-npu.gpuTarget / vllmGpuTarget), which needs Linux kernel >= 6.18.4 (or the CWSR fix backported) or ROCm can miscalculate VGPR counts and crash llamacpp:rocm, sd-cpp:rocm, and vllm:rocm. Kernel ${config.boot.kernelPackages.kernel.version} is below that; if it carries a backported fix, verify on the host with: grep -E \"cwsr_size|ctl_stack_size\" /sys/class/kfd/kfd/topology/nodes/*/properties"
+      # Gated on enableNPU because gpuTarget's enum is Strix-only: a GPU-only
+      # host may be on some other AMD GPU, where leaving gpuTarget out of the
+      # list is precisely what it asked for.
+      ++ optional
+      (cfg.enableNPU
+        && cfg.enableROCm
+        && cfg.rocmGpuTargets != null
+        && !(builtins.elem cfg.gpuTarget cfg.rocmGpuTargets))
+      "hardware.amd-npu.rocmGpuTargets (${concatStringsSep ", " cfg.rocmGpuTargets}) does not include gpuTarget (${cfg.gpuTarget}), so no ROCm backend is compiled for this host's iGPU and llama-server / sd-server will fail to load kernels for it. Add ${cfg.gpuTarget} to the list, or leave rocmGpuTargets unset to take the shipped build, which covers it.";
 
     # Kernel configuration (NPU-only)
     boot.kernelModules = optionals cfg.enableNPU ["amdxdna"];
@@ -727,7 +776,9 @@ in {
       // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
         # Keeps the ROCm llamacpp backend offered: read directly by
         # is_ggml_hip_plugin_available()'s env probe (upstreamed in #2044).
-        LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
+        # Same package as the llamacpp-rocm backend above: the probe dlopens
+        # this into the llama-server it sits beside.
+        LEMONADE_GGML_HIP_PATH = "${llamaCppRocm}/lib/libggml-hip.so";
       };
 
     # Stable indirection symlinks lemonade's config.json bin paths point at.
@@ -795,7 +846,7 @@ in {
           LD_LIBRARY_PATH = ldLibraryPath;
         }
         // optionalAttrs cfg.enableROCm {
-          LEMONADE_GGML_HIP_PATH = "${pkgs.llama-cpp-rocm}/lib/libggml-hip.so";
+          LEMONADE_GGML_HIP_PATH = "${llamaCppRocm}/lib/libggml-hip.so";
         }
         // optionalAttrs cfg.enableFastFlowLM {
           # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
