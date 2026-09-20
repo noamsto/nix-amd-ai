@@ -94,7 +94,7 @@ jobs:
           VLLM_NEEDS_UPDATE: ${{ steps.check.outputs.vllm_needs_update }}
         run: |
           FAILED=""
-          PKGS="xrt xrt-plugin-amdxdna fastflowlm lemonade"
+          PKGS="xrt xrt-plugin-amdxdna fastflowlm lemonade lemonade-headless"
           # Validate the vllm-rocm bump only when it moved — building it (and
           # re-fetching 2.25 GB) every run when unchanged is pure waste since it
           # isn't in the cache. A build failure here blocks the auto-merge below.
