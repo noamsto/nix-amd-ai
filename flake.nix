@@ -192,17 +192,20 @@
           };
           stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};
           libwebsockets = libwebsocketsOverride pkgs;
-        in {
-          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
-          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
-          ds4 = pkgs.callPackage ./pkgs/ds4 {};
-          xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             whisper-cpp = pkgs.whisper-cpp;
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
+        in {
+          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets lemonade;
+          inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+          ds4 = pkgs.callPackage ./pkgs/ds4 {};
+          xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
+          # What `hardware.amd-npu.lemonade.desktopApp.enable = false` selects;
+          # built here so headless hosts substitute it rather than compile it.
+          lemonade-headless = lemonade.override {withDesktopApp = false;};
           gaia = pkgs.callPackage ./pkgs/gaia {};
           vllm-rocm = pkgs.callPackage ./pkgs/vllm-rocm {};
           lemond-unit = lemondUnit;

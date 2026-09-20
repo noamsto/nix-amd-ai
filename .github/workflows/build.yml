@@ -47,7 +47,7 @@ jobs:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build all packages
-        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#ds4
+        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#lemonade-headless .#ds4
       - name: Check flake
         # -L so NixOS VM tests stream their boot and assertions into the job log.
         # Without it a VM test is a bare ✅/❌ line — indistinguishable from one
