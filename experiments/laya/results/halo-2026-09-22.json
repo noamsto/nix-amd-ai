@@ -1,7 +1,1893 @@
 {
+  "baselines": {
+    "adequate": {
+      "ACTAAP_2013_7_16": {
+        "ms": 349.332,
+        "noul": 0.3094
+      },
+      "ACTAAP_2014_5_8": {
+        "ms": 457.12,
+        "noul": 0.419
+      },
+      "AKDE&ED_2008_4_25": {
+        "ms": 380.581,
+        "noul": 0.1183
+      },
+      "AKDE&ED_2008_8_53": {
+        "ms": 281.809,
+        "noul": 0.7087
+      },
+      "CSZ_2005_5_CSZ10021": {
+        "ms": 409.852,
+        "noul": 0.7144
+      },
+      "LEAP_2002_4_10247": {
+        "ms": 342.419,
+        "noul": 0.1827
+      },
+      "LEAP_2007_8_10417": {
+        "ms": 312.16,
+        "noul": 0.1463
+      },
+      "MCAS_1999_4_27": {
+        "ms": 515.546,
+        "noul": 0.8597
+      },
+      "MCAS_2004_5_11": {
+        "ms": 477.774,
+        "noul": 0.1038
+      },
+      "MCAS_2010_5_11984": {
+        "ms": 594.312,
+        "noul": 0.8726
+      },
+      "MCAS_2012_5_23614": {
+        "ms": 376.946,
+        "noul": 0.2183
+      },
+      "MCAS_2014_5_13": {
+        "ms": 669.702,
+        "noul": 0.3015
+      },
+      "MDSA_2009_4_1": {
+        "ms": 2591.534,
+        "noul": 0.1642
+      },
+      "MDSA_2009_5_20": {
+        "ms": 1471.476,
+        "noul": 0.0874
+      },
+      "MDSA_2012_8_16": {
+        "ms": 1597.074,
+        "noul": 0.6832
+      },
+      "MEAP_2005_8_13": {
+        "ms": 800.051,
+        "noul": 0.0833
+      },
+      "MEA_2013_8_1": {
+        "ms": 436.391,
+        "noul": 0.2286
+      },
+      "MSA_2012_5_2": {
+        "ms": 1164.202,
+        "noul": 0.4302
+      },
+      "Mercury_187198": {
+        "ms": 288.478,
+        "noul": 0.1012
+      },
+      "Mercury_191625": {
+        "ms": 365.763,
+        "noul": 0.3431
+      },
+      "Mercury_403930": {
+        "ms": 370.325,
+        "noul": 0.3859
+      },
+      "Mercury_404638": {
+        "ms": 209.454,
+        "noul": 0.1871
+      },
+      "Mercury_405136": {
+        "ms": 395.914,
+        "noul": 0.5491
+      },
+      "Mercury_406639": {
+        "ms": 381.764,
+        "noul": 0.333
+      },
+      "Mercury_407262": {
+        "ms": 460.323,
+        "noul": 0.7353
+      },
+      "Mercury_412202": {
+        "ms": 847.062,
+        "noul": 0.68
+      },
+      "Mercury_412463": {
+        "ms": 491.273,
+        "noul": 0.2407
+      },
+      "Mercury_415082": {
+        "ms": 244.125,
+        "noul": 0.0952
+      },
+      "Mercury_416380": {
+        "ms": 260.24,
+        "noul": 0.1596
+      },
+      "Mercury_417137": {
+        "ms": 460.253,
+        "noul": 0.1603
+      },
+      "Mercury_417465": {
+        "ms": 895.918,
+        "noul": 0.8117
+      },
+      "Mercury_7001295": {
+        "ms": 890.916,
+        "noul": 0.7469
+      },
+      "Mercury_7004725": {
+        "ms": 1721.931,
+        "noul": 0.2059
+      },
+      "Mercury_7016538": {
+        "ms": 1786.107,
+        "noul": 0.0978
+      },
+      "Mercury_7018270": {
+        "ms": 1179.246,
+        "noul": 0.2571
+      },
+      "Mercury_7027405": {
+        "ms": 1075.094,
+        "noul": 0.4201
+      },
+      "Mercury_7032620": {
+        "ms": 702.906,
+        "noul": 0.16
+      },
+      "Mercury_7033828": {
+        "ms": 721.947,
+        "noul": 0.0839
+      },
+      "Mercury_7040793": {
+        "ms": 320.195,
+        "noul": 0.6897
+      },
+      "Mercury_7057085": {
+        "ms": 294.649,
+        "noul": 0.1988
+      },
+      "Mercury_7069020": {
+        "ms": 512.37,
+        "noul": 0.1863
+      },
+      "Mercury_7075023": {
+        "ms": 465.399,
+        "noul": 0.3258
+      },
+      "Mercury_7102323": {
+        "ms": 1216.337,
+        "noul": 0.6282
+      },
+      "Mercury_7106960": {
+        "ms": 620.497,
+        "noul": 0.3514
+      },
+      "Mercury_7123078": {
+        "ms": 384.628,
+        "noul": 0.6904
+      },
+      "Mercury_7126263": {
+        "ms": 278.915,
+        "noul": 0.277
+      },
+      "Mercury_7131530": {
+        "ms": 327.998,
+        "noul": 0.6054
+      },
+      "Mercury_7137165": {
+        "ms": 303.676,
+        "noul": 0.7501
+      },
+      "Mercury_7138390": {
+        "ms": 295.314,
+        "noul": 0.1652
+      },
+      "Mercury_7143308": {
+        "ms": 401.024,
+        "noul": 0.438
+      },
+      "Mercury_7159215": {
+        "ms": 433.009,
+        "noul": 0.635
+      },
+      "Mercury_7165218": {
+        "ms": 341.301,
+        "noul": 0.132
+      },
+      "Mercury_7175893": {
+        "ms": 1331.488,
+        "noul": 0.4915
+      },
+      "Mercury_7191433": {
+        "ms": 424.517,
+        "noul": 0.5947
+      },
+      "Mercury_7192798": {
+        "ms": 610.346,
+        "noul": 0.7716
+      },
+      "Mercury_7213413": {
+        "ms": 308.255,
+        "noul": 0.2953
+      },
+      "Mercury_7230388": {
+        "ms": 273.062,
+        "noul": 0.1079
+      },
+      "Mercury_7239383": {
+        "ms": 585.008,
+        "noul": 0.2374
+      },
+      "Mercury_7268048": {
+        "ms": 295.279,
+        "noul": 0.103
+      },
+      "Mercury_7282083": {
+        "ms": 542.815,
+        "noul": 0.7773
+      },
+      "Mercury_SC_400046": {
+        "ms": 340.776,
+        "noul": 0.5289
+      },
+      "Mercury_SC_400594": {
+        "ms": 367.804,
+        "noul": 0.1019
+      },
+      "Mercury_SC_402103": {
+        "ms": 367.824,
+        "noul": 0.6533
+      },
+      "Mercury_SC_405130": {
+        "ms": 547.285,
+        "noul": 0.4116
+      },
+      "Mercury_SC_405880": {
+        "ms": 632.097,
+        "noul": 0.1829
+      },
+      "Mercury_SC_407572": {
+        "ms": 3192.456,
+        "noul": 0.6951
+      },
+      "Mercury_SC_408367": {
+        "ms": 799.46,
+        "noul": 0.6523
+      },
+      "Mercury_SC_408763": {
+        "ms": 635.883,
+        "noul": 0.14
+      },
+      "Mercury_SC_409241": {
+        "ms": 721.378,
+        "noul": 0.815
+      },
+      "Mercury_SC_410963": {
+        "ms": 587.527,
+        "noul": 0.2284
+      },
+      "Mercury_SC_413089": {
+        "ms": 647.445,
+        "noul": 0.171
+      },
+      "Mercury_SC_413143": {
+        "ms": 475.653,
+        "noul": 0.1013
+      },
+      "Mercury_SC_413624": {
+        "ms": 304.987,
+        "noul": 0.4994
+      },
+      "Mercury_SC_415761": {
+        "ms": 232.552,
+        "noul": 0.4929
+      },
+      "NCEOGA_2013_8_57": {
+        "ms": 374.777,
+        "noul": 0.6829
+      },
+      "NYSEDREGENTS_2008_8_36": {
+        "ms": 350.175,
+        "noul": 0.6949
+      },
+      "NYSEDREGENTS_2010_4_24": {
+        "ms": 1505.268,
+        "noul": 0.2494
+      },
+      "NYSEDREGENTS_2013_4_21": {
+        "ms": 290.475,
+        "noul": 0.7505
+      },
+      "NYSEDREGENTS_2015_4_11": {
+        "ms": 382.799,
+        "noul": 0.7254
+      },
+      "NYSEDREGENTS_2015_8_29": {
+        "ms": 748.084,
+        "noul": 0.4956
+      },
+      "NYSEDREGENTS_2015_8_3": {
+        "ms": 1309.93,
+        "noul": 0.1401
+      },
+      "TAKS_2009_5_14": {
+        "ms": 445.812,
+        "noul": 0.2958
+      },
+      "TIMSS_2003_8_pg87": {
+        "ms": 2044.357,
+        "noul": 0.2347
+      },
+      "TIMSS_2011_8_pg15": {
+        "ms": 1444.139,
+        "noul": 0.7879
+      }
+    },
+    "difficulty_extra": {},
+    "llm_judge": {
+      "ACTAAP_2013_7_16": {
+        "matched_rule": null,
+        "ms": 1510.256
+      },
+      "ACTAAP_2014_5_8": {
+        "matched_rule": null,
+        "ms": 1164.378
+      },
+      "AKDE&ED_2008_4_25": {
+        "matched_rule": null,
+        "ms": 1167.347
+      },
+      "AKDE&ED_2008_8_53": {
+        "matched_rule": null,
+        "ms": 1071.306
+      },
+      "CSZ_2005_5_CSZ10021": {
+        "matched_rule": null,
+        "ms": 1130.806
+      },
+      "LEAP_2002_4_10247": {
+        "matched_rule": null,
+        "ms": 1256.395
+      },
+      "LEAP_2007_8_10417": {
+        "matched_rule": null,
+        "ms": 1238.999
+      },
+      "MCAS_1999_4_27": {
+        "matched_rule": null,
+        "ms": 1282.223
+      },
+      "MCAS_2004_5_11": {
+        "matched_rule": null,
+        "ms": 1199.761
+      },
+      "MCAS_2010_5_11984": {
+        "matched_rule": null,
+        "ms": 1181.107
+      },
+      "MCAS_2012_5_23614": {
+        "matched_rule": null,
+        "ms": 1174.249
+      },
+      "MCAS_2014_5_13": {
+        "matched_rule": null,
+        "ms": 1108.447
+      },
+      "MDSA_2009_4_1": {
+        "matched_rule": null,
+        "ms": 1169.634
+      },
+      "MDSA_2009_5_20": {
+        "matched_rule": null,
+        "ms": 1261.922
+      },
+      "MDSA_2012_8_16": {
+        "matched_rule": null,
+        "ms": 1240.2
+      },
+      "MEAP_2005_8_13": {
+        "matched_rule": null,
+        "ms": 1245.067
+      },
+      "MEA_2013_8_1": {
+        "matched_rule": null,
+        "ms": 1314.702
+      },
+      "MSA_2012_5_2": {
+        "matched_rule": null,
+        "ms": 1166.695
+      },
+      "Mercury_187198": {
+        "matched_rule": null,
+        "ms": 1210.507
+      },
+      "Mercury_191625": {
+        "matched_rule": null,
+        "ms": 1217.503
+      },
+      "Mercury_403930": {
+        "matched_rule": null,
+        "ms": 1299.867
+      },
+      "Mercury_404638": {
+        "matched_rule": null,
+        "ms": 1151.775
+      },
+      "Mercury_405136": {
+        "matched_rule": null,
+        "ms": 1116.218
+      },
+      "Mercury_406639": {
+        "matched_rule": null,
+        "ms": 1305.319
+      },
+      "Mercury_407262": {
+        "matched_rule": null,
+        "ms": 1198.037
+      },
+      "Mercury_412202": {
+        "matched_rule": null,
+        "ms": 1390.314
+      },
+      "Mercury_412463": {
+        "matched_rule": null,
+        "ms": 1101.786
+      },
+      "Mercury_415082": {
+        "matched_rule": null,
+        "ms": 1149.368
+      },
+      "Mercury_416380": {
+        "matched_rule": null,
+        "ms": 1337.959
+      },
+      "Mercury_417137": {
+        "matched_rule": null,
+        "ms": 1210.978
+      },
+      "Mercury_417465": {
+        "matched_rule": null,
+        "ms": 1159.502
+      },
+      "Mercury_7001295": {
+        "matched_rule": null,
+        "ms": 1120.075
+      },
+      "Mercury_7004725": {
+        "matched_rule": null,
+        "ms": 1201.122
+      },
+      "Mercury_7016538": {
+        "matched_rule": null,
+        "ms": 1141.19
+      },
+      "Mercury_7018270": {
+        "matched_rule": null,
+        "ms": 1207.874
+      },
+      "Mercury_7027405": {
+        "matched_rule": null,
+        "ms": 1148.731
+      },
+      "Mercury_7032620": {
+        "matched_rule": null,
+        "ms": 1138.155
+      },
+      "Mercury_7033828": {
+        "matched_rule": null,
+        "ms": 1118.345
+      },
+      "Mercury_7040793": {
+        "matched_rule": null,
+        "ms": 1116.265
+      },
+      "Mercury_7057085": {
+        "matched_rule": null,
+        "ms": 1284.592
+      },
+      "Mercury_7069020": {
+        "matched_rule": null,
+        "ms": 1171.252
+      },
+      "Mercury_7075023": {
+        "matched_rule": null,
+        "ms": 1227.914
+      },
+      "Mercury_7102323": {
+        "matched_rule": null,
+        "ms": 1271.615
+      },
+      "Mercury_7106960": {
+        "matched_rule": null,
+        "ms": 1173.632
+      },
+      "Mercury_7123078": {
+        "matched_rule": null,
+        "ms": 1191.595
+      },
+      "Mercury_7126263": {
+        "matched_rule": null,
+        "ms": 1195.022
+      },
+      "Mercury_7131530": {
+        "matched_rule": null,
+        "ms": 1230.707
+      },
+      "Mercury_7137165": {
+        "matched_rule": null,
+        "ms": 1131.51
+      },
+      "Mercury_7138390": {
+        "matched_rule": null,
+        "ms": 1291.25
+      },
+      "Mercury_7143308": {
+        "matched_rule": null,
+        "ms": 1226.881
+      },
+      "Mercury_7159215": {
+        "matched_rule": null,
+        "ms": 1268.144
+      },
+      "Mercury_7165218": {
+        "matched_rule": null,
+        "ms": 1377.895
+      },
+      "Mercury_7175893": {
+        "matched_rule": null,
+        "ms": 1329.875
+      },
+      "Mercury_7191433": {
+        "matched_rule": null,
+        "ms": 1148.741
+      },
+      "Mercury_7192798": {
+        "matched_rule": null,
+        "ms": 1168.442
+      },
+      "Mercury_7213413": {
+        "matched_rule": null,
+        "ms": 1115.998
+      },
+      "Mercury_7230388": {
+        "matched_rule": null,
+        "ms": 1180.286
+      },
+      "Mercury_7239383": {
+        "matched_rule": null,
+        "ms": 1370.92
+      },
+      "Mercury_7268048": {
+        "matched_rule": null,
+        "ms": 1257.237
+      },
+      "Mercury_7282083": {
+        "matched_rule": null,
+        "ms": 1194.618
+      },
+      "Mercury_SC_400046": {
+        "matched_rule": null,
+        "ms": 1203.252
+      },
+      "Mercury_SC_400594": {
+        "matched_rule": null,
+        "ms": 1154.867
+      },
+      "Mercury_SC_402103": {
+        "matched_rule": null,
+        "ms": 1282.018
+      },
+      "Mercury_SC_405130": {
+        "matched_rule": null,
+        "ms": 1206.898
+      },
+      "Mercury_SC_405880": {
+        "matched_rule": null,
+        "ms": 1145.937
+      },
+      "Mercury_SC_407572": {
+        "matched_rule": null,
+        "ms": 1124.593
+      },
+      "Mercury_SC_408367": {
+        "matched_rule": null,
+        "ms": 1243.332
+      },
+      "Mercury_SC_408763": {
+        "matched_rule": null,
+        "ms": 1345.549
+      },
+      "Mercury_SC_409241": {
+        "matched_rule": null,
+        "ms": 1193.676
+      },
+      "Mercury_SC_410963": {
+        "matched_rule": null,
+        "ms": 1235.305
+      },
+      "Mercury_SC_413089": {
+        "matched_rule": null,
+        "ms": 1247.99
+      },
+      "Mercury_SC_413143": {
+        "matched_rule": null,
+        "ms": 1308.346
+      },
+      "Mercury_SC_413624": {
+        "matched_rule": null,
+        "ms": 1252.756
+      },
+      "Mercury_SC_415761": {
+        "matched_rule": null,
+        "ms": 1202.477
+      },
+      "NCEOGA_2013_8_57": {
+        "matched_rule": null,
+        "ms": 1187.769
+      },
+      "NYSEDREGENTS_2008_8_36": {
+        "matched_rule": null,
+        "ms": 1153.485
+      },
+      "NYSEDREGENTS_2010_4_24": {
+        "matched_rule": null,
+        "ms": 1171.064
+      },
+      "NYSEDREGENTS_2013_4_21": {
+        "matched_rule": null,
+        "ms": 1110.231
+      },
+      "NYSEDREGENTS_2015_4_11": {
+        "matched_rule": null,
+        "ms": 1268.854
+      },
+      "NYSEDREGENTS_2015_8_29": {
+        "matched_rule": null,
+        "ms": 1104.137
+      },
+      "NYSEDREGENTS_2015_8_3": {
+        "matched_rule": null,
+        "ms": 1118.942
+      },
+      "TAKS_2009_5_14": {
+        "matched_rule": null,
+        "ms": 1240.54
+      },
+      "TIMSS_2003_8_pg87": {
+        "matched_rule": null,
+        "ms": 1215.25
+      },
+      "TIMSS_2011_8_pg15": {
+        "matched_rule": null,
+        "ms": 1303.689
+      }
+    },
+    "own_logprob": {
+      "ACTAAP_2013_7_16": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "ACTAAP_2014_5_8": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "AKDE&ED_2008_4_25": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "AKDE&ED_2008_8_53": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "CSZ_2005_5_CSZ10021": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "LEAP_2002_4_10247": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "LEAP_2007_8_10417": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MCAS_1999_4_27": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MCAS_2004_5_11": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MCAS_2010_5_11984": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MCAS_2012_5_23614": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MCAS_2014_5_13": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MDSA_2009_4_1": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MDSA_2009_5_20": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MDSA_2012_8_16": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MEAP_2005_8_13": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MEA_2013_8_1": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "MSA_2012_5_2": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_187198": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_191625": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_403930": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_404638": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_405136": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_406639": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_407262": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_412202": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_412463": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_415082": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_416380": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_417137": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_417465": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7001295": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7004725": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7016538": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7018270": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7027405": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7032620": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7033828": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7040793": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7057085": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7069020": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7075023": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7102323": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7106960": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7123078": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7126263": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7131530": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7137165": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7138390": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7143308": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7159215": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7165218": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7175893": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7191433": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7192798": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7213413": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7230388": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7239383": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7268048": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_7282083": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_400046": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_400594": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_402103": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_405130": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_405880": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_407572": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_408367": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_408763": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_409241": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_410963": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_413089": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_413143": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_413624": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "Mercury_SC_415761": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NCEOGA_2013_8_57": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NYSEDREGENTS_2008_8_36": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NYSEDREGENTS_2010_4_24": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NYSEDREGENTS_2013_4_21": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NYSEDREGENTS_2015_4_11": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NYSEDREGENTS_2015_8_29": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "NYSEDREGENTS_2015_8_3": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "TAKS_2009_5_14": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "TIMSS_2003_8_pg87": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      },
+      "TIMSS_2011_8_pg15": {
+        "logprob": null,
+        "matches_graded_letter": null,
+        "token": null
+      }
+    },
+    "own_logprob_template": "none"
+  },
   "candidate": "llama3.2-1b-FLM",
   "candidate_reason": "FLM probe ok",
+  "contention": {
+    "idle_p50_ms": 835.384,
+    "idle_p95_ms": 1096.391,
+    "igpu_contended_p50_ms": 2169.09,
+    "igpu_contended_p95_ms": 2662.287,
+    "npu_contended_p50_ms": 1296.196,
+    "npu_contended_p95_ms": 3317.94,
+    "status": "measured"
+  },
   "cpu": "AMD RYZEN AI MAX+ 395 w/ Radeon 8060S",
+  "grade": {
+    "candidate": "llama3.2-1b-FLM",
+    "health_at_start": {
+      "all_models_loaded": [
+        {
+          "backend_alive": true,
+          "backend_health": "ready",
+          "backend_url": "http://127.0.0.1:8002/v1",
+          "checkpoint": "unsloth/Qwen3.5-4B-GGUF:Qwen3.5-4B-UD-Q4_K_XL.gguf",
+          "device": "gpu",
+          "is_busy": false,
+          "is_streaming": false,
+          "last_use": 57083828,
+          "launch_command": [
+            "/etc/lemonade/backends/llamacpp-vulkan",
+            "-m",
+            "/var/lib/models/hf/hub/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/Qwen3.5-4B-UD-Q4_K_XL.gguf",
+            "--ctx-size",
+            "262144",
+            "--port",
+            "8002",
+            "--jinja",
+            "--metrics",
+            "--mmproj",
+            "/var/lib/models/hf/hub/models--unsloth--Qwen3.5-4B-GGUF/snapshots/e87f176479d0855a907a41277aca2f8ee7a09523/mmproj-F16.gguf",
+            "--chat-template-kwargs",
+            "{\"preserve_thinking\":true}",
+            "--flash-attn",
+            "on",
+            "--min-p",
+            "0.00",
+            "--repeat-penalty",
+            "1.0",
+            "--temp",
+            "1.0",
+            "--top-k",
+            "20",
+            "--top-p",
+            "0.95",
+            "--parallel",
+            "1"
+          ],
+          "loaded": true,
+          "max_context_window": 262144,
+          "model_name": "Qwen3.5-4B-GGUF",
+          "pid": 268756,
+          "pinned": false,
+          "recipe": "llamacpp",
+          "recipe_options": {
+            "ctx_size": 262144,
+            "llamacpp_args": "--chat-template-kwargs '{\"preserve_thinking\":true}' --flash-attn on --min-p 0.00 --repeat-penalty 1.0 --temp 1.0 --top-k 20 --top-p 0.95 --parallel 1"
+          },
+          "residency_class": "standard",
+          "slot_pool": "standard/llm",
+          "status": "ready",
+          "type": "llm",
+          "watchdog_reset": false
+        }
+      ],
+      "max_models": {
+        "classification": 1,
+        "embedding": 1,
+        "image": 1,
+        "llm": 1,
+        "reranking": 1,
+        "transcription": 1,
+        "tts": 1
+      },
+      "model_loaded": "Qwen3.5-4B-GGUF",
+      "pinned_helper_models": {
+        "classification": 0,
+        "embedding": 0,
+        "image": 0,
+        "llm": 0,
+        "reranking": 0,
+        "transcription": 0,
+        "tts": 0
+      },
+      "pinned_models": {
+        "classification": 0,
+        "embedding": 0,
+        "image": 0,
+        "llm": 0,
+        "reranking": 0,
+        "transcription": 0,
+        "tts": 0
+      },
+      "status": "ok",
+      "telemetry": {
+        "enabled": false
+      },
+      "update_check_done": true,
+      "version": "11.9.0",
+      "websocket_port": 9000
+    },
+    "items": {
+      "ACTAAP_2013_7_16": {
+        "answer_letter": "A",
+        "answer_text": "Butter is a compound because it is made up of hydrogen and carbon atoms, which are chemically bonded together.\n\nAnswer: A",
+        "correct": false,
+        "ms": 786.661,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "ACTAAP_2014_5_8": {
+        "answer_letter": "C",
+        "answer_text": "The sun would be extremely bright next to an average star because the sun is much larger and more massive than an average star, which would make it appear much more luminous.\n\nAnswer: C",
+        "correct": false,
+        "ms": 991.541,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "AKDE&ED_2008_4_25": {
+        "answer_letter": "D",
+        "answer_text": "A property of a type of matter is that it can exist in different states of matter, such as solid, liquid, and gas.\n\nIce is a solid because it has a fixed shape and volume, and it can be melted to become a liquid.\n\nAnswer: D",
+        "correct": false,
+        "ms": 1213.527,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "AKDE&ED_2008_8_53": {
+        "answer_letter": "B",
+        "answer_text": "Most salmon leave salt water and return to fresh water because their bodies are adapted to maintain a specific balance of salt and water, which is essential for their survival and reproduction.\n\nAnswer: B",
+        "correct": false,
+        "ms": 956.54,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "CSZ_2005_5_CSZ10021": {
+        "answer_letter": "C",
+        "answer_text": "Watering plants and grass in the early morning is a way to conserve water because the sun's rays are not yet strong enough to evaporate the water from the soil, allowing for a more efficient use of the available water.\n\nAnswer: C",
+        "correct": false,
+        "ms": 1138.283,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "LEAP_2002_4_10247": {
+        "answer_letter": "B",
+        "answer_text": "The reason for this phenomenon is that the Earth rotates on its axis, causing day and night, which in turn affects the time zone of the student in Louisiana.\n\nAnswer: B",
+        "correct": true,
+        "ms": 6394.872,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "LEAP_2007_8_10417": {
+        "answer_letter": "A",
+        "answer_text": "The reasoning is that in pea plants, the trait for round seeds is dominant over the trait for wrinkled seeds, meaning that the dominant allele will always be expressed in the offspring. \n\nAnswer: A",
+        "correct": true,
+        "ms": 1003.285,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MCAS_1999_4_27": {
+        "answer_letter": "A",
+        "answer_text": "A. landing a human on Mars is a current technological challenge, yet to be solved.\n\nThe technological challenge of landing humans on Mars is being addressed by NASA's Artemis program, which aims to return humans to the lunar surface by 2024 and establish a sustainable presence on the Moon, with the ultimate goal of sending humans to Mars in the 2030s.\n\nAnswer: A",
+        "correct": true,
+        "ms": 1576.522,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MCAS_2004_5_11": {
+        "answer_letter": "D",
+        "answer_text": "If there were too many bison in an area, the grass would likely be overgrazed, leading to a decrease in the available food source for other animals that depend on the grass.\n\nAnswer: D",
+        "correct": true,
+        "ms": 1018.971,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MCAS_2010_5_11984": {
+        "answer_letter": "D",
+        "answer_text": "A. using a fork to eat - This is a learned behavior as it is a specific action that requires practice and repetition to become a habit.\n\nB. jumping at a loud noise - This is a learned behavior as it is a conditioned response to a specific stimulus, such as the sound of thunder.\n\nC. squinting in a bright light - This is a learned behavior as it is a specific action that requires practice and repetition to become a habit.\n\nD. sneezing when",
+        "correct": false,
+        "ms": 1852.026,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MCAS_2012_5_23614": {
+        "answer_letter": "D",
+        "answer_text": "Loggerhead turtles bury their eggs in holes that they dig on the beach to protect them from sand, which can be too coarse and abrasive for the eggs to grow in.\n\nAnswer: D",
+        "correct": false,
+        "ms": 960.466,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MCAS_2014_5_13": {
+        "answer_letter": "A",
+        "answer_text": "The correct answer is A. The tail grows and the gills disappear. \n\nThe tadpole stage of a frog's life cycle is characterized by the development of a tail, which eventually disappears as the tadpole transforms into a frog.",
+        "correct": false,
+        "ms": 1113.812,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MDSA_2009_4_1": {
+        "answer_letter": "D",
+        "answer_text": "The reasoning behind this answer is that the presence of a fossilized seashell on a mountain suggests that the mountain was once underwater, which is a characteristic of a landmass that was covered by water in the past.\n\nAnswer: D",
+        "correct": true,
+        "ms": 1111.158,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MDSA_2009_5_20": {
+        "answer_letter": "D",
+        "answer_text": "The activity that shows the use of a nonrenewable natural resource is baking a cake with electricity produced by a hydroelectric power plant.\n\nThe reason is that the electricity used to power the hydroelectric power plant is a finite resource, meaning it will eventually run out, and its use will eventually lead to a shortage of electricity, which in turn will affect the production of the cake.\n\nAnswer: D",
+        "correct": false,
+        "ms": 1614.693,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MDSA_2012_8_16": {
+        "answer_letter": "B",
+        "answer_text": "Underground coal mining reduces the amount of soil and rock that is disturbed, resulting in less pollution. \n\nAnswer: B",
+        "correct": true,
+        "ms": 759.67,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MEAP_2005_8_13": {
+        "answer_letter": "A",
+        "answer_text": "The presence of fossil organisms in rocks can provide information about the environment at the time the sediments were deposited because fossils occur only in sedimentary rocks.\n\nAnswer: A",
+        "correct": false,
+        "ms": 905.489,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MEA_2013_8_1": {
+        "answer_letter": "A",
+        "answer_text": "The limited supply of copper on Earth necessitates a more efficient use of this valuable resource. \n\nA. Copper should be recycled.",
+        "correct": true,
+        "ms": 806.253,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "MSA_2012_5_2": {
+        "answer_letter": "A",
+        "answer_text": "The student is most likely correct because condensation occurs when water vapor in the air cools and forms droplets of water on surfaces, which would explain the wet grass.\n\nAnswer: A",
+        "correct": true,
+        "ms": 969.167,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_187198": {
+        "answer_letter": "A",
+        "answer_text": "When ice begins to melt at 0\u00b0C, water molecules gain kinetic energy and start moving more freely in relation to each other.\n\nA.",
+        "correct": false,
+        "ms": 818.052,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_191625": {
+        "answer_letter": "B",
+        "answer_text": "Harsh winters provide deer with a source of food, such as berries and other plants, which are more abundant during the winter months.\n\nAnswer: B",
+        "correct": false,
+        "ms": 865.837,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_403930": {
+        "answer_letter": "B",
+        "answer_text": "The student's observations about the worm in the notebook would be a fact if the worm is indeed a heterotroph, as heterotrophs are organisms that cannot produce their own food and need to consume other organisms or organic matter to survive.\n\nAnswer: B",
+        "correct": false,
+        "ms": 1201.388,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_404638": {
+        "answer_letter": "A",
+        "answer_text": "The rock is classified as an intrusive igneous rock because it forms from the cooling and solidification of magma or lava deep within the Earth's crust, resulting in a coarse-grained texture.\n\nAnswer: A",
+        "correct": false,
+        "ms": 1037.148,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_405136": {
+        "answer_letter": "D",
+        "answer_text": "Rocks are composed of one or more minerals, which are naturally occurring inorganic substances with a specific chemical composition and crystal structure. \n\nA. \n\nB. \n\nC. \n\nD.",
+        "correct": false,
+        "ms": 986.349,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_406639": {
+        "answer_letter": "B",
+        "answer_text": "The increase in population leads to an increase in demand for resources, such as food, water, and energy, which can strain the available supply and lead to scarcity. \n\nAnswer: B",
+        "correct": true,
+        "ms": 957.805,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_407262": {
+        "answer_letter": "C",
+        "answer_text": "A. yarn being knitted into a sweater - This is a physical process where fibers are manipulated to create a fabric, which is a tangible and measurable change.\n\nB. the engine from a tractor being started - This is a mechanical process where the energy from a fuel source is converted into motion, which is a tangible and measurable change.\n\nC. the metal on a bicycle forming rust - This is a chemical process where metal reacts with oxygen and moisture, leading to the formation of rust,",
+        "correct": false,
+        "ms": 1840.891,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_412202": {
+        "answer_letter": "A",
+        "answer_text": "The correct answer is A. Object 1, Object 2, Object 3.\n\nThe reasoning is that the temperature of an object is directly related to the amount of energy it emits per unit of time, which is known as the power. The color of the light emitted is a result of the energy being emitted per unit of time, which is related to the power of the object. Therefore, the object with the highest power (i.e., the highest temperature) will emit the",
+        "correct": false,
+        "ms": 1851.312,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_412463": {
+        "answer_letter": "B",
+        "answer_text": "The eight planets that orbit the Sun, excluding Earth, are Mercury, Venus, Mars, Jupiter, Saturn, Uranus, and Neptune. These planets orbit in the same direction as Earth, which is counterclockwise.\n\nAnswer: B",
+        "correct": false,
+        "ms": 1122.912,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_415082": {
+        "answer_letter": "D",
+        "answer_text": "The reasoning is that average speed is calculated by dividing the total distance traveled by the total time taken. \n\nAnswer: D",
+        "correct": false,
+        "ms": 757.38,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_416380": {
+        "answer_letter": "A",
+        "answer_text": "The decrease in dissolved gases would be most likely due to the absorption of oxygen by the water, as oxygen is a major component of the air and is readily available in the water.\n\nAnswer: A",
+        "correct": true,
+        "ms": 1003.223,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_417137": {
+        "answer_letter": "A",
+        "answer_text": "The highest rate of evaporation occurs at the surface of the ocean, where the warm air rising from the water cools and condenses, leading to rapid evaporation.\n\nAnswer: A",
+        "correct": false,
+        "ms": 972.436,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_417465": {
+        "answer_letter": null,
+        "answer_text": "Producers capture energy from gases such as methane and hydrogen sulfide in the oceanic trench ecosystem.\n\nThe oceanic trench ecosystem is characterized by extreme conditions, including high levels of methane and hydrogen sulfide, which are produced by the interaction of tectonic plates and the decomposition of organic matter.",
+        "correct": false,
+        "ms": 1429.128,
+        "split": "Challenge",
+        "unparseable": true
+      },
+      "Mercury_7001295": {
+        "answer_letter": "C",
+        "answer_text": "The correct answer is C. use the same equipment and procedures. \n\nThis is because using the same equipment and procedures ensures that the results are comparable across groups, allowing for a fair and accurate comparison of the outcomes.",
+        "correct": true,
+        "ms": 1044.942,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7004725": {
+        "answer_letter": "B",
+        "answer_text": "The waves produced by a person's voice are similar to the waves produced by an earthquake because they are both caused by physical vibrations.\n\nThe frequency of the waves produced by a person's voice is typically much lower than that of an earthquake, which is why they are not considered to be of the same frequency.\n\nAnswer: B",
+        "correct": false,
+        "ms": 1361.938,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7016538": {
+        "answer_letter": "C",
+        "answer_text": "The dissolved waste molecules produced by the cells are removed primarily from the blood by the kidneys. \n\nAnswer: C",
+        "correct": true,
+        "ms": 746.823,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7018270": {
+        "answer_letter": "B",
+        "answer_text": "A person riding in a moving Ferris wheel is constantly changing speed, as the wheel is rotating and the person is also moving in the same direction, resulting in a constant speed.\n\nAnswer: B",
+        "correct": false,
+        "ms": 994.562,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7027405": {
+        "answer_letter": "B",
+        "answer_text": "The best piece of equipment for measuring the rate of evaporation of a volatile liquid at room temperature would be a thermometer, as it can accurately measure temperature changes.\n\nAnswer: B",
+        "correct": false,
+        "ms": 928.988,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7032620": {
+        "answer_letter": "B",
+        "answer_text": "These elements with similar chemical and physical properties are found in the same group (family) in the Periodic Table of the Elements because their atomic structures and electron configurations are similar, leading to similar chemical behaviors.\n\nAnswer: B",
+        "correct": true,
+        "ms": 1074.909,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7033828": {
+        "answer_letter": "D",
+        "answer_text": "Using wind would improve air quality the most, as wind is a clean and renewable source of energy that produces no greenhouse gas emissions or pollutants.\n\nAnswer: D",
+        "correct": true,
+        "ms": 865.964,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7040793": {
+        "answer_letter": "B",
+        "answer_text": "Adding more plants in the fish tank would increase the amount of oxygen in the water, as plants absorb carbon dioxide and release oxygen, which is essential for the fish's survival.\n\nAnswer: B",
+        "correct": true,
+        "ms": 974.505,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7057085": {
+        "answer_letter": "B",
+        "answer_text": "A meteorologist predicts the possibility of tornadoes developing in a certain area by analyzing the type of clouds in the sky, as different cloud types are associated with the formation of thunderstorms and tornadoes.\n\nAnswer: B",
+        "correct": true,
+        "ms": 1053.001,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7069020": {
+        "answer_letter": "A",
+        "answer_text": "The first line of defense in the human body against infection and disease is the skin, as it acts as the primary barrier between the body and the external environment, providing a physical defense mechanism that prevents pathogens from entering the body.\n\nAnswer: A",
+        "correct": true,
+        "ms": 1126.835,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7075023": {
+        "answer_letter": "B",
+        "answer_text": "A sentence of reasoning: The statement \"Some multicellular organisms are plants\" is an opinion because it expresses a subjective view about the classification of organisms.\n\nAnswer: B",
+        "correct": false,
+        "ms": 895.437,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7102323": {
+        "answer_letter": "D",
+        "answer_text": "The dependent variable is the variable that the researcher is measuring in response to the independent variable, which in this case is the amount of sunlight the plants receive.\n\nThe number of fruits on each plant is the outcome that changes in response to the amount of sunlight, making it the dependent variable.\n\nAnswer: D",
+        "correct": true,
+        "ms": 1321.122,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7106960": {
+        "answer_letter": "A",
+        "answer_text": "A student studying nonrenewable resources could be studying coal because coal is a nonrenewable resource, meaning it will not be replenished in the same amount of time as it was in the past.\n\nAnswer: A",
+        "correct": true,
+        "ms": 1091.923,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7123078": {
+        "answer_letter": "C",
+        "answer_text": "The correct answer is C. the source of most heat and light energy.\n\nThe reason for the planets' orbit around the Sun is that the Sun's immense energy output, which includes solar radiation and the energy released from nuclear fusion in its core, is the primary driver of the planets' motion.",
+        "correct": false,
+        "ms": 1291.745,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7126263": {
+        "answer_letter": "B",
+        "answer_text": "The transformation of energy in a flashlight is from chemical energy, which is stored in the battery, into radiant energy, which is emitted as light.\n\nAnswer: B",
+        "correct": true,
+        "ms": 892.227,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7131530": {
+        "answer_letter": "B",
+        "answer_text": "The type of change that occurred in the material when it was heated is a chemical change because the iron reacted with the sulfur to form a new compound.\n\nAnswer: B",
+        "correct": true,
+        "ms": 898.626,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7137165": {
+        "answer_letter": "A",
+        "answer_text": "The characteristic that most affects the acceleration of an object is its mass, as it is the only factor among the options that is directly proportional to the force applied to the object, according to Newton's first law of motion.\n\nAnswer: A",
+        "correct": true,
+        "ms": 1124.032,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7138390": {
+        "answer_letter": "D",
+        "answer_text": "The increase in water temperature in July would likely cause the fish population to decrease due to the stress and discomfort they would experience in the warmer water.\n\nAnswer: D",
+        "correct": false,
+        "ms": 887.106,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7143308": {
+        "answer_letter": "D",
+        "answer_text": "The most uncontrollable factor in their investigation would be the accuracy of the October and November bills, as it directly affects the data that the students will collect and analyze.\n\nAnswer: D",
+        "correct": false,
+        "ms": 944.917,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7159215": {
+        "answer_letter": "C",
+        "answer_text": "Phillip was making hot tea. The glass broke because the hot water was poured in too quickly, causing the glass to contract rapidly and shatter.\n\nAnswer: C",
+        "correct": false,
+        "ms": 914.312,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7165218": {
+        "answer_letter": "D",
+        "answer_text": "The student should include a trench at the end of a subduction zone because a trench is a characteristic feature of a subduction zone, where the oceanic crust is being forced beneath the continental crust.\n\nAnswer: D",
+        "correct": true,
+        "ms": 1061.781,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7175893": {
+        "answer_letter": null,
+        "answer_text": "The strength of the gravity is the characteristic that is determined by the rotational velocity of the planet, as it affects the planet's mass and the resulting velocity of its rotation.\n\nThe planet's size is the factor that determines its rotational velocity, as it affects the planet's moment of inertia and the resulting angular velocity.\n\nThe shape of the orbit is the characteristic that is determined by the rotational velocity of the planet, as it affects the planet's orbital period and the resulting velocity of its rotation.\n\n",
+        "correct": false,
+        "ms": 1856.113,
+        "split": "Challenge",
+        "unparseable": true
+      },
+      "Mercury_7191433": {
+        "answer_letter": "C",
+        "answer_text": "Animals that live in the same habitat or have similar environments may develop the ability to produce body scents to help recognize each other.\n\nAnswer: C",
+        "correct": true,
+        "ms": 848.329,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7192798": {
+        "answer_letter": null,
+        "answer_text": "Ecologists consider air quality, plant diversity, and thermal pollution when evaluating the impact of human activities on an ecosystem, but solar radiation is the factor least likely considered.\n\nSolar radiation is a natural factor that has been present in the Earth's ecosystem for billions of years, and its impact on the environment is well understood. While human activities such as deforestation, urbanization, and climate change can alter the distribution and abundance of plants and animals, solar radiation is a fundamental component of the Earth",
+        "correct": false,
+        "ms": 1848.758,
+        "split": "Challenge",
+        "unparseable": true
+      },
+      "Mercury_7213413": {
+        "answer_letter": "B",
+        "answer_text": "The students most likely did first shake the mixture until the sand settled on the bottom because this is a common initial step in separating liquids and solids in a mixture to prevent the sand from settling out.\n\nAnswer: B",
+        "correct": false,
+        "ms": 1033.881,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7230388": {
+        "answer_letter": "C",
+        "answer_text": "The process that contributed to the buildup of oxygen in Earth's atmosphere was the aerobic breakdown of sugars to release energy, as plants and other organisms produced oxygen as a byproduct of cellular respiration.\n\nAnswer: C",
+        "correct": false,
+        "ms": 1036.614,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7239383": {
+        "answer_letter": "B",
+        "answer_text": "Genetic drift directly causes the presence and distribution of alleles diverge in the two new populations over time. \n\nAnswer: B",
+        "correct": true,
+        "ms": 776.854,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7268048": {
+        "answer_letter": "D",
+        "answer_text": "Plants are part of the food web because they form the base of the food chain, providing energy and nutrients for other organisms, and their loss can have cascading effects on the entire ecosystem.\n\nAnswer: D",
+        "correct": false,
+        "ms": 1034.995,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_7282083": {
+        "answer_letter": "B",
+        "answer_text": "The correct answer is B. a mutation in a parent's sex cell. \n\nThis is because mutations in the sex cells (sperm or egg) can result in the creation of offspring with unique physical traits, as the genetic material is not inherited from the parents.",
+        "correct": true,
+        "ms": 1203.939,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_400046": {
+        "answer_letter": "B",
+        "answer_text": "The characteristic that explains why powdered tea becomes a solution when mixed with water is that the tea's particles are dispersed evenly throughout the water, allowing the tea's solute to dissolve into the solvent.\n\nAnswer: B",
+        "correct": true,
+        "ms": 1036.766,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_400594": {
+        "answer_letter": "D",
+        "answer_text": "To ensure the reliability of the results, the student should repeat the same procedure to confirm the findings and minimize the risk of error. \n\nAnswer: D",
+        "correct": true,
+        "ms": 854.689,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_402103": {
+        "answer_letter": "B",
+        "answer_text": "When conducting a laboratory experiment, wearing a protective eye shield is an unsafe practice because it could cause eye damage or injury from chemical splashes or spills.\n\nAnswer: B",
+        "correct": false,
+        "ms": 897.536,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_405130": {
+        "answer_letter": "A",
+        "answer_text": "The sound is absorbed by the carpet because the carpet's thick material blocks the sound waves from reaching the listener's ears.\n\nAnswer: A",
+        "correct": true,
+        "ms": 811.189,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_405880": {
+        "answer_letter": "A",
+        "answer_text": "The activity that is an example of conserving nonrenewable resources is carpooling to work, as it reduces the demand for gasoline and other nonrenewable energy sources.\n\nCarpooling reduces the number of cars on the road, thereby decreasing the amount of fuel consumed and the emissions produced.\n\nAnswer: A",
+        "correct": true,
+        "ms": 1381.349,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_407572": {
+        "answer_letter": null,
+        "answer_text": "Photosynthesis produces sugar and oxygen.\n\nPhotosynthesis is the process by which plants, algae, and some bacteria convert light energy from the sun into chemical energy in the form of glucose, a type of sugar.",
+        "correct": false,
+        "ms": 1015.926,
+        "split": "Challenge",
+        "unparseable": true
+      },
+      "Mercury_SC_408367": {
+        "answer_letter": "B",
+        "answer_text": "Thick fur on a mammal will trap heat close to the animal's body, making it ideal for a cold and dry environment like a frozen plain.\n\nAnswer: B",
+        "correct": true,
+        "ms": 924.654,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_408763": {
+        "answer_letter": "C",
+        "answer_text": "Having sharp thorns would best help the plants survive around the leaf-eating animals, as it would deter or harm them.\n\nAnswer: C",
+        "correct": true,
+        "ms": 843.307,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_409241": {
+        "answer_letter": "A",
+        "answer_text": "A. one that eats meat - This type of animal will be severely affected by the fire, as it will lose its primary source of food, leading to starvation and death.\n\nAnswer: A",
+        "correct": false,
+        "ms": 991.953,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_410963": {
+        "answer_letter": "B",
+        "answer_text": "A scientific observation is one that is based on evidence and can be verified through observation, experimentation, or data collection. Tori's statement, \"The grasshopper is pretty,\" is a subjective opinion and not a scientific observation.\n\nAnswer: B",
+        "correct": false,
+        "ms": 1158.351,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_413089": {
+        "answer_letter": "D",
+        "answer_text": "The Sun is different from Earth because it is a star, not a planet, and it is composed of a specific type of gas, primarily hydrogen and helium.\n\nAnswer: D",
+        "correct": true,
+        "ms": 924.37,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_413143": {
+        "answer_letter": "C",
+        "answer_text": "The change is called a landslide. \n\nHeavy rain can cause soil to flow quickly downhill due to the increased water pressure and erosion of the soil, leading to the movement of soil away from its original location. \n\nAnswer: C",
+        "correct": true,
+        "ms": 1073.86,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_413624": {
+        "answer_letter": "B",
+        "answer_text": "When a person starts to jog, the stored energy in their muscles and body is converted into motion, heat, and eventually, a form of chemical energy that fuels their muscles.\n\nAnswer: B",
+        "correct": true,
+        "ms": 984.767,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "Mercury_SC_415761": {
+        "answer_letter": "D",
+        "answer_text": "The ball will continue to move in the same direction and speed, as the force applied by the pushing action is in the same direction as the ball's motion. \n\nAnswer: D",
+        "correct": false,
+        "ms": 954.455,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "NCEOGA_2013_8_57": {
+        "answer_letter": "C",
+        "answer_text": "The correct answer is C. All of the fossils show similar structures to that of the modern horse.\n\nThis option indicates that the fossils are representative of the evolutionary changes that have occurred in the horse over time, making it a strong candidate for the correct answer.",
+        "correct": true,
+        "ms": 1191.579,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "NYSEDREGENTS_2008_8_36": {
+        "answer_letter": "B",
+        "answer_text": "The correct answer is B. Warmed air rises above a lit candle.\n\nThis example best demonstrates the process of conduction because it involves the transfer of heat energy from the candle to the surrounding air, causing the air molecules to move and rise.",
+        "correct": false,
+        "ms": 1136.633,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "NYSEDREGENTS_2010_4_24": {
+        "answer_letter": "D",
+        "answer_text": "The two environmental changes that usually cause certain animals to migrate are a change of season and a change in food availability.\n\nAnimals migrate to take advantage of seasonal food sources, such as migrating birds to find food in winter or fish migrating to warmer waters in summer.\n\nAnswer: D",
+        "correct": false,
+        "ms": 1244.512,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "NYSEDREGENTS_2013_4_21": {
+        "answer_letter": null,
+        "answer_text": "The correct sequence shows the order of stages in a plant's life cycle.\n\nThe sequence that correctly represents the order of stages in a plant's life cycle is: seed -> young plant -> adult plant.\n\nReasoning: This sequence reflects the typical progression from a seed to a young plant to an adult plant, which is a common and logical sequence in the life cycle of plants.",
+        "correct": false,
+        "ms": 1529.088,
+        "split": "Challenge",
+        "unparseable": true
+      },
+      "NYSEDREGENTS_2015_4_11": {
+        "answer_letter": "D",
+        "answer_text": "When a student blows a whistle, the energy transferred is from the electrical energy stored in the device to the mechanical energy of the whistle, which produces sound waves.\n\nAnswer: D",
+        "correct": true,
+        "ms": 921.485,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "NYSEDREGENTS_2015_8_29": {
+        "answer_letter": "C",
+        "answer_text": "A change that is the best example of a physical change is ice cream melting, as it involves a change in state from solid to liquid without any alteration in its chemical composition.\n\nAnswer: C",
+        "correct": true,
+        "ms": 968.712,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "NYSEDREGENTS_2015_8_3": {
+        "answer_letter": "D",
+        "answer_text": "Dogs and cats are classified in different kingdoms, but the same species.\n\nAnswer: D",
+        "correct": false,
+        "ms": 682.999,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "TAKS_2009_5_14": {
+        "answer_letter": "A",
+        "answer_text": "The force that moves the fork toward the floor is the pull of Earth's gravity, as gravity is acting on the fork due to its mass and the Earth's gravitational field.\n\nAnswer: A",
+        "correct": true,
+        "ms": 978.915,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "TIMSS_2003_8_pg87": {
+        "answer_letter": "B",
+        "answer_text": "The reasoning is that to achieve a solution that is half as concentrated as the original, David needs to reduce the amount of salt in the solution by half, which means he needs to add half of 10 grams of salt, which is 5 grams of salt.\n\nAnswer: B",
+        "correct": true,
+        "ms": 1241.118,
+        "split": "Challenge",
+        "unparseable": false
+      },
+      "TIMSS_2011_8_pg15": {
+        "answer_letter": "C",
+        "answer_text": "The correct answer is C. Air pressure in the valley is lower than on the mountain top because the atmospheric pressure decreases with altitude, resulting in lower air pressure at lower elevations.\n\nAnswer: C",
+        "correct": false,
+        "ms": 993.897,
+        "split": "Challenge",
+        "unparseable": false
+      }
+    },
+    "n_correct": 40,
+    "n_graded": 84,
+    "n_incorrect": 44,
+    "n_unparseable": 5,
+    "stop_reason": ">= 40 correct and >= 40 incorrect (n_graded=84)"
+  },
   "health_at_probe": {
     "all_models_loaded": [],
     "max_models": {
@@ -891,6 +2777,24 @@
       }
     },
     "threads": 32
+  },
+  "step3_wall_s": 473.8628065840021,
+  "thread_sweep": {
+    "16": {
+      "n": 40,
+      "p50_ms": 468.422,
+      "p95_ms": 606.19
+    },
+    "32": {
+      "n": 40,
+      "p50_ms": 833.229,
+      "p95_ms": 7049.808
+    },
+    "8": {
+      "n": 40,
+      "p50_ms": 618.515,
+      "p95_ms": 796.122
+    }
   },
   "threads": 32
 }
