@@ -762,6 +762,16 @@ in {
         XILINX_XRT = "${xrt-combined}";
         XRT_PATH = "${xrt-combined}";
       }
+      // optionalAttrs (ldLibraryPath != "") {
+        # flm looks up the amdxdna plugin (libxrt_driver_xdna.so.2) next to
+        # wherever its own libxrt_core/libxrt_coreutil loaded from, not via
+        # $XILINX_XRT. RPATH alone resolves those to xrt's own lib/, which
+        # lacks the plugin, so `flm serve`/`run` fails with "No such device
+        # with index '0'" while `flm validate`/`xrt-smi examine` still see
+        # the NPU. lemond gets this below already; interactive flm needs it
+        # too. #148.
+        LD_LIBRARY_PATH = ldLibraryPath;
+      }
       // optionalAttrs cfg.enableFastFlowLM {
         # nix manages the version; FLM's auto-update probe on every run/serve
         # is noise on a read-only nix-store binary. New in FLM 0.9.41.
