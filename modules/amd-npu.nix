@@ -54,6 +54,21 @@
     ln -sf ${pkgs.xrt-plugin-amdxdna}/opt/xilinx/xrt/lib/libxrt_driver_xdna* $out/lib/
   '';
 
+  # flm resolves the amdxdna plugin (libxrt_driver_xdna.so.2) next to wherever
+  # its own libxrt_core loaded from, not via $XILINX_XRT — plain RPATH points
+  # at xrt's own lib/, which lacks the plugin. Wrapped rather than session-wide:
+  # nix binaries carry RUNPATH, which glibc searches after LD_LIBRARY_PATH, so
+  # a session-wide var would override library resolution for every dynamically
+  # linked process in the session, not just flm's. #148.
+  fastflowlmWrapped = pkgs.symlinkJoin {
+    name = "fastflowlm-wrapped";
+    paths = [pkgs.fastflowlm];
+    nativeBuildInputs = [pkgs.makeWrapper];
+    postBuild = ''
+      wrapProgram $out/bin/flm --prefix LD_LIBRARY_PATH : ${xrt-combined}/lib
+    '';
+  };
+
   # XRT (NPU) libs only present when enableNPU; ROCm libs trail them.
   ldLibraryPath = concatStringsSep ":" (
     optional cfg.enableNPU "${xrt-combined}/lib"
@@ -62,7 +77,7 @@
 
   pathList =
     optional cfg.enableNPU xrt-combined
-    ++ optional cfg.enableFastFlowLM pkgs.fastflowlm;
+    ++ optional cfg.enableFastFlowLM fastflowlmWrapped;
 
   # Stable /etc indirection for lemonade's backend binaries. v10.7.0 reads bin
   # paths only from config.json (it dropped the LEMONADE_*_BIN env→config
@@ -762,16 +777,6 @@ in {
         XILINX_XRT = "${xrt-combined}";
         XRT_PATH = "${xrt-combined}";
       }
-      // optionalAttrs (ldLibraryPath != "") {
-        # flm looks up the amdxdna plugin (libxrt_driver_xdna.so.2) next to
-        # wherever its own libxrt_core/libxrt_coreutil loaded from, not via
-        # $XILINX_XRT. RPATH alone resolves those to xrt's own lib/, which
-        # lacks the plugin, so `flm serve`/`run` fails with "No such device
-        # with index '0'" while `flm validate`/`xrt-smi examine` still see
-        # the NPU. lemond gets this below already; interactive flm needs it
-        # too. #148.
-        LD_LIBRARY_PATH = ldLibraryPath;
-      }
       // optionalAttrs cfg.enableFastFlowLM {
         # nix manages the version; FLM's auto-update probe on every run/serve
         # is noise on a read-only nix-store binary. New in FLM 0.9.41.
@@ -808,7 +813,7 @@ in {
         pkgs.lshw
       ]
       ++ optional cfg.enableNPU xrt-combined
-      ++ optional cfg.enableFastFlowLM pkgs.fastflowlm
+      ++ optional cfg.enableFastFlowLM fastflowlmWrapped
       ++ optional cfg.enableLemonade lemonadePackage
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr;
 
