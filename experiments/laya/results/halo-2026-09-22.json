@@ -2778,7 +2778,12 @@
     },
     "threads": 32
   },
-  "step3_wall_s": 474.68805717299983,
+  "pins": {
+    "arc_dataset_sha": "210d026faf9955653af8916fad021475a3f00453",
+    "laya_model_sha": "1c5edc17a7acd8701df6fc341c0d179f1c62c982",
+    "recorded": "after the fact on 2026-09-22; the committed run fetched unpinned"
+  },
+  "step3_wall_s": 474.9452749089978,
   "thread_sweep": {
     "16": {
       "n": 40,

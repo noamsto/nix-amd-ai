@@ -36,6 +36,8 @@ nix-shell experiments/laya/shell.nix --run "python experiments/laya/bench.py con
 - `laya-latency` — loads a Laya checkpoint (`--checkpoint root` or
   `typed-decisions`) and times `agent.predict()` over the first `--n` items
   of the ARC prompt pool (default 120), plus one 10-question batched call.
+  Refuses to overwrite existing results for that checkpoint unless `--force`
+  is passed.
 - `grade`, `baselines`, `report`, `contention` — implemented in Step 3 of
   `docs/superpowers/plans/2026-09-22-typed-decisions-exploration.md`.
 

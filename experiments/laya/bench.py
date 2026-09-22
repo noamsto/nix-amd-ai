@@ -21,7 +21,9 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+import pyarrow.parquet as pq
 import torch
+from huggingface_hub import hf_hub_download
 
 BASE_URL = "http://localhost:13305"
 RESULTS_PATH = Path(__file__).parent / "results" / "halo-2026-09-22.json"
@@ -34,13 +36,21 @@ JUDGE_MODEL = FALLBACK_MODEL
 POOL_SEED = 149
 LABEL_MAP = {"1": "A", "2": "B", "3": "C", "4": "D"}
 
+# Resolved once via HfApi().dataset_info(...).sha / .model_info(...).sha on
+# 2026-09-22, after the committed run already fetched unpinned. ARC_REVISION
+# is passed to hf_hub_download below; LAYA_REVISION is recorded only —
+# laya.load()/Agent.__init__ take no revision and don't forward one to
+# snapshot_download.
+ARC_REVISION = "210d026faf9955653af8916fad021475a3f00453"
+LAYA_REVISION = "1c5edc17a7acd8701df6fc341c0d179f1c62c982"
+
 # Step 3 pre-registered thresholds (spec Deliverable 2, plan Fixed inputs) — kill
 # I1/I2 if ANY of these hold.
 KILL_AUC_FLOOR = 0.65
 KILL_AUC_MARGIN = 0.05
 KILL_WARM_P50_MS = 250.0
 
-ANSWER_LINE_RE = re.compile(r"answer\s*:\s*([A-Da-d])\b")
+ANSWER_LINE_RE = re.compile(r"answer\s*:\s*([A-Da-d])\b", re.IGNORECASE)
 STANDALONE_LETTER_RE = re.compile(r"(?<![A-Za-z0-9])([A-D])(?![A-Za-z0-9])")
 
 GRADE_STOP_MIN = 40
@@ -70,6 +80,11 @@ def load_results() -> dict:
 
 
 def save_results(results: dict) -> None:
+    results["pins"] = {
+        "arc_dataset_sha": ARC_REVISION,
+        "laya_model_sha": LAYA_REVISION,
+        "recorded": "after the fact on 2026-09-22; the committed run fetched unpinned",
+    }
     RESULTS_PATH.parent.mkdir(parents=True, exist_ok=True)
     RESULTS_PATH.write_text(json.dumps(results, indent=2, sort_keys=True) + "\n")
 
@@ -89,16 +104,13 @@ def build_pool() -> list:
     split independently shuffled with seed 149. Shared with Step 3's
     `grade` so the two subcommands see the same pool/order.
     """
-    from huggingface_hub import hf_hub_download
-    import pyarrow.parquet as pq
-
     pool = []
     for split, filename in (
         ("Challenge", "ARC-Challenge/test-00000-of-00001.parquet"),
         ("Easy", "ARC-Easy/test-00000-of-00001.parquet"),
     ):
         local_path = hf_hub_download(
-            repo_id="allenai/ai2_arc", repo_type="dataset", filename=filename
+            repo_id="allenai/ai2_arc", repo_type="dataset", filename=filename, revision=ARC_REVISION
         )
         rows = pq.read_table(local_path).to_pylist()
 
@@ -294,6 +306,10 @@ def cmd_laya_latency(args: argparse.Namespace) -> None:
     key = "laya" if args.checkpoint == "root" else "laya_typed_decisions"
     subfolder = None if args.checkpoint == "root" else "typed-decisions"
 
+    if "p50_ms" in results.get(key, {}) and not args.force:
+        print(f"{prefix} laya-latency: {key} already has results; pass --force to overwrite")
+        return
+
     try:
         import laya
     except Exception as e:
@@ -375,6 +391,15 @@ def cmd_grade(args: argparse.Namespace) -> None:
     cap = GRADE_CAP_FLM if candidate == FLM_MODEL else GRADE_CAP_FALLBACK
 
     grade = results.get("grade", {})
+    cached_candidate = grade.get("candidate")
+    if args.reset:
+        grade = {}
+    elif cached_candidate is not None and cached_candidate != candidate:
+        print(
+            f"{prefix} grade: refusing to resume — cached grade is for candidate="
+            f"{cached_candidate!r}, current candidate={candidate!r}; pass --reset to discard and re-grade"
+        )
+        return
     items = grade.get("items", {})
     if "health_at_start" not in grade:
         try:
@@ -526,8 +551,7 @@ def cmd_baselines(args: argparse.Namespace) -> None:
     baselines["own_logprob_template"] = "none"
     t_start = time.monotonic()
 
-    # (a) own-logprob: raw prompt + "\nAnswer:", no chat template, logprobs of
-    # the single greedy next token.
+    # (a) own-logprob: raw prompt + "\nAnswer:", deliberately no chat template.
     own_logprob = baselines.setdefault("own_logprob", {})
     n_done = 0
     for gid in graded_ids:
@@ -573,15 +597,10 @@ def cmd_baselines(args: argparse.Namespace) -> None:
     save_results(results)
     print(f"{prefix} baselines: own_logprob done ({len(own_logprob)} items)")
 
-    # (d) llm_judge via routing/validate — every route_to/default_model/
-    # classifier model is in `components` (docs/api/lemonade.md:126-128).
-    #
-    # Empirically (lemonade 11.9.0, halo, max_models.llm=1): routing/validate's
-    # classifier evaluation does not itself swap the loaded LLM. If the judge
-    # model isn't already resident it fails closed to the classifier's
-    # `on_error` (`match_false` here, i.e. EASY) near-instantly and silently —
-    # no error surfaces in the response. Since `grade` and own-logprob (a)
-    # both leave the candidate (FLM) loaded, warm the judge model in first.
+    # (d) llm_judge via routing/validate. lemonade 11.9.0 does not load a
+    # non-resident judge for validate: with the FLM candidate holding the single
+    # LLM slot the classifier fails closed to `on_error` (EASY) in ~10 ms with
+    # no error in the body, so warm the judge in first.
     try:
         http_post(
             "/api/v1/chat/completions",
@@ -820,8 +839,6 @@ def cmd_report(args: argparse.Namespace) -> None:
     judge_p50 = percentile(judge_times, 50) if judge_times else None
     judge_p95 = percentile(judge_times, 95) if judge_times else None
 
-    # Top greedy tokens from the own-logprob baseline (a), so a reader can
-    # tell letter confidence from formatting confidence.
     own_logprob = results.get("baselines", {}).get("own_logprob", {})
     token_counts = collections.Counter(
         v["token"] for v in own_logprob.values() if v.get("token") is not None
@@ -938,22 +955,22 @@ def run_thread_sweep(prefix: str) -> dict:
 
 
 def write_report_md(
-    results,
-    prefix,
-    grade,
-    auc_rows,
-    best_baseline_name,
-    best_baseline_auc,
-    idle_p50,
-    idle_p95,
-    f_p50,
-    judge_p50,
-    judge_p95,
-    top_tokens,
-    thread_sweep,
-    kills,
-    overall_kill,
-    unmeasured_notes,
+    results: dict,
+    prefix: str,
+    grade: dict,
+    auc_rows: list,
+    best_baseline_name: str | None,
+    best_baseline_auc: float,
+    idle_p50: float | None,
+    idle_p95: float | None,
+    f_p50: float | None,
+    judge_p50: float | None,
+    judge_p95: float | None,
+    top_tokens: list,
+    thread_sweep: dict,
+    kills: list,
+    overall_kill: bool,
+    unmeasured_notes: list,
 ) -> None:
     lines = []
     lines.append("# Laya (#149) — Step 3 results, I1/I2 arm")
@@ -1167,6 +1184,9 @@ def cmd_contention(args: argparse.Namespace) -> None:
         contention[f"{label}_p50_ms"] = round(p50, 3)
         contention[f"{label}_p95_ms"] = round(p95, 3)
         print(f"{prefix} contention {label} ({model}): p50={p50:.1f}ms p95={p95:.1f}ms")
+        if thread.is_alive():
+            contention[f"{label}_contaminated_by_lingering_thread"] = True
+            print(f"{prefix} contention {label}: lingering thread still alive after join timeout")
 
     contention["status"] = "measured"
     results["contention"] = contention
@@ -1183,8 +1203,12 @@ def main() -> None:
     latency = sub.add_parser("laya-latency", help="Measure Laya load + predict latency over the ARC pool.")
     latency.add_argument("--checkpoint", choices=["root", "typed-decisions"], default="root")
     latency.add_argument("--n", type=int, default=120)
+    latency.add_argument("--force", action="store_true", help="Overwrite existing results for this checkpoint.")
 
-    sub.add_parser("grade", help="Step 3: grade the candidate over the ARC pool.")
+    grade = sub.add_parser("grade", help="Step 3: grade the candidate over the ARC pool.")
+    grade.add_argument(
+        "--reset", action="store_true", help="Discard cached grade items and re-grade from scratch."
+    )
     sub.add_parser("baselines", help="Step 3: compute baseline signals per graded item.")
     sub.add_parser("report", help="Step 3: AUC + latency report, PASS/KILL lines.")
     sub.add_parser("contention", help="Step 3: latency under NPU/iGPU contention.")

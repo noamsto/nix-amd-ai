@@ -203,7 +203,7 @@ measurable on halo today?
 - Mechanism: lemonade's existing `semantic_similarity` router condition with `embed-gemma:300m` resident on FLM — no new software at all.
 - Why typed beats ask-the-LLM: it doesn't clearly beat a typed-decision model — this is the alternative for comparison, not a typed-decision idea. It answers "is this close to a reference example" via embedding distance, a different (and cruder) signal than a calibrated probability over a specific question.
 - Jaggedness: embedding-space jaggedness (synonymy, negation blindness) is not characterised in this doc.
-- Fit: fully native — `lemonade-sdk/lemonade@v11.9.0:docs/dev/router-policy.md` documents `semantic_similarity` as a condition today, and `flm list` on halo offers `embed-gemma:300m` as downloadable (`lemonade-sdk/lemonade@v11.9.0:docs/guide/configuration/multi-model.md:69`).
+- Fit: fully native — `lemonade-sdk/lemonade@v11.9.0:docs/dev/router-policy.md` documents `semantic_similarity` as a condition today, and `flm list` on halo offers `embed-gemma:300m` as downloadable (`flm list` output on halo, 2026-09-22; `embed-gemma:300m` is one of FLM's two non-chat models, `lemonade-sdk/lemonade@v11.9.0:src/cpp/server/backends/fastflowlm/fastflowlm_models.cpp:305`).
 - Cost to try: 0.5 day (pull the model, write a policy) — cheapest idea in this list by far.
 - Kill criterion: not pre-registered.
 - Measurable on halo today? No — `embed-gemma:300m` is not pulled on this host and this exploration does not pull new models (Fixed inputs, plan): unmeasured. This is presented as the cheapest alternative to compare a typed-decision idea against, not as a measured bar — nothing here should read "I9 beats/loses to I1" as a number, because no I9 number exists.
@@ -320,7 +320,7 @@ Laya's signal adds anything a trivial heuristic doesn't already give.
 **The `llm_judge` baseline has no discrimination either.** `llm_judge`
 (Qwen3.5-4B-GGUF via `/api/v1/routing/validate`, halo p50 1200.4 ms / p95
 1344.4 ms) returned EASY (`matched_rule` empty, default route) for **all
-84** graded items. Verified afterward as a genuine judgement, not a
+84** graded items. Verified afterward (halo) as a genuine judgement, not a
 fail-open: a manual validate call (outside the graded 84) on an ARC science
 item returned trace
 `{"condition":"classifier:hard","label":"HARD","result":false,"score":0.0}`
@@ -336,10 +336,10 @@ load the judge model. If the judge is not resident — e.g. the FLM candidate
 already holds the single LLM slot — the `llm` classifier fails closed to
 `default_label` via `on_error: match_false` in ~1–13 ms with no error in
 the response body
-(`lemonade-sdk/lemonade@v11.9.0:docs/dev/router-policy.md:133` documents
-`on_error`; `lemonade-sdk/lemonade@v11.9.0:docs/api/lemonade.md:138-141`
-documents that a model-evaluation failure is handled by `on_error` and
-routing continues regardless). The harness therefore sends one warm-up chat
+(`lemonade-sdk/lemonade@v11.9.0:docs/dev/router-policy.md:133` shows the
+`on_error` field in a policy example; `lemonade-sdk/lemonade@v11.9.0:docs/api/lemonade.md:138-141`
+carries the semantics — a model-evaluation failure is handled by `on_error`
+and routing continues regardless). The harness therefore sends one warm-up chat
 call to the judge before the judge loop, to force residency first. This is
 an observation from this run about halo's residency state at run time, not
 a lemonade bug report.
