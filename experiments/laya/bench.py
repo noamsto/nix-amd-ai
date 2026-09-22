@@ -1000,10 +1000,10 @@ def write_report_md(
     idle_p95_s = f"{idle_p95:.1f}" if idle_p95 is not None else "unmeasured"
     lines.append(f"p50={idle_p50_s}ms p95={idle_p95_s}ms")
     lines.append("")
-    f_p50_s = f"{f_p50:.1f}" if f_p50 is not None else "unmeasured (no ids missing from the idle run)"
+    f_p50_s = f"{f_p50:.1f}ms" if f_p50 is not None else "unmeasured (no ids missing from the idle run)"
     lines.append(
         f"{prefix} — baseline (f) difficulty p50, measured while lemonade calls interleaved "
-        f"(not the kill line): p50={f_p50_s}ms"
+        f"(not the kill line): p50={f_p50_s}"
     )
     lines.append("")
     judge_p50_s = f"{judge_p50:.1f}" if judge_p50 is not None else "unmeasured"
@@ -1049,14 +1049,36 @@ def write_report_md(
             lines.append(f"| {threads} | {row['n']} | {row['p50_ms']:.1f} | {row['p95_ms']:.1f} |")
     lines.append("")
 
+    lines.append("## Contention (Laya on CPU while an LLM generates)")
+    lines.append("")
     contention = results.get("contention")
-    if contention:
-        lines.append("## Contention")
+    if contention and contention.get("status") == "measured":
+        lines.append(f"{prefix} — Laya p50/p95 under a background NPU/iGPU streaming load, n=40 each.")
         lines.append("")
-        lines.append(f"{prefix} — Laya p50 under a background NPU/iGPU streaming load.")
+        lines.append("| condition | p50_ms | p95_ms |")
+        lines.append("|---|---|---|")
+        lines.append(
+            f"| idle | {contention['idle_p50_ms']:.1f} | {contention['idle_p95_ms']:.1f} |"
+        )
+        for label, caption in (
+            ("npu_contended", f"NPU contended (`{FLM_MODEL}` streaming)"),
+            ("igpu_contended", f"iGPU contended (`{FALLBACK_MODEL}` streaming)"),
+        ):
+            p50 = contention.get(f"{label}_p50_ms")
+            if p50 is None:
+                lines.append(f"| {caption} | skipped ({contention.get(f'{label}_reason', 'unmeasured')}) | |")
+            else:
+                lines.append(f"| {caption} | {p50:.1f} | {contention[f'{label}_p95_ms']:.1f} |")
         lines.append("")
-        lines.append(f"```json\n{json.dumps(contention, indent=2)}\n```")
-        lines.append("")
+        lines.append(
+            f"{prefix} — this idle p50 (n=40, run after grading) is not the kill-line p50 "
+            "(n=120, Step 2)."
+        )
+    elif contention:
+        lines.append(f"{prefix} — status: unmeasured ({contention.get('reason', 'no reason recorded')})")
+    else:
+        lines.append(f"{prefix} — status: unmeasured (contention step not run)")
+    lines.append("")
 
     lines.append("## Unmeasured")
     lines.append("")

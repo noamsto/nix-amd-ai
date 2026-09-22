@@ -7,7 +7,24 @@ halo — Ryzen AI MAX+ 395 (Strix Halo, gfx1151 iGPU, XDNA2 NPU fw 1.1.2.65),
 
 ## 1. TL;DR
 
-<!-- PENDING: filled from experiments/laya/results -->
+The ranking (§6) puts **I1 — calibrated route signal** first and **I2 —
+cascade** second. The prototype ran the shared I1/I2 arm and **killed both**
+as tested on halo: Laya's `difficulty` AUC vs small-model-incorrect was
+**0.5565** (halo) against the pre-registered 0.65 floor, and Laya's warm p50
+was **797.2 ms** (halo, CPU, 32 threads, n=120) against the 250 ms line —
+both pre-registered kill criteria fired (§8). I2's `adequate` signal scored
+worse, 0.4409 (halo).
+
+Do not build the caller-side `metadata` shim on Laya's base checkpoint —
+that is what was just killed. The only path that could revive routing is a
+fine-tune on this host's own routing labels (Laya's published zero-shot
+0.36 → fine-tuned 0.766 gap suggests headroom, unmeasured here); that is a
+human go/no-go decision, roughly **2–4 days**, and needs a labelled routing
+set that does not exist yet. Cheaper measurable follow-ups not run in this
+pass: **I7** coherence canary (0.5–1 day) and **I3** grounding (0.5–1 day).
+
+These numbers say nothing about the iGPU, the NPU, or a fine-tuned Laya
+checkpoint — all three remain unmeasured (§8).
 
 ## 2. What a typed-decision model is
 
@@ -258,4 +275,115 @@ waiting on upstream, independent of what this doc's numbers show).
 
 ## 8. Prototype results
 
-<!-- PENDING: filled from experiments/laya/results -->
+What ran on halo (Ryzen AI MAX+ 395, gfx1151 iGPU, XDNA2 NPU, CPU 32 threads
+unless stated): the shared I1/I2 arm from §5/§7 via
+`experiments/laya/bench.py` (`probe`, `laya-latency`, `grade`, `baselines`,
+`report`, `contention`); raw data and the rendered tables are
+`experiments/laya/results/halo-2026-09-22.{json,md}`. Only the root
+checkpoint ran — `typed-decisions` and `multilingual` are **unmeasured**.
+The run used only already-pulled lemonade models; nothing was pulled for
+this exploration. Residency at probe time (`health_at_probe` in the results
+JSON): `max_models.llm = 1`, no model resident when the run started.
+
+**Grading.** Candidate `llama3.2-1b-FLM` (FLM probe passed — the NPU was
+usable at run time). The pre-registered stop rule reached n=84 (40 correct /
+44 incorrect / 5 unparseable, counted incorrect). All 84 graded items are
+ARC-**Challenge**: the pool grades Challenge before Easy and the stop rule
+fired before reaching Easy, so the `easy_challenge` baseline is degenerate
+(single split, AUC 0.5000) and the secondary "AUC vs split==Challenge"
+column is n/a for every signal. ARC-Easy AUC is therefore **unmeasured**.
+
+**Signal AUCs vs small-model-incorrect** (halo, n=84 unless noted):
+
+| signal | AUC | note |
+|---|---|---|
+| `difficulty_score` (Laya, I1) | 0.5565 | barely above chance |
+| `1 - adequate_noul` (Laya, I2) | 0.4409 | below chance |
+| `min_chars` | 0.6176 | outperforms Laya's difficulty score on this set |
+| `llm_judge == HARD` | 0.5000 | no discrimination — see below |
+| `easy_challenge` | 0.5000 | degenerate, single split graded |
+| `-own_logprob` | **unmeasured** | n=0 — see below |
+
+Mean `difficulty_score` (halo) was 1.06 for items the 1B got wrong vs 1.00
+for items it got right — the signal barely moves between the two groups,
+consistent with the 0.5565 AUC. `min_chars` (raw prompt byte length)
+outperformed Laya's difficulty score on this pool, even though the
+pre-registered kill line (§5 I1) compares Laya only against own-logprob and
+easy/challenge, not min_chars — said plainly because it bears on whether
+Laya's signal adds anything a trivial heuristic doesn't already give.
+
+`own_logprob` is **unmeasured**: FLM's `/api/v1/completions` returned no
+`logprobs` object for any of the 84 graded items (expected on FLM;
+`lemonade-sdk/lemonade@v11.9.0:docs/api/openai.md:220` documents where
+`logprobs` is populated).
+
+**The `llm_judge` baseline has no discrimination either.** `llm_judge`
+(Qwen3.5-4B-GGUF via `/api/v1/routing/validate`, halo p50 1200.4 ms / p95
+1344.4 ms) returned EASY (`matched_rule` empty, default route) for **all
+84** graded items. Verified afterward as a genuine judgement, not a
+fail-open: a manual validate call (outside the graded 84) on an ARC science
+item returned trace
+`{"condition":"classifier:hard","label":"HARD","result":false,"score":0.0}`
+after ~1.5 s, and a number-theory prompt returned `result: true, score:
+1.0` with a rationale. So a 4B LLM-as-judge rates every ARC-Challenge
+question "easy for a 1B model" (halo) while the 1B model gets 44/84 (52%)
+of them wrong — the judge baseline has no discrimination on this set
+either.
+
+**A lemonade residency behaviour observed on this run.** On halo (lemonade
+11.9.0, `max_models.llm = 1`), `/api/v1/routing/validate` does not itself
+load the judge model. If the judge is not resident — e.g. the FLM candidate
+already holds the single LLM slot — the `llm` classifier fails closed to
+`default_label` via `on_error: match_false` in ~1–13 ms with no error in
+the response body
+(`lemonade-sdk/lemonade@v11.9.0:docs/dev/router-policy.md:133` documents
+`on_error`; `lemonade-sdk/lemonade@v11.9.0:docs/api/lemonade.md:138-141`
+documents that a model-evaluation failure is handled by `on_error` and
+routing continues regardless). The harness therefore sends one warm-up chat
+call to the judge before the judge loop, to force residency first. This is
+an observation from this run about halo's residency state at run time, not
+a lemonade bug report.
+
+**Latency** (halo, CPU):
+
+| measurement | p50 | p95 | n |
+|---|---|---|---|
+| kill-line (Step 2 idle run, 32 threads) | 797.2 ms | 1916.6 ms | 120 |
+| thread sweep — 8 threads (supplementary) | 618.5 ms | 796.1 ms | 40 |
+| thread sweep — 16 threads (supplementary) | 468.4 ms | 606.2 ms | 40 |
+| thread sweep — 32 threads (supplementary) | 833.2 ms | 7049.8 ms | 40 |
+| contention — idle | 835.4 ms | 1096.4 ms | 40 |
+| contention — NPU (`llama3.2-1b-FLM` streaming) | 1296.2 ms | 3317.9 ms | 40 |
+| contention — iGPU (`Qwen3.5-4B-GGUF` streaming) | 2169.1 ms | 2662.3 ms | 40 |
+
+Load 18.53 s (halo, root checkpoint); batched 10 questions 414.0
+ms/question (halo). 16 threads is the best of the sweep and still nearly twice
+the 250 ms line; the 32-thread p95 blow-up (7049.8 ms)
+suggests SMT oversubscription on this 16-core part — an inference from the
+shape of the sweep, not itself a measurement. The contention idle p50
+(835.4 ms, n=40, run after grading) is **not** the kill-line p50 (797.2 ms,
+n=120, Step 2) — a separate run, reported separately here and in the
+results md.
+
+**PASS/KILL** (halo, pre-registered criteria, spec Deliverable 2 / plan
+Fixed inputs):
+
+- **KILL** — Laya AUC < 0.65 (0.5565)
+- **PASS** — Laya AUC > best-baseline AUC + 0.05 (0.5565 vs easy_challenge 0.5000)
+- **KILL** — Laya warm p50 ≥ 250 ms (797.2 ms)
+- **PASS** — Laya p50 < `llm`-judge p50 (797.2 ms vs 1200.4 ms)
+
+**Overall: KILL** for I1; I2's `adequate` signal (AUC 0.4409) scores worse
+and is killed on the same AUC floor.
+
+**Unmeasured, listed explicitly:**
+
+- ROCm torch on the iGPU (§4)
+- NPU (§4 — no path)
+- power / RAPL (not read by any run)
+- `own_logprob` on the FLM candidate (no `logprobs` object returned)
+- the `typed-decisions` and `multilingual` checkpoints (only root ran)
+- AUC on ARC-Easy (the stop rule fired before the pool reached it)
+- the secondary AUC vs split==Challenge (degenerate — single split graded)
+- I3 (grounding) and I7 (coherence canary) arms — not run; I1 was the
+  selected prototype target (§6)

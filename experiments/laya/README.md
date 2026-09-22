@@ -41,3 +41,10 @@ nix-shell experiments/laya/shell.nix --run "python experiments/laya/bench.py con
 
 All subcommands read/merge/write the same results file,
 `experiments/laya/results/halo-2026-09-22.json`.
+
+## Results
+
+Rendered tables: `experiments/laya/results/halo-2026-09-22.md`. Overall
+verdict: **KILL** for the I1/I2 arm (Laya AUC 0.5565 < 0.65 floor; warm p50
+797.2 ms ≥ 250 ms line, both halo) — see
+`docs/research/typed-decisions-local-models.md` §8 for the full breakdown.
