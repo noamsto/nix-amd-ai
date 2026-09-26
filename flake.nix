@@ -20,6 +20,18 @@
     # default is every target clr advertises -- 16 in the pinned nixpkgs.
     rocmGpuTargets = ["gfx1150" "gfx1151"];
 
+    # FastFlowLM's NPU kernels (.xclbin, share/flm) are proprietary beside its
+    # MIT source, so nixpkgs marks the package unfree. Allow exactly that
+    # package where this repo instantiates nixpkgs. #158
+    allowFastFlowLMUnfree = pkg:
+      builtins.elem (inputs.nixpkgs.lib.getName pkg) ["fastflowlm"];
+
+    # This repo's own NixOS eval checks and unit renders opt in to fastflowlm's
+    # unfree licence the same way a consumer must. #158
+    fastFlowLMUnfreeConfig = {
+      nixpkgs.config.allowUnfreePredicate = allowFastFlowLMUnfree;
+    };
+
     # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
     # upgrade response (missing the empty CRLF after the last header) for
     # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
@@ -120,10 +132,17 @@
 
       flake = {
         overlays.default = final: prev: let
-          # Build everything against our own nixpkgs input rather than the
-          # consumer's `final`, so the input closure matches CI's and Cachix
-          # substitution works regardless of which channel the consumer is on.
-          pinned = import inputs.nixpkgs {inherit (prev.stdenv.hostPlatform) system;};
+          # Build against our own nixpkgs input for closure/Cachix stability,
+          # but inherit the consumer's unfree policy so fastflowlm is refused
+          # under allowUnfree = false. Mirror only the unfree keys. #158
+          pinned = import inputs.nixpkgs {
+            inherit (prev.stdenv.hostPlatform) system;
+            config = builtins.intersectAttrs {
+              allowUnfree = null;
+              allowUnfreePredicate = null;
+              allowUnfreePackages = null;
+            } (prev.config or {});
+          };
         in
           # Branch on `prev` (not `final`): making the overlay's key set depend
           # on `final.stdenv` would force the fixpoint and recurse infinitely.
@@ -172,10 +191,16 @@
       };
 
       perSystem = {
-        pkgs,
         system,
         ...
       }: let
+        # flake-parts' default pkgs is a bare nixpkgs import, which rejects
+        # unfree; configure it for fastflowlm. #158
+        pkgs = import inputs.nixpkgs {
+          inherit system;
+          config.allowUnfreePredicate = allowFastFlowLMUnfree;
+        };
+
         isLinux = inputs.nixpkgs.lib.hasSuffix "linux" system;
 
         # AMD NPU/XRT/ROCm/Vulkan stack — Linux + AMD-hardware only.
@@ -224,6 +249,7 @@
             inherit system;
             modules = [
               inputs.self.nixosModules.default
+              fastFlowLMUnfreeConfig
               {
                 boot.loader.grub.enable = false;
                 fileSystems."/" = {
@@ -250,6 +276,7 @@
             inherit system;
             modules = [
               inputs.self.nixosModules.default
+              fastFlowLMUnfreeConfig
               {
                 boot.loader.grub.enable = false;
                 fileSystems."/" = {
@@ -277,6 +304,7 @@
             inherit system;
             modules = [
               inputs.self.nixosModules.default
+              fastFlowLMUnfreeConfig
               {
                 boot.loader.grub.enable = false;
                 fileSystems."/" = {
@@ -321,6 +349,7 @@
                 inherit system;
                 modules = [
                   inputs.self.nixosModules.default
+                  fastFlowLMUnfreeConfig
                   {
                     boot.loader.grub.enable = false;
                     fileSystems."/" = {
@@ -347,6 +376,7 @@
                 inherit system;
                 modules = [
                   inputs.self.nixosModules.default
+                  fastFlowLMUnfreeConfig
                   {
                     boot.loader.grub.enable = false;
                     fileSystems."/" = {
@@ -385,6 +415,7 @@
                 inherit system;
                 modules = [
                   inputs.self.nixosModules.default
+                  fastFlowLMUnfreeConfig
                   {
                     boot.loader.grub.enable = false;
                     fileSystems."/" = {
@@ -417,6 +448,7 @@
                 inherit system;
                 modules = [
                   inputs.self.nixosModules.default
+                  fastFlowLMUnfreeConfig
                   {
                     boot.loader.grub.enable = false;
                     fileSystems."/" = {
@@ -449,6 +481,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     (pkgs.lib.recursiveUpdate {
                         boot.loader.grub.enable = false;
                         fileSystems."/" = {
@@ -526,6 +559,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -590,6 +624,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -647,6 +682,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -706,6 +742,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -743,6 +780,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -817,6 +855,7 @@
               (import inputs.nixpkgs {
                 inherit system;
                 overlays = [inputs.self.overlays.default];
+                config.allowUnfreePredicate = allowFastFlowLMUnfree;
               })
             .testers.runNixOSTest {
                 name = "lemond-reconcile";
@@ -886,6 +925,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -943,6 +983,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
@@ -1034,6 +1075,7 @@
                     inherit system;
                     modules = [
                       inputs.self.nixosModules.default
+                      fastFlowLMUnfreeConfig
                       {
                         hardware.amd-npu = {
                           enable = true;
