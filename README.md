@@ -67,6 +67,20 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 }
 ```
 
+> [!IMPORTANT]
+> **FastFlowLM's NPU kernels are proprietary.** The package's source is MIT,
+> but the `.xclbin` kernels it installs are governed by
+> [FastFlowLM's TERMS.md](https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/TERMS.md):
+> free only for non-commercial use or for companies with annual revenue
+> ≤ USD 10M; a commercial licence is required above that. nixpkgs therefore
+> treats `fastflowlm` as unfree, and applying this overlay/module on a host
+> with `allowUnfree = false` fails evaluation. Allow just this package:
+>
+> ```nix
+> nixpkgs.config.allowUnfreePredicate =
+>   pkg: builtins.elem (lib.getName pkg) ["fastflowlm"];
+> ```
+
 ### macOS (nix-darwin)
 
 On Apple Silicon the flake ships a `darwinModules.default` exposing `services.lemonade`. It installs the Lemonade server and runs it as a per-user LaunchAgent (the llama.cpp Metal backend needs a GUI login session, so it cannot run as a root daemon). The Metal/sd.cpp backends are fetched into `~/.cache/lemonade` on first run, exactly as the upstream `.pkg` does — there is no NPU/ROCm wiring on macOS.

@@ -98,7 +98,8 @@ stdenv.mkDerivation (finalAttrs: {
   meta = {
     description = "NPU-optimized LLM runtime for AMD Ryzen AI";
     homepage = "https://github.com/ROCm/FastFlowLM";
-    license = lib.licenses.mit;
+    # Source is MIT; the NPU kernels in share/flm are proprietary (see TERMS.md).
+    license = [lib.licenses.mit lib.licenses.unfree];
     platforms = ["x86_64-linux"];
     mainProgram = "flm";
   };
