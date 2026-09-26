@@ -549,6 +549,60 @@
                 touch $out
               '';
 
+            # fastflowlm.package feeds both the wrapped system package and
+            # lemonade's flm.npu_bin (via the stable /etc symlink). Eval-only: the
+            # asserted strings are store paths whose contexts are discarded so the
+            # check never builds fastflowlm or the XRT closure.
+            module-eval-fastflowlm-package = let
+              mkSys = extra:
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu = {
+                        enable = true;
+                        enableLemonade = true;
+                        lemonade.user = "testuser";
+                      };
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                    extra
+                  ];
+                }).config;
+              stub = pkgs.writeShellScriptBin "oflm" "exit 0" // {meta.mainProgram = "oflm";};
+              flmNpu = c: builtins.unsafeDiscardStringContext c.environment.etc."lemonade/backends/flm-npu".source;
+              defaultsOf = c: c.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
+              def = mkSys {};
+              swapped = mkSys {hardware.amd-npu.fastflowlm.package = stub;};
+              off = mkSys {hardware.amd-npu.enableFastFlowLM = false;};
+            in
+              pkgs.runCommand "module-eval-fastflowlm-package" {
+                nativeBuildInputs = [pkgs.jq];
+                defaultBin = flmNpu def;
+                swappedBin = flmNpu swapped;
+                defaultDefaults = defaultsOf def;
+                swappedDefaults = defaultsOf swapped;
+                offDefaults = defaultsOf off;
+                offHasLink = builtins.toJSON (off.environment.etc ? "lemonade/backends/flm-npu");
+              } ''
+                case "$defaultBin" in *-fastflowlm-wrapped/bin/flm) ;; *) echo "default: $defaultBin" >&2; exit 1 ;; esac
+                case "$swappedBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "swapped: $swappedBin" >&2; exit 1 ;; esac
+                for f in "$defaultDefaults" "$swappedDefaults"; do
+                  jq -e '.flm.npu_bin == "/etc/lemonade/backends/flm-npu"' "$f" >/dev/null
+                  jq -e '.flm.prefer_system == true' "$f" >/dev/null
+                done
+                touch $out
+              '';
+
             # lemonade.settings must deep-merge over the module's computed
             # defaults — overriding one key without dropping its siblings — and
             # the unit must re-apply them on every start, else the option is

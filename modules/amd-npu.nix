@@ -60,12 +60,13 @@
   # nix binaries carry RUNPATH, which glibc searches after LD_LIBRARY_PATH, so
   # a session-wide var would override library resolution for every dynamically
   # linked process in the session, not just flm's. #148.
+  flmProgram = baseNameOf (lib.getExe cfg.fastflowlm.package);
   fastflowlmWrapped = pkgs.symlinkJoin {
     name = "fastflowlm-wrapped";
-    paths = [pkgs.fastflowlm];
+    paths = [cfg.fastflowlm.package];
     nativeBuildInputs = [pkgs.makeWrapper];
     postBuild = ''
-      wrapProgram $out/bin/flm --prefix LD_LIBRARY_PATH : ${xrt-combined}/lib
+      wrapProgram $out/bin/${flmProgram} --prefix LD_LIBRARY_PATH : ${xrt-combined}/lib
     '';
   };
 
@@ -109,6 +110,9 @@
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableVulkan && cfg.enableImageGen) {
       "lemonade/backends/sdcpp-vulkan".source = "${pkgs.stable-diffusion-cpp-vulkan}/bin/sd-server";
+    }
+    // optionalAttrs (cfg.enableLemonade && cfg.enableFastFlowLM) {
+      "lemonade/backends/flm-npu".source = "${fastflowlmWrapped}/bin/${flmProgram}";
     };
 
   # defaults.json seed that lemonade's get_defaults() merges over its packaged
@@ -141,6 +145,11 @@
       # ignores the flm we put on its PATH and reports the NPU backend as "not
       # installed", so no FLM models list. See noamsto/nix-amd-ai#62.
       flm.prefer_system = true;
+      # flm.npu_bin outranks PATH discovery, so a swapped fastflowlm.package
+      # (whose binary needn't be called `flm`) is found. A path-valued *_bin
+      # also clears lemonade's expected version, so backend_versions.json's
+      # pin to pkgs.fastflowlm cannot mark a different runtime update_required.
+      flm.npu_bin = lemonadeBackendBin "flm-npu";
     }
     // optionalAttrs cfg.enableImageGen {
       sdcpp =
@@ -275,6 +284,19 @@ in {
       type = types.bool;
       default = true;
       description = "Whether to install FastFlowLM NPU inference runtime.";
+    };
+
+    fastflowlm.package = mkOption {
+      type = types.package;
+      default = pkgs.fastflowlm;
+      defaultText = lib.literalExpression "pkgs.fastflowlm";
+      description = ''
+        The flm-compatible runtime installed by `enableFastFlowLM` and handed to
+        lemonade as `flm.npu_bin`. Its `meta.mainProgram` must be set and need not
+        be called `flm`. Only `pkgs.fastflowlm` has been exercised on hardware
+        here; whether another runtime speaks the same CLI (`list --json`,
+        `version --json`, `serve`) is untested.
+      '';
     };
 
     enableLemonade = mkOption {

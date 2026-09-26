@@ -54,6 +54,7 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
     enable = true;
     enableNPU = true;         # default; set false for GPU-only hosts (see "Other hardware")
     enableFastFlowLM = true;  # LLM inference on NPU (requires enableNPU)
+    # fastflowlm.package = pkgs.fastflowlm;  # swap in an flm-compatible runtime (see below)
     enableLemonade = true;    # OpenAI-compatible API server
     enableROCm = true;        # ROCm GPU backends (llamacpp + sd-cpp)
     enableVulkan = true;      # Vulkan GPU backends (llamacpp + whispercpp)
@@ -464,6 +465,26 @@ confirms whether the wiki's numbers reproduce on Strix Point. Tracked in
 [#19](https://github.com/noamsto/nix-amd-ai/issues/19).
 
 ## Troubleshooting
+
+### Using an flm-compatible runtime
+
+`hardware.amd-npu.fastflowlm.package` (default `pkgs.fastflowlm`) selects the
+runtime that `enableFastFlowLM` installs and lemonade drives. The module wraps it
+with the XRT `LD_LIBRARY_PATH`, links its main program (`meta.mainProgram`, which
+need not be `flm`) at `/etc/lemonade/backends/flm-npu`, and seeds
+`flm.npu_bin = "/etc/lemonade/backends/flm-npu"`. Lemonade resolves FLM through
+`flm.npu_bin` first (or the `LEMONADE_FLM_NPU_BIN` environment variable), and only
+then looks for a literal `flm` on `PATH`. A path-valued `npu_bin` also drops
+lemonade's expected-version check, so the `backend_versions.json` pin to
+`pkgs.fastflowlm` does not flag another runtime as needing an update.
+
+`flm.flm_bin` is **not** a config key: `lemonade config set flm.flm_bin ...` is
+accepted silently and has no effect. Use `flm.npu_bin`.
+
+The wiring is verified by an eval check only. Whether a given runtime (e.g.
+OpenFlowLM-Next's `oflm`, [#147](https://github.com/noamsto/nix-amd-ai/issues/147))
+implements the CLI lemonade calls (`list --json`, `version --json`, `serve`) has
+not been tested on hardware here.
 
 ### FLM models don't appear / `flm:npu` reports "not installed" after enabling FastFlowLM
 
