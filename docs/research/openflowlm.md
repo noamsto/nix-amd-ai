@@ -32,9 +32,11 @@ Pinned commits (all links in this doc are permalinks at these):
 | [ROCm/FastFlowLM](https://github.com/ROCm/FastFlowLM) (what `pkgs/fastflowlm` ships) | tag `v1.0.6` | `1a40ad9` (`1a40ad9ade3d4714d48974a974a114441a5bd786`) |
 | [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) (what `pkgs/lemonade` ships) | tag `v11.9.0` | `bb39eaf` (`bb39eafc22aa7e57fc7aeb8b7d384d70b44a4531`) |
 
-Host caveat, per `CLAUDE.md`: the OFLM numbers quoted here (tok/s etc.) come
-from upstream's own Windows/WSL Strix Point runs and do not transfer to Halo
-(gfx1151 / XDNA2 on Strix Halo) or to Krackan.
+Host caveat, per `CLAUDE.md`: the only timings in this doc are the compile
+runs in §2.2, from **halo** (Ryzen AI MAX+ 395, Strix Halo; NPU present but
+masked for those runs, no NPU-side measurement). This doc quotes no OFLM
+performance numbers, and none from upstream's Strix Point reports should be
+transferred to Halo (gfx1151 / XDNA2) or to Krackan.
 
 ## 1. TL;DR
 
@@ -49,8 +51,8 @@ from upstream's own Windows/WSL Strix Point runs and do not transfer to Halo
   own LLM kernels already use) makes the BERT export device-free. §2.2
   reports the result of doing it here with the NPU hidden and no `pyxrt`: the
   full `BERT-h384-bfp16` set compiles in under two minutes, and its
-  instruction streams are byte-identical to a reference build's. The
-  compiled kernels have not been run on hardware; that check is still owed
+  instruction streams are byte-identical to those of a set @eyduh committed
+  (whose own provenance is unclear, §2.2). The compiled kernels have not been run on hardware; that check is still owed
   (§2.2, §6). `[source]` `[ran]`
 - **The other ways round it are worse.** An NPU-host builder in Nix is
   possible but host-configured, impure and not usable from a flake consumer
@@ -172,8 +174,8 @@ untouched (`CallableDesign.specialize(...).compile()`,
 out to have an NPU (`/dev/accel/accel0`, driver `amdxdna`). To make the test a
 real no-NPU one, every export below ran under
 `bwrap --dev-bind / / --tmpfs /dev/accel ...` (so `/dev/accel` is an empty
-directory), with `pyxrt` never installed (`import pyxrt` fails). No run
-touched the device, and **nothing here says anything about whether the
+directory), with `pyxrt` never installed (`import pyxrt` fails). All runs are from halo (§0).
+No run touched the device, and **nothing here says anything about whether the
 produced kernels load or compute correctly on hardware.** `[ran]`
 
 Toolchain, exactly as upstream pins it: `mlir_aie==1.4.2` and
@@ -201,16 +203,20 @@ static-configuration identity checks between the four shapes passed, and
 `check_design_sets.py --xclbins` reports `ok BERT-h384-bfp16` for the set.
 
 Comparison, done for `BERT-h384-bfp16` only (the other four families were not
-built). The oracle is @eyduh's reverted commit `bcaee46`; how or where those
-files were built is not stated, so it is **a reference build, not a known-good
-one**:
+built). The oracle is @eyduh's reverted commit `bcaee46`. Its provenance is
+contradictory: the message says the sets were "Generated on arcus" (an NPU host,
+per the `oflm validate` output in #147) and also that "BERT embedding sets are
+intentionally excluded because they require NPU access at build time", yet the
+commit adds all five. They were most likely built through the JIT-call path
+this doc replaces. So it is **a reference build, not a known-good one**, and
+byte-equality to it shows the compile is the same computation, nothing more:
 
 - **Same toolchain pair (1.4.3 / Peano 22):** `toolchain.json` and all 17
   `insts*.bin` are byte-identical to `bcaee46`'s. `design.json` differs only in
   the 16 `"src"` values (IRON cache directory names, not a semantic field).
   `final.xclbin` is the same size (127,406 B) and differs in 78 bytes, all in
   the header `UniqueID`/timestamp/`XclBinUUID`, the PDI uuid, and the trailing
-  metadata mirror. With exactly those fields masked, my two runs and the
+  metadata mirror. With exactly those fields masked, the two runs here and the
   `bcaee46` file have the **same sha256**, PDI payload included.
 - **Upstream's pair (1.4.2 / Peano 21):** all 17 `insts*.bin` are still
   byte-identical to `bcaee46`'s (the instruction stream comes from the IRON
@@ -228,7 +234,6 @@ with an NPU loading the set and comparing embedding vectors against the
 existing gate ([test_open_npue.ps1](https://github.com/Atomic-Germ/OpenFlowLM-Next/blob/eb656007856579c38bafaaa7f86f2f08cc980890/utilities/test_open_npue.ps1)).
 `[ran]` `[untested]` (hardware)
 
-
 ### 2.3 Q2(a): patch the device use out
 
 **Viable.** See §2.2, where it was applied and run for one family. Effort to
@@ -243,15 +248,16 @@ to `skipBert = true` and, when BERT is requested, sets `__noChroot`
 ([open-kernels.nix:15-20, 87-89, 100][ey-ok-15]). `[source]`
 
 The fork's history holds a useful oracle. Commit `bcaee46` ("xclbins: add
-built open NPU kernel blobs", built "on arcus" with mlir-aie 1.4.3 / Peano
-20260923) added all five BERT sets, about 3.1 MB in total, and was reverted a
-minute later by `9c48448`. A device-free rebuild on the same toolchain pair
-can be diffed against those files. Whether they load or pass any accuracy
-gate is not stated anywhere. `[source]` `[untested]`
+built open NPU kernel blobs", "Generated on arcus", mlir-aie 1.4.3 / Peano
+20260923) added all five BERT sets, about 3.1 MB in total, although its message
+also says BERT sets are excluded because they need NPU access; it was reverted
+a minute later by `9c48448`. A device-free rebuild on the same toolchain pair
+can be diffed against those files (§2.2). Whether they load or pass any
+accuracy gate is not stated anywhere. `[source]` `[untested]`
 
 ### 2.4 Q2(b): build on the host's NPU through Nix
 
-**Conditional; works on a hand-configured host and nowhere else.** The pieces:
+**Conditional: might work on a hand-configured host (untested), and cannot be shipped in a flake.** The pieces:
 
 - `requiredSystemFeatures` is a scheduling gate only; it grants no device
   access. The one device Nix mounts by feature is `/dev/kvm`
@@ -281,7 +287,9 @@ ship. `[untested]` Effort to get one host working: 3-8 h.
 **Reproducibility.** Given §2.1 the *artifact* does not depend on the device,
 so the derivation is conceptually pure but operationally impure: hardware
 presence only decides whether a discarded run succeeds, and a device hiccup
-(`ENODEV`, busy, `err=-22`, see the retry loops in [device.py:38-93][ma-device])
+(`ENODEV`, or the `err=-22` stale-context error mlir-aie already special-cases in
+[callabledesign.py:365-397][ma-cd-365], plus the open retries in
+[device.py:38-93][ma-device])
 becomes a spurious build failure Nix cannot classify. Separately the xclbin
 itself is not bit-reproducible run to run (UUID and `TimeStamp` fields, 402 of
 631,126 bytes over five xclbins per
@@ -312,8 +320,8 @@ out-of-band helper script running the patched exporter. `[source]` `[untested]`
 releases and zero tags (`gh api .../releases`, `[ran]`); upstream's
 `.gitignore` explicitly refuses them ("A binary in a repository beside the
 source that produces it is a claim nobody checks",
-[.gitignore:24-33][gitignore]); the README points to a "distributed package"
-that could not be located. The only artifact source is one we build ourselves.
+[.gitignore:24-33][gitignore]); the `.gitignore` and the engine's error text
+refer to a "distributed package" that could not be located. The only artifact source is one we build ourselves.
 Five families of about 0.6 MB each (about 3.1 MB total, `[source]` from
 `git ls-tree -l bcaee46`).
 
@@ -327,19 +335,22 @@ Five families of about 0.6 MB each (about 3.1 MB total, `[source]` from
 would be published: the gemm_rtp source is MIT, relicensed on copy from
 Apache-2.0 [`NpuEmbeddings`](https://github.com/vegardberget/NpuEmbeddings)
 ([gemm_rtp/README.md:48-50][gr-readme-48]); the compiled xclbin also embeds
-mlir-aie's Apache-2.0-with-LLVM-exception `mm.cc` kernel
-([README:34-36][gr-readme-34]), so binary redistribution needs the notices.
+mlir-aie's `mm.cc` kernel ([README:34-36][gr-readme-34]), whose header says
+`Apache-2.0 WITH LLVM-exception` ([mm.cc:1-4][ma-mm]), so binary redistribution needs the notices.
 This is a reading, not a legal conclusion.
 
 **FastFlowLM's shipped kernels cannot stand in (Q2e).** FLM 1.0.6 has exactly
 one embedding model, `embed-gemma:300m`, as four closed xclbins and no
 `insts.bin`, `design.json` or `gemm_rtp` directory
-([model_list.json:647-670][flm-models]); a grep for BERT/MiniLM/bge/nomic finds
-nothing. OFLM's BERT layout is a different ABI: `<root>/xclbins/<family>/gemm_rtp/{final.xclbin, insts*.bin, design.json, toolchain.json}`
+([model_list.json:647-670][flm-models]; the four files are the directory
+listing of `src/xclbins/Embedding-Gemma-300M-NPU2/`, `[ran]`); a grep for
+BERT/MiniLM/bge/nomic finds nothing. OFLM's BERT layout is a different ABI: `<root>/xclbins/<family>/gemm_rtp/{final.xclbin, insts*.bin, design.json, toolchain.json}`
 selected by `npue_design_family` and validated against `design.json` fields
 (`hidden`, `intermediate`, `qkv_n`, `gated_ffn`, `emulate_bfp16`,
-`b_layout_hash`, tiers) ([npue_embedding.cpp:185-219][npue-185],
-[export_gemm_rtp.py:515-586][egr-515]). No overlap in names, layout or keys.
+`b_layout_hash`, tiers): the design set is written by
+[export_gemm_rtp.py:515-586][egr-515], located by
+[npue_embedding.cpp:185-219][npue-185] and checked by `design_fits`
+([npue_encoder.hpp:3938][npue-fits]). No overlap in names, layout or keys.
 `[source]` `[ran]` Which models OFLM serves this way:
 
 | model | design family |
@@ -386,7 +397,7 @@ not the closed xclbins it installs; worth a separate look.
 
 - `mlir_aie==1.4.2` from the GitHub release, and `llvm-aie==21.0.0.2026080301+c9c5ecb7`
   (Peano) from the rolling GitHub release tag `nightly`, both by `pip`;
-- 12 further PyPI packages, **unpinned** (several look unused for kernel
+- 12 further PyPI packages, 11 of them **unpinned** (`reuse` is pinned; several look unused for kernel
   export: gurobipy, ortools, networkx, matplotlib, psutil, pyyaml; `[untested]`
   that dense export passes with only the subset @eyduh's env installs);
 - a best-effort, unpinned `git clone` of mlir-aie feeding only version
@@ -461,8 +472,7 @@ insufficient; mlir-aie from source not at all. `[untested]`
 
 FastFlowLM 1.0.6's server maps only error code 400 to an HTTP status; the
 `else if ()` is an empty stub ([server.cpp:729-745][flm-server]). Handlers
-that build `{"error": {"code": 500}}` (three of them, [rest_handler.cpp:1329, 1392,
-1526][flm-rest]) are therefore sent as **HTTP 200**.
+that build `{"error": {"code": 500}}` (three of them: [L1329][flm-rest], [L1392][flm-rest2], [L1526][flm-rest3]) are therefore sent as **HTTP 200**.
 OFLM fixed it: the response status now comes from `openai_compat::status_for`,
 with a comment saying the block "previously recognised a numeric 400 and let a
 handler's own 500 out as HTTP 200"
@@ -542,7 +552,7 @@ and our `enableFastFlowLM`/`enableLemonade` default to true
 | master switch | `hardware.amd-npu.enable = mkDefault cfg.enableNPU` | the module's enable | his `enableNPU = false` turns off our *whole* module, against his own docs |
 | `enableNPU` | `programs.openflowlm.enableNPU` | `hardware.amd-npu.enableNPU` | same word, different scope; he never sets ours |
 | kernel module, IOMMU assertions, udev, memlock | none (delegated) | all set | no duplication; ours covers his hosts |
-| XRT env | `oflm` wrapper sets `XILINX_XRT` and `LD_LIBRARY_PATH` | session-wide values from `xrt-combined` | consistent; he re-implements `xrt-combined` twice, verbatim from ours, so it should be exported from our overlay |
+| XRT env | `oflm` wrapper sets `XILINX_XRT` and `LD_LIBRARY_PATH` | `XILINX_XRT` session-wide from `xrt-combined`; `LD_LIBRARY_PATH` only inside the `flm` wrapper (deliberately not session-wide, #148) | consistent; he re-implements `xrt-combined` twice, verbatim from ours, so it should be exported from our overlay |
 | binary and env | `oflm`, `OFLM_*`, `~/.config/oflm` | `flm`, `FLM_*`, `flm.prefer_system` | not a drop-in (§5) |
 | systemd | none | `lemond`, `lemond-models`, `ds4-server` | enabling OFLM starts `lemond` by default |
 | planned `hardware.amd-npu.fastflowlm.package` | n/a | being added (sibling work, not touched here) | OFLM cannot just be the package: needs an `flm`-named wrapper and the version handling in §5 |
@@ -573,14 +583,14 @@ closed libraries is inaccurate for those blobs. `[source]`
 | stated status | `docs/semantic-versioning.md`: "Before `1.0.0`... **anything may change at any time**"; issue #33 "Provide a first version" asks for a 0.0.1-beta because "the build / tooling process is too complicated" `[doc]` |
 | install | build from source only; README: "Upstream remains the place to go for a turnkey install and for the closed, tuned kernels" ([README.md:38-39][ofl-readme]) |
 | chips | XDNA2 only (Strix, Strix Halo, Kraken, Gorgon Point); in-tree evidence is one Strix Point and one Framework 13 AI 340 report ([PR_open_npue.md][ofl-pr]) |
-| relation to FastFlowLM | forked from about FLM 1.0.4; does not track releases (1.0.5 and 1.0.6 not merged; 193 files under `src/` differ from 1.0.6) `[ran]` |
+| relation to FastFlowLM | forked from about FLM 1.0.4; does not track releases (1.0.5 and 1.0.6 not merged; 193 non-binary files under `src/` differ from 1.0.6 and 122 more have no counterpart there) `[ran]` |
 | @eyduh's fork | 24 commits ahead and 4 behind upstream; not a descendant of `eb65600`; PR #120 was reviewed as "It doesn't merge as it stands... Split it into three PRs" `[doc]` |
 
 The owner's earlier blocker, "once it tags releases", still stands as of this
 writing. Open issues that bear on us: #81 (`oflm validate` passes on machines
 where `oflm run` cannot open the NPU), #73 (three multimodal families still
-need the closed engine), #72/#74/#91 (Whisper, the 35B and GPT-OSS on open
-kernels still unfinished). `[doc]`
+need the closed engine), #74 and #91 (the 35B and GPT-OSS on open
+kernels still unfinished; the Whisper issue #72 is closed but its perf follow-ups were still landing). `[doc]`
 
 ### 5.2 The closed binaries are still in the tree
 
@@ -599,7 +609,7 @@ upstream sets, and are not redistributed by this repository"
 
 OFLM's own inventory counts 222 closed and 24 open xclbins
 ([precompiled_replacement_map.md:15-22][ofl-repl], a table that lags the README).
-Only `src/xclbins/BERT-h*/` is gitignored. `[source]`
+Of the xclbin trees, only `src/xclbins/BERT-h*/` and `src/xclbins/*/open_kernels*/` are gitignored ([.gitignore][gitignore-all]). `[source]`
 
 Also: OFLM's default model registry points 38 of 44 tags at `Atomic-Germ/*-NPU2`
 on Hugging Face; the one repo compared (Llama-3.2-1B) is byte-identical to
@@ -754,6 +764,12 @@ change): steps 1 and 2 above, and the `license = mit` question on
 [ma-eudsl]: https://github.com/Xilinx/mlir-aie/blob/760932a4abf084bfc7abdec851703b27a03c01ba/python/requirements.txt#L8-L10
 [flm-server]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/src/server/server.cpp#L729-L745
 [flm-rest]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/src/server/rest_handler.cpp#L1326-L1331
+[flm-rest2]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/src/server/rest_handler.cpp#L1389-L1394
+[flm-rest3]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/src/server/rest_handler.cpp#L1523-L1528
+[ma-mm]: https://github.com/Xilinx/mlir-aie/blob/760932a4abf084bfc7abdec851703b27a03c01ba/aie_kernels/aie2p/mm.cc#L1-L4
+[ma-cd-365]: https://github.com/Xilinx/mlir-aie/blob/760932a4abf084bfc7abdec851703b27a03c01ba/python/utils/callabledesign.py#L365-L397
+[npue-fits]: https://github.com/Atomic-Germ/OpenFlowLM-Next/blob/eb656007856579c38bafaaa7f86f2f08cc980890/src/open_npue/npue_encoder.hpp#L3938-L4030
+[gitignore-all]: https://github.com/Atomic-Germ/OpenFlowLM-Next/blob/eb656007856579c38bafaaa7f86f2f08cc980890/.gitignore#L24-L84
 [flm-main]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/src/src/main.cpp#L581-L588
 [flm-models]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/src/model_list.json#L647-L670
 [flm-readme]: https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/README.md#L116-L123
