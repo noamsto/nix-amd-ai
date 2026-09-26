@@ -292,7 +292,7 @@ in {
       defaultText = lib.literalExpression "pkgs.fastflowlm";
       description = ''
         The flm-compatible runtime installed by `enableFastFlowLM` and handed to
-        lemonade as `flm.npu_bin`. Its main program (`meta.mainProgram`) need not
+        lemonade as `flm.npu_bin`. Its `meta.mainProgram` must be set and need not
         be called `flm`. Only `pkgs.fastflowlm` has been exercised on hardware
         here; whether another runtime speaks the same CLI (`list --json`,
         `version --json`, `serve`) is untested.

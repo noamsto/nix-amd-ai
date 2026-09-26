@@ -550,6 +550,7 @@
               defaultsOf = c: c.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
               def = mkSys {};
               swapped = mkSys {hardware.amd-npu.fastflowlm.package = stub;};
+              off = mkSys {hardware.amd-npu.enableFastFlowLM = false;};
             in
               pkgs.runCommand "module-eval-fastflowlm-package" {
                 nativeBuildInputs = [pkgs.jq];
@@ -557,6 +558,8 @@
                 swappedBin = flmNpu swapped;
                 defaultDefaults = defaultsOf def;
                 swappedDefaults = defaultsOf swapped;
+                offDefaults = defaultsOf off;
+                offHasLink = builtins.toJSON (off.environment.etc ? "lemonade/backends/flm-npu");
               } ''
                 case "$defaultBin" in *-fastflowlm-wrapped/bin/flm) ;; *) echo "default: $defaultBin" >&2; exit 1 ;; esac
                 case "$swappedBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "swapped: $swappedBin" >&2; exit 1 ;; esac
