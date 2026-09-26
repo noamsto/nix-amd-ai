@@ -32,6 +32,14 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
+  # server.cpp maps only error code 400 to an HTTP status, so handler errors
+  # raised with code 500 (rest_handler.cpp) go out as HTTP 200. This ports the
+  # numeric-code half of OpenFlowLM-Next 746f6ab (Vegard Berget) without its
+  # openai_compat helpers. Still unfixed on ROCm/FastFlowLM main as of v1.0.6;
+  # drop once upstream maps 4xx/5xx codes. A bump that breaks the patch fails
+  # the build rather than silently losing the fix.
+  patches = [ ./patches/http-error-status.patch ];
+
   cargoDeps = rustPlatform.importCargoLock {
     lockFile = ./Cargo.lock;
   };

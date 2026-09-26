@@ -1,0 +1,17 @@
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -735,12 +735,9 @@
+             {
+                 int code = response_data["error"]["code"].get<int>();
+ 
+-                if (code == 400) {
+-                    status = http::status::bad_request;
++                if (code >= 400 && code <= 599) {
++                    status = static_cast<http::status>(code);
+                 }
+-                //else if () {
+-
+-                //}
+             }
+ 
+             response_ref.result(status);
