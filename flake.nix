@@ -20,15 +20,14 @@
     # default is every target clr advertises -- 16 in the pinned nixpkgs.
     rocmGpuTargets = ["gfx1150" "gfx1151"];
 
-    # FastFlowLM ships proprietary NPU kernels (.xclbin, share/flm) beside its
+    # FastFlowLM's NPU kernels (.xclbin, share/flm) are proprietary beside its
     # MIT source, so nixpkgs marks the package unfree. Allow exactly that
-    # package wherever this repo instantiates nixpkgs; never a blanket
-    # allowUnfree. #158
+    # package where this repo instantiates nixpkgs. #158
     allowFastFlowLMUnfree = pkg:
       builtins.elem (inputs.nixpkgs.lib.getName pkg) ["fastflowlm"];
 
-    # This repo's own NixOS eval checks and unit renders opt in to that unfree
-    # licence the same way a downstream consumer must. #158
+    # This repo's own NixOS eval checks and unit renders opt in to fastflowlm's
+    # unfree licence the same way a consumer must. #158
     fastFlowLMUnfreeConfig = {
       nixpkgs.config.allowUnfreePredicate = allowFastFlowLMUnfree;
     };
@@ -134,9 +133,8 @@
       flake = {
         overlays.default = final: prev: let
           # Build against our own nixpkgs input for closure/Cachix stability,
-          # but inherit the consumer's unfree policy so fastflowlm's unfree NPU
-          # kernels are refused under allowUnfree = false (#158). Mirror only
-          # the unfree keys, so no other consumer config changes a derivation.
+          # but inherit the consumer's unfree policy so fastflowlm is refused
+          # under allowUnfree = false. Mirror only the unfree keys. #158
           pinned = import inputs.nixpkgs {
             inherit (prev.stdenv.hostPlatform) system;
             config = builtins.intersectAttrs {
@@ -197,7 +195,7 @@
         ...
       }: let
         # flake-parts' default pkgs is a bare nixpkgs import, which rejects
-        # unfree; configure it for fastflowlm only. #158
+        # unfree; configure it for fastflowlm. #158
         pkgs = import inputs.nixpkgs {
           inherit system;
           config.allowUnfreePredicate = allowFastFlowLMUnfree;
