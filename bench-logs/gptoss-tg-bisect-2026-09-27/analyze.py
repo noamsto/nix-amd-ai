@@ -42,7 +42,7 @@ def main():
             for arm in ("old", "new"):
                 p = os.path.join(d, f"r{r}-{arm}.json")
                 if not os.path.exists(p):
-                    continue
+                    raise SystemExit(f"missing expected run file: {p}")
                 avg, sd, b = load_run(p)
                 runs[(r, arm)] = (avg, sd)
                 build[arm] = b

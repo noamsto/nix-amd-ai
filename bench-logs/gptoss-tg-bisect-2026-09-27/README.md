@@ -27,15 +27,19 @@ run-to-run. That is the number this log re-tests.
   (`llama-bench`, `libggml-vulkan.so`), upstream tag b10964, commit `b29c606`.
 - **New** = `/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207`,
   upstream tag b11207, commit `7ac59a6`.
-- **Model** = `gpt-oss-120b-MXFP4.gguf` (63,374,323,968 bytes),
+- **Model** = `gpt-oss-120b-MXFP4.gguf` (63,387,346,208 bytes),
   `/var/lib/models/hf/hub/models--ggml-org--gpt-oss-120b-GGUF/snapshots/238abdd290bb874b90a5da1b4549881b7d05c091/`.
 - **Command per run** (tg only; pp512 not re-measured here, see *Not measured*):
   `llama-bench -m <model> -ngl 99 -p 0 -n 128 -r 5 -o json`
-- **Guard before every run**: `gpu_busy_percent == 0` (all cards) and lemond
-  `model_loaded == null`; if not, wait and re-check. Cool-down after each run:
-  poll until busy is 0 and GPU temp settles, then 10 s. Start/end busy and temp
-  are in each phase's `timeline.txt`, and the model-load wall times there are
-  how the host-load spikes below are identified.
+- **Guard before every run**: every phase's wrapper polls until
+  `gpu_busy_percent == 0` (all cards) and GPU temp ≤ 45 °C before launching.
+  Additionally, rounds 1-4 (and the warm-ups) re-checked lemond
+  `model_loaded == null`; that extra check was not run in rounds 5-14. Every
+  phase's `timeline.txt` records the start busy/temp; only `interleaved/`
+  (rounds 1-4 + warm-ups) also records the end busy/temp and the `lemond`
+  field. The model-load wall times in those files identify the host-load
+  spikes below (a run that took ~2x its neighbours is a load-contaminated
+  round).
 - **Design**: 14 interleaved rounds, each round = one run of each build
   back-to-back, plus 2 discarded warm-up runs. Run order was deliberately varied
   so the build effect is separable from run order / host drift:
@@ -44,9 +48,9 @@ run-to-run. That is the number this log re-tests.
   - `interleaved-balanced/` — rounds 7-10, mixed order
   - `interleaved-quiet/` — rounds 11-14, mixed order, lower host load
 - **Host is shared and was under heavy sibling-worker load during part of the
-  session.** `loadavg` is recorded per quiet run; peaks were observed by hand
-  (see *Host load* below). All disk and CPU work (the build trees, the model
-  sha256) was kept off the GPU and away from the runs.
+  session.** Host load was sampled by hand, not per run: see `host-load.txt`.
+  All disk and CPU work (the build trees, the model sha256) was kept off the
+  GPU and away from the runs.
 
 Raw per-run `llama-bench` JSON (stdout) and stderr logs are in each phase
 directory; `analyze.py` regenerates the table and statistics below. No build
@@ -100,10 +104,12 @@ first step's gate to bisect (a reproducible gap above noise) was not met.
 
 ## Why the single-shot −4.0% is not trustworthy — measured evidence
 
-1. **Run-to-run spread swamps 4%.** Across 14 rounds the per-build run-to-run
-   stddev is ~1.2–1.5 t/s on means of ~52 t/s (≈2.5%), several times larger
-   than the within-run stddev #161 quoted (±0.41–0.66). A 2.16 t/s single-shot
-   difference is inside that spread.
+1. **Run-to-run spread swamps 4%.** Across the 12 non-spike rounds the per-build
+   run-to-run stddev is 1.22 t/s (old) / 1.60 t/s (new) on means of 52.72 /
+   52.64 t/s (≈2.3–3.0%); across all 14 rounds it is 3.24 / 3.75 t/s on means
+   of 51.77 / 51.79. Either way the spread is several times larger than the
+   within-run stddev #161 quoted (±0.41–0.66), so a 2.16 t/s single-shot
+   difference sits inside it.
 2. **The original order (old then new) is the one that drifts.** In the AB
    phase (r1-4, exactly #161's order), the new build declined monotonically
    52.74 → 51.66 → 50.91 → 49.28 t/s while old stayed flat; the paired sign
