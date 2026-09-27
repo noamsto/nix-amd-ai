@@ -1,0 +1,120 @@
+Hardware check for the device-free-built BERT-h384-bfp16 design set
+Host: halo (real XDNA2 NPU at /dev/accel/accel0)
+Date: 2026-09-27
+Design set under test: <clone>/out/full-family/BERT-h384-bfp16/gemm_rtp/
+  (final.xclbin + insts_*.bin, built by the patched, device-free
+  export_gemm_rtp.py on branch fix/device-free-bert-export)
+
+METHOD (outcome 2 of the plan's step 8 -- the full C++ engine build via
+docs/BUILD.md was not attempted: test_open_npue.ps1 exercises the open_npue
+embedding backend by model name (all-MiniLM-L6-v2, bge-*, nomic, gte-...),
+which is a separate integration surface from the raw BERT-h384-bfp16 gemm_rtp
+kernel family checked here, needs pwsh (not installed on this host) or a
+from-scratch Linux/C++ port, and was judged unlikely to converge inside the
+time budget. Instead: loaded the compiled final.xclbin directly via pyxrt
+(from this repo's `nix build .#xrt` / the realized xrt-combined derivation,
+which bundles both the cp312 pyxrt module and the amdxdna driver plugin) and
+ran the design's own precompiled instruction streams against real input,
+comparing to a CPU reference.)
+
+This is a kernel-load-and-execute + numerical-sanity check against a CPU
+reference, NOT the full open_npue OpenAI-embeddings-endpoint gate that
+test_open_npue.ps1 runs -- it does not exercise the C++ engine, the RTP
+dispatch-by-request-size logic, or the tokenizer/pooling pipeline. It does
+exercise: the real final.xclbin loading into a real hw_context on real
+hardware, the real insts_*.bin instruction streams (produced by the
+device-free/compile-only export) actually executing on the AIE array, and the
+real B operand tiled-layout packing (npue.gemm_b_layout / tile_b, matching the
+design's recorded b_layout_hash) actually being consumed correctly by the
+kernel.
+
+Kernel ABI (read from the xclbin's EMBEDDED_METADATA, not guessed):
+  kernel "MLIR_AIE" (dpu_kernel_id 0x901, type dpu), args:
+    opcode(uint64), instr(char*), ninstr(uint32), bo0..bo4(void*)
+  Call convention verified against this repo's own npu_offload/matmul/host.cpp
+  and host_var.cpp (opcode=3, kernel(opcode, bo_instr, ninstr, bo_a, bo_b,
+  bo_c, ...)); bo3/bo4 are unused placeholder slots in this design (only
+  bo0=A, bo1=B(packed), bo2=C are touched), sized 4 bytes each.
+
+Environment:
+  XRT: this repo's `nix build .#xrt` output combined with the system's
+       already-realized xrt-combined derivation (bundles pyxrt for cpython
+       3.12 plus libxrt_driver_xdna.so.2, matching docs/BUILD.md's XRT
+       runtime prerequisite and the plan's pyxrt sourcing note).
+  Python: nixpkgs python312 (`nix build nixpkgs#python312`) in a throwaway
+          venv with pyxrt + numpy -- NOT the ironvenv used for export (that
+          one is Python 3.13, and the pyxrt .so is built against cpython-312
+          specifically, exactly the mismatch the plan flagged).
+  B-operand packing and the CPU reference were computed separately in the
+  ironvenv (Python 3.13, has numpy/ml_dtypes already) by importing this
+  design's own npu_offload/gemm_rtp/npue.py (to_bf16_bits/from_bf16_bits/
+  tile_b) directly, so the packing exactly matches what export_gemm_rtp.py
+  itself uses (b_layout_hash in design.json: tile_k=64, tile_n=48, mac_s=8,
+  mac_t=8, order "k,n,kt,nt").
+
+Streams tested (3 of the 16 in the design set, chosen for shape diversity):
+
+  qkv_b4       M=256,  K=384,  N=1152  (smallest tier)
+  ffn_down_b4  M=256,  K=1536, N=384   (the K=1536 shape the gemm_rtp README
+                                        calls out as the one that couldn't be
+                                        expressed at all under the old
+                                        non-tiled B layout -- deliberately
+                                        included as the hardest case)
+  qkv_b128     M=8192, K=384,  N=1152  (largest tier, 17348 instruction words)
+
+Device state before touching hardware: polled via /proc/*/fd scan for
+accel0 immediately before opening the device; free both times (once briefly
+held by an unrelated `flm serve llama3.2:1b` process from a concurrent
+session on this shared host, which released it on its own within the poll
+window -- never interrupted).
+
+Commands run (paths abbreviated; full paths in the scripts under this
+session's scratchpad, not preserved on disk beyond this run):
+
+  # data prep + CPU reference (ironvenv, py3.13, has numpy/ml_dtypes)
+  LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib \
+    <clone>/ironvenv/bin/python3 prepare.py     # qkv_b4
+  LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib \
+    <clone>/ironvenv/bin/python3 prepare2.py    # ffn_down_b4, qkv_b128
+
+  # real hardware execution (python3.12 + pyxrt venv)
+  XILINX_XRT=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined \
+  PYTHONPATH=$XILINX_XRT/python \
+  LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib \
+    timeout 90 pyxrt-venv/bin/python3 run_on_npu.py     # qkv_b4
+    timeout 120 pyxrt-venv/bin/python3 run_on_npu2.py   # ffn_down_b4, qkv_b128
+
+  # comparison against CPU reference (ironvenv again)
+  LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib \
+    <clone>/ironvenv/bin/python3 compare.py
+    <clone>/ironvenv/bin/python3 compare2.py
+
+RESULTS -- all three streams: run.wait() -> ERT_CMD_STATE_COMPLETED (no
+timeout, no error state), non-zero output, no NaN/Inf, high correlation with
+the CPU reference. Absolute error is on the order of bf16 ULP at this value
+range plus the extra quantization from emulate_bf16_mmul_with_bfp16 (the
+design's MACs run in emulated bfp16, so exact bit-identity against a plain
+bf16-rounded fp64 reference is not expected -- only closeness. See
+design.json: "emulate_bfp16": true.).
+
+  qkv_b4:       state=ERT_CMD_STATE_COMPLETED  nan=0  max_abs_err=5.66e-4  mean_abs_err=1.32e-4  corr=0.99997208
+  ffn_down_b4:  state=ERT_CMD_STATE_COMPLETED  nan=0  max_abs_err=1.92e-3  mean_abs_err=8.58e-4  corr=0.99997902
+  qkv_b128:     state=ERT_CMD_STATE_COMPLETED  nan=0  max_abs_err=5.66e-4  mean_abs_err=1.33e-4  corr=0.99997210
+
+Sample (qkv_b4, first 8 output elements):
+  NPU:  [ 0.03979492 -0.03979492 -0.02990723 -0.01989746 -0.00994873  0.  0.00994873  0.01989746]
+  ref:  [ 0.04007816 -0.04007816 -0.0301075  -0.02003908 -0.01001954  0.  0.01001954  0.02003908]
+
+CONCLUSION: the device-free-built BERT-h384-bfp16 kernel set (final.xclbin +
+insts_*.bin) loads on real XDNA2 hardware and executes the three tested
+(op, tier) streams to completion with numerically sane, reference-correlated
+output. This is a real hardware pass at the kernel level, across the
+smallest tier, largest tier, and the historically hardest K-dimension shape.
+It does NOT exercise open_npue's C++ engine, RTP shape dispatch by request
+size, or the embedding-vector OpenAI-endpoint gate that test_open_npue.ps1
+runs -- that remains unverified on this host, and is the honest scope of
+"hardware check" claimed here.
+
+Device left clean: /proc/*/fd polled for accel0 immediately after each run
+completed (process already exited by then) -- no lingering holder. No GPU
+was touched at any point.

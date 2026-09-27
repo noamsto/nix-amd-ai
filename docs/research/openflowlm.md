@@ -229,10 +229,17 @@ byte-equality to it shows the compile is the same computation, nothing more:
 
 What this establishes: the BERT design set compiles with no device and no
 `pyxrt`, and the instruction streams are those a reference build produced.
-What it does not: any hardware behaviour. The remaining check is one person
-with an NPU loading the set and comparing embedding vectors against the
-existing gate ([test_open_npue.ps1](https://github.com/Atomic-Germ/OpenFlowLM-Next/blob/eb656007856579c38bafaaa7f86f2f08cc980890/utilities/test_open_npue.ps1)).
-`[ran]` `[untested]` (hardware)
+Hardware check, done on halo (XDNA2): the device-free-built `final.xclbin`
+loaded directly via `pyxrt`, and 3 of the 16 `(op, tier)` instruction streams
+(smallest tier `qkv_b4`, largest `qkv_b128`, and the `K=1536` `ffn_down_b4`
+shape that `gemm_rtp/README.md` calls out as impossible under the old layout) ran to
+`ERT_CMD_STATE_COMPLETED` with no NaN/Inf and correlation >0.9999 against a
+CPU reference — evidence in `bench-logs/oflm-bert-npu-2026-09-27/`. `[ran]`
+That does not exercise `open_npue`'s C++ engine or the full
+`test_open_npue.ps1` embedding-vector gate
+([test_open_npue.ps1](https://github.com/Atomic-Germ/OpenFlowLM-Next/blob/eb656007856579c38bafaaa7f86f2f08cc980890/utilities/test_open_npue.ps1)),
+which needs `pwsh` (unavailable here) or a from-scratch Linux port of the
+engine; that layer is `[untested]` (hardware).
 
 ### 2.3 Q2(a): patch the device use out
 
@@ -686,7 +693,7 @@ mismatches with lemonade. Do the following, in this order:
 | # | step | effort | notes |
 |---|---|---|---|
 | 1 | **Carry the FLM server error-status fix** in `pkgs/fastflowlm` (`patches/`), with `Co-authored-by: Vegard Berget` in a branch commit | 2-4 h | verify against lemonade that a 500 surfaces; unit-level only, no hardware needed. `[untested]` |
-| 2 | **Upstream the device-free BERT export patch** (§2.2) to Atomic-Germ, with the comparison from §2.2 in the PR, and ask them for a tagged release | 2-4 h | the single change that removes the "needs an NPU" blocker; one person with an NPU must then confirm the set loads and the embedding vectors match |
+| 2 | **Upstream the device-free BERT export patch** (§2.2) to Atomic-Germ, with the comparison from §2.2 in the PR, and ask them for a tagged release | Done | [PR #126](https://github.com/Atomic-Germ/OpenFlowLM-Next/pull/126), open; byte-comparison 17/17 `insts*.bin` matched the bcaee46 reference; hardware check on halo passed at kernel level (3 of 16 shapes via `pyxrt`), full `test_open_npue.ps1` embedding gate still `[untested]` |
 | 3 | **`pkgs/mlir-aie` and `pkgs/llvm-aie`** as wheel FODs (1.4.2 with Peano 21), mirrored into our cache | 3-6 h | prerequisite for any OFLM kernel build; also useful to anyone doing IRON work; not needed until step 4 is wanted |
 | 4 | Wait for a tag, then add `pkgs/openflowlm` (engine plus open kernels, BERT sets from a device-free build) behind the planned `hardware.amd-npu.fastflowlm.package` seam, exposing an `flm`-named wrapper and pinning `flm.npu_bin` to an absolute path | 1-2 days | only after 1-3, a release tag, and a licence clarification; needs a hardware smoke test (`list`, `serve`, one chat, one embedding) |
 | 5 | Run `oflm-test --api` against `flm serve` on Halo | 0.5 day | hardware-gated; would also validate step 1 |
