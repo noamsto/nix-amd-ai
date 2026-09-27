@@ -559,6 +559,7 @@
                   inherit system;
                   modules = [
                     inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
                     {
                       boot.loader.grub.enable = false;
                       fileSystems."/" = {
