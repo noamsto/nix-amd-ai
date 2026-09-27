@@ -52,11 +52,9 @@ def main():
 
     print(f"old = {build.get('old')}   new = {build.get('new')}\n")
     print(f"{'round':>5} {'old t/s':>9} {'old sd':>7} {'new t/s':>9} {'new sd':>7} {'old-new':>9}  load")
-    diffs = []
     for r in rounds:
         o, osd = runs[(r, "old")]
         n, nsd = runs[(r, "new")]
-        diffs.append(o - n)
         tag = "spike" if r in LOAD_SPIKE_ROUNDS else ""
         print(f"{r:>5} {o:>9.3f} {osd:>7.3f} {n:>9.3f} {nsd:>7.3f} {o - n:>+9.3f}  {tag}")
 
