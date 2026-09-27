@@ -611,9 +611,10 @@ The concurrency row is the interesting one: an NPU workload running alongside an
   gone. Full diagnosis and history:
   [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
 
-  Still open, tracked in that doc: the gfx1151 and gfx1150 ROCm benchmark rows
-  above were all measured through the old, broken host-memory path and want
-  re-running against the unpatched b11207 build.
+  Still open, tracked in that doc: this README's gfx1150 ROCm benchmark rows
+  (Large: Gemma-4-26B-A4B, Qwen3.5-9B) were all measured through the old,
+  broken host-memory path and want re-running against the unpatched b11207
+  build.
 
 Enable all three and let lemonade pick the recipe per model.
 

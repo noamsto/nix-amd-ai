@@ -29,8 +29,11 @@ Raw output: `old-{vulkan,rocm}-{27b,flash,gptoss}.log`, `new-{vulkan,rocm}-{27b,
 a risk of a Flash-Next Vulkan decode regression from upstream's IQ4_XS kernel
 changes (author's own table showed MoE `MUL_MAT_ID` at batch 1 at 0.81×) — on
 this host, Flash-Next Vulkan tg128 is instead **+3.7%**, and pp512 is +40.8%.
-The Vulkan pp512 gains across the board are consistent with upstream #27952
-(int8 coopmat MMQ for RDNA3/4, landed b11160).
+The Vulkan pp512 gains across the board are plausibly consistent with upstream
+[#27952](https://github.com/ggml-org/llama.cpp/pull/27952) ("vulkan: int8
+coopmat1 matmul implementation for AMD RDNA3 and RDNA4", merged 2026-09-24,
+landed before b11207) — not independently attributed to it via profiling on
+this host, so treat the mechanism as a plausible cause, not a measured one.
 
 **One real, small regression: gpt-oss-120b Vulkan tg128, −4.0%.** Reported
 plainly, not explained away — pp512 on the same model is +82.1%, so this

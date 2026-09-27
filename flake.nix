@@ -60,28 +60,40 @@
     # so we can pick up a fix (or a newer ggml/CUDA-backend feature) ahead of
     # nixpkgs' llama-cpp update. `__intentionallyOverridingVersion` silences
     # nixpkgs' "you changed version without changing src" warning -- we're
-    # changing both together, deliberately.
-    llamaCppPin = pkgs: pkg:
+    # changing both together, deliberately. `pinBuildNumber`/`pinCommit` must
+    # move together with `pinTag` on the next bump -- there is no single
+    # source of truth to derive them from (fetchFromGitHub's `src.rev` here is
+    # just the tag we passed in, not the resolved commit).
+    llamaCppPin = pkgs: pkg: let
+      pinTag = "b11207";
+      pinBuildNumber = "11207";
+      pinCommit = "7ac59a6";
+    in
       pkg.overrideAttrs (old: {
-        version = "11207";
+        version = pinBuildNumber;
         __intentionallyOverridingVersion = true;
         src = pkgs.fetchFromGitHub {
           owner = "ggml-org";
           repo = "llama.cpp";
-          tag = "b11207";
+          tag = pinTag;
           hash = "sha256-ckEFqkLHWFRN6ciR/gjBIflYLsnRwbql1naDEb0uKmQ=";
         };
         # nixpkgs bakes its own pin's build number/commit into `--version` and
         # `/props` as plain -D flags (the release tarball carries no .git for
-        # llama.cpp to read them from); replace them so ours doesn't lie.
-        cmakeFlags = builtins.map (
-          flag:
-            if pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=" flag
-            then "-DLLAMA_BUILD_NUMBER:STRING=11207"
-            else if pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=" flag
-            then "-DLLAMA_BUILD_COMMIT:STRING=7ac59a6"
-            else flag
-        ) old.cmakeFlags;
+        # llama.cpp to read them from); replace them so ours doesn't lie. The
+        # asserts catch a future nixpkgs reformatting these flags silently
+        # leaving the stale build number/commit in place instead of erroring.
+        cmakeFlags = assert pkgs.lib.any (pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=") old.cmakeFlags;
+          assert pkgs.lib.any (pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=") old.cmakeFlags;
+            builtins.map (
+              flag:
+                if pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=" flag
+                then "-DLLAMA_BUILD_NUMBER:STRING=${pinBuildNumber}"
+                else if pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=" flag
+                then "-DLLAMA_BUILD_COMMIT:STRING=${pinCommit}"
+                else flag
+            )
+            old.cmakeFlags;
       });
 
     # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
