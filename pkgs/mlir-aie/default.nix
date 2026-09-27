@@ -67,7 +67,7 @@ stdenv.mkDerivation (finalAttrs: {
     cp -r mlir_aie/python/aie "$libpy/site-packages/aie"
     cp -r mlir_aie/python/eudsl_python_extras-*.dist-info "$libpy/site-packages/"
     # Keep the distribution metadata so importlib.metadata can resolve mlir-aie
-    # and its declared Requires-Dist (numpy, rich, aiofiles).
+    # and its declared Requires-Dist.
     cp -r mlir_aie-*.dist-info "$libpy/site-packages/"
 
     # aie/utils/configure.py resolves PEANO_INSTALL_DIR, then $aie_dir/peano; make
@@ -95,9 +95,9 @@ stdenv.mkDerivation (finalAttrs: {
 
   passthru = {
     pythonPath = "${finalAttrs.finalPackage}/lib/python3.12/site-packages";
-    # The wheel declares numpy, rich and aiofiles at runtime (METADATA
-    # Requires-Dist) and imports ml_dtypes from aie.utils; no pip here, so the
-    # deps are carried by this env. With the package on PYTHONPATH, e.g.
+    # The wheel's METADATA declares numpy, rich, aiofiles, ml_dtypes and
+    # cloudpickle at runtime; no pip here, so the deps are carried by this env.
+    # With the package on PYTHONPATH, e.g.
     #   PYTHONPATH=${mlir-aie.passthru.pythonPath} ${mlir-aie.passthru.python}/bin/python3.12 -c 'import aie.iron'
     python = python312.withPackages (ps: [
       ps.numpy

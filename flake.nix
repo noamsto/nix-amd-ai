@@ -370,13 +370,12 @@
                 "$MLIR_AIE/bin/aiecc" --version | grep -q 'aiecc'
                 export PYTHONPATH="$MLIR_AIE/lib/python3.12/site-packages"
                 python3.12 -c 'import aie; assert aie.__version__ == "1.4.2", aie.__version__'
-                # The IRON API is the package's purpose; it needs the runtime deps from
-                # passthru.python, so exercise it rather than only the bare import.
+                # IRON is the package's purpose; it needs the passthru.python runtime deps.
                 python3.12 -c 'import aie.iron'
                 # The peano symlink makes the sibling llvm-aie findable.
                 python3.12 -c 'import os; assert os.path.isdir(os.path.join(os.environ["MLIR_AIE"],"lib/python3.12/peano/bin")), "peano symlink missing"'
                 # aie/utils/config.py finds aiecc via realpath(<site-packages>/aie/utils/../../..);
-                # assert the repackaged layout still satisfies that without importing numpy.
+                # assert the repackaged layout still satisfies that.
                 python3.12 -c 'import os; p=os.path.join(os.environ["MLIR_AIE"],"lib/python3.12/site-packages/aie/utils"); root=os.path.realpath(os.path.join(p,"..","..","..")); assert os.path.isfile(os.path.join(root,"bin","aiecc")), root'
                 touch $out
               '';
