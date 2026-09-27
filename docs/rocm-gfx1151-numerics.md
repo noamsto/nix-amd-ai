@@ -1,9 +1,16 @@
-# llamacpp:rocm was numerically broken on gfx1151 — fixed, patch carried here
+# llamacpp:rocm was numerically broken on gfx1151 — fixed upstream, no patch carried
 
-**Status (2026-09-07): fixed.** This flake patches `llama-cpp-rocm` with
-`865374bb` from [ggml-org/llama.cpp#28211](https://github.com/ggml-org/llama.cpp/issues/28211)
-— *"hip: disable direct host access on gfx1151"* — and ROCm now agrees with CPU
-and Vulkan to 0.2%. `llamacpp:rocm` is usable again on Strix Halo.
+**Status (2026-09-07: fixed via a local patch; 2026-09-27: superseded by
+upstream's own fix, local patch dropped).** This flake used to patch
+`llama-cpp-rocm` with a widened form of `865374bb` from
+[ggml-org/llama.cpp#28211](https://github.com/ggml-org/llama.cpp/issues/28211)
+— *"hip: disable direct host access on gfx1151"* — which brought ROCm back to
+agreeing with CPU and Vulkan to 0.2%. Upstream has since landed the real fix
+unconditionally (`d4389a4d`, closing
+[ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)),
+and this repo's llama.cpp pin (b11207) is past that revert, so the local patch
+is gone — see "## b11207 re-measurement (unpatched)" below for the current
+numbers. `llamacpp:rocm` is usable on Strix Halo either way.
 
 **Root cause.** gfx1151 reports as an integrated GPU, so ggml allowed tensors to
 live in *host* memory for the GPU to read directly. On this chip that hands back
@@ -24,13 +31,17 @@ The rest of this document is the diagnosis that led there. It is kept because
 the eliminations are what make the conclusion trustworthy, and because the same
 loop re-runs in ~25 s if this ever regresses.
 
-## Post-fix throughput (gfx1151, patched ROCm vs Vulkan)
+## Post-fix throughput (gfx1151, historical: local patch vs Vulkan)
 
-The patch moves tensors out of host memory into device memory, and upstream
-framed that as avoiding *"UMA prefill latency regressions"* — so it is worth
-knowing what it costs. `llama-bench`, Qwen3.5-4B `UD-Q4_K_XL`, `-ngl 99 -r 3`,
-on this Halo host (Ryzen AI MAX+ 395, gfx1151, kernel 7.2.2, ROCm 7.2.3,
-nixpkgs llama.cpp 0.3.0 **with the patch**):
+This measurement predates the b11207 pin and was taken against the *local*
+patch described above (since dropped in favour of upstream's own fix — see
+"## b11207 re-measurement (unpatched)" below for the current build). It is
+kept as the historical record of what the local patch cost. The patch moved
+tensors out of host memory into device memory, and upstream framed that as
+avoiding *"UMA prefill latency regressions"* — so it was worth knowing what it
+cost. `llama-bench`, Qwen3.5-4B `UD-Q4_K_XL`, `-ngl 99 -r 3`, on this Halo host
+(Ryzen AI MAX+ 395, gfx1151, kernel 7.2.2, ROCm 7.2.3, nixpkgs llama.cpp 0.3.0
+**with the local patch**):
 
 | Backend | pp512 | tg128 |
 | --- | ---: | ---: |
@@ -38,19 +49,19 @@ nixpkgs llama.cpp 0.3.0 **with the patch**):
 | Vulkan | 2001.00 ± 2.60 t/s | 62.39 ± 0.04 t/s |
 | | Vulkan +5.3% | Vulkan +6.9% |
 
-**Vulkan still wins, but now for the ordinary reason.** The old advice to prefer
-Vulkan on this part stands; what changed is that it rests on a few percent of
-throughput rather than on ROCm being wrong.
+**Vulkan still won, but for the ordinary reason.** The advice to prefer Vulkan
+on this part stands; what changed at the time was that it rested on a few
+percent of throughput rather than on ROCm being wrong.
 
-**The patch shows no prefill blow-up.** ROCm prefill sits 5% behind Vulkan, in
+**The patch showed no prefill blow-up.** ROCm prefill sat 5% behind Vulkan, in
 the same range as the gfx1150 tables in the README. Note there is no meaningful
 "before" to difference against: pre-patch throughput was the speed of a backend
-computing garbage, so it is not a baseline. ROCm's prefill variance is ~13x
+computing garbage, so it is not a baseline. ROCm's prefill variance was ~13x
 Vulkan's (±33.74 vs ±2.60), which is worth remembering before leaning on a
 single ROCm prefill figure.
 
-Different model and host from the README's benchmark tables, so this is recorded
-here rather than substituted into them.
+Different model and host from the README's benchmark tables, so this was
+recorded here rather than substituted into them.
 
 ## Follow-ups this opens
 
@@ -62,11 +73,11 @@ here rather than substituted into them.
   whose ROCm rows were measured through the old path — see below.
 - **Check gfx1150.** *Done — it is affected too. See the next section.*
 
-## gfx1150 (Strix Point) is affected too, and upstream's fix misses it
+## gfx1150 (Strix Point) was affected too, and upstream's first fix missed it
 
 The broken condition is `integrated && is_cuda_host(buft)`, which applies to
-*any* integrated GPU, while upstream's `865374bb` exempts gfx1151 alone
-(`cc == GGML_CUDA_CC_RDNA3_5 + 1`). Strix Point is equally integrated and
+*any* integrated GPU, while upstream's original `865374bb` exempted gfx1151
+alone (`cc == GGML_CUDA_CC_RDNA3_5 + 1`). Strix Point is equally integrated and
 equally RDNA3.5, so it was worth checking. Measured on `tp-g6` (Ryzen AI 9 HX
 PRO 370, Radeon 890M, gfx1150, kernel 7.2.2) with the **deployed** backends:
 
@@ -81,7 +92,7 @@ at partial offload too. Two unrelated model families, so this is not a MoE or
 Gemma quirk.
 
 Widening the predicate from gfx1151 to the existing `GGML_CUDA_CC_IS_RDNA3_5`
-fixes it, with no regression on gfx1151:
+fixed it locally, with no regression on gfx1151:
 
 | Qwen3.5-4B, widened patch | `-ngl 0` | `-ngl 16` | `-ngl 99` |
 | --- | ---: | ---: | ---: |
@@ -89,14 +100,45 @@ fixes it, with no regression on gfx1151:
 | gfx1151 | — | — | 6.8182 |
 
 Identical at every offload depth and identical across both chips. This repo
-carries the widened form; upstream has been told on
-[#28211](https://github.com/ggml-org/llama.cpp/issues/28211).
+carried the widened form as a local patch until upstream fixed the underlying
+condition unconditionally: `d4389a4d` (closing
+[ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604))
+sets `integrated = false` for the whole RDNA3.5 family rather than gfx1151
+alone — see [#28211](https://github.com/ggml-org/llama.cpp/issues/28211) for
+the original report this repo filed the widened fix against. This repo's
+llama.cpp pin (b11207) is past that revert, so the local patch is gone.
+**gfx1150 has not been re-measured against b11207** — only gfx1151/Halo was
+(see "## b11207 re-measurement (unpatched)" below); the widened-patch numbers
+above remain the last measurement taken for gfx1150.
 
 **Consequence for the README benchmarks.** The `Large: Gemma-4-26B-A4B` and
 `Qwen3.5-9B` tables are gfx1150 and their ROCm rows were measured through the
 broken path — real throughput, but for a backend returning garbage. They are
 annotated in place rather than deleted, since the Vulkan and FLM rows are
-unaffected.
+unaffected, and still want re-running against the unpatched build.
+
+## b11207 re-measurement (unpatched)
+
+Measured 2026-09-27 on this Halo host (Ryzen AI MAX+ 395, gfx1151, kernel
+7.2.7, ROCm 7.2.3). `llama-perplexity -m Qwen3.5-4B-UD-Q4_K_XL.gguf -f
+corpus.txt -ngl 99 -c 512 --chunks 6 --seed 42 -t 8`, same corpus and flags as
+"## What was measured" below (corpus reconstructed byte-exact from this
+repo's history; see `bench-logs/llamacpp-b11207-2026-09-27/README.md` for the
+provenance and hash).
+
+| Build | PPL |
+| --- | ---: |
+| old (b10964, deployed) | 6.8311 |
+| new (b11207, this repo's pin, no local patch) | 6.8311 |
+
+**Byte-identical to the old (still-patched) build**, and 0.19% from the
+6.8182 reference — within the 0.2% tolerance this doc already establishes.
+gfx1151/ROCm stays numerically correct with no patch carried. `llama-bench`
+throughput (Vulkan on 3 models, ROCm on the 27B) is in
+[bench-logs/llamacpp-b11207-2026-09-27/](../bench-logs/llamacpp-b11207-2026-09-27/) —
+not repeated here since it uses different models from this doc's Qwen3.5-4B.
+gfx1150 was **not** re-measured (no gfx1150 host available this session); its
+last-known numbers stay the widened-patch ones above.
 
 ## What was measured
 

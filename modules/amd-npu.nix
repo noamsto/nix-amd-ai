@@ -21,8 +21,9 @@
   # Both rocm packages are thin `pkg.override {rocmSupport = true;}` wrappers,
   # so the target list is overridden a level down. llama-cpp goes through the
   # wrapper on purpose: that keeps the overlay's `overrideAttrs` on it -- the
-  # RDNA3.5 host-access patch. sd-cpp carries no such patch and its wrapper
-  # forwards `.override` to the inner package, so it is built directly.
+  # NoWebUi build (and the pinned llama.cpp version underneath it). sd-cpp
+  # carries no such overrideAttrs and its wrapper forwards `.override` to the
+  # inner package, so it is built directly.
   llamaCppRocm =
     if cfg.rocmGpuTargets == null
     then pkgs.llama-cpp-rocm

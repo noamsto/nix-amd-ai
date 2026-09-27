@@ -8,13 +8,15 @@ and fixed — Phase 3 is unblocked on all three backends.** The misbehaviour in
 #105 was not the kernel/firmware pair: stock `llamacpp:rocm` returned garbage
 (perplexity 1334) while Vulkan (6.8067) and CPU (6.8056) were correct on that
 same kernel 7.2.2 and linux-firmware 20260810. The cause was ggml letting
-gfx1151 read tensors straight out of host memory; this flake now patches it
-(`llamaCppRocmOverride`, llama.cpp#28211) and ROCm reads 6.8182.
+gfx1151 read tensors straight out of host memory; this flake carried a patch
+for it (`llamaCppRocmOverride`, llama.cpp#28211) until upstream landed the
+real fix (`d4389a4d`, llama.cpp#28604), which this repo's llama.cpp pin
+(b11207) is now past — ROCm reads 6.8182 either way.
 See [rocm-gfx1151-numerics.md](rocm-gfx1151-numerics.md).
 
-**#61's ROCm-vs-Vulkan A/B is now worth running — but only against a patched
-build.** An unpatched ROCm measures the speed of a wrong answer, so any ROCm
-number taken on this host before 2026-09-07 is void.
+**#61's ROCm-vs-Vulkan A/B is now worth running.** A ROCm build before
+2026-09-07's fix measured the speed of a wrong answer, so any ROCm number
+taken on this host before then is void.
 
 The point of the ordering is that **#61's decisive long-context A/B is the
 expensive one**, and it is worthless if the GTT ceiling or the kernel is wrong.

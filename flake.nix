@@ -32,48 +32,6 @@
       nixpkgs.config.allowUnfreePredicate = allowFastFlowLMUnfree;
     };
 
-    # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
-    # upgrade response (missing the empty CRLF after the last header) for
-    # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
-    # python-websockets) reject with code 1006.
-    # RDNA3.5 iGPUs report as integrated, so ggml lets tensors sit in host
-    # memory for the GPU to read directly -- and that returns wrong data on
-    # them. Measured, CPU reference vs ROCm, same corpus and flags:
-    #
-    #   gfx1151 Halo,        Qwen3.5-4B:      6.79 vs 1334      -> 6.8182 patched
-    #   gfx1150 Strix Point, Qwen3.5-4B:      6.79 vs 1638      -> 6.8182 patched
-    #   gfx1150 Strix Point, Gemma-4-26B-A4B: 385  vs 250459    (deployed build)
-    #
-    # Vulkan and CPU are correct on both chips throughout, and AMD's own gfx1151
-    # prebuilt reproduces it, so this is neither our packaging nor ROCm version.
-    #
-    # ggml-org/llama.cpp#28211 carries 865374bb for this, but that patch gates on
-    # gfx1151 alone (`cc == GGML_CUDA_CC_RDNA3_5 + 1`) and gfx1150 is equally
-    # affected. We widen it to the whole family via GGML_CUDA_CC_IS_RDNA3_5.
-    #
-    # The prePatch guard retires this by itself: `direct_host_access` is the
-    # variable both our patch and upstream's introduce, so when the pinned
-    # nixpkgs carries either form of the fix the build fails telling you to
-    # delete the override, rather than silently double-applying it.
-    llamaCppRocmOverride = pkgs:
-      (pkgs.llama-cpp-rocm.override {
-        llama-cpp = pkgs.llama-cpp.override {inherit rocmGpuTargets;};
-      })
-      .overrideAttrs (old: {
-        patches = (old.patches or []) ++ [./patches/llamacpp-rdna35-host-access.patch];
-        prePatch =
-          (old.prePatch or "")
-          + ''
-            if grep -q direct_host_access ggml/src/ggml-cuda/ggml-cuda.cu; then
-              echo "llama-cpp-rocm: upstream now carries the host-access fix." >&2
-              echo "Drop llamaCppRocmOverride and patches/llamacpp-rdna35-host-access.patch." >&2
-              echo "Check it covers gfx1150 too, not just gfx1151:" >&2
-              echo "  https://github.com/ggml-org/llama.cpp/issues/28211" >&2
-              exit 1
-            fi
-          '';
-      });
-
     # nixpkgs builds llama.cpp's embedded server UI (tools/ui) with npm, which
     # pulls `nodejs_latest` -- the newest Node by definition, hence the
     # attribute least likely to be on cache.nixos.org. A nixpkgs bump whose
@@ -98,6 +56,50 @@
         ];
       });
 
+    # Pin llama.cpp to a specific upstream tag instead of nixpkgs' own version,
+    # so we can pick up a fix (or a newer ggml/CUDA-backend feature) ahead of
+    # nixpkgs' llama-cpp update. `__intentionallyOverridingVersion` silences
+    # nixpkgs' "you changed version without changing src" warning -- we're
+    # changing both together, deliberately. `pinBuildNumber`/`pinCommit` must
+    # move together with `pinTag` on the next bump -- there is no single
+    # source of truth to derive them from (fetchFromGitHub's `src.rev` here is
+    # just the tag we passed in, not the resolved commit).
+    llamaCppPin = pkgs: pkg: let
+      pinTag = "b11207";
+      pinBuildNumber = "11207";
+      pinCommit = "7ac59a6";
+    in
+      pkg.overrideAttrs (old: {
+        version = pinBuildNumber;
+        __intentionallyOverridingVersion = true;
+        src = pkgs.fetchFromGitHub {
+          owner = "ggml-org";
+          repo = "llama.cpp";
+          tag = pinTag;
+          hash = "sha256-ckEFqkLHWFRN6ciR/gjBIflYLsnRwbql1naDEb0uKmQ=";
+        };
+        # nixpkgs bakes its own pin's build number/commit into `--version` and
+        # `/props` as plain -D flags (the release tarball carries no .git for
+        # llama.cpp to read them from); replace them so ours doesn't lie. The
+        # asserts catch a future nixpkgs reformatting these flags silently
+        # leaving the stale build number/commit in place instead of erroring.
+        cmakeFlags = assert pkgs.lib.any (pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=") old.cmakeFlags;
+          assert pkgs.lib.any (pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=") old.cmakeFlags;
+            builtins.map (
+              flag:
+                if pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=" flag
+                then "-DLLAMA_BUILD_NUMBER:STRING=${pinBuildNumber}"
+                else if pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=" flag
+                then "-DLLAMA_BUILD_COMMIT:STRING=${pinCommit}"
+                else flag
+            )
+            old.cmakeFlags;
+      });
+
+    # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
+    # upgrade response (missing the empty CRLF after the last header) for
+    # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
+    # python-websockets) reject with code 1006.
     libwebsocketsOverride = pkgs:
       pkgs.libwebsockets.overrideAttrs (old: rec {
         version = "4.5.8";
@@ -156,9 +158,12 @@
             libwebsockets = libwebsocketsOverride pinned;
             xrt = pinned.callPackage ./pkgs/xrt {};
             fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
-            llama-cpp = llamaCppNoWebUi pinned pinned.llama-cpp;
-            llama-cpp-vulkan = llamaCppNoWebUi pinned (pinned.llama-cpp.override {vulkanSupport = true;});
-            llama-cpp-rocm = llamaCppNoWebUi pinned (llamaCppRocmOverride pinned);
+            llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
+            llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
+            llama-cpp-vulkan = llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;});
+            llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
+              llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
+            });
             whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {
               rocmSupport = true;
@@ -207,9 +212,12 @@
         linuxPackages = let
           xrt = pkgs.callPackage ./pkgs/xrt {};
           fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          llama-cpp = llamaCppNoWebUi pkgs pkgs.llama-cpp;
-          llama-cpp-vulkan = llamaCppNoWebUi pkgs (pkgs.llama-cpp.override {vulkanSupport = true;});
-          llama-cpp-rocm = llamaCppNoWebUi pkgs (llamaCppRocmOverride pkgs);
+          llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
+          llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
+          llama-cpp-vulkan = llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;});
+          llama-cpp-rocm = llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
+            llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
+          });
           whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {
             rocmSupport = true;
