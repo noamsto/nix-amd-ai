@@ -1,0 +1,17 @@
+Host-load record for the gpt-oss-120b tg128 interleaved run (halo).
+The run wrappers do not sample loadavg per run; these are hand-sampled
+`cat /proc/loadavg` readings taken between runs during the session, recorded
+here so the load claim in README.md is not uncited.
+
+2026-09-27T18:58:41+03:00  load average: 71.97, 54.08, 30.72   (during r7/r8)
+2026-09-27T19:06:51+03:00  load average:  4.20, 15.08, 20.63   (after r10)
+2026-09-27T21:02:26+03:00  load average: 26.77, 15.95,  9.94   (well after the runs)
+
+Context. The machine runs several sibling dispatcher workers (pi/claude
+processes); during the 18:53-19:02 window the 1-minute load average was ~72 on
+32 cores. The two rounds taken in that window (r7, r8) are the ones whose model
+load wall time is ~2x the other rounds (see each phase's timeline.txt) and whose
+throughput drops to ~40 t/s vs ~53 t/s in the later low-load rounds.
+
+The per-run wall times in the committed `timeline.txt` files are the per-run
+load proxy; the samples above bracket the spike and the recovery.
