@@ -22,6 +22,7 @@ class _AlarmTimeout(Exception):
 def _alarm_handler(signum, frame):
     raise _AlarmTimeout(f"test exceeded {PER_TEST_TIMEOUT}s (server may be hung/crashed)")
 
+
 class SkipMark(Exception):
     def __init__(self, cond, reason=""):
         self.cond = cond
