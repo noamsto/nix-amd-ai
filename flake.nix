@@ -158,6 +158,8 @@
             libwebsockets = libwebsocketsOverride pinned;
             xrt = pinned.callPackage ./pkgs/xrt {};
             fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
+            llvm-aie = pinned.callPackage ./pkgs/llvm-aie {};
+            mlir-aie = pinned.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;});
@@ -173,6 +175,7 @@
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+            inherit mlir-aie llvm-aie;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
@@ -212,6 +215,8 @@
         linuxPackages = let
           xrt = pkgs.callPackage ./pkgs/xrt {};
           fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
+          llvm-aie = pkgs.callPackage ./pkgs/llvm-aie {};
+          mlir-aie = pkgs.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
           llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;});
@@ -234,6 +239,7 @@
         in {
           inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets lemonade;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+          inherit mlir-aie llvm-aie;
           ds4 = pkgs.callPackage ./pkgs/ds4 {};
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           # What `hardware.amd-npu.lemonade.desktopApp.enable = false` selects;
@@ -352,6 +358,40 @@
         checks =
           if isLinux
           then {
+            # Smoke checks for the IRON toolchain packages: prove the CLI tools
+            # run, the Python module imports with the package on PYTHONPATH, and
+            # the Peano clang still carries the AIE targets. No NPU needed.
+            mlir-aie-smoke =
+              pkgs.runCommand "mlir-aie-smoke" {
+                nativeBuildInputs = [linuxPackages.mlir-aie.passthru.python];
+                MLIR_AIE = linuxPackages.mlir-aie;
+              } ''
+                "$MLIR_AIE/bin/aie-opt" --version | grep -q 'aie-opt'
+                "$MLIR_AIE/bin/aiecc" --version | grep -q 'aiecc'
+                export PYTHONPATH="$MLIR_AIE/lib/python3.12/site-packages"
+                python3.12 -c 'import aie; assert aie.__version__ == "1.4.2", aie.__version__'
+                # IRON is the package's purpose; it needs the passthru.python runtime deps.
+                python3.12 -c 'import aie.iron'
+                # The peano symlink makes the sibling llvm-aie findable.
+                python3.12 -c 'import os; assert os.path.isdir(os.path.join(os.environ["MLIR_AIE"],"lib/python3.12/peano/bin")), "peano symlink missing"'
+                # aie/utils/config.py finds aiecc via realpath(<site-packages>/aie/utils/../../..);
+                # assert the repackaged layout still satisfies that.
+                python3.12 -c 'import os; p=os.path.join(os.environ["MLIR_AIE"],"lib/python3.12/site-packages/aie/utils"); root=os.path.realpath(os.path.join(p,"..","..","..")); assert os.path.isfile(os.path.join(root,"bin","aiecc")), root'
+                touch $out
+              '';
+
+            llvm-aie-smoke =
+              pkgs.runCommand "llvm-aie-smoke" {
+                LLVM_AIE = linuxPackages.llvm-aie;
+              } ''
+                "$LLVM_AIE/bin/clang" --version | grep -q 'llvm-aie'
+                # --version prints the host triple; the AIE targets are what prove this
+                # is the Peano backend rather than a stock clang.
+                "$LLVM_AIE/bin/clang" -print-targets | grep -q 'aie2'
+                "$LLVM_AIE/bin/clang" --target=aie2-none-unknown-elf -print-target-triple | grep -qx 'aie2-none-unknown-elf'
+                touch $out
+              '';
+
             module-eval-rocm-false =
               (inputs.nixpkgs.lib.nixosSystem {
                 inherit system;
