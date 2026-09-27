@@ -233,6 +233,10 @@ half so the two arches sit together.
       re-quantization moved throughput on Halo. His Llama rows are unaffected.
 - [ ] Sanity-check the concurrency result — NPU model + iGPU model at once, the
       claim being the iGPU pays nothing measurable.
+- [x] API-level conformance of `flm serve` against OFLM-Next's server-api spec:
+      [bench-logs/oflm-api-conformance-2026-09-27/README.md](../bench-logs/oflm-api-conformance-2026-09-27/README.md)
+      — several real deviations found, including a server crash on a malformed
+      request body.
 ### Settled: NPU contexts are not column-exclusive
 
 #79 hypothesised that two NPU models can't co-exist because each FLM context
