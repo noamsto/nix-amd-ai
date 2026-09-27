@@ -31,15 +31,16 @@ run-to-run. That is the number this log re-tests.
   `/var/lib/models/hf/hub/models--ggml-org--gpt-oss-120b-GGUF/snapshots/238abdd290bb874b90a5da1b4549881b7d05c091/`.
 - **Command per run** (tg only; pp512 not re-measured here, see *Not measured*):
   `llama-bench -m <model> -ngl 99 -p 0 -n 128 -r 5 -o json`
-- **Guard before every run**: every phase's wrapper polls until
-  `gpu_busy_percent == 0` (all cards) and GPU temp ≤ 45 °C before launching.
-  Additionally, rounds 1-4 (and the warm-ups) re-checked lemond
-  `model_loaded == null`; that extra check was not run in rounds 5-14. Every
-  phase's `timeline.txt` records the start busy/temp; only `interleaved/`
-  (rounds 1-4 + warm-ups) also records the end busy/temp and the `lemond`
-  field. The model-load wall times in those files identify the host-load
-  spikes below (a run that took ~2x its neighbours is a load-contaminated
-  round).
+- **Guard before every run**: the wrapper waits up to 90 s for
+  `gpu_busy_percent == 0` (all cards) and GPU temp ≤ 45 °C, then launches
+  regardless. On this always-warm mini-PC the wait often timed out, so the
+  committed start temps run 44-55 °C (`timeline.txt` per phase) — the 45 °C
+  target is not a hard gate. Rounds 1-4 (and the warm-ups) additionally
+  re-checked lemond `model_loaded == null`; rounds 5-14 did not. Every phase's
+  `timeline.txt` records the start busy/temp; only `interleaved/` (rounds 1-4 +
+  warm-ups) also records the end busy/temp and the `lemond` field. The
+  model-load wall times in those files identify the host-load spikes below (a
+  run that took ~2x its neighbours is a load-contaminated round).
 - **Design**: 14 interleaved rounds, each round = one run of each build
   back-to-back, plus 2 discarded warm-up runs. Run order was deliberately varied
   so the build effect is separable from run order / host drift:

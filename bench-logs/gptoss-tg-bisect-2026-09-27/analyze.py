@@ -3,12 +3,14 @@
 
 Reads every arm's llama-bench `-o json` output under the run directories and
 prints the per-round table plus the paired statistics quoted in README.md.
-Run from this directory:  python3 analyze.py
+Paths resolve relative to this script, so it can be run from anywhere:
+    python3 analyze.py
 """
-import glob
 import json
 import os
 import statistics as st
+
+HERE = os.path.dirname(os.path.abspath(__file__))
 
 # Run directory -> round numbers. Order of phases is the order they were run.
 PHASES = [
@@ -40,7 +42,7 @@ def main():
     for d, rounds in PHASES:
         for r in rounds:
             for arm in ("old", "new"):
-                p = os.path.join(d, f"r{r}-{arm}.json")
+                p = os.path.join(HERE, d, f"r{r}-{arm}.json")
                 if not os.path.exists(p):
                     raise SystemExit(f"missing expected run file: {p}")
                 avg, sd, b = load_run(p)
