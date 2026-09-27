@@ -32,13 +32,30 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
-  # server.cpp maps only error code 400 to an HTTP status, so handler errors
-  # raised with code 500 (rest_handler.cpp) go out as HTTP 200. This ports the
-  # numeric-code half of OpenFlowLM-Next 746f6ab (Vegard Berget) without its
-  # openai_compat helpers. Still unfixed on ROCm/FastFlowLM main as of v1.0.6;
-  # drop once upstream maps 4xx/5xx codes. A bump that breaks the patch fails
-  # the build rather than silently losing the fix.
-  patches = [ ./patches/http-error-status.patch ];
+  # flm serve's request handling has three bugs found by running
+  # OpenFlowLM-Next's server-api conformance suite against it (#164, #171):
+  #   - server-error-handling.patch: a malformed request body could throw
+  #     twice while the server built its own error response, escaping every
+  #     catch before the NPU lock was released and wedging it permanently
+  #     (fixed with an RAII guard); and error.code was mapped to an HTTP
+  #     status only for an object with a numeric code, so a bare-string
+  #     error (or an object with a string code, from
+  #     request-validation.patch) stayed HTTP 200 -- supersedes #157, whose
+  #     numeric-code mapping this keeps, plus a 400 default for other shapes.
+  #   - request-validation.patch: rest_handler.cpp read required fields with
+  #     `request["field"]` on a const json&, undefined behavior for a missing
+  #     key (JSON_ASSERT is compiled out in release builds) that segfaults or
+  #     returns garbage instead of throwing. Checks presence and type first.
+  # Neither patch carries attribution: require_field and safe_dump are ported
+  # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
+  # that is on the branch commit per this repo's CLAUDE.md, not here. Still
+  # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
+  # request validation, the NPU-lock leak, and the status mapping. A bump
+  # that breaks either patch fails the build rather than silently losing it.
+  patches = [
+    ./patches/server-error-handling.patch
+    ./patches/request-validation.patch
+  ];
 
   cargoDeps = rustPlatform.importCargoLock {
     lockFile = ./Cargo.lock;
