@@ -158,8 +158,8 @@
             libwebsockets = libwebsocketsOverride pinned;
             xrt = pinned.callPackage ./pkgs/xrt {};
             fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
-            mlir-aie = pinned.callPackage ./pkgs/mlir-aie {};
             llvm-aie = pinned.callPackage ./pkgs/llvm-aie {};
+            mlir-aie = pinned.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;});
@@ -215,8 +215,8 @@
         linuxPackages = let
           xrt = pkgs.callPackage ./pkgs/xrt {};
           fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
-          mlir-aie = pkgs.callPackage ./pkgs/mlir-aie {};
           llvm-aie = pkgs.callPackage ./pkgs/llvm-aie {};
+          mlir-aie = pkgs.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
           llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;});
@@ -363,13 +363,18 @@
             # the Peano clang still carries the AIE targets. No NPU needed.
             mlir-aie-smoke =
               pkgs.runCommand "mlir-aie-smoke" {
-                nativeBuildInputs = [pkgs.python312];
+                nativeBuildInputs = [linuxPackages.mlir-aie.passthru.python];
                 MLIR_AIE = linuxPackages.mlir-aie;
               } ''
                 "$MLIR_AIE/bin/aie-opt" --version | grep -q 'aie-opt'
                 "$MLIR_AIE/bin/aiecc" --version | grep -q 'aiecc'
                 export PYTHONPATH="$MLIR_AIE/lib/python3.12/site-packages"
                 python3.12 -c 'import aie; assert aie.__version__ == "1.4.2", aie.__version__'
+                # The IRON API is the package's purpose; it needs the runtime deps from
+                # passthru.python, so exercise it rather than only the bare import.
+                python3.12 -c 'import aie.iron'
+                # The peano symlink makes the sibling llvm-aie findable.
+                python3.12 -c 'import os; assert os.path.isdir(os.path.join(os.environ["MLIR_AIE"],"lib/python3.12/peano/bin")), "peano symlink missing"'
                 # aie/utils/config.py finds aiecc via realpath(<site-packages>/aie/utils/../../..);
                 # assert the repackaged layout still satisfies that without importing numpy.
                 python3.12 -c 'import os; p=os.path.join(os.environ["MLIR_AIE"],"lib/python3.12/site-packages/aie/utils"); root=os.path.realpath(os.path.join(p,"..","..","..")); assert os.path.isfile(os.path.join(root,"bin","aiecc")), root'

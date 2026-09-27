@@ -24,6 +24,7 @@
   zlib,
   python312,
   bash,
+  llvm-aie ? null,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "mlir-aie";
@@ -65,6 +66,15 @@ stdenv.mkDerivation (finalAttrs: {
     cp -r mlir_aie/aie_runtime_lib "$libpy/aie_runtime_lib"
     cp -r mlir_aie/python/aie "$libpy/site-packages/aie"
     cp -r mlir_aie/python/eudsl_python_extras-*.dist-info "$libpy/site-packages/"
+    # Keep the distribution metadata so importlib.metadata can resolve mlir-aie
+    # and its declared Requires-Dist (numpy, rich, aiofiles).
+    cp -r mlir_aie-*.dist-info "$libpy/site-packages/"
+
+    # aie/utils/configure.py resolves PEANO_INSTALL_DIR, then $aie_dir/peano; make
+    # the sibling llvm-aie package findable there when it is passed in.
+    ${lib.optionalString (llvm-aie != null) ''
+      ln -s ${llvm-aie} "$libpy/peano"
+    ''}
 
     # libcrypto-ee446395.so.3 is reached through the binaries' $ORIGIN/../../mlir_aie.libs
     # runpath; from $libpy/bin that resolves to $out/lib, so it must land here.
@@ -83,7 +93,20 @@ stdenv.mkDerivation (finalAttrs: {
   # Prebuilt release binaries; stripping buys little and risks the .so set.
   dontStrip = true;
 
-  passthru.pythonPath = "${placeholder "out"}/lib/python3.12/site-packages";
+  passthru = {
+    pythonPath = "${finalAttrs.finalPackage}/lib/python3.12/site-packages";
+    # The wheel declares numpy, rich and aiofiles at runtime (METADATA
+    # Requires-Dist) and imports ml_dtypes from aie.utils; no pip here, so the
+    # deps are carried by this env. With the package on PYTHONPATH, e.g.
+    #   PYTHONPATH=${mlir-aie.passthru.pythonPath} ${mlir-aie.passthru.python}/bin/python3.12 -c 'import aie.iron'
+    python = python312.withPackages (ps: [
+      ps.numpy
+      ps."ml-dtypes"
+      ps.rich
+      ps.aiofiles
+      ps.cloudpickle
+    ]);
+  };
 
   meta = with lib; {
     description = "MLIR-based toolchain for AMD AI Engine (AIE) devices";
