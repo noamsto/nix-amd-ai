@@ -1,0 +1,10 @@
+  b4    qkv           [256, 384, 1152] -> f97a25f2b43a7dc0dbfa8d01
+  b4    attn_out       [256, 384, 384] -> 3a7d825f0b7a20728bbbdfc9
+  b4    ffn_up        [256, 384, 1536] -> 48b9b2a6fb2f4367cd156bd1
+  b4    ffn_down      [256, 1536, 384] -> 3ee5358c39510403fc3c8708
+  identity qkv@b4 vs attn_out@b4    72 differing bytes in 12 runs, longest 16 B  OK
+  identity qkv@b4 vs ffn_up@b4    69 differing bytes in 8 runs, longest 17 B  OK
+  identity qkv@b4 vs ffn_down@b4    65 differing bytes in 11 runs, longest 16 B  OK
+  toolchain  mlir_aie 1.4.2, peano 21.0.0.2026080301+c9c5ecb7, mlir-aie HEAD unavailable
+
+  wrote /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/out/patched-probe/gemm_rtp -- ONE xclbin, 4 streams (4 shapes x 1 batch tiers)

@@ -1,0 +1,106 @@
+Comparison against eyduh/OpenFlowLM-Next @ bcaee46cf5b4cdb6318a99f1ff0099b56d1e075e
+(resolved from short SHA bcaee46; repo has since reverted this commit at 9c48448)
+Local build: this branch's patched export_gemm_rtp.py, mlir_aie 1.4.2 / llvm-aie Peano 21.0.0.2026080301+c9c5ecb7
+
+=== HARD GATE: byte-comparison of all 17 insts*.bin files ===
+MATCH  insts.bin
+MATCH  insts_qkv_b4.bin
+MATCH  insts_qkv_b16.bin
+MATCH  insts_qkv_b32.bin
+MATCH  insts_qkv_b128.bin
+MATCH  insts_attn_out_b4.bin
+MATCH  insts_attn_out_b16.bin
+MATCH  insts_attn_out_b32.bin
+MATCH  insts_attn_out_b128.bin
+MATCH  insts_ffn_up_b4.bin
+MATCH  insts_ffn_up_b16.bin
+MATCH  insts_ffn_up_b32.bin
+MATCH  insts_ffn_up_b128.bin
+MATCH  insts_ffn_down_b4.bin
+MATCH  insts_ffn_down_b16.bin
+MATCH  insts_ffn_down_b32.bin
+MATCH  insts_ffn_down_b128.bin
+
+Result: 17/17 matched, 0/17 differed
+
+=== INFORMATIONAL (not gating) ===
+-- toolchain.json --
+ours:
+{
+  "mlir_aie_version": "1.4.2",
+  "peano_version": "21.0.0.2026080301+c9c5ecb7",
+  "mlir_aie_git_head": "unavailable"
+}bcaee46:
+{
+  "mlir_aie_version": "1.4.3",
+  "peano_version": "22.0.0.2026092301+02be6fd8",
+  "mlir_aie_git_head": "unavailable"
+}
+design.json: differs (expected -- src field is IRON cache dir names)
+final.xclbin: differs (expected under 1.4.2/Peano-21 vs bcaee46's 1.4.3/Peano-22)
+
+design.json field-level diff (confirms only 'src' differs, the IRON cache dir name):
+41c41
+<       "src": "f97a25f2b43a7dc0dbfa8d01"
+---
+>       "src": "0eb9760baefa56702bad839f"
+51c51
+<       "src": "3a7d825f0b7a20728bbbdfc9"
+---
+>       "src": "8555d125b24545980c70ff24"
+61c61
+<       "src": "48b9b2a6fb2f4367cd156bd1"
+---
+>       "src": "8f80b85916d8746e8d3d8926"
+71c71
+<       "src": "3ee5358c39510403fc3c8708"
+---
+>       "src": "9a90576db8efcb94df8d4145"
+81c81
+<       "src": "0149c7e321b5855c23eb71c5"
+---
+>       "src": "b1766c40a2c27ba36e05d777"
+91c91
+<       "src": "867271689d01263d63926759"
+---
+>       "src": "17b9c56e9b642f804787cc99"
+101c101
+<       "src": "a11ac2eb68479b549ac91406"
+---
+>       "src": "a3ac62484f5cffada57d9617"
+111c111
+<       "src": "1a7b8790b60709fdcf1dfb1a"
+---
+>       "src": "66ec557bfc9b03f69bd03e46"
+121c121
+<       "src": "cac6b982533a4669e2b1c0ae"
+---
+>       "src": "d95056dccfbe7ed92a869ffe"
+131c131
+<       "src": "8884bbf93d3eb4a7dddd67da"
+---
+>       "src": "d472c768451ddad00ffe9559"
+141c141
+<       "src": "976ea4c5dbcc3a2ad89ba8db"
+---
+>       "src": "05c808585c46fa2c75488a98"
+151c151
+<       "src": "87c84773f26674d96f2d3ff7"
+---
+>       "src": "235d8e30fe29d9fad0496066"
+161c161
+<       "src": "7e24109d50f1d1d035eedb25"
+---
+>       "src": "61d983738cb1548a9076b9ab"
+171c171
+<       "src": "1c82e5f928e01fba2ccf2332"
+---
+>       "src": "4a696f04a2325905d8085fc1"
+181c181
+<       "src": "af31925b4ffc62d64ff5a48e"
+---
+>       "src": "0c8b1e977f2c134552b6d318"
+191c191
+<       "src": "bcf9443d2be49ffc0740e54f"
+---
+>       "src": "0c465be45221dd050e4d0948"
