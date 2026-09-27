@@ -1,13 +1,14 @@
 # Bench logs
 
 Raw `llama-bench` output kept for provenance behind decisions made elsewhere.
-All runs on Strix Point (gfx1150, Radeon 890M, 64 GiB DDR5-5600).
+Host is per-row below — not all runs are on the same machine.
 
-| Run | What it tested | Outcome |
-| --- | --- | --- |
-| `rocwmma-2026-05-19` | llama.cpp with the rocWMMA flash-attn build flag vs a plain ROCm baseline | **Net regression** — `pp4096` 368.50 → 213.84 t/s (−42%) at head_dim 256. Flag left off. |
-| `mtp-2026-05-24` | `--mtp-ab` decode A/B on a 27B model | Provisional — not run on an idle GPU under the performance power profile, so the deltas are not authoritative. |
-| `mtp-2026-05-31` | same A/B via the Go benchmark TUI | Provisional, same caveat. |
+| Run | Host | What it tested | Outcome |
+| --- | --- | --- | --- |
+| `rocwmma-2026-05-19` | Strix Point (gfx1150, Radeon 890M, 64 GiB DDR5-5600) | llama.cpp with the rocWMMA flash-attn build flag vs a plain ROCm baseline | **Net regression** — `pp4096` 368.50 → 213.84 t/s (−42%) at head_dim 256. Flag left off. |
+| `mtp-2026-05-24` | Strix Point | `--mtp-ab` decode A/B on a 27B model | Provisional — not run on an idle GPU under the performance power profile, so the deltas are not authoritative. |
+| `mtp-2026-05-31` | Strix Point | same A/B via the Go benchmark TUI | Provisional, same caveat. |
+| [`llamacpp-b11207-2026-09-27`](llamacpp-b11207-2026-09-27/) | halo (gfx1151, Radeon 8060S, 123 GiB RAM) | llama.cpp b10964 (old/`main`) vs b11207 (new) A/B — Vulkan on 3 models, ROCm on the 27B, plus ROCm perplexity vs the 6.8182 reference | Vulkan pp512 **+15% to +82%** across models; one small tg128 regression on gpt-oss-120b Vulkan (**−4.0%**); ROCm perplexity unchanged (6.8311, within 0.2% of reference on both builds). |
 
 The rocWMMA result is why `llama-cpp-rocm` ships plain; see
 `docs/therock-eval-results.md`, which argues rocWMMA should be **on** for

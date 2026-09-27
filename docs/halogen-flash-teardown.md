@@ -62,7 +62,7 @@ not to do.
 The EULA expressly permits benchmarking and publication with no approval, and
 they state plainly that their comparison table is other people's published
 figures rather than a head-to-head they ran. A same-machine comparison against
-our patched llama.cpp is therefore both sanctioned and unclaimed. It is not run
+our llama.cpp build is therefore both sanctioned and unclaimed. It is not run
 yet; it needs a 118 GiB weights download.
 
 ## What they publish that bears on our settings

@@ -9,16 +9,15 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | Package | Description | Source |
 |---------|-------------|--------|
 | `xrt` | Xilinx Runtime for AMD NPU | Built from [Xilinx/XRT](https://github.com/Xilinx/XRT) |
-| `xrt-plugin-amdxdna` | XDNA userspace driver plugin | Built from [amd/xdna-driver](https://github.com/amd/xdna-driver) branch `1.9` |
+| `xrt-plugin-amdxdna` | XDNA userspace driver plugin | Built from [amd/xdna-driver](https://github.com/amd/xdna-driver) branch `1.7` |
 | `fastflowlm` | NPU-optimized LLM runtime | Built from [FastFlowLM](https://github.com/FastFlowLM/FastFlowLM) |
 | `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
-| `lemonade-headless` | `lemonade` without the Tauri desktop shell — what `lemonade.desktopApp.enable = false` selects, cached so headless hosts substitute it | `lemonade.override { withDesktopApp = false; }` |
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
-| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
+| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`, `gaia-emr`, `gaia-code`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
 CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`. The GPU backends track nixpkgs too; the `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944), backed by llama.cpp [#22673](https://github.com/ggml-org/llama.cpp/pull/22673) — fires on any nixpkgs llama.cpp past `b9175`.
@@ -54,33 +53,16 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
     enable = true;
     enableNPU = true;         # default; set false for GPU-only hosts (see "Other hardware")
     enableFastFlowLM = true;  # LLM inference on NPU (requires enableNPU)
-    # fastflowlm.package = pkgs.fastflowlm;  # swap in an flm-compatible runtime (see below)
     enableLemonade = true;    # OpenAI-compatible API server
     enableROCm = true;        # ROCm GPU backends (llamacpp + sd-cpp)
     enableVulkan = true;      # Vulkan GPU backends (llamacpp + whispercpp)
     enableImageGen = true;    # default true; set false to drop sd-cpp from closure
-    # rocmGpuTargets = ["gfx1103"];  # only to reach a GPU the shipped
-    #                                # gfx1150+gfx1151 build doesn't cover
     lemonade.user = "youruser";
   };
 
   users.users.youruser.extraGroups = ["video" "render"];
 }
 ```
-
-> [!IMPORTANT]
-> **FastFlowLM's NPU kernels are proprietary.** The package's source is MIT,
-> but the `.xclbin` kernels it installs are governed by
-> [FastFlowLM's TERMS.md](https://github.com/ROCm/FastFlowLM/blob/1a40ad9ade3d4714d48974a974a114441a5bd786/TERMS.md):
-> free only for non-commercial use or for companies with annual revenue
-> ≤ USD 10M; a commercial licence is required above that. nixpkgs therefore
-> treats `fastflowlm` as unfree, and applying this overlay/module on a host
-> with `allowUnfree = false` fails evaluation. Allow just this package:
->
-> ```nix
-> nixpkgs.config.allowUnfreePredicate =
->   pkg: builtins.elem (lib.getName pkg) ["fastflowlm"];
-> ```
 
 ### macOS (nix-darwin)
 
@@ -140,7 +122,7 @@ The module splits into an NPU half and a GPU half. The NPU half (XRT + `amdxdna`
 
 **Krackan Point** (Ryzen AI 7 350 / 5 340, PCI `1022:17f0` rev `0x20`) is XDNA 2 with the same 8-column AIE array, but `amdxdna` gives it its own device profile (`dev_npu6_info`, vs `dev_npu4_info` for Strix Point) and nothing here has been tested on it. Reported failing at model load with `DRM_IOCTL_AMDXDNA_CREATE_HWCTX` — see #79.
 
-Set `enableNPU = false` to drop the XRT/`amdxdna` closure (kernel module, udev rules, memlock limits) and run GPU-only. Example for a **Hawk Point** APU (Ryzen 9 8945HS, Radeon 780M / `gfx1103`):
+Set `enableNPU = false` to drop the XRT/`amdxdna` closure (kernel module, IOMMU param, udev rules, memlock limits) and run GPU-only. Example for a **Hawk Point** APU (Ryzen 9 8945HS, Radeon 780M / `gfx1103`):
 
 ```nix
 hardware.amd-npu = {
@@ -154,19 +136,11 @@ hardware.amd-npu = {
 
 - **Vulkan** is the recommended path: RADV is arch-agnostic, so llama.cpp / whisper.cpp run on any RDNA3 iGPU including the Radeon 780M (Phoenix / Hawk Point).
 - **NPU** (`enableFastFlowLM`) is XDNA-2 only; the assertion blocks it unless `enableNPU = true`.
-- **ROCm** (`enableROCm`): the shipped `llama-cpp-rocm` and `sd-cpp-rocm` are compiled for `gfx1150` and `gfx1151` only, so they carry **no 780M kernels** and the backend will fail to load on one. Name your own target to get them:
-
-  ```nix
-  hardware.amd-npu.rocmGpuTargets = ["gfx1103"];
-  ```
-
-  This is **untested on actual Hawk Point hardware**, and rocBLAS coverage for `gfx1103` APUs can be uneven, so Vulkan remains the recommended path. If ROCm misbehaves, the usual fallback is to alias the arch to `gfx1100`:
+- **ROCm** (`enableROCm`): the shipped `llama-cpp-rocm` is compiled with `gfx1103` in its `CMAKE_HIP_ARCHITECTURES` list, so it carries native 780M kernels — no `HSA_OVERRIDE_GFX_VERSION` workaround should be needed. This is **untested on actual Hawk Point hardware**, and rocBLAS coverage for `gfx1103` APUs can be uneven, so Vulkan remains the recommended path. If ROCm misbehaves, the usual fallback is to alias the arch to `gfx1100`:
 
   ```nix
   systemd.services.lemond.environment.HSA_OVERRIDE_GFX_VERSION = "11.0.0";
   ```
-
-  The value is part of the derivation, so naming a target means a store path no substituter has: native kernels for your chip, bought with a local llama.cpp and sd.cpp build. The cache carries the gfx1150+gfx1151 pair and nothing else, which is also what `#llama-cpp-rocm` and `#stable-diffusion-cpp-rocm` build.
 
 ## What the module configures
 
@@ -400,27 +374,9 @@ Halo measurements above contributed by [@expelledboy](https://github.com/expelle
 ### `amd_iommu=off` would kill the NPU
 
 The Strix Halo wiki suggests `amd_iommu=off` for a small memory-read speedup.
-It is not small, and on a compute-bound prefill it is not a memory-read effect:
-peonist-ai measured the IOMMU costing 13-16% of prefill on their gfx1151 host,
-by way of a power budget the translation machinery spends and the shaders then
-do not get. Their numbers, mechanism, and caveats are in
-[halogen-flash-teardown.md](docs/halogen-flash-teardown.md); none of it is
-reproduced here, and they never measured Translated mode, which is what our
-hosts run.
-
 **Do not do this on a host that uses the NPU.** amdxdna needs the IOMMU present
 for PASID; with `amd_iommu=off` there is no IOMMU at all and the NPU dies.
 `amd_iommu=off` is only viable on a GPU-only host that has given up XDNA.
-
-`enableNPU` asserts on this, because the param does not always come from the
-line you wrote: any module in the closure can contribute to `boot.kernelParams`,
-and Jovian-NixOS ships `amd_iommu=off` in the SteamOS cmdline defaults that
-`jovian.steamos.useSteamOSConfig` turns on. Enabling Steam Gaming Mode on an NPU
-host is enough to do it. To see the merged list:
-
-```console
-$ nix eval --json .#nixosConfigurations.<host>.config.boot.kernelParams
-```
 
 You also don't need it for large-model headroom, which is the usual reason
 people reach for it. The 128 GB Halo host measured above boots
@@ -434,14 +390,8 @@ required *Translated* mode (SVA/PASID), so the module used to pin
 "skip PASID tag in non-SVA mode") the driver no longer tags DMA with an invalid
 PASID under an identity default domain, so the NPU works with `iommu=pt` too.
 The module no longer forces the mode — it leaves the kernel default (Translated
-on NixOS), and hosts that want passthrough can set `iommu=pt` themselves.
-
-> **Don't expect a prefill win from `iommu=pt`.** peonist-ai's A/B makes
-> passthrough the *slow* arm: it measured `iommu=pt` at 385 tok/s against 460
-> with the IOMMU off entirely, on more package power and lower shader clocks.
-> If that generalises, passthrough keeps the NPU alive without recovering the
-> prefill that `amd_iommu=off` buys. Unmeasured here, and unmeasured against
-> Translated anywhere.
+on NixOS), and hosts that want passthrough for a memory-read win can set
+`iommu=pt` themselves.
 
 ### CPU performance tuning (not implemented — pending A/B)
 
@@ -465,26 +415,6 @@ confirms whether the wiki's numbers reproduce on Strix Point. Tracked in
 [#19](https://github.com/noamsto/nix-amd-ai/issues/19).
 
 ## Troubleshooting
-
-### Using an flm-compatible runtime
-
-`hardware.amd-npu.fastflowlm.package` (default `pkgs.fastflowlm`) selects the
-runtime that `enableFastFlowLM` installs and lemonade drives. The module wraps it
-with the XRT `LD_LIBRARY_PATH`, links its main program (`meta.mainProgram`, which
-need not be `flm`) at `/etc/lemonade/backends/flm-npu`, and seeds
-`flm.npu_bin = "/etc/lemonade/backends/flm-npu"`. Lemonade resolves FLM through
-`flm.npu_bin` first (or the `LEMONADE_FLM_NPU_BIN` environment variable), and only
-then looks for a literal `flm` on `PATH`. A path-valued `npu_bin` also drops
-lemonade's expected-version check, so the `backend_versions.json` pin to
-`pkgs.fastflowlm` does not flag another runtime as needing an update.
-
-`flm.flm_bin` is **not** a config key: `lemonade config set flm.flm_bin ...` is
-accepted silently and has no effect. Use `flm.npu_bin`.
-
-The wiring is verified by an eval check only. Whether a given runtime (e.g.
-OpenFlowLM-Next's `oflm`, [#147](https://github.com/noamsto/nix-amd-ai/issues/147))
-implements the CLI lemonade calls (`list --json`, `version --json`, `serve`) has
-not been tested on hardware here.
 
 ### FLM models don't appear / `flm:npu` reports "not installed" after enabling FastFlowLM
 
@@ -512,19 +442,18 @@ Harmless. `aie2_get_info` handles the NPU's `GET_INFO` ioctl, and the mainline `
 
 ## GAIA agent framework
 
-[AMD GAIA](https://github.com/amd/gaia) is a Python agent framework that uses lemond as its inference backend, plus a built-in web UI. Upstream targets pip / electron installers, neither of which fits a NixOS host cleanly, and the Python dependency tree is large and fast-moving (weekly-ish releases, torch + transformers; the `[ui]` extra resolves to ~120 packages on x86_64-linux). The flake therefore ships a thin `uvx` wrapper rather than a from-source Nix build:
+[AMD GAIA](https://github.com/amd/gaia) is a Python agent framework that uses lemond as its inference backend (Email Triage / Code / Jira / Blender / RAG / MCP agents, plus a built-in web UI). Upstream targets pip / electron installers, neither of which fits a NixOS host cleanly, and the Python dependency tree is large and fast-moving (weekly-ish releases, torch + transformers + ~60 transitive deps). The flake therefore ships a thin `uvx` wrapper rather than a from-source Nix build:
 
 ```bash
-nix run .#gaia                     # launch the Agent UI (the default experience)
-nix run .#gaia -- --cli            # interactive CLI chat
+nix run .#gaia                     # interactive CLI; falls back to printing help
+nix run .#gaia -- ui               # launch the web UI (FastAPI + bundled SPA)
 nix shell .#gaia -c gaia-mcp       # MCP bridge server
+nix shell .#gaia -c gaia-code      # code-agent CLI
 ```
 
-It exports the three console scripts the wheel declares — `gaia`, `gaia-cli`, `gaia-mcp`. 0.24.0 deleted the thirteen per-task agents (`analyst`, `blender`, `browser`, `code`, `doc-search`, `docker`, `docqa`, `emr`, `fileio`, `jira`, `routing`, `sd`, `summarize`), so there is no per-task command left to invoke: install the flagship agent with `gaia hub install gaia --trust` and it loads the matching `SKILL.md`.
+The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~60 transitive deps into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
 
-The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~120 packages into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
-
-Bump the pinned version in `pkgs/gaia/default.nix` by hand when a new GAIA release lands — that is by design, not an oversight. `scripts/check-updates.sh` reads the version from PyPI and the console scripts out of the published wheel's `entry_points.txt` (a version-only bump would otherwise ship wrappers for entry points upstream removed), reports both in the weekly update PR, and withholds that PR from auto-merge so the edit stays a human's.
+Bump the pinned version in `pkgs/gaia/default.nix` when a new GAIA release lands and you want it. CI doesn't auto-bump GAIA today (only lemonade / fastflowlm / xdna are wired into `scripts/check-updates.sh`).
 
 ## ds4 (DeepSeek V4 on Strix Halo)
 
@@ -552,8 +481,6 @@ hardware.amd-npu.ds4 = {
 Binds `127.0.0.1:8000` by default (`host`/`port`); the unit runs with `render`/`video` GPU access, `LimitMEMLOCK=infinity`, and a writable `/var/lib/ds4` (StateDirectory) for the optional SSD-streaming KV cache. Retarget another AMD GPU with `package = pkgs.ds4.override { gpuTarget = "gfx1103"; }` (experimental — upstream only validates gfx1151).
 
 All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600). Prompt 256 tokens, generation 128 tokens, 3 iterations after 1 warmup.
-
-> **⚠️ The ROCm rows below were measured on a numerically broken backend.** gfx1150 is hit by the same RDNA3.5 host-access bug as gfx1151: on this host, ROCm reads perplexity 250,459 against a CPU reference of 385 for the very Gemma-4-26B-A4B model benchmarked here (and 1,638 vs 6.79 for Qwen3.5-4B), while CPU and Vulkan are correct. The throughput figures are real, but they time a backend producing garbage, so the ROCm-vs-Vulkan comparison is not a choice worth making from these numbers. Upstream has since fixed the underlying regression (`d4389a4d`, [ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)), and this flake's llama.cpp pin (b11207) is past that revert, so no patch is carried anymore. The rows below are left in place, unrevised, until they can be re-measured on the fixed build. Vulkan and FLM rows are unaffected. See [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
 
 ### Large: Gemma-4-26B-A4B-it-GGUF (~15.7 GB, via `llama-bench`, llama.cpp b8770)
 
@@ -595,38 +522,12 @@ The concurrency row is the interesting one: an NPU workload running alongside an
 - **General LLM inference (7B–26B Q4):** use **Vulkan**. On Strix Point 890M with llama.cpp b8770, Vulkan wins decode at every size tested and ties or wins prefill. The previous "ROCm for prefill-heavy" advice no longer holds now that ROCm targets gfx1150 natively (the gfx1102 Tensile arch-logic was apparently more tuned than gfx1150's is today).
 - **Power-budget / idle-GPU scenarios:** use **FLM/NPU** — decode is competitive with Vulkan and offloads the GPU, but the compile-on-first-load TTFT is noticeable.
 - **ROCm** is kept installed as a fallback and for ecosystem tooling (`rocminfo`, profiling, HIP apps); re-evaluate when newer rocBLAS/Tensile logic for gfx1150 lands.
-- **RDNA3.5 iGPUs needed a patch to be numerically correct, until upstream
-  fixed it.** Stock `llamacpp:rocm` returned near-random tokens on both
-  chips — perplexity 1334 on gfx1151 and 1638 on gfx1150, where CPU and Vulkan
-  both give 6.81. Cause: RDNA3.5 parts report as integrated GPUs, so ggml let
-  tensors live in host memory for the GPU to read directly, which hands back
-  wrong data on them. This flake used to carry a widened form of
-  [llama.cpp#28211](https://github.com/ggml-org/llama.cpp/issues/28211)'s
-  `865374bb` fix (gfx1151-only upstream at the time) covering the whole
-  RDNA3.5 family, via a `llamaCppRocmOverride` in `flake.nix`. Upstream has
-  since landed the real fix unconditionally (`d4389a4d`,
-  [ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)),
-  which covers gfx1150 too, and this flake's llama.cpp pin (`llamaCppPin` in
-  `flake.nix`, b11207) is past that revert — so the override and its patch are
-  gone. Full diagnosis and history:
-  [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
-
-  Still open, tracked in that doc: the gfx1151 and gfx1150 ROCm benchmark rows
-  above were all measured through the old, broken host-memory path and want
-  re-running against the unpatched b11207 build.
 
 Enable all three and let lemonade pick the recipe per model.
 
 ### Running ds4 beside lemond
 
 Both servers draw from the same GTT pool, and a DeepSeek-V4-Flash-sized model leaves no room for a second resident one. Measured on a 128 GB Strix Halo (gfx1151) at `ttmSizeGiB = 104`: the 80.76 GiB `IQ2XXS-w2Q2K` quant answers in 1.3 s with ds4 alone, but with a 4B model also loaded under lemond there is nothing left for page cache — lemond fell from 53 tok/s to 0.11 (71 s to process 8 prompt tokens), and shortly after that *both* endpoints stopped answering. Stopping either one restores the other immediately.
-
-Why *both* died, rather than the second one failing to load, was never
-established. Contiguous-memory exhaustion is a candidate: peonist-ai report that
-a host with plenty of free bytes and few free 2 MiB blocks stalls for minutes at
-100% of one core with no disk activity, which is the signature we saw. See
-[halogen-flash-teardown.md](docs/halogen-flash-teardown.md). The original event
-was not instrumented, so this is a hypothesis rather than a diagnosis.
 
 `exclusiveInference` makes that explicit instead of leaving the machine to thrash, and `autoStart` picks which server the host boots with:
 
@@ -720,3 +621,232 @@ Authoritative MTP A/B numbers (idle GPU + AC + performance power profile) are **
 
 - **Build**: All packages built and cached on every push to `main`
 - **Update**: Weekly check for upstream releases, auto-creates PR with version bumps
+# Strix Halo (gfx1151) bring-up checklist
+
+Everything in this repo that is blocked on Halo hardware, ordered so each step
+unblocks the next.
+
+**Status (2026-09-05): the box exists and Phases 0-2 are done.** What blocks the
+rest is no longer hardware — it is #105. This host runs kernel 7.2.2 with
+linux-firmware 20260810, the pair reported there as making models misbehave on
+Strix Halo, so any number measured today would have to be thrown away. Settle
+#105 before Phase 3.
+
+The point of the ordering is that **#61's decisive long-context A/B is the
+expensive one**, and it is worthless if the GTT ceiling or the kernel is wrong.
+Phases 0-2 are cheap and make the phase-3 numbers trustworthy.
+
+Open issues this closes: #42 (partly — the NPU half landed in #94), #61, #63,
+#68.
+
+## Phase 0 — identify the box before changing anything
+
+```bash
+# NPU: which device profile did amdxdna bind?
+lspci -nn | grep -i 'signal processing'      # expect 1022:17f0, note the rev
+cat /sys/class/accel/accel0/device/fw_version
+journalctl -k -b | grep -iE 'amdxdna|amdgpu'
+
+# GPU: does ROCm see gfx1151 natively?
+rocminfo | grep -i 'gfx\|Marketing'
+cat /sys/class/drm/card*/device/mem_info_vram_total
+cat /sys/class/drm/card*/device/mem_info_gtt_total
+
+uname -r
+```
+
+Record the rev byte. #79 turned on `rev 0x10` (npu4) vs `rev 0x20` (npu6/Krackan)
+mapping to different driver profiles, and README line 123 already carries a
+"Krackan is untested" caveat. Halo should be npu5.
+
+- [x] `rocminfo` reports `gfx1151`, not `gfx1100`. Confirmed: `gfx1151` and
+      `amdgcn-amd-amdhsa--gfx1151`. NPU is `rev 0x11` (npu5, as predicted), fw
+      `1.1.2.65`. IOMMU on, group 34.
+- [ ] Kernel window. The original entry named ~6.18.6-6.18.14 and said to avoid
+      6.19.x, which misidentifies gfx1151 as gfx1100. **This host runs 7.2.2**,
+      far outside that window, and `rocminfo` identifies the arch correctly — so
+      the 6.19.x misidentification bug is not present here and that window is
+      stale rather than violated. The live kernel question is #105, not this one.
+
+## Phase 1 — GTT ceiling (#42)
+
+@expelledboy measured this on his 128 GB Halo and #96 folds it into the README.
+This is the confirmation run on our own box, plus the one question he could not
+answer.
+
+```bash
+# with hardware.amd-npu.gpuMemory.ttmSizeGiB = 96
+cat /sys/class/drm/card1/device/mem_info_gtt_total   # expect 103079215104
+```
+
+- [x] `mem_info_gtt_total` == `ttmSizeGiB × 262144 × 4096` exactly. Measured:
+      `ttmSizeGiB = 104` gives `111669149696`, which is `104 × 262144 × 4096`.
+      Reproduces @expelledboy's result on our own box.
+- [x] ROCm agrees. `llama-bench` on the HIP backend reports `Total VRAM: 106496
+      MiB`, and a vLLM run profiled **35.8 GiB** of KV cache out of that pool,
+      so the headroom is usable and not just advertised.
+- [ ] **Settle `pagePoolSizeGiB`** — the open question from #42. Drop the line
+      entirely, reboot, and re-read `mem_info_gtt_total`. If unchanged, the
+      option is decorative and the README should say so instead of hedging on
+      three unmeasured sources.
+- [ ] Confirm `amdgpu.gttsize` is genuinely unnecessary (it should already be
+      unset; just verify nothing else set it).
+
+Do **not** set `amd_iommu=off`. It kills the NPU, and expelledboy showed it
+isn't needed for headroom anyway — his host runs `iommu.passthrough=0` and still
+loads an 80 GiB model.
+
+## Phase 2 — vLLM gfx1151 has never executed a kernel (#63, #68)
+
+`pkgs/vllm-rocm/sources.nix` says it plainly: packaging is verified, the bundle
+unpacks, `vllm-server --help` imports torch — but **no gfx1151 kernel has ever
+run**. This is the cheapest high-value result on the list.
+
+```bash
+# smallest real model first; Qwen3.5-0.8B-FP16-vLLM exists in the registry
+lemonade pull Qwen3.5-0.8B-FP16-vLLM
+lemonade run Qwen3.5-0.8B-FP16-vLLM
+```
+
+- [x] One successful completion end-to-end. Done 2026-09-05, though not by the
+      route above: `enableVllm` is off on this host, so the bundle was built
+      directly for `gpuTarget = "gfx1151"` and `vllm-server` run against
+      `facebook/opt-125m`. `Application startup complete`, coherent completion
+      returned. torch reports `gfx1151` / ROCm 7.15.0a and executed an fp16
+      2048x2048 matmul whose mean matches the analytic value, so the kernel
+      computed rather than merely not crashing.
+      **It did not work as packaged** — `torch/lib/libaotriton_v2.so` needs a
+      plain `liblzma.so.5` that the bundle only ships renamed, so `import torch`
+      died. Fixed in #114; without that the caveat below could not have been
+      closed at all.
+- [ ] Then a 9B (`Qwen3.5-9B-FP16-vLLM`) to prove it isn't only toy-sized.
+      ~18 GB pull, not yet done.
+
+Note the vllm pin is stale and will move once #95 lands and the weekly workflow
+picks a tag that actually has gfx1150 **and** gfx1151 builds. Prefer testing
+whatever the workflow lands rather than the current pin.
+
+## Phase 3 — the decisive test: ROCm vs Vulkan at long context (#61)
+
+This is the one the issue is actually gated on. The premise to test is **not**
+"is ROCm faster" — the gfx1150 answer was no. It is: *does the ordering flip at
+long context on gfx1151?* Community data says HIP+rocWMMA+FA holds ~51 t/s at
+8K where Vulkan collapses to ~32 t/s.
+
+The repo's harness does the A/B:
+
+```bash
+nix run .#benchmark -- -backend rocm   -prompt-tokens 8192 -repeat 5 -no-tui
+nix run .#benchmark -- -backend vulkan -prompt-tokens 8192 -repeat 5 -no-tui
+```
+
+### ⚠️ Tooling gap to fix first
+
+`-ctx-size` **only reaches `llama-server` in `--mtp-ab` mode.** It is consumed
+by `BuildLlamaServerArgs` at `internal/bench/run.go:571`, inside `RunMTPAB`. In
+the normal `-backend` path the benchmark drives lemonade's HTTP API and lemond
+spawns `llama-server` with whatever the config says — so **you cannot request
+8K/16K/32K context on the path this test needs**, and a long `-prompt-tokens`
+against a 2048 ctx just truncates.
+
+Two ways out, in preference order:
+
+1. Set it declaratively and leave the harness alone:
+   ```nix
+   hardware.amd-npu.lemonade.settings.llamacpp.args = "--ctx-size 32768 --flash-attn on";
+   ```
+2. Or extend `-ctx-size` to apply outside MTP A/B mode.
+
+Either way, **confirm the server actually got the context** (lemond logs the
+`llama-server` argv) before trusting a single number. A silently-truncated 8K
+run that reports healthy t/s is the failure mode that would make this whole
+phase worthless.
+
+### Build the ROCm side properly
+
+The comparison is only fair if ROCm is fully optimized — **rocWMMA ON +
+Flash-Attention + hipBLASLt**. Per-arch matters:
+
+| target | rocWMMA |
+|---|---|
+| gfx1150 | **OFF** — measured net regression, −42% pp4096 |
+| gfx1151 | **ON** — this is where the community win comes from |
+
+Do not reuse the gfx1150 rocWMMA conclusion here; different arch, opposite
+expected sign.
+
+**This does not need TheRock.** The earlier assumption was that an optimized
+gfx1151 ROCm build required vendoring TheRock, because nixpkgs 7.2.3 was
+believed to fault on gfx1151. It does not — measured 2026-09-05, see the
+Correction in `docs/therock-eval-results.md`. `rocmPackages.rocwmma` is in
+nixpkgs at the same 7.2.3, so the rocWMMA + FA build is reachable as an override
+on the existing `llama-cpp-rocm`. Try that before reopening vendoring: the
+gfx1150 A/B already showed newer ROCm losing, and nixpkgs-unstable is also at
+7.2.3, so vendoring is the only route to anything newer and costs a 16 GB fetch
+at ~350 KB/s plus four undocumented NixOS build fixes.
+
+**Second candidate that could flip the gate.** A community ROCm fork
+(`halo-box/strix-llama.cpp`) claims large MoE prefill gains on gfx1151. Treat as
+unreplicated: it has no releases, its own README documents a gfx1151 HIP
+async-execution correctness bug (perplexity ~88 vs ~9.4 on batched inference,
+worked around with `HIP_LAUNCH_BLOCKING=1` at a performance cost) and names
+Vulkan the default recommendation, and a sibling project in the same community
+retracted a 25% pp claim that turned out to be a work-skipping bug on q4_K/q5_K
+MoE. Its numbers are also on ROCm 7.14, which nixpkgs does not have. The bar for
+it to matter here: beat Vulkan on **decode at >=32K depth with perplexity
+checked**, not beat ROCm master on prefill.
+
+- [ ] Bench 8K, 16K, 32K — not just pp512/tg128. Short context was already
+      answered on gfx1150 and is not the regime that motivates Halo.
+- [ ] Capture GPU utilisation evidence alongside, same as the gfx1150 eval did,
+      to rule out CPU fallback (`-min-decode-tps` guards the gross case).
+- [ ] Log raw output under `bench-logs/` — that's the repo convention.
+- [ ] First `sd-cpp` ROCm-vs-Vulkan look on gfx1151 (image-gen), lower priority.
+
+### Decision gate
+
+- **ROCm+rocWMMA clearly wins long context** → vendor a per-arch gfx1151
+  optimized-ROCm llama path via TheRock, behind a hand-gated update lane plus a
+  hardware smoke test.
+- **Vulkan wins or ties even at long context** → Vulkan-first everywhere, keep
+  nixpkgs ROCm as fallback/tooling, and **close #61** rather than leaving it
+  open indefinitely.
+
+Record whichever it is in `docs/therock-eval-results.md` next to the gfx1150
+half so the two arches sit together.
+
+## Phase 4 — NPU cross-check (optional)
+
+#94 has expelledboy's Halo NPU numbers on FLM 0.9.43. The flake is moving to
+1.0.3 (#98), which re-quantized Qwen3.5 / Qwen3.6-MoE from Q4_1 to Q4_K.
+
+- [ ] Re-run `flm bench` on 1.0.3 for a Qwen3.5 model and see whether the
+      re-quantization moved throughput on Halo. His Llama rows are unaffected.
+- [ ] Sanity-check the concurrency result — NPU model + iGPU model at once, the
+      claim being the iGPU pays nothing measurable.
+### Settled: NPU contexts are not column-exclusive
+
+#79 hypothesised that two NPU models can't co-exist because each FLM context
+requests all 8 columns. **That is wrong** — measured twice:
+
+- Halo (rev 0x11 / npu5), FLM 0.9.43: three separate `flm serve` processes
+  loaded and answered concurrently (@expelledboy).
+- Strix Point (rev 0x10 / npu4), FLM 1.0.3: `--asr 1 --embed 1` on one serve —
+  #655's exact trigger — loaded Whisper + Embedding-Gemma + Llama-3.2-1B and
+  served clean.
+
+`flm validate` printing "8 columns" describes the array, not a claim on it.
+Don't re-test this; the open question is what changed after FLM 0.9.44 and
+whether it is gated on the `npu6` device profile:
+
+| rev | profile | `--asr 1 --embed 1` |
+|---|---|---|
+| 0x10 | npu4 (Strix Point) | works on 1.0.3 |
+| 0x11 | npu5 (Halo) | works on 0.9.43; **1.0.3 pending** |
+| 0x20 | npu6 (Krackan) | broken from 0.9.45 |
+
+- [ ] Fill the npu5-on-1.0.3 cell. If it passes, [ROCm/FastFlowLM#655](https://github.com/ROCm/FastFlowLM/issues/655)
+      is an npu6-profile bug; if it fails, the regression isn't Krackan-specific
+      and npu4 is the outlier. Test Llama-3.2-1B first — it's untouched by the
+      Q4_1→Q4_K re-quant, so a load failure can't be confused with a weights
+      problem.
