@@ -22,7 +22,7 @@ class _AlarmTimeout(Exception):
 def _alarm_handler(signum, frame):
     raise _AlarmTimeout(f"test exceeded {PER_TEST_TIMEOUT}s (server may be hung/crashed)")
 
-class SkipMark:
+class SkipMark(Exception):
     def __init__(self, cond, reason=""):
         self.cond = cond
         self.reason = reason
@@ -56,7 +56,11 @@ class Mark:
 
 pytest_shim = types.ModuleType("pytest")
 pytest_shim.mark = Mark()
-pytest_shim.skip = lambda reason="": (_ for _ in ()).throw(SkipMark(True, reason))
+def _skip(reason=""):
+    raise SkipMark(True, reason)
+
+
+pytest_shim.skip = _skip
 sys.modules["pytest"] = pytest_shim
 
 
@@ -83,7 +87,7 @@ def record(results, mod_name, label, verdict, detail):
     results.append((mod_name, label, verdict, detail))
     line = f"{verdict:6} {mod_name}::{label}"
     if detail:
-        line += f"  -- {detail}"
+        line += f"  -- {' '.join(str(detail).split())}"
     print(line, flush=True)
 
 
@@ -96,10 +100,12 @@ def run_module(path, results):
         return
 
     module_skip = getattr(mod, "pytestmark", None)
-    if isinstance(module_skip, SkipMark) and module_skip.cond:
+    module_marks = module_skip if isinstance(module_skip, list) else [module_skip] if module_skip else []
+    active_skip = next((m for m in module_marks if isinstance(m, SkipMark) and m.cond), None)
+    if active_skip:
         for fname in dir(mod):
             if fname.startswith("test_"):
-                record(results, mod_name, fname, "SKIP", module_skip.reason)
+                record(results, mod_name, fname, "SKIP", active_skip.reason)
         return
 
     test_fns = []
@@ -136,6 +142,10 @@ def run_module(path, results):
                 record(results, mod_name, label, "FAIL", str(e))
             except _AlarmTimeout as e:
                 record(results, mod_name, label, "ERROR", str(e))
+            except SkipMark as e:
+                if had_signal:
+                    signal.alarm(0)
+                record(results, mod_name, label, "SKIP", e.reason)
             except Exception as e:
                 if had_signal:
                     signal.alarm(0)
