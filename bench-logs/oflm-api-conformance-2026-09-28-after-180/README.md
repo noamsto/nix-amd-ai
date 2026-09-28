@@ -22,8 +22,10 @@ Red (base + injection): `/nix/store/m1vqq017hbfnqfzkbm5n6cl62viw7a2y-fastflowlm-
 Green (new + injection): `/nix/store/vn94z3p5br2glvygyrv5jy7hg0wkhvc4-fastflowlm-1.0.6`.
 **Rebase:** the runs below were made before this branch was rebased onto
 `74dec24`, which changes only `embed-task-prompt.patch` (`handle_embeddings`).
-The patch applies unchanged there, and the rebased build is
-`/nix/store/jxp7zdhx1hjv93k9hpvi20mx40ldh3mq-fastflowlm-1.0.6`.
+The patch applies unchanged there. The final build is
+`/nix/store/s8rilbz0bmz9miyaspx15f99a4d7wlka-fastflowlm-1.0.6`: the rebased
+tree plus a comment-only rewording in the patch, so the code it compiles is
+unchanged.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
