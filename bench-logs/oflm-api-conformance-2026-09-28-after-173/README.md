@@ -10,6 +10,8 @@ Only the `flm` build under test changed.
 `/nix/store/8pgdcx429na9a9wxiqiwwa0faz8rm3dl-fastflowlm-1.0.6`. Its logs are in [`before/`](before/).
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/model-identity.patch` —
 `/nix/store/lp2xwjayy36j0byma058nrfdvili4b0r-fastflowlm-1.0.6`. Its logs are in this directory.
+A later comment-only cleanup of the patch changed the out path to
+`/nix/store/zvg05givvmmlmp331fn9imjyfyrr6jyi-fastflowlm-1.0.6`; the code it compiles is unchanged.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding). All were already pulled.
 

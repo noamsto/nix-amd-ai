@@ -1,12 +1,11 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 6500795..6a48c4b 100644
+index 6500795..bad5298 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -48,6 +48,35 @@ static json require_field(const json& request, const char* field, RequiredFieldT
+@@ -48,6 +48,34 @@ static json require_field(const json& request, const char* field, RequiredFieldT
      return json();
  }
  
-+// The error body for a non-Ok ensure_model_loaded() outcome.
 +// Ported from OpenFlowLM-Next's openai_compat::model_error
 +// (src/server/openai_compat.hpp, Vegard Berget).
 +static json model_error(RestHandler::ModelLoad why, const std::string& model) {
@@ -38,7 +37,7 @@ index 6500795..6a48c4b 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -389,8 +418,9 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -389,8 +417,9 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
              header_print("Warning", "Default model tag '" << default_model_tag << "' is not supported. Falling back to 'llama3.2:1b'.");
              this->default_model_tag = "llama3.2:1b";
          }
@@ -49,7 +48,7 @@ index 6500795..6a48c4b 100644
          }
      }
      else {
-@@ -405,47 +435,96 @@ RestHandler::~RestHandler() = default;
+@@ -405,47 +434,91 @@ RestHandler::~RestHandler() = default;
  
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
@@ -61,13 +60,9 @@ index 6500795..6a48c4b 100644
 -            auto_chat_engine.reset();
 +///@param model_field_present whether the request actually carried a "model" key
 +RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model_tag, bool model_field_present) {
-+    // Normalise FIRST: cut_tag() strips a registry prefix and rectify_model_tag()
-+    // resolves a bare type ("granite") to its default variant ("granite:3b"). Both
-+    // the sentinel check and the is_model_supported() check below need the same
-+    // spelling current_model_tag was set to, or a prefixed/bare tag for the loaded
-+    // model compares unequal to itself. rectify_model_tag() indexes config for the
-+    // type, so it is only safe once is_model_supported() has confirmed the type
-+    // exists.
++    // current_model_tag holds the rectified tag, so a prefixed ("Ollama/x:1b") or
++    // bare ("x") spelling of the loaded model must be normalised to compare equal.
++    // rectify_model_tag() indexes config by type: only safe for a supported tag.
 +    std::string ensure_tag = supported_models.cut_tag(model_tag);
 +    if (supported_models.is_model_supported(ensure_tag)) {
 +        ensure_tag = supported_models.rectify_model_tag(ensure_tag);
@@ -114,9 +109,8 @@ index 6500795..6a48c4b 100644
 +                              current_model_tag + "' stays loaded");
 +        return ModelLoad::Unknown;
 +    }
-+    // ... and the same question one level down. embed-gemma and whisper-v3 ARE in
-+    // the model list, so the check above passes them; get_auto_model() substitutes
-+    // Llama for them instead of refusing, so this endpoint must ask itself.
++    // embed-gemma and whisper-v3 are in the model list, but get_auto_model()
++    // substitutes Llama for them instead of refusing.
 +    auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
 +    std::string family = info["details"]["family"];
 +    if (family == "whisper-v3" || family == "embed-gemma") {
@@ -182,7 +176,7 @@ index 6500795..6a48c4b 100644
  }
  
  ///@brief Ensure the asr model is loaded
-@@ -691,9 +770,8 @@ void RestHandler::handle_generate(const json& request,
+@@ -691,9 +764,8 @@ void RestHandler::handle_generate(const json& request,
          int length_limit = request.value("max_tokens", 4096);
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
@@ -194,7 +188,7 @@ index 6500795..6a48c4b 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -808,13 +886,12 @@ void RestHandler::handle_chat(const json& request,
+@@ -808,13 +880,12 @@ void RestHandler::handle_chat(const json& request,
          int length_limit = options.value("num_predict", 4096);
  
          auto load_start_time = time_utils::now();
@@ -211,7 +205,7 @@ index 6500795..6a48c4b 100644
          configure_chat_engine_parameters(options, request);
  
          // messages = normalize_messages(messages);
-@@ -919,6 +996,17 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -919,6 +990,17 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -229,15 +223,13 @@ index 6500795..6a48c4b 100644
          if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
              send_response(err);
              return;
-@@ -932,6 +1020,26 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -932,6 +1014,24 @@ void RestHandler::handle_embeddings(const json& request,
              return;
          }
          std::string model = request["model"].get<std::string>();
 +
 +#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
-+        // One embedding model is loaded per server; a request naming any other one
-+        // used to be served by the loaded model anyway and echoed back under the
-+        // name it was asked for.
++        // One embedding model is loaded per server.
 +        std::string ensure_tag = supported_models.cut_tag(model);
 +        if (supported_models.is_model_supported(ensure_tag)) {
 +            ensure_tag = supported_models.rectify_model_tag(ensure_tag);
@@ -256,7 +248,7 @@ index 6500795..6a48c4b 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1176,9 +1284,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1176,9 +1276,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
          }
  
          auto load_start_time = time_utils::now();
@@ -268,7 +260,7 @@ index 6500795..6a48c4b 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1233,7 +1340,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1233,7 +1332,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
              }
          }
  
@@ -277,7 +269,7 @@ index 6500795..6a48c4b 100644
              current_messages = convert_tool_responses_gemma4(current_messages);
          }
  
-@@ -1472,16 +1579,10 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -1472,16 +1571,10 @@ void RestHandler::handle_openai_completion(const json& request,
          bool stream = request.value("stream", false);
          json options = request.value("options", json::object());
  
@@ -297,23 +289,21 @@ index 6500795..6a48c4b 100644
          }
  
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
-index 69256de..0548bca 100644
+index 69256de..b904bf8 100644
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
-@@ -34,6 +34,12 @@ using StreamResponseCallback = std::function<void(const json&, bool)>; // data,
+@@ -34,6 +34,10 @@ using StreamResponseCallback = std::function<void(const json&, bool)>; // data,
  
  class RestHandler {
  public:
-+    // Why ensure_model_loaded() did not leave a model serving. Unknown / NotChatModel
-+    // / NoModel are the CLIENT's mistake and answer 400; LoadFailed is ours and
-+    // answers 500. Public so the file-static model_error() in rest_handler.cpp can
-+    // take it as a parameter.
++    // Unknown / NotChatModel / NoModel are the client's mistake and answer 400;
++    // LoadFailed is ours and answers 500.
 +    enum class ModelLoad { Ok, Unknown, NotChatModel, NoModel, LoadFailed };
 +
      RestHandler(model_list& models, ModelDownloader& downloader, program_args_t& args);
      ~RestHandler();
  
-@@ -108,7 +114,7 @@ public:
+@@ -108,7 +112,7 @@ public:
          std::shared_ptr<CancellationToken> cancellation_token = nullptr);
  
  private:
