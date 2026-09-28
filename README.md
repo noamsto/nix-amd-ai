@@ -537,20 +537,25 @@ place: on halo, FLM's `Qwen3.6-35B-A3B-NPU2/model.q4nx` (21.0 GB) differs from
 OFLM's manifest (23.2 GB), so pulling that model through lemonade would
 overwrite FLM's copy. To keep the stores separate, point `oflm` at its own
 directory the way lemonade itself understands, by setting `FLM_MODEL_PATH`
-(the name `oflm` also honours, as a legacy alias for `OFLM_MODEL_PATH`) on
-`lemond`:
+(the name `oflm` also honours, as a legacy alias for `OFLM_MODEL_PATH`) for
+both `lemond` and your shell:
 
 ```nix
+# StateDirectory creates /var/lib/oflm owned by lemonade.user when lemond
+# starts; oflm itself does not create its store root.
+systemd.services.lemond.serviceConfig.StateDirectory = "oflm";
 systemd.services.lemond.environment.FLM_MODEL_PATH = "/var/lib/oflm";
+environment.sessionVariables.FLM_MODEL_PATH = "/var/lib/oflm";
 ```
 
-The directory must be writable by `hardware.amd-npu.lemonade.user`; models are
-then downloaded again. Creating `~/.config/oflm` or setting `OFLM_MODEL_PATH`
-instead also separates the stores, but lemonade reads a FLM model's
-`config.json` only from `FLM_MODEL_PATH` or FastFlowLM's own directories, so it can no longer
-find each model's max context length (measured on halo, for `lfm2-1.2b-FLM`
-and `llama3.2-1b-FLM`) and falls back to its 32768-token auto context cap
-(from lemonade's source).
+Models are then downloaded again. Without the session variable, an
+interactive `oflm pull`/`oflm run` still uses `~/.config/flm`. Creating
+`~/.config/oflm` or setting `OFLM_MODEL_PATH` instead also separates the
+stores, but lemonade reads a FLM model's `config.json` only from
+`FLM_MODEL_PATH` or FastFlowLM's own directories, so it can no longer find
+each model's max context length (measured on halo, for `lfm2-1.2b-FLM` and
+`llama3.2-1b-FLM`) and falls back to its 32768-token auto context cap (from
+lemonade's source).
 
 Measured on halo only (Ryzen AI MAX+ 395, XDNA2 NPU, 8 columns), 2026-09-28,
 with the module-wrapped binary:
