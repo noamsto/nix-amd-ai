@@ -61,11 +61,12 @@ stdenv.mkDerivation (finalAttrs: {
   #     from a caught exception's e.what(), which for nlohmann errors
   #     reflects request bytes and library internals. Bodies now carry a
   #     fixed message and e.what() goes to the server log: a json::exception,
-  #     or any failure applying the chat template to the request, gets 400
-  #     invalid_request_error "Invalid request"; anything else gets 500
-  #     server_error "Internal error". A malformed model_list.json entry now
-  #     fails the model load (500 model_load_failed) instead of surfacing as
-  #     a JSON error in the request handler.
+  #     or any exception from a catch around prompt processing (where a chat
+  #     template rejects the conversation), gets 400 invalid_request_error
+  #     "Invalid request", as those catches did before; anything else gets
+  #     500 server_error "Internal error". A malformed max_prefill_len or
+  #     model path entry in model_list.json now fails the model load (500
+  #     model_load_failed) rather than reaching the handler as a JSON error.
   # None of the patches carries attribution: require_field, safe_dump and the
   # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget) --
   # the Co-authored-by trailer for that is on the branch commit per this

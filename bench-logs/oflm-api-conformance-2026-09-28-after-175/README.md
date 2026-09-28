@@ -12,6 +12,9 @@ models and ports. Only the `flm` build under test changed.
 the after-173 run ended on.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/no-exception-text.patch` —
 `/nix/store/1hk1j328srbnqyic0az0m08ffxzf1mms-fastflowlm-1.0.6`.
+A later comment-only change to the patch moved the out path to
+`/nix/store/4xsxdjm2q3xzhav5yp3zfa16sfd5n892-fastflowlm-1.0.6`. The code it
+compiles is the same.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
