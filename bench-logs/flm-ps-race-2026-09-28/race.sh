@@ -11,8 +11,8 @@
 # Oracle:
 #   red:   ps-pair >= 1 AND model-state >= 1 (both the #184 race and the
 #          post-send tail race must reproduce) -- gates for red.
-#   green: ps-pair == 0, model-state == 0 and incomplete == 0, and every
-#          poll, chat/completions and queue request answered 200.
+#   green: ps-pair == 0, model-state == 0, incomplete == 0 and other == 0,
+#          and every poll, chat/completions and queue request answered 200.
 #   both:  FAIL if any TSan log was unreadable (skipped > 0), the classifier
 #          exited non-zero, or no TSan logs were found at all.
 set -u
@@ -153,10 +153,10 @@ else
     echo "$label $i $model $(post /v1/completions "$body")" >>"$completions_file"
   done
 
-  # Concurrent-queue phase: B queues behind A on the NPU token. This is the
-  # only phase where the previous handler's post-send tail (clear_context /
-  # prompt_cache.reset) can overlap the next request -- sequential phases
-  # never queue one behind another.
+  # Concurrent-queue phase: back-to-back NPU requests on the same model (no
+  # 500ms swap pause) can overlap the previous handler's post-send tail --
+  # both queued B and the next round's unqueued request. The sequential swap
+  # phases never overlap it, because ensure_model_loaded sleeps 500ms first.
   queue_file="$outdir/queue-$label.txt"
   : >"$queue_file"
   chat_body='{"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 20."}],"stream":false,"options":{"num_predict":16,"top_k":1}}'
@@ -221,6 +221,7 @@ log "INFO chat_completions_queue_code_histogram: $req_hist"
 ps_pair=0
 model_state=0
 incomplete=0
+other=0
 skipped=0
 if [ "${#tsan_logs[@]}" -eq 0 ]; then
   log "FAIL tsan-logs-present: no TSan log files found for label=$label (TSan aborted at startup?)"
@@ -234,6 +235,7 @@ else
   ps_pair=$(printf '%s\n' "$buckets_line" | grep -oE 'ps-pair=[0-9]+' | cut -d= -f2)
   model_state=$(printf '%s\n' "$buckets_line" | grep -oE 'model-state=[0-9]+' | cut -d= -f2)
   incomplete=$(printf '%s\n' "$buckets_line" | grep -oE 'incomplete=[0-9]+' | cut -d= -f2)
+  other=$(printf '%s\n' "$buckets_line" | grep -oE 'other=[0-9]+' | cut -d= -f2)
   skipped=$(printf '%s\n' "$buckets_line" | grep -oE 'skipped=[0-9]+' | cut -d= -f2)
   log "INFO $buckets_line"
 
@@ -265,6 +267,7 @@ else
       if [ "${ps_pair:-1}" -eq 0 ]; then log "PASS no-ps-pair"; else log "FAIL no-ps-pair (ps-pair=$ps_pair)"; rc=1; fi
       if [ "${model_state:-1}" -eq 0 ]; then log "PASS no-model-state"; else log "FAIL no-model-state (model-state=$model_state)"; rc=1; fi
       if [ "${incomplete:-1}" -eq 0 ]; then log "PASS no-incomplete"; else log "FAIL no-incomplete (incomplete=$incomplete)"; rc=1; fi
+      if [ "${other:-1}" -eq 0 ]; then log "PASS no-other"; else log "FAIL no-other (other=$other)"; rc=1; fi
       if $all_polls_200; then log "PASS all-poll-200"; else log "FAIL all-poll-200"; rc=1; fi
       if $all_req_200; then log "PASS all-chat-completions-queue-200"; else log "FAIL all-chat-completions-queue-200"; rc=1; fi
       ;;

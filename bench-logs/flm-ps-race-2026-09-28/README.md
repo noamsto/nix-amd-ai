@@ -91,9 +91,12 @@ runs concurrently with those five.
    swaps the model.
 4. Queue phase: 4 rounds, alternating `/api/chat` and `/v1/chat/completions`
    on `llama3.2:1b`. Each round sends request A, then request B 0.3 s later,
-   so B queues behind A on the NPU token. Only then can the next request
-   overlap the tail A runs after sending its response (`clear_context()`,
-   `prompt_cache.reset()`); the sequential phases never overlap it.
+   so B queues behind A on the NPU token. Back-to-back NPU requests on the
+   same model, with no 500 ms swap pause between them, can overlap the
+   previous handler's post-send tail: both a queued B (B starts once A's
+   token is released) and the next round's request, sent as soon as the
+   replies arrive without queuing. The sequential swap phases never overlap
+   it, because `ensure_model_loaded` sleeps 500 ms before touching the engine.
 5. Classifies every TSan report with [`tsan-classify.py`](tsan-classify.py), of
    any warning kind (not only data races).
 
@@ -111,8 +114,8 @@ The classifier works per access stack, and the first bucket that matches wins:
 A log the classifier cannot read fails the run.
 - Red requires `ps-pair ≥ 1` (the `/api/ps` race) and `model-state ≥ 1` (the
   tail race).
-- Green requires `ps-pair`, `model-state` and `incomplete` all 0, with every
-  poll and every request answered 200.
+- Green requires `ps-pair`, `model-state`, `incomplete` and `other` all 0,
+  with every poll and every request answered 200.
 
 | | Red (base patch set) | Green (with the fix) |
 | --- | --- | --- |
@@ -124,6 +127,10 @@ A log the classifier cannot read fails the run.
 | `incomplete` / `failed-restore` / skipped logs | 1 / 0 / 0 | 0 / 0 / 0 |
 | `libc-tz` (not gating) | 83 | 78 |
 | verdict | [`before/race-red.txt`](before/race-red.txt): PASS 2/2 (both races reproduced) | [`race-green.txt`](race-green.txt): PASS 5/5 |
+
+The `other == 0` green gate was added after review; the committed green run
+([`race-green.txt`](race-green.txt)) predates it and reported `other=0` under
+the original gate.
 
 The eight red reports ([`before/tsan-red.ps-pair.txt`](before/tsan-red.ps-pair.txt))
 are exactly the race in the issue:
@@ -144,15 +151,22 @@ classification, one line per report, is in
 server logs (~65 MB each, one request banner per poll) and the raw per-poll
 status files are not committed.
 
-**The tail race** shows up only in the queue phase. The 35 red `model-state`
+**The tail race** shows up only in the queue phase. All 35 red `model-state`
 reports ([`before/tsan-red.model-state.txt`](before/tsan-red.model-state.txt))
-come from the tails of `handle_chat` and `handle_openai_chat_completion`, the
-two routes the queue phase alternates. In each, the previous handler, after its
-response was sent, calls
-`AutoModel::clear_context()` (e.g. `rest_handler.cpp:1091`, right after
-`send_response`) or `profiler::reset()`, and that races the queued request's
-`AutoModel::_shared_insert` running on another I/O thread (dispatched through
-`server.cpp:930`, the queued-task lambda). In all 57 red `other` reports,
+have `handle_chat`'s post-send `clear_context()` (`rest_handler.cpp:1091`,
+right after `send_response`) on one side. 6 of them race the queued request
+B's prefill (`AutoModel::_shared_insert` via `rest_handler.cpp:1061`,
+dispatched through `server.cpp:930`, the queued-task lambda). The other 29
+race the *next* round's
+`/v1/chat/completions` request A, which is not queued at all: it is sent as
+soon as the previous round's replies arrive, while `/api/chat` B's tail is
+still running (A's side is `clear_context()` at `:1517` on a prompt-cache
+miss, or `insert()`/`profiler::stop()` at `:1596`).
+`/v1/chat/completions` has no post-send tail on its non-streaming success
+path — its `prompt_cache.reset()` at `:1656` runs only for a cancelled
+generation, before `send_response` — so only `handle_chat`'s tail was
+reproduced; `/v1/chat/completions` shows up only as the request that
+overlaps it. In all 57 red `other` reports,
 both access stacks are under a RestHandler route handler: two NPU handlers
 running at once, racing inside the NPU runtime (`npu_app::_setup_kernel`,
 `llama_npu_sequence`, and XRT/ELFIO objects destroyed under one handler while
@@ -239,3 +253,7 @@ logs.
   change applies to it too.
 - A queue-full (503) case for the two newly locked routes. It is the same code
   path as the five routes that were already locked.
+- Tails other than non-streaming `/api/chat`'s. Streaming tails,
+  `/api/generate`, `/v1/completions`, and `/v1/chat/completions`'s error-path
+  tail were not reproduced under TSan; the release change covers them by the
+  same code path (the token is released after the handler returns).

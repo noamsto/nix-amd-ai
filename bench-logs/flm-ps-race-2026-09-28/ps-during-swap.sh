@@ -232,8 +232,11 @@ with open(out_path, "w") as f:
         print(line)
         f.write(line + "\n")
 PY
+  python_rc=$?
+  [ "$python_rc" -eq 0 ] || rc=1
 
   grep -q '^FAIL' "$out_file" && rc=1
+  grep -qE '^(PASS|FAIL) no-stale$' "$out_file" || rc=1
 fi
 
 if pgrep -x flm >/dev/null; then

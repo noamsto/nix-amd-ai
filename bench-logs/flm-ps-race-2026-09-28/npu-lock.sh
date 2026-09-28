@@ -25,11 +25,14 @@ server_log="$outdir/server-npu-lock-$label.log"
 chat_code_file="$outdir/npu-lock-$label.chat-code.txt"
 completions_code_file="$outdir/npu-lock-$label.completions-code.txt"
 embeddings_code_file="$outdir/npu-lock-$label.embeddings-code.txt"
-# Reset now, not just inside the up()-success branch below: a failed up()
-# must not leave a previous run's code behind for the caller to misread.
+result_file="$outdir/npu-lock-$label.txt"
+# Reset now, not just inside the up()-success branch below: a failed up() (or
+# an ABORT in wait_for_no_flm, below) must not leave a previous run's code or
+# PASS/FAIL lines behind for the caller to misread.
 : >"$chat_code_file"
 : >"$completions_code_file"
 : >"$embeddings_code_file"
+: >"$result_file"
 
 pid=""
 rc=0
@@ -87,8 +90,6 @@ queued_for() { # <needle> -- a "request queued" server log line names <needle>
 
 wait_for_no_flm
 
-result_file="$outdir/npu-lock-$label.txt"
-: >"$result_file"
 log() { echo "$1" | tee -a "$result_file"; }
 
 if ! up; then
