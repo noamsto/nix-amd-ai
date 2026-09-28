@@ -124,16 +124,16 @@ stdenv.mkDerivation (finalAttrs: {
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
-  # that is on the branch commit per this repo's CLAUDE.md, not here. Still
-  # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
-  # request validation, the NPU-lock leak, the status mapping, model
+  # that is on the branch commit per this repo's CLAUDE.md, not here.
+  # Still unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream
+  # fixes request validation, the NPU-lock leak, the status mapping, model
   # substitution, leaking exception text, ignoring the task prompt, reporting
-  # the no-model sentinel in /api/ps, classifying /api/chat decode faults
-  # as client errors, streaming /api/chat's double insert (still on main at
-  # 39ff855632), the unsynchronised /api/ps reads, the unlocked
-  # /v1/completions and /api/embeddings, and releasing the NPU lock before
-  # a handler is done with the engine. A bump that breaks any patch fails
-  # the build rather than silently losing it.
+  # the no-model sentinel in /api/ps, classifying /api/chat decode faults as
+  # client errors, streaming /api/chat's double insert, the unsynchronised
+  # /api/ps reads, the unlocked /v1/completions and /api/embeddings, and
+  # releasing the NPU lock before a handler is done with the engine (the last
+  # four still on main at 39ff855632). A bump that breaks any patch fails the
+  # build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch

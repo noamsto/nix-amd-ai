@@ -1,5 +1,5 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 2aed49d..6b9c42a 100644
+index 2aed49d..a03414f 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
 @@ -533,6 +533,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
@@ -49,8 +49,8 @@ index 2aed49d..6b9c42a 100644
 -        if (auto_chat_engine && supported_models.is_model_supported(current_model_tag)) {
 -            auto [new_current_model_tag, model_info] = supported_models.get_model_info(current_model_tag);
 +        // ensure_model_loaded publishes this snapshot under a lock. It is empty
-+        // with no chat model and during a swap (from teardown of the old engine
-+        // until the new one has loaded), so this handler -- not serialised by
++        // with no chat model and from just before the old engine is torn down
++        // until the new one has loaded, so this handler -- not serialised by
 +        // the NPU token -- never reads the engine or tag being swapped.
 +        const std::string chat_tag = serving_chat_tag_snapshot();
 +        if (!chat_tag.empty()) {
