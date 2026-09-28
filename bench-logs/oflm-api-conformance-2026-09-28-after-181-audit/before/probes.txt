@@ -1,0 +1,56 @@
+== case missing-name (base) ==
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T19:47:14.08941+00:00"}]}
+HTTP 200
+PASS missing-name/loaded
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Say hi"}],"stream":false,"max_tokens":8}
+{"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+HTTP 400
+PASS missing-name/status
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T19:47:14.09450+00:00"}]}
+HTTP 200
+PASS missing-name/not-evicted
+-- [ERROR] ensure_model_loaded line --
+[ERROR]  handle_openai_chat_completion: [json.exception.type_error.302] type must be string, but is null
+== case missing-min-version (base) ==
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T19:47:17.19870+00:00"}]}
+HTTP 200
+PASS missing-min-version/loaded
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Say hi"}],"stream":false,"max_tokens":8}
+{"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+HTTP 400
+PASS missing-min-version/status
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T19:47:17.20445+00:00"}]}
+HTTP 200
+PASS missing-min-version/not-evicted
+-- [ERROR] ensure_model_loaded line --
+[ERROR]  handle_openai_chat_completion: [json.exception.type_error.302] type must be string, but is null
+== case missing-family (base) ==
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T19:47:21.04240+00:00"}]}
+HTTP 200
+PASS missing-family/loaded
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Say hi"}],"stream":false,"max_tokens":8}
+{"error":{"message":"model 'gemma4-it:e4b' is known to this build but could not be loaded; the server log says why","type":"server_error","param":"model","code":"model_load_failed"}}
+HTTP 500
+PASS missing-family/status
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T19:47:21.04786+00:00"}]}
+HTTP 200
+PASS missing-family/not-evicted
+-- [ERROR] ensure_model_loaded line --
+[ERROR]  model 'gemma4-it:e4b' has a malformed model-list entry: [json.exception.type_error.302] type must be string, but is null
+== summary (base) ==
+PASS missing-name/loaded
+PASS missing-name/status
+PASS missing-name/not-evicted
+PASS missing-min-version/loaded
+PASS missing-min-version/status
+PASS missing-min-version/not-evicted
+PASS missing-family/loaded
+PASS missing-family/status
+PASS missing-family/not-evicted
+9 passed, 0 failed

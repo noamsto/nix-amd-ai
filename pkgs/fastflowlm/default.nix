@@ -163,6 +163,15 @@ stdenv.mkDerivation (finalAttrs: {
   #     reset erases the cancel of a client that left while queued, and
   #     nothing else would notice. Non-streaming /api/chat still ignores a
   #     disconnect: generate_with_prompt() takes no predicate.
+  #   - model-list-download-check.patch (#181): ensure_model_loaded's pre-evict
+  #     download check, downloader.is_model_downloaded(), reads the
+  #     model_list.json entry's `name` and `flm_min_version` (and parses the
+  #     model's local config.json) outside any try, so an entry missing either
+  #     reached the handler as a JSON error and was answered 400
+  #     invalid_request_error -- including an entry missing `name` that
+  #     no-exception-text.patch meant to fail the load for, since this check
+  #     runs before that one. The check now fails the load as 500
+  #     model_load_failed, still before anything is unloaded.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -177,9 +186,10 @@ stdenv.mkDerivation (finalAttrs: {
   # four still on main at 39ff855632), leaking a connection slot when a
   # streaming client disconnects (also still on main; see also
   # ROCm/FastFlowLM#680), a pre-accept reset killing the accept loop (on main
-  # at 39ff855632), and ignoring a client disconnect outside
-  # /v1/chat/completions. A bump that breaks any patch fails the build rather
-  # than silently losing it.
+  # at 39ff855632), ignoring a client disconnect outside
+  # /v1/chat/completions, and answering a malformed model_list.json entry as
+  # a client error. A bump that breaks any patch fails the build rather than
+  # silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
@@ -193,6 +203,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/connection-slot-release.patch
     ./patches/accept-loop-rearm.patch
     ./patches/cancel-client-disconnect.patch
+    ./patches/model-list-download-check.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
