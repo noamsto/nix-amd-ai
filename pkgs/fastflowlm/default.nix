@@ -32,7 +32,7 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
-  # flm serve's request handling has four bugs found by running
+  # flm serve's request handling has bugs found by running
   # OpenFlowLM-Next's server-api conformance suite against it (#164, #171, #173):
   #   - server-error-handling.patch: a malformed request body could throw
   #     twice while the server built its own error response, escaping every
@@ -56,17 +56,24 @@ stdenv.mkDerivation (finalAttrs: {
   #     500 in the status mapping above). An omitted `model` is still served
   #     by the loaded chat model; /v1/embeddings still requires `model`
   #     (#171) and refuses any tag but the loaded one.
+  #   - no-exception-text.patch (#175): handlers built client error bodies
+  #     from a caught exception's e.what(), which for nlohmann errors
+  #     reflects request bytes and library internals. Bodies now carry a
+  #     fixed message (a json::exception gets 400 invalid_request_error
+  #     "Invalid request", anything else 500 server_error "Internal error")
+  #     and e.what() goes to the server log.
   # None of the patches carries attribution: require_field, safe_dump and the
   # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget) --
   # the Co-authored-by trailer for that is on the branch commit per this
   # repo's CLAUDE.md, not here. Still unfixed on ROCm/FastFlowLM main as of
   # v1.0.6; drop once upstream fixes request validation, the NPU-lock leak,
-  # the status mapping, and model substitution. A bump that breaks any patch
-  # fails the build rather than silently losing it.
+  # the status mapping, model substitution, and leaking exception text. A
+  # bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
     ./patches/model-identity.patch
+    ./patches/no-exception-text.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {

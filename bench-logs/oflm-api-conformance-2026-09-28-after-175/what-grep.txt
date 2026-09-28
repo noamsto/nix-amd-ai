@@ -1,0 +1,12 @@
+# rg -n 'what\(\)' src/server  (v1.0.6 + all four patches in default.nix order)
+src/server/server.cpp:133:// nlohmann puts the offending bytes into a caught exception's e.what(), and
+src/server/server.cpp:134:// the default .dump() validates UTF-8, so building {"error": e.what()} and
+src/server/server.cpp:137:// Response bodies no longer carry e.what(), but safe_dump still guards
+src/server/server.cpp:545:                header_print("LOG", "Error in WebServer I/O thread: " + std::string(e.what()));
+src/server/server.cpp:699:        header_print("LOG", "Error parsing request body: " + std::string(e.what()));
+src/server/server.cpp:870:            header_print("ERROR", "Handler exception: " + std::string(e.what()));
+src/server/rest_handler.cpp:79:// e.what() can quote the request's own bytes and nlohmann's type-system
+src/server/rest_handler.cpp:85:    header_print("ERROR", std::string(where) + ": " + e.what());
+src/server/rest_handler.cpp:522:        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
+src/server/rest_handler.cpp:561:        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()));
+src/server/rest_handler.cpp:594:        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()));
