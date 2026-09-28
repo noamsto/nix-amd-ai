@@ -36,8 +36,23 @@ jobs:
       - name: Build ${{ matrix.package }}
         run: nix build -L .#${{ matrix.package }}
 
+  # The open NPU kernel export takes ~50 min on a 16-core host and longer on
+  # the 4-core runner; built here so `build` substitutes it from Cachix.
+  npu-kernels:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: nix-amd-ai
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Build openflowlm kernels
+        run: nix build -L .#openflowlm.kernels
+
   build:
-    needs: rocm
+    needs: [rocm, npu-kernels]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -47,7 +62,7 @@ jobs:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build all packages
-        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#lemonade-headless .#ds4 .#mlir-aie .#llvm-aie
+        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#lemonade-headless .#ds4 .#mlir-aie .#llvm-aie .#openflowlm
       - name: Check flake
         # -L so NixOS VM tests stream their boot and assertions into the job log.
         # Without it a VM test is a bare ✅/❌ line — indistinguishable from one
