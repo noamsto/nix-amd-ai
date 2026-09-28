@@ -1,0 +1,1506 @@
+# 35 model-state reports from tsan-red.650626 (raw log not committed: 3.4 MB).
+# Access stacks cut to frames #0-#16, signatures shortened; Location line kept.
+
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Read of size 8 at 0x7254009909f8 by thread T11:
+    #0 std::vector<> >::size stl_vector.h:1119
+    #1 AutoModel::_shared_insert automodel.cpp:184
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 Llama3::generate_with_prompt[abi:cxx11] modeling_llama3.cpp:86
+    #4 RestHandler::handle_chat rest_handler.cpp:1061
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Previous write of size 8 at 0x7254009909f8 by thread T10:
+    #0 std::vector<> >::_M_erase_at_end stl_vector.h:2245
+    #1 std::vector<> >::clear stl_vector.h:1864
+    #2 AutoModel::clear_context automodel.cpp:505
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Read of size 4 at 0x725400990a44 by thread T11:
+    #0 AutoModel::_shared_insert automodel.cpp:203
+    #1 Llama3::insert modeling_llama3.cpp:76
+    #2 Llama3::generate_with_prompt[abi:cxx11] modeling_llama3.cpp:86
+    #3 RestHandler::handle_chat rest_handler.cpp:1061
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 operator() server.cpp:930
+    #11 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #12 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #13 _M_invoke std_function.h:292
+    #14 std::function<void  std_function.h:593
+    #15 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #16 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+
+  Previous write of size 4 at 0x725400990a44 by thread T10:
+    #0 AutoModel::clear_context automodel.cpp:503
+    #1 RestHandler::handle_chat rest_handler.cpp:1091
+    #2 operator() server.cpp:985
+    #3 __invoke_impl<void, create_lm_server invoke.h:63
+    #4 __invoke_r<void, create_lm_server invoke.h:113
+    #5 _M_invoke std_function.h:292
+    #6 std::function<void  std_function.h:593
+    #7 operator() server.cpp:844
+    #8 WebServer::handle_request server.cpp:910
+    #9 HttpSession::handle_request server.cpp:322
+    #10 operator() server.cpp:255
+    #11 complete composed.hpp:156
+    #12 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #13 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+    #16 operator()<const boost::system::error_code&, long unsigned int const&> composed.hpp:150
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Read of size 8 at 0x725400eeb100 by thread T11:
+    #0 profiler::stop profiler.hpp:31
+    #1 AutoModel::_shared_insert automodel.cpp:216
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 Llama3::generate_with_prompt[abi:cxx11] modeling_llama3.cpp:86
+    #4 RestHandler::handle_chat rest_handler.cpp:1061
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Previous write of size 8 at 0x725400eeb100 by thread T10:
+    #0 profiler::reset profiler.hpp:44
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Read of size 4 at 0x725400eeb110 by thread T11:
+    #0 profiler::stop profiler.hpp:32
+    #1 AutoModel::_shared_insert automodel.cpp:216
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 Llama3::generate_with_prompt[abi:cxx11] modeling_llama3.cpp:86
+    #4 RestHandler::handle_chat rest_handler.cpp:1061
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Previous write of size 4 at 0x725400eeb110 by thread T10:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 profiler::reset profiler.hpp:46
+    #2 AutoModel::clear_context automodel.cpp:511
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Read of size 8 at 0x725400eeb138 by thread T11:
+    #0 profiler::stop profiler.hpp:37
+    #1 AutoModel::_shared_insert automodel.cpp:216
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 Llama3::generate_with_prompt[abi:cxx11] modeling_llama3.cpp:86
+    #4 RestHandler::handle_chat rest_handler.cpp:1061
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Previous write of size 8 at 0x725400eeb138 by thread T10:
+    #0 profiler::reset profiler.hpp:45
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x7254009909f8 by thread T14:
+    #0 std::vector<> >::push_back stl_vector.h:1423
+    #1 AutoModel::_shared_insert automodel.cpp:208
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #4 operator() server.cpp:1104
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous write of size 8 at 0x7254009909f8 by thread T11:
+    #0 std::vector<> >::_M_erase_at_end stl_vector.h:2245
+    #1 std::vector<> >::clear stl_vector.h:1864
+    #2 AutoModel::clear_context automodel.cpp:505
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 operator() server.cpp:930
+    #11 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #12 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #13 _M_invoke std_function.h:292
+    #14 std::function<void  std_function.h:593
+    #15 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #16 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb100 by thread T11:
+    #0 profiler::reset profiler.hpp:44
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Previous write of size 8 at 0x725400eeb100 by thread T14:
+    #0 profiler::start profiler.hpp:22
+    #1 AutoModel::_shared_insert automodel.cpp:212
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #4 operator() server.cpp:1104
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb208 by thread T11:
+    #0 profiler::reset profiler.hpp:44
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Previous read of size 8 at 0x725400eeb208 by thread T14:
+    #0 profiler::stop profiler.hpp:31
+    #1 Llama3::insert modeling_llama3.cpp:73
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb240 by thread T11:
+    #0 profiler::reset profiler.hpp:45
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Previous write of size 8 at 0x725400eeb240 by thread T14:
+    #0 profiler::stop profiler.hpp:37
+    #1 Llama3::insert modeling_llama3.cpp:73
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x725400eeb218 by thread T11:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 profiler::reset profiler.hpp:46
+    #2 AutoModel::clear_context automodel.cpp:511
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 operator() server.cpp:930
+    #11 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #12 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #13 _M_invoke std_function.h:292
+    #14 std::function<void  std_function.h:593
+    #15 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #16 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+
+  Previous write of size 4 at 0x725400eeb218 by thread T14:
+    #0 profiler::stop profiler.hpp:32
+    #1 Llama3::insert modeling_llama3.cpp:73
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x725400eeb110 by thread T14:
+    #0 profiler::stop profiler.hpp:32
+    #1 AutoModel::_shared_insert automodel.cpp:216
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #4 operator() server.cpp:1104
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous write of size 4 at 0x725400eeb110 by thread T11:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 profiler::reset profiler.hpp:46
+    #2 AutoModel::clear_context automodel.cpp:511
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 operator() server.cpp:930
+    #11 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #12 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #13 _M_invoke std_function.h:292
+    #14 std::function<void  std_function.h:593
+    #15 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #16 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb138 by thread T14:
+    #0 profiler::stop profiler.hpp:37
+    #1 AutoModel::_shared_insert automodel.cpp:216
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 RestHandler::handle_openai_chat_completion rest_handler.cpp:1596
+    #4 operator() server.cpp:1104
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous write of size 8 at 0x725400eeb138 by thread T11:
+    #0 profiler::reset profiler.hpp:45
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x7254009909f8 by thread T10:
+    #0 std::vector<> >::push_back stl_vector.h:1423
+    #1 AutoModel::_shared_insert automodel.cpp:208
+    #2 Llama3::insert modeling_llama3.cpp:76
+    #3 Llama3::generate_with_prompt[abi:cxx11] modeling_llama3.cpp:86
+    #4 RestHandler::handle_chat rest_handler.cpp:1061
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Previous write of size 8 at 0x7254009909f8 by thread T11:
+    #0 std::vector<> >::_M_erase_at_end stl_vector.h:2245
+    #1 std::vector<> >::clear stl_vector.h:1864
+    #2 AutoModel::clear_context automodel.cpp:505
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x725400990a44 by thread T14:
+    #0 AutoModel::clear_context automodel.cpp:503
+    #1 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #2 operator() server.cpp:1104
+    #3 __invoke_impl<void, create_lm_server invoke.h:63
+    #4 __invoke_r<void, create_lm_server invoke.h:113
+    #5 _M_invoke std_function.h:292
+    #6 std::function<void  std_function.h:593
+    #7 operator() server.cpp:844
+    #8 WebServer::handle_request server.cpp:910
+    #9 HttpSession::handle_request server.cpp:322
+    #10 operator() server.cpp:255
+    #11 complete composed.hpp:156
+    #12 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #13 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+    #16 operator()<const boost::system::error_code&, long unsigned int const&> composed.hpp:150
+
+  Previous write of size 4 at 0x725400990a44 by thread T10:
+    #0 AutoModel::clear_context automodel.cpp:503
+    #1 RestHandler::handle_chat rest_handler.cpp:1091
+    #2 operator() server.cpp:985
+    #3 __invoke_impl<void, create_lm_server invoke.h:63
+    #4 __invoke_r<void, create_lm_server invoke.h:113
+    #5 _M_invoke std_function.h:292
+    #6 std::function<void  std_function.h:593
+    #7 operator() server.cpp:844
+    #8 operator() server.cpp:930
+    #9 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #10 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #11 _M_invoke std_function.h:292
+    #12 std::function<void  std_function.h:593
+    #13 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #14 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #15 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+    #16 boost::asio::detail::scheduler::do_run_one scheduler.ipp:502
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x725400990a44 by thread T14:
+    #0 AutoModel::clear_context automodel.cpp:508
+    #1 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #2 operator() server.cpp:1104
+    #3 __invoke_impl<void, create_lm_server invoke.h:63
+    #4 __invoke_r<void, create_lm_server invoke.h:113
+    #5 _M_invoke std_function.h:292
+    #6 std::function<void  std_function.h:593
+    #7 operator() server.cpp:844
+    #8 WebServer::handle_request server.cpp:910
+    #9 HttpSession::handle_request server.cpp:322
+    #10 operator() server.cpp:255
+    #11 complete composed.hpp:156
+    #12 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #13 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+    #16 operator()<const boost::system::error_code&, long unsigned int const&> composed.hpp:150
+
+  Previous write of size 4 at 0x725400990a44 by thread T10:
+    #0 AutoModel::clear_context automodel.cpp:508
+    #1 RestHandler::handle_chat rest_handler.cpp:1091
+    #2 operator() server.cpp:985
+    #3 __invoke_impl<void, create_lm_server invoke.h:63
+    #4 __invoke_r<void, create_lm_server invoke.h:113
+    #5 _M_invoke std_function.h:292
+    #6 std::function<void  std_function.h:593
+    #7 operator() server.cpp:844
+    #8 operator() server.cpp:930
+    #9 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #10 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #11 _M_invoke std_function.h:292
+    #12 std::function<void  std_function.h:593
+    #13 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #14 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #15 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+    #16 boost::asio::detail::scheduler::do_run_one scheduler.ipp:502
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x7fffc1612000 by thread T14:
+    #0 Sampler::reset_penalties sampler.cpp:66
+    #1 AutoModel::clear_context automodel.cpp:509
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Previous write of size 4 at 0x7fffc1612000 by thread T10:
+    #0 Sampler::reset_penalties sampler.cpp:66
+    #1 AutoModel::clear_context automodel.cpp:509
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 513024 at 0x7fffc1612000 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x7fffc1593000 by thread T14:
+    #0 Sampler::reset_penalties sampler.cpp:67
+    #1 AutoModel::clear_context automodel.cpp:509
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Previous write of size 4 at 0x7fffc1593000 by thread T10:
+    #0 Sampler::reset_penalties sampler.cpp:67
+    #1 AutoModel::clear_context automodel.cpp:509
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 513024 at 0x7fffc1593000 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x721c000590f0 by thread T14:
+    #0 void std::__fill_a1<std::__detail::_Hash_node_base**, decltype stl_algobase.h:925
+    #1 void std::__fill_a<std::__detail::_Hash_node_base**, decltype stl_algobase.h:979
+    #2 std::__detail::_Hash_node_base** std::__fill_n_a<std::__detail::_Hash_node_base**, unsigne stl_algobase.h:1148
+    #3 std::__detail::_Hash_node_base** std::fill_n<std::__detail::_Hash_node_base**, unsigned lo stl_algobase.h:1178
+    #4 std::_Hashtable<>, std::allocator<> >, std::__detail::_Select1st, std::equal_to<>, std::ha hashtable.h:2717
+    #5 std::unordered_map<>, std::equal_to<>, std::allocator<> > >::clear unordered_map.h:862
+    #6 Sampler::reset_penalties sampler.cpp:69
+    #7 AutoModel::clear_context automodel.cpp:509
+    #8 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #9 operator() server.cpp:1104
+    #10 __invoke_impl<void, create_lm_server invoke.h:63
+    #11 __invoke_r<void, create_lm_server invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 operator() server.cpp:844
+    #15 WebServer::handle_request server.cpp:910
+    #16 HttpSession::handle_request server.cpp:322
+
+  Previous write of size 8 at 0x721c000590f0 by thread T10:
+    #0 void std::__fill_a1<std::__detail::_Hash_node_base**, decltype stl_algobase.h:925
+    #1 void std::__fill_a<std::__detail::_Hash_node_base**, decltype stl_algobase.h:979
+    #2 std::__detail::_Hash_node_base** std::__fill_n_a<std::__detail::_Hash_node_base**, unsigne stl_algobase.h:1148
+    #3 std::__detail::_Hash_node_base** std::fill_n<std::__detail::_Hash_node_base**, unsigned lo stl_algobase.h:1178
+    #4 std::_Hashtable<>, std::allocator<> >, std::__detail::_Select1st, std::equal_to<>, std::ha hashtable.h:2717
+    #5 std::unordered_map<>, std::equal_to<>, std::allocator<> > >::clear unordered_map.h:862
+    #6 Sampler::reset_penalties sampler.cpp:69
+    #7 AutoModel::clear_context automodel.cpp:509
+    #8 RestHandler::handle_chat rest_handler.cpp:1091
+    #9 operator() server.cpp:985
+    #10 __invoke_impl<void, create_lm_server invoke.h:63
+    #11 __invoke_r<void, create_lm_server invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 operator() server.cpp:844
+    #15 operator() server.cpp:930
+    #16 __invoke_impl<void, WebServer::handle_request invoke.h:63
+
+  Location is heap block of size 104 at 0x721c000590f0 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x727800003d08 by thread T14:
+    #0 std::_Hashtable<>, std::allocator<> >, std::__detail::_Select1st, std::equal_to<>, std::ha hashtable.h:2718
+    #1 std::unordered_map<>, std::equal_to<>, std::allocator<> > >::clear unordered_map.h:862
+    #2 Sampler::reset_penalties sampler.cpp:69
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #5 operator() server.cpp:1104
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 WebServer::handle_request server.cpp:910
+    #12 HttpSession::handle_request server.cpp:322
+    #13 operator() server.cpp:255
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #16 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+
+  Previous write of size 8 at 0x727800003d08 by thread T10:
+    #0 std::_Hashtable<>, std::allocator<> >, std::__detail::_Select1st, std::equal_to<>, std::ha hashtable.h:2718
+    #1 std::unordered_map<>, std::equal_to<>, std::allocator<> > >::clear unordered_map.h:862
+    #2 Sampler::reset_penalties sampler.cpp:69
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_chat rest_handler.cpp:1091
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x727800003d00 by thread T14:
+    #0 std::_Hashtable<>, std::allocator<> >, std::__detail::_Select1st, std::equal_to<>, std::ha hashtable.h:2719
+    #1 std::unordered_map<>, std::equal_to<>, std::allocator<> > >::clear unordered_map.h:862
+    #2 Sampler::reset_penalties sampler.cpp:69
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #5 operator() server.cpp:1104
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 WebServer::handle_request server.cpp:910
+    #12 HttpSession::handle_request server.cpp:322
+    #13 operator() server.cpp:255
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #16 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+
+  Previous write of size 8 at 0x727800003d00 by thread T10:
+    #0 std::_Hashtable<>, std::allocator<> >, std::__detail::_Select1st, std::equal_to<>, std::ha hashtable.h:2719
+    #1 std::unordered_map<>, std::equal_to<>, std::allocator<> > >::clear unordered_map.h:862
+    #2 Sampler::reset_penalties sampler.cpp:69
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_chat rest_handler.cpp:1091
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x727800003c6c by thread T14:
+    #0 Sampler::reset_penalties sampler.cpp:70
+    #1 AutoModel::clear_context automodel.cpp:509
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Previous write of size 4 at 0x727800003c6c by thread T10:
+    #0 Sampler::reset_penalties sampler.cpp:70
+    #1 AutoModel::clear_context automodel.cpp:509
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x727800003cb8 by thread T14:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #5 operator() server.cpp:1104
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 WebServer::handle_request server.cpp:910
+    #12 HttpSession::handle_request server.cpp:322
+    #13 operator() server.cpp:255
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #16 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+
+  Previous write of size 8 at 0x727800003cb8 by thread T10:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_chat rest_handler.cpp:1091
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x727800003cc0 by thread T14:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #5 operator() server.cpp:1104
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 WebServer::handle_request server.cpp:910
+    #12 HttpSession::handle_request server.cpp:322
+    #13 operator() server.cpp:255
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #16 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+
+  Previous write of size 8 at 0x727800003cc0 by thread T10:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_chat rest_handler.cpp:1091
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x727800003cc8 by thread T14:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #5 operator() server.cpp:1104
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 WebServer::handle_request server.cpp:910
+    #12 HttpSession::handle_request server.cpp:322
+    #13 operator() server.cpp:255
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #16 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+
+  Previous write of size 8 at 0x727800003cc8 by thread T10:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_chat rest_handler.cpp:1091
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x727800003cd0 by thread T14:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #5 operator() server.cpp:1104
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 WebServer::handle_request server.cpp:910
+    #12 HttpSession::handle_request server.cpp:322
+    #13 operator() server.cpp:255
+    #14 complete composed.hpp:156
+    #15 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #16 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+
+  Previous write of size 8 at 0x727800003cd0 by thread T10:
+    #0 std::deque<> >::_M_erase_at_end stl_deque.h:2224
+    #1 std::deque<> >::clear stl_deque.h:1935
+    #2 Sampler::reset_penalties sampler.cpp:71
+    #3 AutoModel::clear_context automodel.cpp:509
+    #4 RestHandler::handle_chat rest_handler.cpp:1091
+    #5 operator() server.cpp:985
+    #6 __invoke_impl<void, create_lm_server invoke.h:63
+    #7 __invoke_r<void, create_lm_server invoke.h:113
+    #8 _M_invoke std_function.h:292
+    #9 std::function<void  std_function.h:593
+    #10 operator() server.cpp:844
+    #11 operator() server.cpp:930
+    #12 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #13 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #14 _M_invoke std_function.h:292
+    #15 std::function<void  std_function.h:593
+    #16 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+
+  Location is heap block of size 2816 at 0x727800003c00 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb100 by thread T14:
+    #0 profiler::reset profiler.hpp:44
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Previous write of size 8 at 0x725400eeb100 by thread T10:
+    #0 profiler::reset profiler.hpp:44
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb138 by thread T14:
+    #0 profiler::reset profiler.hpp:45
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Previous write of size 8 at 0x725400eeb138 by thread T10:
+    #0 profiler::reset profiler.hpp:45
+    #1 AutoModel::clear_context automodel.cpp:511
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x725400eeb110 by thread T14:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 profiler::reset profiler.hpp:46
+    #2 AutoModel::clear_context automodel.cpp:511
+    #3 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #4 operator() server.cpp:1104
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous write of size 4 at 0x725400eeb110 by thread T10:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 profiler::reset profiler.hpp:46
+    #2 AutoModel::clear_context automodel.cpp:511
+    #3 RestHandler::handle_chat rest_handler.cpp:1091
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 operator() server.cpp:930
+    #11 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #12 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #13 _M_invoke std_function.h:292
+    #14 std::function<void  std_function.h:593
+    #15 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #16 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Read of size 8 at 0x725400eeb120 by thread T14:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_is_local basic_string.h:282
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:950
+    #2 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #3 profiler::reset profiler.hpp:46
+    #4 AutoModel::clear_context automodel.cpp:511
+    #5 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #6 operator() server.cpp:1104
+    #7 __invoke_impl<void, create_lm_server invoke.h:63
+    #8 __invoke_r<void, create_lm_server invoke.h:113
+    #9 _M_invoke std_function.h:292
+    #10 std::function<void  std_function.h:593
+    #11 operator() server.cpp:844
+    #12 WebServer::handle_request server.cpp:910
+    #13 HttpSession::handle_request server.cpp:322
+    #14 operator() server.cpp:255
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+
+  Previous write of size 8 at 0x725400eeb120 by thread T10:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_chat rest_handler.cpp:1091
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 operator() server.cpp:930
+    #14 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #15 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #16 _M_invoke std_function.h:292
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 2 at 0x725400eeb128 by thread T14:
+    #0 std::char_traits<>::copy char_traits.h:429
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:969
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #7 operator() server.cpp:1104
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:910
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous write of size 2 at 0x725400eeb128 by thread T10:
+    #0 std::char_traits<>::copy char_traits.h:429
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:969
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_chat rest_handler.cpp:1091
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 operator() server.cpp:930
+    #14 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #15 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #16 _M_invoke std_function.h:292
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400eeb178 by thread T14:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #7 operator() server.cpp:1104
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:910
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous write of size 8 at 0x725400eeb178 by thread T10:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_chat rest_handler.cpp:1091
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 operator() server.cpp:930
+    #14 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #15 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #16 _M_invoke std_function.h:292
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 1 at 0x725400eeb182 by thread T14:
+    #0 std::char_traits<>::assign char_traits.h:352
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:273
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #7 operator() server.cpp:1104
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:910
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous write of size 1 at 0x725400eeb182 by thread T10:
+    #0 std::char_traits<>::assign char_traits.h:352
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:273
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 profiler::reset profiler.hpp:46
+    #5 AutoModel::clear_context automodel.cpp:511
+    #6 RestHandler::handle_chat rest_handler.cpp:1091
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 operator() server.cpp:930
+    #14 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #15 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #16 _M_invoke std_function.h:292
+
+  Location is heap block of size 616 at 0x725400eeb100 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 4 at 0x725400990b40 by thread T14:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 AutoModel::clear_context automodel.cpp:513
+    #2 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #3 operator() server.cpp:1104
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 WebServer::handle_request server.cpp:910
+    #10 HttpSession::handle_request server.cpp:322
+    #11 operator() server.cpp:255
+    #12 complete composed.hpp:156
+    #13 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #14 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_some_op<boost read.hpp:265
+
+  Previous write of size 4 at 0x725400990b40 by thread T10:
+    #0 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:626
+    #1 AutoModel::clear_context automodel.cpp:513
+    #2 RestHandler::handle_chat rest_handler.cpp:1091
+    #3 operator() server.cpp:985
+    #4 __invoke_impl<void, create_lm_server invoke.h:63
+    #5 __invoke_r<void, create_lm_server invoke.h:113
+    #6 _M_invoke std_function.h:292
+    #7 std::function<void  std_function.h:593
+    #8 operator() server.cpp:844
+    #9 operator() server.cpp:930
+    #10 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #11 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 boost::asio::detail::binder0<std::function<void  bind_handler.hpp:57
+    #15 boost::asio::detail::executor_op<boost::asio::detail::binder0<std::function<void  executor_op.hpp:71
+    #16 boost::asio::detail::scheduler_operation::complete scheduler_operation.hpp:41
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 2 at 0x725400990b58 by thread T14:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:969
+    #4 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #5 AutoModel::clear_context automodel.cpp:513
+    #6 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #7 operator() server.cpp:1104
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:910
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous write of size 2 at 0x725400990b58 by thread T10:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:969
+    #4 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #5 AutoModel::clear_context automodel.cpp:513
+    #6 RestHandler::handle_chat rest_handler.cpp:1091
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 operator() server.cpp:930
+    #14 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #15 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #16 _M_invoke std_function.h:292
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x725400990b50 by thread T14:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 AutoModel::clear_context automodel.cpp:513
+    #5 RestHandler::handle_openai_chat_completion rest_handler.cpp:1517
+    #6 operator() server.cpp:1104
+    #7 __invoke_impl<void, create_lm_server invoke.h:63
+    #8 __invoke_r<void, create_lm_server invoke.h:113
+    #9 _M_invoke std_function.h:292
+    #10 std::function<void  std_function.h:593
+    #11 operator() server.cpp:844
+    #12 WebServer::handle_request server.cpp:910
+    #13 HttpSession::handle_request server.cpp:322
+    #14 operator() server.cpp:255
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+
+  Previous write of size 8 at 0x725400990b50 by thread T10:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:970
+    #3 _ZNSt4pairIfNSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEEaSEOS6_Qcl13_S_assignable stl_pair.h:627
+    #4 AutoModel::clear_context automodel.cpp:513
+    #5 RestHandler::handle_chat rest_handler.cpp:1091
+    #6 operator() server.cpp:985
+    #7 __invoke_impl<void, create_lm_server invoke.h:63
+    #8 __invoke_r<void, create_lm_server invoke.h:113
+    #9 _M_invoke std_function.h:292
+    #10 std::function<void  std_function.h:593
+    #11 operator() server.cpp:844
+    #12 operator() server.cpp:930
+    #13 __invoke_impl<void, WebServer::handle_request invoke.h:63
+    #14 __invoke_r<void, WebServer::handle_request invoke.h:113
+    #15 _M_invoke std_function.h:292
+    #16 std::function<void  std_function.h:593
+
+  Location is heap block of size 568 at 0x725400990980 allocated by thread T10:

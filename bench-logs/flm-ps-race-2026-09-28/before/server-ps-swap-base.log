@@ -1,0 +1,1361 @@
+[FLM]  Using user-specified port: 58606
+[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+[FLM]  Starting server on port 58606...
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43398
+[FLM]  WebServer started on port 58606 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[TCP]  Read 90 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/version
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43398
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43408
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43408
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43414
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43414
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43422
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43422
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43436
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43436
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43446
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43446
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43452
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43452
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43462
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43462
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43470
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43470
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43474
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43474
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43490
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43490
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43506
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43506
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43516
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43516
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43518
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43518
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43528
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43528
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43536
+[TCP]  Read 258 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Say hi.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "options": {
+        "num_predict": 1
+    },
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43544
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43544
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43558
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43558
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43566
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43566
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43570
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43570
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43582
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43582
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43592
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43592
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43598
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43598
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43614
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43614
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43626
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43626
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43628
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43628
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43638
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43638
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43650
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43650
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43658
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:20 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43658
+[FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43670
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43670
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43674
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43674
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43676
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43676
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43678
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43678
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43690
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43690
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43692
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43692
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43698
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43698
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43700
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43700
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43704
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43704
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43708
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43708
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43718
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43718
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43726
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43726
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43740
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43740
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:43742
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:21 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43742
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55922
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55922
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55924
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55924
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55934
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55934
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55938
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55938
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55948
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55948
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55960
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55960
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55968
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55968
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55984
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55984
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55988
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55988
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55998
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55998
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56010
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56010
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56026
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56026
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56042
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:22 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56042
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56050
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56050
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56056
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56056
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56070
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56070
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56086
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56086
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56092
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56092
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56106
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56106
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56114
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56114
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56126
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56126
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56134
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56134
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56140
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56140
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56142
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56142
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56148
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56148
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56162
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:23 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56162
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56176
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56176
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56178
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56178
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56192
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56192
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56208
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56208
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56210
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56210
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56220
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56220
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56230
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56230
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56232
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56232
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56238
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56238
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56244
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56244
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56256
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56256
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56258
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56258
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56270
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56270
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56274
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:24 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56274
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56290
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56290
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56306
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56306
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56322
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56322
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56326
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56326
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56338
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56338
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56354
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56354
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56358
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56358
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56374
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56374
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56388
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56388
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56394
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56394
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56400
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56400
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56414
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56414
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56424
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:25 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56424
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56426
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56426
+[FLM]  Start generating...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 12 tokens
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56438
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56438
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56440
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56440
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56456
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56456
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56458
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56458
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56472
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56472
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56482
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56482
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56486
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56486
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56496
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56496
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56500
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56500
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56508
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56508
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56516
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56516
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56522
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:26 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56522
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56536
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56536
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56546
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56546
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56560
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56560
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56568
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56568
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56574
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56574
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56586
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56586
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56590
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56590
+[31m[FLM]  Creating checkpoint at context length 12[0m
+[31m[FLM]  Restoring checkpoint at context length 12[0m
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56596
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56596
+[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56612
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56612
+
+[FLM]  Model RAW Output: 
+Hi!
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56614
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56614
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43536
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56616
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56616
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56630
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56630
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56644
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56644
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56658
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:27 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56658
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56664
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56664
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56670
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56670
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56684
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56684
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56700
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56700
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56704
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56704
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56714
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56714
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56720
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56720
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56732
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56732
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56742
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56742
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:56756
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 16:12:28 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56756

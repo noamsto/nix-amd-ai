@@ -1,0 +1,8 @@
+red 0 /api/chat A 200 23.391963
+red 0 /api/chat B 200 24.153837
+red 1 /v1/chat/completions A 200 1.481821
+red 1 /v1/chat/completions B 200 2.317854
+red 2 /api/chat A 200 1.488766
+red 2 /api/chat B 200 2.284238
+red 3 /v1/chat/completions A 200 239.724485
+red 3 /v1/chat/completions B 200 240.607004

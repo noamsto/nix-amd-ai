@@ -1,0 +1,6 @@
+green 0 gemma4-it:e4b 200 51.257583
+green 1 llama3.2:1b 200 26.818196
+green 2 gemma4-it:e4b 200 54.737104
+green 3 llama3.2:1b 200 24.614703
+green 4 gemma4-it:e4b 200 53.907569
+green 5 llama3.2:1b 200 48.865263
