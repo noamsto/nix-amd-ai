@@ -1,4 +1,4 @@
-# /v1/embeddings probes, NEW build, --embed 1 (embed-gemma:300m), port 58602
+# /v1/embeddings probes, NEW build /nix/store/lp2xwjayy36j0byma058nrfdvili4b0r-fastflowlm-1.0.6, --embed 1 (embed-gemma:300m), port 58602
 $ POST /v1/embeddings {"model":"embed-gemma:300m","input":"probe"}
 {"object":"list","data":[{"object":"embedding","embedding":[0.028076171875,0.0093994140625,-0.0264892578125,-0.0037994384765625,0.01220703125,-0.00531005859375,0.0859375,-0.00201416015625,-0.059570312
 HTTP 200

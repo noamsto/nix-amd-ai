@@ -1,5 +1,5 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 6500795..a3009a7 100644
+index 6500795..6a48c4b 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
 @@ -48,6 +48,35 @@ static json require_field(const json& request, const char* field, RequiredFieldT
@@ -22,9 +22,9 @@ index 6500795..a3009a7 100644
 +                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}};
 +        case RestHandler::ModelLoad::NoModel:
 +            return json{{"error", {
-+                {"message", "no chat model is loaded: this server was started without one. "
-+                            "Name a model in the request's 'model' field, or start flm serve "
-+                            "with a model tag."},
++                {"message", "no chat model is currently loaded (none was given at startup, or the "
++                            "last load failed). Name a model in the request's 'model' field, or "
++                            "start flm serve with a model tag."},
 +                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}};
 +        case RestHandler::ModelLoad::LoadFailed:
 +        default:
@@ -38,16 +38,18 @@ index 6500795..a3009a7 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -389,7 +418,7 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -389,8 +418,9 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
              header_print("Warning", "Default model tag '" << default_model_tag << "' is not supported. Falling back to 'llama3.2:1b'.");
              this->default_model_tag = "llama3.2:1b";
          }
 -        if (!ensure_model_loaded(default_model_tag)) {
 +        if (ensure_model_loaded(default_model_tag) != ModelLoad::Ok) {
              header_print("Error", "Failed to load default model: " + default_model_tag);
++            this->current_model_tag = "model-faker";
          }
      }
-@@ -405,47 +434,90 @@ RestHandler::~RestHandler() = default;
+     else {
+@@ -405,47 +435,96 @@ RestHandler::~RestHandler() = default;
  
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
@@ -123,6 +125,12 @@ index 6500795..a3009a7 100644
 +        return ModelLoad::NotChatModel;
 +    }
 +
++    if (downloader.is_model_downloaded(ensure_tag) == ModelDownloader::ModelStatus::Incompatible) {
++        header_print("ERROR", "model '" + ensure_tag + "' is not compatible with this version of FastFlowLM -- refusing; '" +
++                              current_model_tag + "' stays loaded");
++        return ModelLoad::LoadFailed;
++    }
++
 +    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 +    if (auto_chat_engine != nullptr) {
 +        auto_chat_engine.reset();
@@ -174,7 +182,7 @@ index 6500795..a3009a7 100644
  }
  
  ///@brief Ensure the asr model is loaded
-@@ -691,9 +763,8 @@ void RestHandler::handle_generate(const json& request,
+@@ -691,9 +770,8 @@ void RestHandler::handle_generate(const json& request,
          int length_limit = request.value("max_tokens", 4096);
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
@@ -186,7 +194,7 @@ index 6500795..a3009a7 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -808,13 +879,12 @@ void RestHandler::handle_chat(const json& request,
+@@ -808,13 +886,12 @@ void RestHandler::handle_chat(const json& request,
          int length_limit = options.value("num_predict", 4096);
  
          auto load_start_time = time_utils::now();
@@ -203,7 +211,7 @@ index 6500795..a3009a7 100644
          configure_chat_engine_parameters(options, request);
  
          // messages = normalize_messages(messages);
-@@ -919,6 +989,17 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -919,6 +996,17 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -221,7 +229,7 @@ index 6500795..a3009a7 100644
          if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
              send_response(err);
              return;
-@@ -932,6 +1013,26 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -932,6 +1020,26 @@ void RestHandler::handle_embeddings(const json& request,
              return;
          }
          std::string model = request["model"].get<std::string>();
@@ -248,7 +256,7 @@ index 6500795..a3009a7 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1176,9 +1277,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1176,9 +1284,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
          }
  
          auto load_start_time = time_utils::now();
@@ -260,7 +268,16 @@ index 6500795..a3009a7 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1472,16 +1572,10 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -1233,7 +1340,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+             }
+         }
+ 
+-        if (model.starts_with("gemma4-it")) {
++        if (current_model_tag.starts_with("gemma4-it")) {
+             current_messages = convert_tool_responses_gemma4(current_messages);
+         }
+ 
+@@ -1472,16 +1579,10 @@ void RestHandler::handle_openai_completion(const json& request,
          bool stream = request.value("stream", false);
          json options = request.value("options", json::object());
  

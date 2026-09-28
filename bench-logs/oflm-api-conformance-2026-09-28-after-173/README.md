@@ -9,7 +9,7 @@ Only the `flm` build under test changed.
 **Old build (red):** `main` at `c9d378c`, meaning the #171 patches without #173 —
 `/nix/store/8pgdcx429na9a9wxiqiwwa0faz8rm3dl-fastflowlm-1.0.6`. Its logs are in [`before/`](before/).
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/model-identity.patch` —
-`/nix/store/cznzg39i4aaj0s6xlhw5i55w29qz30wz-fastflowlm-1.0.6`. Its logs are in this directory.
+`/nix/store/lp2xwjayy36j0byma058nrfdvili4b0r-fastflowlm-1.0.6`. Its logs are in this directory.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding). All were already pulled.
 
@@ -101,6 +101,19 @@ The server log shows one `Loading model` line in total.
 | `embed-gemma:300m` or bare `embed-gemma` | 200 |
 | an unknown tag or `""` | 400, naming the loaded model |
 | omitted `model` | 400 `missing_required_parameter` (unchanged, #171 AC4) |
+
+[`startup-nonchat.txt`](startup-nonchat.txt) is `flm serve embed-gemma:300m`, a known tag that
+is not a chat model. The old build loaded llama3.2:1b in its place. The new build starts with no
+chat model:
+
+| Request | Result |
+| --- | --- |
+| omitted `model` | 400 `model_not_found` |
+| `llama3.2:1b` named explicitly | loaded and served (200) |
+
+In this no-model state, `GET /api/ps` answers 400 with a JSON-exception body. That is the
+existing `model-faker` behaviour of `handle_ps`, which this change does not touch; it is tracked
+as a follow-up.
 
 ## Not probed live: known-but-unloadable → 500
 
