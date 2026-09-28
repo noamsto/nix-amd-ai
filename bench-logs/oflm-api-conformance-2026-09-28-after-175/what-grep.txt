@@ -6,7 +6,7 @@ src/server/server.cpp:545:                header_print("LOG", "Error in WebServe
 src/server/server.cpp:699:        header_print("LOG", "Error parsing request body: " + std::string(e.what()));
 src/server/server.cpp:870:            header_print("ERROR", "Handler exception: " + std::string(e.what()));
 src/server/rest_handler.cpp:79:// e.what() can quote the request's own bytes and nlohmann's type-system
-src/server/rest_handler.cpp:88:    header_print("ERROR", std::string(where) + ": " + e.what());
-src/server/rest_handler.cpp:528:        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
-src/server/rest_handler.cpp:564:        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()));
-src/server/rest_handler.cpp:597:        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()));
+src/server/rest_handler.cpp:87:    header_print("ERROR", std::string(where) + ": " + e.what());
+src/server/rest_handler.cpp:527:        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
+src/server/rest_handler.cpp:563:        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()));
+src/server/rest_handler.cpp:596:        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()));
