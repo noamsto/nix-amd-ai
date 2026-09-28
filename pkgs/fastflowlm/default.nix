@@ -32,8 +32,9 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
-  # flm serve's request handling has bugs found by running
-  # OpenFlowLM-Next's server-api conformance suite against it (#164, #171, #173):
+  # flm serve's request handling has bugs, found by running OpenFlowLM-Next's
+  # server-api conformance suite against it (#164, #171, #173) and by review
+  # (#175):
   #   - server-error-handling.patch: a malformed request body could throw
   #     twice while the server built its own error response, escaping every
   #     catch before the NPU lock was released and wedging it permanently
@@ -59,9 +60,12 @@ stdenv.mkDerivation (finalAttrs: {
   #   - no-exception-text.patch (#175): handlers built client error bodies
   #     from a caught exception's e.what(), which for nlohmann errors
   #     reflects request bytes and library internals. Bodies now carry a
-  #     fixed message (a json::exception gets 400 invalid_request_error
-  #     "Invalid request", anything else 500 server_error "Internal error")
-  #     and e.what() goes to the server log.
+  #     fixed message and e.what() goes to the server log: a json::exception,
+  #     or any failure applying the chat template to the request, gets 400
+  #     invalid_request_error "Invalid request"; anything else gets 500
+  #     server_error "Internal error". A malformed model_list.json entry now
+  #     fails the model load (500 model_load_failed) instead of surfacing as
+  #     a JSON error in the request handler.
   # None of the patches carries attribution: require_field, safe_dump and the
   # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget) --
   # the Co-authored-by trailer for that is on the branch commit per this

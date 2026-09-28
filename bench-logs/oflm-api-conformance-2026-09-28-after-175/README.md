@@ -11,7 +11,7 @@ models and ports. Only the `flm` build under test changed.
 `/nix/store/zvg05givvmmlmp331fn9imjyfyrr6jyi-fastflowlm-1.0.6`, the same out path
 the after-173 run ended on.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/no-exception-text.patch` —
-`/nix/store/fxscs6a3706dl0p74wf9idx4nzw0dmi5-fastflowlm-1.0.6`.
+`/nix/store/1hk1j328srbnqyic0az0m08ffxzf1mms-fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
@@ -42,6 +42,14 @@ did not log it at all ([`before/probes-server-log.txt`](before/probes-server-log
 The first probe's status moves from 500 to 400. A `json::exception` means the
 request had a field of the wrong shape, so it is a client error. Handlers that
 already sent bare-string errors answered 400 before and still do.
+
+Catches around prompt processing (`insert()` and `generate_with_prompt()`)
+answer 400 for any exception, as they did before. That is where a chat
+template's `raise_exception` rejects a conversation, as a plain
+`std::runtime_error`. Other non-JSON exceptions, such as a failure in
+`generate()`, now answer 500. This template path was checked in the code
+only. None of the conversations tried on `llama3.2:1b` (tools with no user
+turn, an image part, a lone `tool` message) made its template raise.
 
 ## Source grep
 

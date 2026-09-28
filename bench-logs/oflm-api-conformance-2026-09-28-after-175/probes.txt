@@ -1,4 +1,4 @@
-# GREEN: build /nix/store/fxscs6a3706dl0p74wf9idx4nzw0dmi5-fastflowlm-1.0.6 (this branch), served llama3.2:1b, port 58601
+# GREEN: build /nix/store/1hk1j328srbnqyic0az0m08ffxzf1mms-fastflowlm-1.0.6 (this branch), served llama3.2:1b, port 58601
 $ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"hi"}],"stream":"yes"}
 {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 HTTP 400
@@ -9,5 +9,5 @@ $ POST /api/generate {"model":"llama3.2:1b","prompt":"hi","stream":"yes"}
 {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 HTTP 400
 $ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
-{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790586752,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":2,"total_tokens":40,"kv_token_occupancy_rate_percentage":0.030517578125,"load_duration":1.804e-06,"prefill_duration_ttft":0.427513344,"decoding_duration":0.029459,"prefill_speed_tps":88.88611439459537,"decoding_speed_tps":67.89096710682644},"service_tier":"default"}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790587360,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":2,"total_tokens":40,"kv_token_occupancy_rate_percentage":0.030517578125,"load_duration":1.623e-06,"prefill_duration_ttft":0.398128704,"decoding_duration":0.029642,"prefill_speed_tps":95.44652173584551,"decoding_speed_tps":67.47183051076176},"service_tier":"default"}
 HTTP 200
