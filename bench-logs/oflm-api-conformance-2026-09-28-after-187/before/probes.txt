@@ -1,0 +1,50 @@
+== llama (llama3.2:1b) ==
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":false,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=1 first_line_s=0.604 total_s=0.604
+{"model":"llama3.2:1b","message":{"role":"assistant","content":"1, 2, 3, 4, 5","images":null},"done":true,"prompt_eval_count":47,"eval_count":13,"total_duration":594142080,"load_duration":2144,"prompt_eval_duration":385824096,"eval_duration":191970000,"done_reason":"stop"}
+PASS llama/nonstream-chat
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"max_tokens":32}
+HTTP 200 lines=15 first_line_s=0.394 total_s=0.602
+content: 1, 2, 3, 4, 5
+PASS llama/stream-openai
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"options":{"num_predict":32}}
+HTTP 000 error=RemoteDisconnected: Remote end closed connection without response
+bench-logs/oflm-api-conformance-2026-09-28-after-187/probes.sh: line 196: 1835717 Segmentation fault         (core dumped) LD_LIBRARY_PATH="$libpath" "$FLM" serve "$model" --port "$port" > "$outdir/server-$label.log" 2>&1
+prefill log lines during stream-chat: 1
+content: 
+FAIL llama/stream-chat/server-alive: flm serve exited during the request (see server-llama.log)
+FAIL llama/stream-chat/tokens: expected 200, content chunks with done:false, then one done:true chunk with eval_count>0; got HTTP 000 error=RemoteDisconnected: Remote end closed connection without response
+FAIL llama/stream-chat/matches-nonstream: streamed content differs from the non-streaming reply
+FAIL llama/nonstream-after: server is gone
+== gemma4 (gemma4-it:e4b) ==
+$ POST /api/chat {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":false,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=1 first_line_s=2.271 total_s=2.271
+{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"1, 2, 3, 4, 5","images":null},"done":true,"prompt_eval_count":21,"eval_count":13,"total_duration":2229814016,"load_duration":1933,"prompt_eval_duration":1185524352,"eval_duration":931205000,"done_reason":"stop"}
+PASS gemma4/nonstream-chat
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"max_tokens":32}
+HTTP 200 lines=15 first_line_s=1.168 total_s=2.177
+content: 1, 2, 3, 4, 5
+PASS gemma4/stream-openai
+$ POST /api/chat {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"options":{"num_predict":32}}
+HTTP 000 error=RemoteDisconnected: Remote end closed connection without response
+bench-logs/oflm-api-conformance-2026-09-28-after-187/probes.sh: line 196: 1840699 Segmentation fault         (core dumped) LD_LIBRARY_PATH="$libpath" "$FLM" serve "$model" --port "$port" > "$outdir/server-$label.log" 2>&1
+prefill log lines during stream-chat: 1
+content: 
+FAIL gemma4/stream-chat/server-alive: flm serve exited during the request (see server-gemma4.log)
+FAIL gemma4/stream-chat/tokens: expected 200, content chunks with done:false, then one done:true chunk with eval_count>0; got HTTP 000 error=RemoteDisconnected: Remote end closed connection without response
+FAIL gemma4/stream-chat/matches-nonstream: streamed content differs from the non-streaming reply
+FAIL gemma4/nonstream-after: server is gone
+== summary ==
+PASS llama/nonstream-chat
+PASS llama/stream-openai
+FAIL llama/stream-chat/server-alive: flm serve exited during the request (see server-llama.log)
+FAIL llama/stream-chat/tokens: expected 200, content chunks with done:false, then one done:true chunk with eval_count>0; got HTTP 000 error=RemoteDisconnected: Remote end closed connection without response
+FAIL llama/stream-chat/matches-nonstream: streamed content differs from the non-streaming reply
+FAIL llama/nonstream-after: server is gone
+PASS gemma4/nonstream-chat
+PASS gemma4/stream-openai
+FAIL gemma4/stream-chat/server-alive: flm serve exited during the request (see server-gemma4.log)
+FAIL gemma4/stream-chat/tokens: expected 200, content chunks with done:false, then one done:true chunk with eval_count>0; got HTTP 000 error=RemoteDisconnected: Remote end closed connection without response
+FAIL gemma4/stream-chat/matches-nonstream: streamed content differs from the non-streaming reply
+FAIL gemma4/nonstream-after: server is gone
+4 passed, 8 failed

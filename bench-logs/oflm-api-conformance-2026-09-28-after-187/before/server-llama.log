@@ -1,0 +1,105 @@
+[FLM]  Using user-specified port: 58601
+[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+[FLM]  Starting server on port 58601...
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:52610
+[FLM]  WebServer started on port 58601 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[TCP]  Read 90 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 14:53:02 09:28:2026
+[LOG]  Target: /api/version
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:52610
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58790
+[TCP]  Read 339 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 14:53:02 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "options": {
+        "num_predict": 32
+    },
+    "stream": false,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start generating...
+[FLM]  Prefill chunk 1/1 with 47 tokens
+
+[FLM]  Model RAW Output: 
+1, 2, 3, 4, 5
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58790
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58806
+[TCP]  Read 336 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 14:53:03 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 32,
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 47 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+1, 2, 3, 4, 5
+ChatCompletionChunk: {"id":"chatcmpl-5c10c08206f0485a0333db14","object":"chat.completion.chunk","created":1790596383,"model":"llama3.2:1b","system_fingerprint":"fp_b8e05161ed62b949","choices":[{"index":0,"delta":{"content":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":47,"completion_tokens":13,"total_tokens":60,"active_kv_tokens":60,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0457763671875,"load_duration":1.863e-06,"prefill_duration_ttft":0.383923168,"decoding_duration":0.19215,"prefill_speed_tps":122.42032760054742,"decoding_speed_tps":67.65547749154307}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58822
+[TCP]  Read 338 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 14:53:03 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "options": {
+        "num_predict": 32
+    },
+    "stream": true,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start generating...
+[FLM]  Conversation context diverged from cache, clearing context...
+[FLM]  Prefill chunk 1/1 with 47 tokens

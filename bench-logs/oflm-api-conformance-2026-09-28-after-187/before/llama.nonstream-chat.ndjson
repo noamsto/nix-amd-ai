@@ -1,0 +1,1 @@
+   0.604	{"model":"llama3.2:1b","message":{"role":"assistant","content":"1, 2, 3, 4, 5","images":null},"done":true,"prompt_eval_count":47,"eval_count":13,"total_duration":594142080,"load_duration":2144,"prompt_eval_duration":385824096,"eval_duration":191970000,"done_reason":"stop"}

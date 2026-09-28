@@ -34,7 +34,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   # flm serve's request handling has bugs, found by running OpenFlowLM-Next's
   # server-api conformance suite against it (#164, #171, #173), by review
-  # (#175), and by the conformance runs' startup probe (#178):
+  # (#175, #187), and by the conformance runs' startup probe (#178):
   #   - server-error-handling.patch: a malformed request body could throw
   #     twice while the server built its own error response, escaping every
   #     catch before the NPU lock was released and wedging it permanently
@@ -100,6 +100,14 @@ stdenv.mkDerivation (finalAttrs: {
   #     the answer for Qwen3.5 and Qwen3.6-MoE (their generate() forces think
   #     tokens) and GPT-OSS (generate_with_prompt adds the
   #     <|start|>assistant...<|end|> wrapper).
+  #   - stream-chat-generate.patch (#187): streaming /api/chat ran insert()
+  #     twice and never generate(). The second insert() found the whole
+  #     prompt already in the token history, prefilled nothing and sampled
+  #     an empty logits buffer, so every streaming /api/chat request
+  #     segfaulted flm serve. The streaming branch now runs insert() then
+  #     generate(), as streaming /api/generate and /v1/chat/completions do,
+  #     so for Qwen3.5, Qwen3.6-MoE and GPT-OSS it can answer differently
+  #     from non-streaming /api/chat, for the reasons above.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -107,8 +115,9 @@ stdenv.mkDerivation (finalAttrs: {
   # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
   # request validation, the NPU-lock leak, the status mapping, model
   # substitution, leaking exception text, ignoring the task prompt, reporting
-  # the no-model sentinel in /api/ps, and classifying /api/chat decode faults
-  # as client errors. A bump that breaks any patch fails the build rather
+  # the no-model sentinel in /api/ps, classifying /api/chat decode faults
+  # as client errors, and streaming /api/chat's double insert (still on
+  # main at 39ff855632). A bump that breaks any patch fails the build rather
   # than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -118,6 +127,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/embed-task-prompt.patch
     ./patches/ps-loaded-models.patch
     ./patches/chat-decode-fault.patch
+    ./patches/stream-chat-generate.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
