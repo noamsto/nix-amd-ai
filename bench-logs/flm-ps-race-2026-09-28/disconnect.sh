@@ -194,9 +194,9 @@ PY
 
   sleep 2
   kill -0 "$pid" 2>/dev/null && server_alive=true
-
-  stop
 fi
+# Both branches: a server that timed out in up() is still alive here.
+stop
 
 log "INFO disconnect=$disconnect_json chat_code=$chat_code chat_time_total=$chat_time completions_again_code=$completions2_code completions_again_done=$completions2_done server_alive=$server_alive"
 
