@@ -1,0 +1,130 @@
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 1d903c5..5c22def 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -224,6 +224,17 @@ void HttpSession::start(bool cors) {
+     read_request(cors);
+ }
+ 
++///@brief release the connection slot exactly once
++///@note Every path that ends a connection routes through here; the atomic
++/// exchange makes a second call (a later chunk for a dead session, or a
++/// deferred callback after a write error) a no-op instead of underflowing
++/// the counter.
++void HttpSession::release_slot() {
++    if (!slot_released_.exchange(true)) {
++        server_.active_connections_.fetch_sub(1);
++    }
++}
++
+ ///@brief close connection
+ void HttpSession::close_connection() {
+     boost::system::error_code ec;
+@@ -235,7 +246,7 @@ void HttpSession::close_connection() {
+         header_print("🔒 ", "TCP connection closing - Remote endpoint unavailable");
+     }
+     socket_.shutdown(tcp::socket::shutdown_both, ec);
+-    server_.active_connections_.fetch_sub(1);
++    release_slot();
+ }
+ 
+ ///@brief read request
+@@ -276,7 +287,7 @@ void HttpSession::read_request(bool cors) {
+             } catch (...) {
+                 header_print("🔒 ", "TCP connection closed - Remote endpoint unavailable");
+             }
+-            self->server_.active_connections_.fetch_sub(1);
++            self->release_slot();
+         });
+ }
+ 
+@@ -302,6 +313,7 @@ void HttpSession::handle_request(bool cors) {
+         http::async_write(socket_, *options_res,
+             [self, cors, options_res](beast::error_code ec, std::size_t) {
+                 if (ec) {
++                    self->release_slot();
+                     return;
+                 }
+                 // waiting the true response
+@@ -326,6 +338,12 @@ void HttpSession::handle_request(bool cors) {
+ 
+     if (!is_streaming_ && !deferred) {
+         write_response();
++    } else if (is_streaming_ && !deferred && !slot_released_.load()) {
++        // A synchronous handler started streaming and returned without a final
++        // chunk (e.g. generate() threw and send_response() is a no-op for a
++        // non-deferred session). No async op will release the slot, so do it
++        // here; the guard keeps a normal finalize from double-releasing.
++        release_slot();
+     } else {
+         // For streaming responses, we need to handle connection cleanup differently
+         // The connection will be closed when streaming ends
+@@ -364,8 +382,8 @@ void HttpSession::write_response() {
+     http::async_write(socket_, res_,
+         [self](beast::error_code ec, std::size_t) {
+             self->socket_.shutdown(tcp::socket::shutdown_both, ec);
+-            // Decrement connection counter for non-keep-alive connections
+-            self->server_.active_connections_.fetch_sub(1);
++            // Release this session's connection slot exactly once.
++            self->release_slot();
+             try {
+                 header_print("🔒 ", "TCP connection closed - Remote: " + self->socket_.remote_endpoint().address().to_string() + ":" + std::to_string(self->socket_.remote_endpoint().port()));
+             }
+@@ -450,7 +468,10 @@ void HttpSession::write_streaming_response(const json& data, bool is_final) {
+         // Send headers synchronously
+         boost::system::error_code ec;
+         net::write(socket_, net::buffer(headers), ec);
+-        if (ec) return;
++        if (ec) {
++            release_slot();
++            return;
++        }
+     }
+     
+     // Send this chunk immediately
+@@ -503,8 +524,11 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
+             cancellation_token_->cancel(); 
+         }
+ 
+-        //socket_.shutdown(tcp::socket::shutdown_both, ec);
+-        //server_.active_connections_.fetch_sub(1);
++        // Release the slot exactly once: every later chunk for this dead
++        // session re-enters this branch (the stream keeps producing after
++        // the first failed write, and the final chunk takes it too), and
++        // the guard makes those re-entries no-ops.
++        release_slot();
+ 
+         boost::system::error_code ignore_ec;
+         socket_.close(ignore_ec);
+@@ -517,8 +541,8 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
+         net::write(socket_, net::buffer(final_chunk), ec);
+         header_print("🔒 ", "Closing TCP connection (streaming, non-keep-alive)");
+         socket_.shutdown(tcp::socket::shutdown_both, ec);
+-        // Decrement connection counter for non-keep-alive connections
+-        server_.active_connections_.fetch_sub(1);
++        // Release this session's connection slot exactly once.
++        release_slot();
+     }
+ }
+ 
+diff --git a/src/server/server.hpp b/src/server/server.hpp
+index 910c588..7e94db1 100644
+--- a/src/server/server.hpp
++++ b/src/server/server.hpp
+@@ -191,6 +191,7 @@ private:
+     void write_response();
+     void send_chunk_data(const json& data, bool is_final);
+     void start_client_disconnect_monitor(std::shared_ptr<CancellationToken> token);
++    void release_slot();
+     
+     ///@brief socket
+     tcp::socket socket_;
+@@ -207,6 +208,8 @@ private:
+     ///@brief stream buffer
+     std::shared_ptr<streaming_buf> stream_buf_;
+     std::shared_ptr<CancellationToken> cancellation_token_;
++    ///@brief connection slot released exactly once
++    std::atomic<bool> slot_released_{false};
+ };
+ 
+ // Forward declarations

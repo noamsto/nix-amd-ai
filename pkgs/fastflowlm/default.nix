@@ -121,6 +121,29 @@ stdenv.mkDerivation (finalAttrs: {
   #     lock is released when the handler returns, not when it sends its
   #     response, because handlers still call clear_context() on the engine
   #     after sending.
+  #   - connection-slot-release.patch (#194): flm serve caps concurrent
+  #     connections at 10, but a streaming client that disconnected mid-stream
+  #     never gave its slot back. send_chunk_data's write-error branch had its
+  #     active_connections_.fetch_sub(1) commented out, and it returns before
+  #     the is_final branch, which was the only other streaming release. Ten
+  #     such clients left the counter at the cap and every new connection was
+  #     refused ("Connection limit reached (10)") until restart. The decrement
+  #     cannot simply be uncommented: after the first failed write, every later
+  #     chunk for that dead session re-enters the branch (the stream keeps
+  #     producing, and ostream.finalize() sends a final chunk too), so a plain
+  #     decrement per chunk underflows the counter and makes
+  #     load() >= max_connections_ true forever. Every decrement site now goes
+  #     through HttpSession::release_slot(), which exchanges an atomic
+  #     once-per-session flag before fetch_sub, so a connection gives its slot
+  #     back exactly once however it ends. Included are close_connection() (no
+  #     caller in this tree), read_request's read-error path, write_response's
+  #     async_write completion, the OPTIONS async_write error and the streaming
+  #     header-write error (both leaked before), and handle_request's
+  #     non-deferred abandoned-stream case, where generate() threw after chunks
+  #     were sent and send_response() does nothing for a non-deferred session.
+  #     The disconnect monitor needs no release of its own: it only cancels the
+  #     token, and generation still reaches finalize() (or send_response() on
+  #     the deferred path).
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -132,8 +155,10 @@ stdenv.mkDerivation (finalAttrs: {
   # client errors, streaming /api/chat's double insert, the unsynchronised
   # /api/ps reads, the unlocked /v1/completions and /api/embeddings, and
   # releasing the NPU lock before a handler is done with the engine (the last
-  # four still on main at 39ff855632). A bump that breaks any patch fails the
-  # build rather than silently losing it.
+  # four still on main at 39ff855632), plus leaking a connection slot when a
+  # streaming client disconnects (also still on main; see also
+  # ROCm/FastFlowLM#680). A bump that breaks any patch fails the build rather
+  # than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
@@ -144,6 +169,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/chat-decode-fault.patch
     ./patches/stream-chat-generate.patch
     ./patches/ps-serving-snapshot.patch
+    ./patches/connection-slot-release.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
