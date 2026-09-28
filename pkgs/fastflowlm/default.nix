@@ -32,8 +32,9 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
-  # flm serve's request handling has four bugs found by running
-  # OpenFlowLM-Next's server-api conformance suite against it (#164, #171, #173):
+  # flm serve's request handling has bugs, found by running OpenFlowLM-Next's
+  # server-api conformance suite against it (#164, #171, #173), by review
+  # (#175), and by the conformance runs' startup probe (#178):
   #   - server-error-handling.patch: a malformed request body could throw
   #     twice while the server built its own error response, escaping every
   #     catch before the NPU lock was released and wedging it permanently
@@ -56,17 +57,53 @@ stdenv.mkDerivation (finalAttrs: {
   #     500 in the status mapping above). An omitted `model` is still served
   #     by the loaded chat model; /v1/embeddings still requires `model`
   #     (#171) and refuses any tag but the loaded one.
-  # None of the patches carries attribution: require_field, safe_dump and the
-  # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget) --
-  # the Co-authored-by trailer for that is on the branch commit per this
-  # repo's CLAUDE.md, not here. Still unfixed on ROCm/FastFlowLM main as of
-  # v1.0.6; drop once upstream fixes request validation, the NPU-lock leak,
-  # the status mapping, and model substitution. A bump that breaks any patch
+  #   - no-exception-text.patch (#175): handlers built client error bodies
+  #     from a caught exception's e.what(), which for nlohmann errors
+  #     reflects request bytes and library internals. Bodies now carry a
+  #     fixed message and e.what() goes to the server log: a json::exception,
+  #     or any exception from a catch around prompt processing (where a chat
+  #     template rejects the conversation), gets 400 invalid_request_error
+  #     "Invalid request", as those catches did before; anything else gets
+  #     500 server_error "Internal error". A malformed max_prefill_len or
+  #     model path entry in model_list.json now fails the model load (500
+  #     model_load_failed) rather than reaching the handler as a JSON error.
+  #   - embed-task-prompt.patch (#174): handle_embeddings ignored the
+  #     request's prompt_name/task_type and always embedded with task_query,
+  #     so a document index was built as if every text were a query and
+  #     nothing downstream could tell -- the vector is correctly shaped and
+  #     normed either way. The REST names are now mapped onto the model's
+  #     task enum (OpenFlowLM-Next's task_names/resolve_task/task_policy),
+  #     and an unknown or non-string task is refused 400 invalid_value. A
+  #     model that declares no prompt names (embed-gemma: hardcoded prefixes)
+  #     keeps task_query when the request names none; a model that declares
+  #     prompt names would require one (missing_required_parameter).
+  #   - ps-loaded-models.patch (#178): GET /api/ps built its entry from
+  #     current_model_tag unconditionally, so with no chat model loaded (flm
+  #     serve with no tag, a non-chat startup tag such as embed-gemma:300m,
+  #     or after a failed load) it looked up the "model-faker" sentinel -- a
+  #     missing-key read on a const json, undefined behavior that answered
+  #     400 -- and since GET /api/ps isn't serialized by the NPU lock, the
+  #     same UB was reachable mid-load, when the new engine is set before
+  #     current_model_tag. It now lists the chat model only when a chat
+  #     engine is loaded under a real tag ({"models": []} otherwise), and
+  #     like Ollama also lists a loaded --embed model. Whisper (--asr) is
+  #     not listed.
+  # None of the patches carries attribution: require_field, safe_dump, the
+  # model-identity checks and the embedding task-prompt mapping are ported
+  # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
+  # that is on the branch commit per this repo's CLAUDE.md, not here. Still
+  # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
+  # request validation, the NPU-lock leak, the status mapping, model
+  # substitution, leaking exception text, ignoring the task prompt, and
+  # reporting the no-model sentinel in /api/ps. A bump that breaks any patch
   # fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
     ./patches/model-identity.patch
+    ./patches/no-exception-text.patch
+    ./patches/embed-task-prompt.patch
+    ./patches/ps-loaded-models.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {

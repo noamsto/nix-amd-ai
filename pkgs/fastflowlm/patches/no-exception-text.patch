@@ -1,0 +1,349 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index bad5298..fd1916a 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -76,6 +76,21 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
+     }
+ }
+ 
++// e.what() can quote the request's own bytes and nlohmann's type-system
++// internals, so it goes to the server log, never into the response body.
++// request_fault marks a catch around prompt processing (insert(), or
++// generate_with_prompt(), which also decodes), where a chat template
++// rejecting the conversation throws a plain std::runtime_error.
++// Elsewhere a json::exception almost always means a request field had a
++// shape a handler didn't expect; anything else is a server fault.
++static json exception_error(const char* where, const std::exception& e, bool request_fault = false) {
++    header_print("ERROR", std::string(where) + ": " + e.what());
++    if (request_fault || dynamic_cast<const json::exception*>(&e))
++        return json{{"error", {{"message", "Invalid request"}, {"type", "invalid_request_error"},
++                               {"code", "invalid_value"}}}};
++    return json{{"error", {{"message", "Internal error"}, {"type", "server_error"}}}};
++}
++
+ ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
+ ///@param messages the original messages
+ ///@return normalized messages with consecutive user messages merged
+@@ -500,10 +515,13 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+             this->current_model_tag = "model-faker";
+             return ModelLoad::LoadFailed;
+         }
+-    auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
+-    auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
+     try {
++        auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
++        auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
+         auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption);
++        if (this->prefill_chunk_len == -1) {
++            this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
++        }
+     }
+     catch (const std::exception& e) {
+         header_print("ERROR", "Failed to load model: " + std::string(e.what()));
+@@ -514,9 +532,6 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         return ModelLoad::LoadFailed;
+     }
+ 
+-    if (this->prefill_chunk_len == -1) {
+-        this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
+-    }
+     current_model_tag = ensure_tag;
+     return ModelLoad::Ok;
+ }
+@@ -738,8 +753,7 @@ void RestHandler::handle_show(const json& request,
+         send_response(info);
+     }
+     catch (const std::exception& e) {
+-        json error_response = { {"error", e.what()} };
+-        send_response(error_response);
++        send_response(exception_error("handle_show", e));
+     }
+ }
+ 
+@@ -790,16 +804,14 @@ void RestHandler::handle_generate(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_generate", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+             try {
+                 auto_chat_engine->generate(meta_info, length_limit, ostream);
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_generate", e));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -823,16 +835,14 @@ void RestHandler::handle_generate(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_generate", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+             try {
+                 auto_chat_engine->generate(meta_info, length_limit, ostream);
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_generate", e));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -855,8 +865,7 @@ void RestHandler::handle_generate(const json& request,
+             send_response(response);
+         }
+     } catch (const std::exception& e) {
+-        json error_response = {{"error", e.what()}};
+-        send_response(error_response);
++        send_response(exception_error("handle_generate", e));
+     }
+ }
+ 
+@@ -909,8 +918,7 @@ void RestHandler::handle_chat(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_chat", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -923,8 +931,7 @@ void RestHandler::handle_chat(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_chat", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -945,8 +952,7 @@ void RestHandler::handle_chat(const json& request,
+             try {
+                 response_text = auto_chat_engine->generate_with_prompt(meta_info, uniformed_input, length_limit, nstream);
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_chat", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -977,8 +983,7 @@ void RestHandler::handle_chat(const json& request,
+             this->auto_chat_engine->clear_context();
+         }
+     } catch (const std::exception& e) {
+-        json error_response = {{"error", e.what()}};
+-        send_response(error_response);
++        send_response(exception_error("handle_chat", e));
+     }
+ }
+ 
+@@ -1076,8 +1081,7 @@ void RestHandler::handle_embeddings(const json& request,
+         send_response(response);
+     }
+     catch (const std::exception& e) {
+-        json error_response = {{"error", e.what()}};
+-        send_response(error_response);
++        send_response(exception_error("handle_embeddings", e));
+     }
+ }
+ 
+@@ -1092,8 +1096,7 @@ void RestHandler::handle_models(const json& request,
+         json models = supported_models.get_all_models_ollama();
+         send_response(models);
+     } catch (const std::exception& e) {
+-        json error_response = {{"error", e.what()}};
+-        send_response(error_response);
++        send_response(exception_error("handle_models", e));
+     }
+ }
+ 
+@@ -1122,8 +1125,7 @@ void RestHandler::handle_models_openai(const json& request,
+         send_response(models);
+     }
+     catch (const std::exception& e) {
+-        json error_response = { {"error", e.what()} };
+-        send_response(error_response);
++        send_response(exception_error("handle_models_openai", e));
+     }
+ }
+ 
+@@ -1181,8 +1183,7 @@ void RestHandler::handle_ps(const json& request,
+         // std::cout << "response: " << response.dump(4) << std::endl;
+         send_response(response);
+     } catch (const std::exception& e) {
+-        json error_response = {{"error", e.what()}};
+-        send_response(error_response);
++        send_response(exception_error("handle_ps", e));
+     }
+ }
+ 
+@@ -1380,8 +1381,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_chat_completion", e, true));
+                 this->auto_chat_engine->clear_context();
+                 this->prompt_cache.reset();
+                 return;
+@@ -1390,8 +1390,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+             try {
+                 auto_chat_engine->generate(meta_info, length_limit, ostream, [&] { return cancellation_token->cancelled(); });
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_chat_completion", e));
+                 this->auto_chat_engine->clear_context();
+                 this->prompt_cache.reset();
+                 return;
+@@ -1432,8 +1431,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_chat_completion", e, true));
+                 this->auto_chat_engine->clear_context();
+                 this->prompt_cache.reset();
+                 return;
+@@ -1442,8 +1440,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+             try {
+                 response_text = auto_chat_engine->generate(meta_info, length_limit, nstream, [&] { return cancellation_token->cancelled(); });
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_chat_completion", e));
+                 this->auto_chat_engine->clear_context();
+                 this->prompt_cache.reset();
+                 return;
+@@ -1477,14 +1474,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+         }
+ 
+     } catch (const std::exception& e) {
+-        json error_response = {
+-            {"error", {
+-                {"message", e.what()},
+-                {"type", "server_error"},
+-                {"code", 500}
+-            }}
+-        };
+-        send_response(error_response);
++        send_response(exception_error("handle_openai_chat_completion", e));
+     }
+ }
+ 
+@@ -1540,14 +1530,7 @@ void RestHandler::handle_openai_audio_transcriptions(const json& request,
+         //this->whisper_engine->clear_context();
+     }
+     catch (const std::exception& e) {
+-        json error_response = {
+-            {"error", {
+-                {"message", e.what()},
+-                {"type", "server_error"},
+-                {"code", 500}
+-            }}
+-        };
+-        send_response(error_response);
++        send_response(exception_error("handle_openai_audio_transcriptions", e));
+     }
+ }
+ 
+@@ -1602,16 +1585,14 @@ void RestHandler::handle_openai_completion(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_completion", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+             try {
+                 auto_chat_engine->generate(meta_info, length_limit, ostream);
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_completion", e));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -1633,16 +1614,14 @@ void RestHandler::handle_openai_completion(const json& request,
+                     return;
+                 }
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_completion", e, true));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+             try {
+                 auto_chat_engine->generate(meta_info, length_limit, ostream);
+             } catch (const std::exception& e) {
+-                json error_response = {{"error", e.what()}};
+-                send_response(error_response);
++                send_response(exception_error("handle_openai_completion", e));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
+@@ -1672,13 +1651,6 @@ void RestHandler::handle_openai_completion(const json& request,
+         }
+     }
+     catch (const std::exception& e) {
+-        json error_response = {
+-            {"error", {
+-                {"message", e.what()},
+-                {"type", "server_error"},
+-                {"code", 500}
+-            }}
+-        };
+-        send_response(error_response);
++        send_response(exception_error("handle_openai_completion", e));
+     }
+ }
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index d0c4176..1d903c5 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -134,6 +134,8 @@ void brief_print_message_response(nlohmann::json request) {
+ // the default .dump() validates UTF-8, so building {"error": e.what()} and
+ // dumping it threw a second time, escaping the catch before it released the
+ // NPU lock. error_handler_t::replace substitutes U+FFFD instead of throwing.
++// Response bodies no longer carry e.what(), but safe_dump still guards
++// request text a handler echoes back (e.g. a model tag).
+ // Ported from OpenFlowLM-Next's server.cpp (Vegard Berget).
+ static std::string safe_dump(const json& j) {
+     return j.dump(-1, ' ', false, json::error_handler_t::replace);
+@@ -808,8 +810,8 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             }
+ 
+             response_ref.result(status);
+-            // response_data can be a handler's own {"error": e.what()} body,
+-            // and e.what() is not guaranteed valid UTF-8.
++            // response_data can echo request text (e.g. a model tag), which
++            // is not guaranteed valid UTF-8.
+             response_ref.body() = safe_dump(response_data);
+             response_ref.set(http::field::content_type, "application/json");
+             response_ref.prepare_payload();
+@@ -865,7 +867,8 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             unregister_active_request(request_id);
+ 
+             res_ref.result(http::status::internal_server_error);
+-            res_ref.body() = safe_dump(json{ {"error", std::string("Handler exception: ") + e.what()} });
++            header_print("ERROR", "Handler exception: " + std::string(e.what()));
++            res_ref.body() = safe_dump(json{ {"error", { {"message", "Internal error"}, {"type", "server_error"} }} });
+             res_ref.set(http::field::content_type, "application/json");
+             res_ref.prepare_payload();
+ 

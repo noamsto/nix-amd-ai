@@ -1,0 +1,238 @@
+[32m[FLM]  Embedding mode enabled: reserving additional 300MB of memory[0m
+[FLM]  Using user-specified port: 58602
+[FLM]  Loading model: /home/noams/.config/flm/models/Embedding-Gemma-300M-NPU2
+[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+[FLM]  Starting server on port 58602...
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58030
+[TCP]  Read 88 bytes from socket
+[FLM]  WebServer started on port 58602 with 10 I/O threads
+================================================
+[FLM]  [⬇️ ]  Incoming Request: GETPress Ctrl+C to stop.
+
+[LOG]  Time stamp: 13:02:58 09:28:2026
+[LOG]  Target: /v1/models
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58030
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58032
+[TCP]  Read 270 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:58 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58032
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58046
+[TCP]  Read 295 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:58 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "query"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58046
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58062
+[TCP]  Read 298 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:58 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "document"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58062
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58066
+[TCP]  Read 295 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:59 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "query"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58066
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58070
+[TCP]  Read 298 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:59 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "document"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58070
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58076
+[TCP]  Read 293 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:59 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "task_type": "query"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58076
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58090
+[TCP]  Read 324 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:59 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "query",
+    "task_type": "search_query"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58090
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58096
+[TCP]  Read 320 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:02:59 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "query",
+    "task_type": "document"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58096
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58112
+[TCP]  Read 300 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:03:00 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": "not_a_task"
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58112
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58128
+[TCP]  Read 289 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:03:00 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "prompt_name": 7
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58128
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58136
+[TCP]  Read 287 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 13:03:00 09:28:2026
+[LOG]  Target: /v1/embeddings
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "input": "The NPU runs the embedding model on device.",
+    "model": "embed-gemma:300m",
+    "task_type": 7
+}
+[🟢 ]  NPU Locked!
+Embedding input[0]: 
+The NPU runs the embedding model on device.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58136

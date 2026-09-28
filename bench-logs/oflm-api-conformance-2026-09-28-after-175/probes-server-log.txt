@@ -1,0 +1,4 @@
+# server log lines for the probes, GREEN build
+[ERROR]  handle_openai_chat_completion: [json.exception.type_error.302] type must be boolean, but is string
+[ERROR]  handle_chat: [json.exception.type_error.306] cannot use value() with string
+[ERROR]  handle_generate: [json.exception.type_error.302] type must be boolean, but is string

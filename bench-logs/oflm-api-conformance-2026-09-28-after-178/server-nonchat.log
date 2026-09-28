@@ -1,0 +1,36 @@
+[FLM]  Using user-specified port: 58601
+[ERROR]  model 'embed-gemma:300m' is not a chat model -- refusing; '' stays loaded
+[Error]  Failed to load default model: embed-gemma:300m
+[FLM]  Starting server on port 58601...
+[FLM]  WebServer started on port 58601 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:54658
+[TCP]  Read 90 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 13:35:33 09:28:2026
+[LOG]  Target: /api/version
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:54658
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:54662
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 13:35:33 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:54662
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:54674
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 13:35:33 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:54674

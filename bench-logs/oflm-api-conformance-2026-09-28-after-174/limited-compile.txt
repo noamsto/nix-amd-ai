@@ -1,0 +1,34 @@
+LIMITED build guard for embed-task-prompt.patch (#174 / PR #182 finding 2)
+
+The finding: task_names()/TaskResolution/resolve_task and the handle_embeddings
+resolution block use embedding_task_type_t at file scope, but that enum comes
+from auto_embedding_model.hpp, which rest_handler.hpp includes only under
+#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS. With the define set, rest_handler.cpp
+did not compile. Fix: put the helpers and the resolution block under the same
+#ifndef as the embed loop they feed.
+
+Scratch compile, on halo. Source tree: upstream FastFlowLM v1.0.6
+(/nix/store/zyzxyn4lmfra1nm6sm5c7qrmww14nh01-source) + the four earlier patches,
+then embed-task-prompt.patch (old = 328ebd2's patch, new = this branch's).
+Configure (both trees), from `nix develop .#fastflowlm`:
+
+  cmake -S <tree>/src -B <build> -GNinja -DCMAKE_BUILD_TYPE=Release \
+    -DFLM_VERSION=1.0.6 -DNPU_VERSION=32.0.203.304 \
+    -DXRT_INCLUDE_DIR=/nix/store/amiaiwg5a7dv29fnlbhwx6kb9jpyfp80-xrt-unstable-2026-08-13/opt/xilinx/xrt/include \
+    -DXRT_LIB_DIR=/nix/store/amiaiwg5a7dv29fnlbhwx6kb9jpyfp80-xrt-unstable-2026-08-13/opt/xilinx/xrt/lib \
+    -DCMAKE_XCLBIN_PREFIX=/tmp/fflm-xclbin \
+    -DCMAKE_CXX_FLAGS=-DFASTFLOWLM_LINUX_LIMITED_MODELS=1
+
+Then compile only the translation unit in question:
+
+  ninja -C <build> CMakeFiles/flm.dir/server/rest_handler.cpp.o
+
+Old patch (pre-guard) -- FAILS as the finding says:
+
+  /tmp/fflm-old/src/server/rest_handler.cpp:84:49: error: 'embedding_task_type_t' was not declared in this scope
+  /tmp/fflm-old/src/server/rest_handler.cpp:84:49: error: template argument 2 is invalid
+  /tmp/fflm-old/src/server/rest_handler.cpp:84:70: error: template argument 1 is invalid
+  /tmp/fflm-old/src/server/rest_handler.cpp:85:53: error: 'embedding_task_type_t' was not declared in this scope
+  ... ('task_query', 'task_document', ... not declared)
+
+New patch (this branch) -- compiles clean (exit 0, no diagnostics).

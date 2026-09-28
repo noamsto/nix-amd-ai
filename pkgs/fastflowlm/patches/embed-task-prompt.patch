@@ -1,0 +1,208 @@
+diff --git a/src/include/AutoEmbeddingModel/auto_embedding_model.hpp b/src/include/AutoEmbeddingModel/auto_embedding_model.hpp
+index 64b79fa..03da32f 100644
+--- a/src/include/AutoEmbeddingModel/auto_embedding_model.hpp
++++ b/src/include/AutoEmbeddingModel/auto_embedding_model.hpp
+@@ -78,6 +78,16 @@ public:
+ 	/// \return the model info
+ 	std::string show_model_info();
+ 
++	/// \brief Whether this model applies a task prompt at all. False for a
++	/// model with no task concept; true even when its prefixes are hardcoded
++	/// rather than declared (embed-gemma), which is why prompt_names() is
++	/// asked separately. Ported from OpenFlowLM-Next's AutoEmbeddingModel.
++	virtual bool supports_task_prompts() const { return false; }
++
++	/// \brief The prompt names this model declares, empty when its prefixes
++	/// are hardcoded rather than named. Ported from OpenFlowLM-Next.
++	virtual std::vector<std::string> prompt_names() const { return {}; }
++
+ 	//************ Unique for each model *************/
+ 	
+ 	virtual void load_model(std::string model_path, json model_info, bool enable_preemption) {}
+diff --git a/src/include/AutoEmbeddingModel/modeling_gemma_embedding.hpp b/src/include/AutoEmbeddingModel/modeling_gemma_embedding.hpp
+index d0ef9d7..e1c2d5d 100644
+--- a/src/include/AutoEmbeddingModel/modeling_gemma_embedding.hpp
++++ b/src/include/AutoEmbeddingModel/modeling_gemma_embedding.hpp
+@@ -57,4 +57,8 @@ public:
+ 
+     void load_model(std::string model_path, json model_info, bool enable_preemption = false) override;
+     std::vector<float> embed(std::string& text, embedding_task_type_t task_type) override;
++
++    // embed-gemma's prefixes are hardcoded in _get_task_prefix(), so it
++    // applies a task prompt but declares no names for one.
++    bool supports_task_prompts() const override { return true; }
+ };
+\ No newline at end of file
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index fd1916a..a0413f2 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -76,6 +76,92 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
+     }
+ }
+ 
++// Guarded with the embed loop below: these use embedding_task_type_t, whose
++// header rest_handler.hpp includes only when embedding models are built, and a
++// FASTFLOWLM_LINUX_LIMITED_MODELS build supports no embedding.
++#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
++// The REST names for an embedding task, and the enum each maps to. Ported from
++// OpenFlowLM-Next's openai_compat::task_names() (src/server/openai_compat.hpp,
++// Vegard Berget). NOT the model's own vocabulary: several names are aliases for
++// one task, and an error message must quote these REST names because those are
++// the values the validator accepts.
++static const std::vector<std::pair<const char*, embedding_task_type_t>>& task_names() {
++    static const std::vector<std::pair<const char*, embedding_task_type_t>> kTasks = {
++        {"query", task_query}, {"search_query", task_query},
++        {"Retrieval-query", task_query},
++        {"document", task_document}, {"search_document", task_document},
++        {"Retrieval-document", task_document},
++        {"clustering", task_clustering}, {"Clustering", task_clustering},
++        {"classification", task_classification},
++        {"Classification", task_classification},
++        {"MultilabelClassification", task_multilabel_classification},
++        {"STS", task_sentence_similarity},
++        {"sentence_similarity", task_sentence_similarity},
++        {"Summarization", task_summarization},
++        {"summarization", task_summarization},
++        {"BitextMining", task_bitextmining},
++        {"bitextmining", task_bitextmining},
++        {"code_retrieval", task_code_retrieval},
++        {"search_result", task_search_result},
++    };
++    return kTasks;
++}
++
++static std::string task_names_csv() {
++    std::string s;
++    for (const auto& kv : task_names()) s += (s.empty() ? "" : ", ") + std::string(kv.first);
++    return s;
++}
++
++// The outcome of reading a request's task prompt.
++struct TaskResolution {
++    enum class Status { Ok, Absent, NotAString, Unknown, Conflict };
++    Status status = Status::Absent;
++    embedding_task_type_t task = task_query;  ///< valid only when Ok
++    std::string field;                        ///< which key this is about
++    std::string value;                        ///< the offending value, when Unknown
++};
++
++// Read "prompt_name", or its accepted alias "task_type". BOTH are checked: an
++// invalid task_type beside a valid prompt_name is refused rather than ignored,
++// and sending both is fine only when they name the same task. Ported from
++// OpenFlowLM-Next's openai_compat::resolve_task().
++static TaskResolution resolve_task(const json& request) {
++    TaskResolution out;
++    bool have = false;
++    for (const char* field : {"prompt_name", "task_type"}) {
++        if (!request.contains(field)) continue;
++        const json& f = request.at(field);
++        if (!f.is_string()) return {TaskResolution::Status::NotAString, task_query, field, ""};
++        const std::string want = f.get<std::string>();
++        const auto& tbl = task_names();
++        auto hit = tbl.end();
++        for (auto it = tbl.begin(); it != tbl.end(); ++it)
++            if (want == it->first) { hit = it; break; }
++        if (hit == tbl.end()) return {TaskResolution::Status::Unknown, task_query, field, want};
++        if (have && hit->second != out.task)
++            return {TaskResolution::Status::Conflict, task_query, field, want};
++        out.task = hit->second;
++        out.field = field;
++        have = true;
++    }
++    out.status = have ? TaskResolution::Status::Ok : TaskResolution::Status::Absent;
++    return out;
++}
++
++// Whether a request's task prompt is required, refused, or fine. Three states
++// because an empty prompt table means two different things: a model with no task
++// concept at all, and one whose prefixes are hardcoded rather than declared
++// (embed-gemma). Ported from OpenFlowLM-Next's openai_compat::task_policy().
++enum class TaskPolicy { Ok, Required, NotSupported };
++
++static TaskPolicy task_policy(bool supports_prompts, bool declares_names, bool task_given) {
++    if (task_given && !supports_prompts) return TaskPolicy::NotSupported;
++    if (!task_given && declares_names)   return TaskPolicy::Required;
++    return TaskPolicy::Ok;
++}
++#endif
++
+ // e.what() can quote the request's own bytes and nlohmann's type-system
+ // internals, so it goes to the server log, never into the response body.
+ // request_fault marks a catch around prompt processing (insert(), or
+@@ -1037,6 +1123,66 @@ void RestHandler::handle_embeddings(const json& request,
+         model = loaded;
+ #endif
+ 
++#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
++        // The request's task prompt. embed-gemma prepends a different prefix
++        // per task, so the resolved task or a refusal -- never a substitute.
++        // Ported from OpenFlowLM-Next's SERVER-EMBED-TASK-PROMPT.
++        embedding_task_type_t task = embedding_task_type_t::task_query;
++        const std::string accepted = task_names_csv();
++        bool supports_prompts = false;
++        bool declares_names = false;
++        if (this->auto_embedding_engine) {
++            supports_prompts = this->auto_embedding_engine->supports_task_prompts();
++            declares_names = !this->auto_embedding_engine->prompt_names().empty();
++        }
++        const TaskResolution tr = resolve_task(request);
++        using TRS = TaskResolution::Status;
++        const TaskPolicy policy =
++            task_policy(supports_prompts, declares_names, tr.status != TRS::Absent);
++        if (policy == TaskPolicy::NotSupported) {
++            send_response(json{{"error", {
++                {"message", "model '" + model + "' has no task prompts; remove '" + tr.field +
++                            "'. Passing one would be ignored, and the vector would come back "
++                            "correctly shaped and unprefixed with nothing to show it."},
++                {"type", "invalid_request_error"}, {"param", tr.field}, {"code", "invalid_value"}}}});
++            return;
++        }
++        if (policy == TaskPolicy::Required) {
++            send_response(json{{"error", {
++                {"message", "this model requires a task prompt: pass 'prompt_name' as one of [" +
++                            accepted + "]. Refusing to pick one: the prefix changes the vector, "
++                            "and the result is correctly shaped and correctly normed either way, "
++                            "so nothing downstream can tell the wrong one was used."},
++                {"type", "invalid_request_error"}, {"param", "prompt_name"},
++                {"code", "missing_required_parameter"}}}});
++            return;
++        }
++        if (tr.status == TRS::NotAString) {
++            send_response(json{{"error", {
++                {"message", "'" + tr.field + "' must be a string, one of [" + accepted + "]"},
++                {"type", "invalid_request_error"}, {"param", tr.field}, {"code", "invalid_value"}}}});
++            return;
++        }
++        if (tr.status == TRS::Unknown) {
++            send_response(json{{"error", {
++                {"message", "unknown " + tr.field + " '" + tr.value + "'. Known: [" + accepted +
++                            "]. Refusing to substitute one: an embedding under the wrong task "
++                            "prompt is correctly shaped and correctly normed, so nothing "
++                            "downstream can tell it is wrong."},
++                {"type", "invalid_request_error"}, {"param", tr.field}, {"code", "invalid_value"}}}});
++            return;
++        }
++        if (tr.status == TRS::Conflict) {
++            send_response(json{{"error", {
++                {"message", "'prompt_name' and 'task_type' are aliases and disagree ('" +
++                            tr.field + "' says '" + tr.value + "'). Send one, or send the same "
++                            "task in both."},
++                {"type", "invalid_request_error"}, {"param", tr.field}, {"code", "invalid_value"}}}});
++            return;
++        }
++        if (tr.status == TRS::Ok) task = tr.task;
++#endif
++
+         std::vector<std::string> inputs;
+ 
+         if (request["input"].is_string()) {
+@@ -1054,7 +1200,7 @@ void RestHandler::handle_embeddings(const json& request,
+ #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
+             for (size_t i = 0; i < inputs.size(); ++i) {
+                 std::cout << "Embedding input[" << i << "]: " << "\n" << inputs[i] << std::endl;
+-                std::vector<float> embedding_result = this->auto_embedding_engine->embed(inputs[i], embedding_task_type_t::task_query);
++                std::vector<float> embedding_result = this->auto_embedding_engine->embed(inputs[i], task);
+                 embedding_data.push_back({
+                     {"object", "embedding"},
+                     {"embedding", embedding_result},

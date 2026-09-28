@@ -1,0 +1,23 @@
+Known embed-gemma prefixes (src/include/AutoEmbeddingModel/modeling_gemma_embedding.hpp):
+  query    -> 'task: search result | query: '
+  document -> 'title: none | text: '
+
+Base build (no embed-task-prompt.patch) always applies the QUERY prefix:
+  base absent == base query == base document: True
+
+New build:
+  absent == query: True
+  query != document: True cosine 0.957706
+
+MANUAL PREFIX CHECK (query): the base build's hardcoded query prefix is the
+known prefix applied by hand, so its no-prompt vector must equal the new
+build's prompt_name=query vector, byte for byte:
+  base absent == new prompt_name=query: True
+  cosine: 1.0
+
+MANUAL PREFIX CHECK (document): v1.0.6 exposes no unprefixed embedding path
+(embed() always prepends _get_task_prefix()), so f('title: none | text: '+T)
+cannot be computed through the API to compare byte-for-byte. The document
+prefix is established by source (_get_task_prefix(task_document)) and the
+name->enum mapping by task_names(); prompt_name=document is reproducible and
+differs from query by cosine 0.957706.

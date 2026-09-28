@@ -1,0 +1,16 @@
+# RED: build /nix/store/zvg05givvmmlmp331fn9imjyfyrr6jyi-fastflowlm-1.0.6 (#173 tip), served llama3.2:1b, port 58601
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"hi"}],"stream":"yes"}
+{"error":{"message":"[json.exception.type_error.302] type must be boolean, but is string","type":"server_error","code":500}}
+HTTP 500
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"hi"}],"options":"x"}
+{"error":"[json.exception.type_error.306] cannot use value() with string"}
+HTTP 400
+$ POST /api/generate {"model":"llama3.2:1b","prompt":"hi","stream":"yes"}
+{"error":"[json.exception.type_error.302] type must be boolean, but is string"}
+HTTP 400
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":123}],"max_tokens":8}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790586293,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"I'm here to provide general information and guidance"},"logprobs":null,"finish_reason":"length"}],"usage":{"prompt_tokens":35,"completion_tokens":8,"total_tokens":43,"kv_token_occupancy_rate_percentage":0.032806396484375,"load_duration":2.574e-06,"prefill_duration_ttft":0.387950976,"decoding_duration":0.118436,"prefill_speed_tps":90.2175846053291,"decoding_speed_tps":67.5470296193725},"service_tier":"default"}
+HTTP 200
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790586293,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":2,"total_tokens":40,"kv_token_occupancy_rate_percentage":0.030517578125,"load_duration":2.294e-06,"prefill_duration_ttft":0.385660704,"decoding_duration":0.029557,"prefill_speed_tps":98.53220617467939,"decoding_speed_tps":67.66586595391955},"service_tier":"default"}
+HTTP 200
