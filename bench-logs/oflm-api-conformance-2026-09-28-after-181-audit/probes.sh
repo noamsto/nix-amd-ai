@@ -1,30 +1,19 @@
 #!/usr/bin/env bash
 # probes.sh <flm-binary> <outdir> <base|new>
 #
-# Red/green for a follow-up to #181: flm serve's pre-evict download check
-# (downloader.is_model_downloaded() in ensure_model_loaded) reads the entry's
-# `name` and `flm_min_version` outside any try, so a model_list.json entry
-# missing either throws a json::type_error that the handler answers as
-# 400 invalid_request_error "Invalid request". Like #181's missing
-# details.family, this is a server-side config fault and must fail the load
-# as 500 model_load_failed, before anything is unloaded.
+# Red/green for the #181 audit: ensure_model_loaded's pre-evict
+# is_model_downloaded() reads the entry's `name` and `flm_min_version` outside
+# any try, so an entry missing either was answered 400 invalid_request_error.
+# It is a server-side config fault and must fail the load as
+# 500 model_load_failed, before anything is unloaded. Each case pops one field
+# from the gemma4-it:e4b entry of a scratch model_list.json (FLM_CONFIG_PATH):
 #
-# Three cases, each against a scratch model_list.json (FLM_CONFIG_PATH) with
-# one field popped from the gemma4-it:e4b entry:
+#   missing-name         base 400, new 500
+#   missing-min-version  base 400, new 500
+#   missing-family       500 on both (#188 regression check)
 #
-#   missing-name           entry.name is gone
-#   missing-min-version    entry.flm_min_version is gone
-#   missing-family         entry.details.family is gone (#188 regression check)
-#
-# Expected: base build (current main) answers missing-name and
-# missing-min-version with 400 invalid_request_error, and missing-family with
-# 500 model_load_failed (already fixed by #188). New build answers all three
-# with 500 model_load_failed. `base`/`new` selects the oracle.
-#
-# missing-min-version only reaches the throwing read once the model's files
-# are already on disk (otherwise is_model_downloaded() returns Missing and the
-# load evicts the serving model to start a multi-GB download instead), so this
-# script aborts up front if gemma4-it:e4b hasn't been downloaded yet.
+# missing-min-version reaches the throwing read only when the model's files are
+# on disk; otherwise the load evicts and starts a download, so abort up front.
 set -u
 
 FLM=${1:?usage: probes.sh <flm-binary> <outdir> <base|new>}
@@ -41,7 +30,7 @@ shipped_list="$(dirname "$FLM")/../share/flm/model_list.json"
 gemma_name=$(jq -r '.models["gemma4-it"].e4b.name' "$shipped_list")
 gemma_config="$HOME/.config/flm/models/$gemma_name/config.json"
 if [[ ! -f "$gemma_config" ]]; then
-  echo "ABORT: $gemma_config not found. missing-min-version needs gemma4-it:e4b already downloaded (otherwise is_model_downloaded() returns Missing and the load evicts the serving model to start a multi-GB download). Run flm once to download gemma4-it:e4b first." >&2
+  echo "ABORT: $gemma_config not found; pull gemma4-it:e4b first" >&2
   exit 1
 fi
 
@@ -159,10 +148,8 @@ start_server() { # <model-list> <label>
   return 1
 }
 
-# run_case <label> <python-expr-on-entry> <base-http-code> <base-body> -- scratch
-# the model_list.json entry, start the server, and drive the case oracle. new
-# mode always expects 500 + LOAD500; base mode expects <base-http-code> +
-# <base-body>.
+# run_case <label> <python-expr-on-entry> <base-http-code> <base-body>
+# -- new mode always expects 500 + LOAD500.
 run_case() {
   local label=$1 expr=$2 base_code=$3 base_body=$4
   echo "== case $label ($mode) =="
