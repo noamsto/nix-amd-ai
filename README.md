@@ -11,6 +11,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `xrt` | Xilinx Runtime for AMD NPU | Built from [Xilinx/XRT](https://github.com/Xilinx/XRT) |
 | `xrt-plugin-amdxdna` | XDNA userspace driver plugin | Built from [amd/xdna-driver](https://github.com/amd/xdna-driver) branch `1.9` |
 | `fastflowlm` | NPU-optimized LLM runtime | Built from [FastFlowLM](https://github.com/FastFlowLM/FastFlowLM) |
+| `openflowlm` | [OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) (`oflm`), the open-kernel fork of FastFlowLM; its open NPU kernels are built from source in the Nix sandbox | Built from [Atomic-Germ/OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) at a pinned commit (no releases yet) |
 | `mlir-aie` | MLIR-based AI Engine compiler toolchain (`aiecc`, `aie-opt`, `aie-translate`, `bootgen`) | Built from the [Xilinx/mlir-aie](https://github.com/Xilinx/mlir-aie) 1.4.2 wheel |
 | `llvm-aie` | Peano AI Engine LLVM/Clang backend (`clang`, `lld`, `llc`) | Built from a [Xilinx/llvm-aie](https://github.com/Xilinx/llvm-aie) nightly wheel |
 | `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
@@ -77,12 +78,17 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 > free only for non-commercial use or for companies with annual revenue
 > ≤ USD 10M; a commercial licence is required above that. nixpkgs therefore
 > treats `fastflowlm` as unfree, and applying this overlay/module on a host
-> with `allowUnfree = false` fails evaluation. Allow just this package:
+> with `allowUnfree = false` fails evaluation. `openflowlm` is unfree for the
+> same reason: it still ships and loads FastFlowLM's closed engine libraries
+> and kernels for every model without an open recipe. Allow the package(s)
+> you use:
 >
 > ```nix
 > nixpkgs.config.allowUnfreePredicate =
->   pkg: builtins.elem (lib.getName pkg) ["fastflowlm"];
+>   pkg: builtins.elem (lib.getName pkg) ["fastflowlm" "openflowlm"];
 > ```
+>
+> `"openflowlm"` is only needed if you set `fastflowlm.package = pkgs.openflowlm`.
 
 ### macOS (nix-darwin)
 
@@ -524,10 +530,96 @@ lemonade's expected-version check, so the `backend_versions.json` pin to
 `flm.flm_bin` is **not** a config key: `lemonade config set flm.flm_bin ...` is
 accepted silently and has no effect. Use `flm.npu_bin`.
 
-The wiring is verified by an eval check only. Whether a given runtime (e.g.
-OpenFlowLM-Next's `oflm`, [#147](https://github.com/noamsto/nix-amd-ai/issues/147))
-implements the CLI lemonade calls (`list --json`, `version --json`, `serve`) has
-not been tested on hardware here.
+The wiring is verified by an eval check only. `pkgs.openflowlm` is the one
+alternative tested on hardware; see
+[OpenFlowLM-Next](#openflowlm-next-oflm).
+
+### OpenFlowLM-Next (`oflm`)
+
+[OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) is a
+community fork of FastFlowLM that replaces some of its closed NPU kernels with
+kernels built from source. Use it in place of `pkgs.fastflowlm`:
+
+```nix
+hardware.amd-npu.fastflowlm.package = pkgs.openflowlm;
+```
+
+plus `"openflowlm"` in the unfree predicate (see [Usage](#usage)). Lemonade
+drives `oflm` through its `flm` recipe exactly as it drives `flm` itself;
+models still show as `*-FLM`.
+
+Upstream has no tags or releases, so the package pins `main` at `8c83712`
+(2026-09-27). It is pre-alpha: `oflm version` reports `0.1.0`, and upstream
+says anything may change before a 1.0.
+
+**What is open and what is not.** The package builds OFLM's open kernel sets
+from source in the Nix sandbox with this flake's `mlir-aie` 1.4.2 and
+`llvm-aie` Peano (upstream's pinned pair), no NPU needed: the dense/MoE sets
+for 11 models (12 recipe specs; `gemma3-12b`'s set is overwritten by
+`gemma3-4b`'s, an upstream naming quirk) and the 5 BERT embedding design sets.
+The BERT export is made device-free by a carried patch, open upstream as
+[Atomic-Germ/OpenFlowLM-Next#126](https://github.com/Atomic-Germ/OpenFlowLM-Next/pull/126).
+Every other model, including `llama3.2:1b`, still runs on FastFlowLM's closed
+engine libraries and kernels, which OFLM's tree ships alongside its own —
+that is why `pkgs.openflowlm` is unfree. The kernel build is its own
+derivation (`openflowlm.kernels`), ~50 min on halo, cached in this flake's
+Cachix.
+
+**A carried fix.** A model file whose size differed from OFLM's manifest
+printed a `[WARNING]` to stdout ahead of `oflm list --json`, which made
+lemonade's strict JSON parse drop every FLM model. The package moves that
+warning to stderr.
+
+**Shared model store caveat.** With no `~/.config/oflm` and no
+`OFLM_MODEL_PATH`, `oflm` falls back to FastFlowLM's `~/.config/flm` store, so
+FLM models it recognizes are reused without re-downloading. But OFLM treats a
+file whose size differs from its own manifest as missing and re-pulls it in
+place: on halo, FLM's `Qwen3.6-35B-A3B-NPU2/model.q4nx` (21.0 GB) differs from
+OFLM's manifest (23.2 GB), so pulling that model through lemonade would
+overwrite FLM's copy. To keep the stores separate, point `oflm` at its own
+directory the way lemonade itself understands, by setting `FLM_MODEL_PATH`
+(the name `oflm` also honours, as a legacy alias for `OFLM_MODEL_PATH`) for
+both `lemond` and your shell:
+
+```nix
+# StateDirectory creates /var/lib/oflm owned by lemonade.user when lemond
+# starts; oflm itself does not create its store root.
+systemd.services.lemond.serviceConfig.StateDirectory = "oflm";
+systemd.services.lemond.environment.FLM_MODEL_PATH = "/var/lib/oflm";
+environment.sessionVariables.FLM_MODEL_PATH = "/var/lib/oflm";
+```
+
+Models are then downloaded again. Without the session variable, an
+interactive `oflm pull`/`oflm run` still uses `~/.config/flm`. Creating
+`~/.config/oflm` or setting `OFLM_MODEL_PATH` instead also separates the
+stores, but lemonade reads a FLM model's `config.json` only from
+`FLM_MODEL_PATH` or FastFlowLM's own directories, so it can no longer find
+each model's max context length (measured on halo, for `lfm2-1.2b-FLM` and
+`llama3.2-1b-FLM`) and falls back to its 32768-token auto context cap (from
+lemonade's source).
+
+Measured on halo only (Ryzen AI MAX+ 395, XDNA2 NPU, 8 columns), 2026-09-28,
+with the module-wrapped binary:
+
+| check | result |
+|---|---|
+| `oflm validate` | ready, 8 columns, firmware OK |
+| `llama3.2:1b` chat (closed kernels) | 63.5 tok/s decode, 100 tok/s prefill (43-token prompt, 128 tokens out) |
+| `lfm2:1.2b` chat on sandbox-built open kernels | packaged `LFM2-1.2B-NPU2/open_kernels` set selected; coherent output; 35.9 tok/s decode, 40.6 tok/s prefill (17-token prompt, 128 tokens out) |
+| `all-minilm:l6-v2` embeddings on sandbox-built BERT set | 384-dim, unit-norm, finite; cosine 0.70 for two paraphrases vs −0.03 for an unrelated pair |
+| lemonade 11.9.0 via `LEMONADE_FLM_NPU_BIN` | flm backend `installed` at `v0.1.0` (not flagged for update), 44 FLM models listed, `llama3.2-1b-FLM` chat served by `oflm serve` |
+
+These are single runs, not a benchmark, and are not comparable to the
+FastFlowLM numbers elsewhere in this README.
+
+**Not tested:** the other 10 open-kernel models and 4 BERT sets on hardware;
+any host other than halo (Strix Point, Krackan); `oflm add` / `q4nx-build` and
+OFLM's Python utilities (not built here: `OFLM_BUILD_UTILITIES=OFF`);
+lemonade's embeddings route with OFLM's BERT models.
+
+Packaging adapted from [@eyduh](https://github.com/eyduh)'s
+[fork](https://github.com/eyduh/OpenFlowLM-Next), who first reported the
+NPU-at-build-time blocker in [#147](https://github.com/noamsto/nix-amd-ai/issues/147).
 
 ### FLM models don't appear / `flm:npu` reports "not installed" after enabling FastFlowLM
 

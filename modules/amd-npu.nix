@@ -323,9 +323,8 @@ in {
       description = ''
         The flm-compatible runtime installed by `enableFastFlowLM` and handed to
         lemonade as `flm.npu_bin`. Its `meta.mainProgram` must be set and need not
-        be called `flm`. Only `pkgs.fastflowlm` has been exercised on hardware
-        here; whether another runtime speaks the same CLI (`list --json`,
-        `version --json`, `serve`) is untested.
+        be called `flm`. `pkgs.openflowlm` (OpenFlowLM-Next's `oflm`) has also
+        been tested on hardware; see the README's OpenFlowLM-Next section.
       '';
     };
 
@@ -897,6 +896,8 @@ in {
         # nix manages the version; FLM's auto-update probe on every run/serve
         # is noise on a read-only nix-store binary. New in FLM 0.9.41.
         FLM_DISABLE_UPDATE_CHECK = "1";
+        # OpenFlowLM-Next's oflm reads only its own name (upstream update.hpp:62).
+        OFLM_DISABLE_UPDATE_CHECK = "1";
       }
       // optionalAttrs cfg.enableLemonade {
         # v10.7.0 reads backend bin paths + tuning only from config.json; point
@@ -983,6 +984,8 @@ in {
           # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
           # New in FLM 0.9.41.
           FLM_DISABLE_UPDATE_CHECK = "1";
+          # OpenFlowLM-Next's oflm reads only its own name (upstream update.hpp:62).
+          OFLM_DISABLE_UPDATE_CHECK = "1";
         }
         // optionalAttrs config.programs.nix-ld.enable {
           # nix-ld exports these only as session vars; the unit doesn't inherit

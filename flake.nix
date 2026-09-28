@@ -21,10 +21,11 @@
     rocmGpuTargets = ["gfx1150" "gfx1151"];
 
     # FastFlowLM's NPU kernels (.xclbin, share/flm) are proprietary beside its
-    # MIT source, so nixpkgs marks the package unfree. Allow exactly that
-    # package where this repo instantiates nixpkgs. #158
+    # MIT source, so nixpkgs marks the package unfree. OpenFlowLM-Next ships
+    # FastFlowLM's closed kernels too (#158). Allow exactly those packages
+    # where this repo instantiates nixpkgs.
     allowFastFlowLMUnfree = pkg:
-      builtins.elem (inputs.nixpkgs.lib.getName pkg) ["fastflowlm"];
+      builtins.elem (inputs.nixpkgs.lib.getName pkg) ["fastflowlm" "openflowlm"];
 
     # This repo's own NixOS eval checks and unit renders opt in to fastflowlm's
     # unfree licence the same way a consumer must. #158
@@ -160,6 +161,7 @@
             fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
             llvm-aie = pinned.callPackage ./pkgs/llvm-aie {};
             mlir-aie = pinned.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
+            openflowlm = pinned.callPackage ./pkgs/openflowlm {inherit xrt mlir-aie llvm-aie;};
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;});
@@ -175,7 +177,7 @@
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
-            inherit mlir-aie llvm-aie;
+            inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
@@ -217,6 +219,7 @@
           fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
           llvm-aie = pkgs.callPackage ./pkgs/llvm-aie {};
           mlir-aie = pkgs.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
+          openflowlm = pkgs.callPackage ./pkgs/openflowlm {inherit xrt mlir-aie llvm-aie;};
           llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;});
@@ -239,7 +242,7 @@
         in {
           inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets lemonade;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
-          inherit mlir-aie llvm-aie;
+          inherit mlir-aie llvm-aie openflowlm;
           ds4 = pkgs.callPackage ./pkgs/ds4 {};
           xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           # What `hardware.amd-npu.lemonade.desktopApp.enable = false` selects;
@@ -389,6 +392,31 @@
                 # is the Peano backend rather than a stock clang.
                 "$LLVM_AIE/bin/clang" -print-targets | grep -q 'aie2'
                 "$LLVM_AIE/bin/clang" --target=aie2-none-unknown-elf -print-target-triple | grep -qx 'aie2-none-unknown-elf'
+                touch $out
+              '';
+
+            # Device-free: the kernel sets shipped, and a size-mismatched model
+            # file keeps its warning off the stdout lemonade parses as JSON.
+            openflowlm-smoke =
+              pkgs.runCommand "openflowlm-smoke" {
+                nativeBuildInputs = [pkgs.jq];
+                OFLM = linuxPackages.openflowlm;
+              } ''
+                export HOME=$TMPDIR/home # oflm creates ~/.config/oflm on start
+                mkdir -p "$HOME"
+
+                "$OFLM/bin/oflm" version --json | jq -e '.version == "0.1.0"'
+
+                store=$TMPDIR/store
+                mkdir -p "$store/models/Llama-3.2-1B-NPU2"
+                echo x > "$store/models/Llama-3.2-1B-NPU2/config.json"
+                OFLM_MODEL_PATH=$store "$OFLM/bin/oflm" list --filter installed --quiet --json 2>/dev/null | jq -e '.models | type == "array"'
+                OFLM_MODEL_PATH=$store "$OFLM/bin/oflm" list --json 2>/dev/null | jq -e '.models | length > 0'
+
+                test "$(find "$OFLM/share/oflm/xclbins" -path '*/open_kernels/manifest.json' | wc -l)" -eq 11
+                test "$(find "$OFLM/share/oflm/xclbins" -path '*/gemm_rtp/design.json' | wc -l)" -eq 5
+                test -d "$OFLM/share/oflm/xclbins/Llama-3.2-1B-NPU2"
+
                 touch $out
               '';
 
@@ -632,23 +660,31 @@
               defaultsOf = c: c.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
               def = mkSys {};
               swapped = mkSys {hardware.amd-npu.fastflowlm.package = stub;};
+              real = mkSys {hardware.amd-npu.fastflowlm.package = linuxPackages.openflowlm;};
               off = mkSys {hardware.amd-npu.enableFastFlowLM = false;};
             in
               pkgs.runCommand "module-eval-fastflowlm-package" {
                 nativeBuildInputs = [pkgs.jq];
                 defaultBin = flmNpu def;
                 swappedBin = flmNpu swapped;
+                realBin = flmNpu real;
                 defaultDefaults = defaultsOf def;
                 swappedDefaults = defaultsOf swapped;
+                realDefaults = defaultsOf real;
                 offDefaults = defaultsOf off;
                 offHasLink = builtins.toJSON (off.environment.etc ? "lemonade/backends/flm-npu");
+                realLemondNoUpdate = real.systemd.services.lemond.environment.OFLM_DISABLE_UPDATE_CHECK or "";
+                realSessionNoUpdate = real.environment.sessionVariables.OFLM_DISABLE_UPDATE_CHECK or "";
               } ''
                 case "$defaultBin" in *-fastflowlm-wrapped/bin/flm) ;; *) echo "default: $defaultBin" >&2; exit 1 ;; esac
                 case "$swappedBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "swapped: $swappedBin" >&2; exit 1 ;; esac
-                for f in "$defaultDefaults" "$swappedDefaults"; do
+                case "$realBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "real: $realBin" >&2; exit 1 ;; esac
+                for f in "$defaultDefaults" "$swappedDefaults" "$realDefaults"; do
                   jq -e '.flm.npu_bin == "/etc/lemonade/backends/flm-npu"' "$f" >/dev/null
                   jq -e '.flm.prefer_system == true' "$f" >/dev/null
                 done
+                test "$realLemondNoUpdate" = 1 || { echo "real: lemond service missing OFLM_DISABLE_UPDATE_CHECK" >&2; exit 1; }
+                test "$realSessionNoUpdate" = 1 || { echo "real: sessionVariables missing OFLM_DISABLE_UPDATE_CHECK" >&2; exit 1; }
                 touch $out
               '';
 
