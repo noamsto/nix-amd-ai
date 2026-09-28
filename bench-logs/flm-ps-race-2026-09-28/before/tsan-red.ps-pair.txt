@@ -1,0 +1,345 @@
+# 8 ps-pair reports from tsan-red.1919153 (raw log not committed: 3.4 MB).
+# Access stacks cut to frames #0-#16, signatures shortened; Location line kept.
+
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c10 by thread T13:
+    #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
+    #1 std::unique_ptr<> >::reset unique_ptr.h:530
+    #2 RestHandler::ensure_model_loaded rest_handler.cpp:597
+    #3 RestHandler::handle_chat rest_handler.cpp:1002
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous read of size 8 at 0x724000001c10 by thread T9:
+    #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
+    #1 std::unique_ptr<> >::get unique_ptr.h:491
+    #2 std::unique_ptr<> >::operator bool unique_ptr.h:508
+    #3 RestHandler::handle_ps rest_handler.cpp:1343
+    #4 operator() server.cpp:995
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:902
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c58 by thread T13:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:326
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::assign basic_string.h:1771
+    #5 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:906
+    #6 RestHandler::ensure_model_loaded rest_handler.cpp:645
+    #7 RestHandler::handle_chat rest_handler.cpp:1002
+    #8 operator() server.cpp:985
+    #9 __invoke_impl<void, create_lm_server invoke.h:63
+    #10 __invoke_r<void, create_lm_server invoke.h:113
+    #11 _M_invoke std_function.h:292
+    #12 std::function<void  std_function.h:593
+    #13 operator() server.cpp:844
+    #14 WebServer::handle_request server.cpp:910
+    #15 HttpSession::handle_request server.cpp:322
+    #16 operator() server.cpp:255
+
+  Previous read of size 8 at 0x724000001c58 by thread T10:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 void std::__cxx11::basic_string<>, std::allocator<> >::_M_construct<> basic_string.tcc:298
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::basic_string basic_string.h:617
+    #5 _ZSt12construct_atINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEJRKS5_EQaant20is_un stl_construct.h:110
+    #6 void std::allocator_traits<>, std::allocator<> > > >::construct<>, std::allocator<> >, std alloc_traits.h:676
+    #7 std::__cxx11::basic_string<>, std::allocator<> >* nlohmann::json_abi_v3_12_0::basic_json<> json.hpp:391
+    #8 nlohmann::json_abi_v3_12_0::basic_json<>, std::allocator<> >, bool, long, unsigned long, d json.hpp:528
+    #9 void nlohmann::json_abi_v3_12_0::detail::external_constructor< to_json.hpp:70
+    #10 void nlohmann::json_abi_v3_12_0::detail::to_json<>, std::allocator<> >, bool, long, unsign to_json.hpp:308
+    #11 decltype  to_json.hpp:468
+    #12 decltype  adl_serializer.hpp:51
+    #13 nlohmann::json_abi_v3_12_0::basic_json<>, std::allocator<> >, bool, long, unsigned long, d json.hpp:842
+    #14 nlohmann::json_abi_v3_12_0::detail::json_ref<>, std::allocator<> >, bool, long, unsigned l json_ref.hpp:43
+    #15 RestHandler::handle_ps rest_handler.cpp:1373
+    #16 operator() server.cpp:995
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c50 by thread T13:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:328
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::assign basic_string.h:1771
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:906
+    #5 RestHandler::ensure_model_loaded rest_handler.cpp:645
+    #6 RestHandler::handle_chat rest_handler.cpp:1002
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:910
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous read of size 8 at 0x724000001c50 by thread T9:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::size basic_string.h:1165
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::length basic_string.h:1176
+    #2 std::__str_hash_base<>, std::__cxx11::basic_string<>, std::allocator<> > >::operator basic_string.h:4910
+    #3 std::__detail::_Hash_code_base<>, std::allocator<> >, std::__cxx11::basic_string<>, std::a hashtable_policy.h:1071
+    #4 std::_Hashtable<>, std::allocator<> >, std::__cxx11::basic_string<>, std::allocator<> >, s hashtable.h:2279
+    #5 std::_Hashtable<>, std::allocator<> >, std::__cxx11::basic_string<>, std::allocator<> >, s hashtable.h:1918
+    #6 std::unordered_set<>, std::allocator<> >, std::hash<>, std::allocator<> > >, std::equal_to unordered_set.h:729
+    #7 model_list::is_model_supported model_list.hpp:225
+    #8 RestHandler::handle_ps rest_handler.cpp:1343
+    #9 operator() server.cpp:995
+    #10 __invoke_impl<void, create_lm_server invoke.h:63
+    #11 __invoke_r<void, create_lm_server invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 operator() server.cpp:844
+    #15 WebServer::handle_request server.cpp:902
+    #16 HttpSession::handle_request server.cpp:322
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 1 at 0x724000001c63 by thread T11:
+    #0 std::char_traits<>::assign char_traits.h:352
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:273
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:328
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::assign basic_string.h:1771
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:906
+    #5 RestHandler::ensure_model_loaded rest_handler.cpp:645
+    #6 RestHandler::handle_chat rest_handler.cpp:1002
+    #7 operator() server.cpp:985
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:910
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous read of size 6 at 0x724000001c60 by thread T8:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 void std::__cxx11::basic_string<>, std::allocator<> >::_M_construct<> basic_string.tcc:298
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::basic_string basic_string.h:617
+    #5 _ZSt12construct_atINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEJRKS5_EQaant20is_un stl_construct.h:110
+    #6 void std::allocator_traits<>, std::allocator<> > > >::construct<>, std::allocator<> >, std alloc_traits.h:676
+    #7 std::__cxx11::basic_string<>, std::allocator<> >* nlohmann::json_abi_v3_12_0::basic_json<> json.hpp:391
+    #8 nlohmann::json_abi_v3_12_0::basic_json<>, std::allocator<> >, bool, long, unsigned long, d json.hpp:528
+    #9 void nlohmann::json_abi_v3_12_0::detail::external_constructor< to_json.hpp:70
+    #10 void nlohmann::json_abi_v3_12_0::detail::to_json<>, std::allocator<> >, bool, long, unsign to_json.hpp:308
+    #11 decltype  to_json.hpp:468
+    #12 decltype  adl_serializer.hpp:51
+    #13 nlohmann::json_abi_v3_12_0::basic_json<>, std::allocator<> >, bool, long, unsigned long, d json.hpp:842
+    #14 nlohmann::json_abi_v3_12_0::detail::json_ref<>, std::allocator<> >, bool, long, unsigned l json_ref.hpp:43
+    #15 RestHandler::handle_ps rest_handler.cpp:1373
+    #16 operator() server.cpp:995
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c10 by thread T12:
+    #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
+    #1 std::unique_ptr<> >::reset unique_ptr.h:530
+    #2 RestHandler::ensure_model_loaded rest_handler.cpp:597
+    #3 RestHandler::handle_chat rest_handler.cpp:1002
+    #4 operator() server.cpp:985
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:910
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous read of size 8 at 0x724000001c10 by thread T9:
+    #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
+    #1 std::unique_ptr<> >::get unique_ptr.h:491
+    #2 std::unique_ptr<> >::operator bool unique_ptr.h:508
+    #3 RestHandler::handle_ps rest_handler.cpp:1343
+    #4 operator() server.cpp:995
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:902
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c58 by thread T12:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:326
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::assign basic_string.h:1771
+    #5 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:906
+    #6 RestHandler::ensure_model_loaded rest_handler.cpp:645
+    #7 RestHandler::handle_openai_completion rest_handler.cpp:1744
+    #8 operator() server.cpp:1130
+    #9 __invoke_impl<void, create_lm_server invoke.h:63
+    #10 __invoke_r<void, create_lm_server invoke.h:113
+    #11 _M_invoke std_function.h:292
+    #12 std::function<void  std_function.h:593
+    #13 operator() server.cpp:844
+    #14 WebServer::handle_request server.cpp:902
+    #15 HttpSession::handle_request server.cpp:322
+    #16 operator() server.cpp:255
+
+  Previous read of size 8 at 0x724000001c58 by thread T5:
+    #0 memcpy <null>
+    #1 std::char_traits<>::copy char_traits.h:429
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
+    #3 void std::__cxx11::basic_string<>, std::allocator<> >::_M_construct<> basic_string.tcc:298
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::basic_string basic_string.h:617
+    #5 _ZSt12construct_atINSt7__cxx1112basic_stringIcSt11char_traitsIcESaIcEEEJRKS5_EQaant20is_un stl_construct.h:110
+    #6 void std::allocator_traits<>, std::allocator<> > > >::construct<>, std::allocator<> >, std alloc_traits.h:676
+    #7 std::__cxx11::basic_string<>, std::allocator<> >* nlohmann::json_abi_v3_12_0::basic_json<> json.hpp:391
+    #8 nlohmann::json_abi_v3_12_0::basic_json<>, std::allocator<> >, bool, long, unsigned long, d json.hpp:528
+    #9 void nlohmann::json_abi_v3_12_0::detail::external_constructor< to_json.hpp:70
+    #10 void nlohmann::json_abi_v3_12_0::detail::to_json<>, std::allocator<> >, bool, long, unsign to_json.hpp:308
+    #11 decltype  to_json.hpp:468
+    #12 decltype  adl_serializer.hpp:51
+    #13 nlohmann::json_abi_v3_12_0::basic_json<>, std::allocator<> >, bool, long, unsigned long, d json.hpp:842
+    #14 nlohmann::json_abi_v3_12_0::detail::json_ref<>, std::allocator<> >, bool, long, unsigned l json_ref.hpp:43
+    #15 RestHandler::handle_ps rest_handler.cpp:1373
+    #16 operator() server.cpp:995
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c50 by thread T12:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
+    #2 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:328
+    #3 std::__cxx11::basic_string<>, std::allocator<> >::assign basic_string.h:1771
+    #4 std::__cxx11::basic_string<>, std::allocator<> >::operator= basic_string.h:906
+    #5 RestHandler::ensure_model_loaded rest_handler.cpp:645
+    #6 RestHandler::handle_openai_completion rest_handler.cpp:1744
+    #7 operator() server.cpp:1130
+    #8 __invoke_impl<void, create_lm_server invoke.h:63
+    #9 __invoke_r<void, create_lm_server invoke.h:113
+    #10 _M_invoke std_function.h:292
+    #11 std::function<void  std_function.h:593
+    #12 operator() server.cpp:844
+    #13 WebServer::handle_request server.cpp:902
+    #14 HttpSession::handle_request server.cpp:322
+    #15 operator() server.cpp:255
+    #16 complete composed.hpp:156
+
+  Previous read of size 8 at 0x724000001c50 by thread T7:
+    #0 std::__cxx11::basic_string<>, std::allocator<> >::size basic_string.h:1165
+    #1 std::__cxx11::basic_string<>, std::allocator<> >::length basic_string.h:1176
+    #2 std::__str_hash_base<>, std::__cxx11::basic_string<>, std::allocator<> > >::operator basic_string.h:4910
+    #3 std::__detail::_Hash_code_base<>, std::allocator<> >, std::__cxx11::basic_string<>, std::a hashtable_policy.h:1071
+    #4 std::_Hashtable<>, std::allocator<> >, std::__cxx11::basic_string<>, std::allocator<> >, s hashtable.h:2279
+    #5 std::_Hashtable<>, std::allocator<> >, std::__cxx11::basic_string<>, std::allocator<> >, s hashtable.h:1918
+    #6 std::unordered_set<>, std::allocator<> >, std::hash<>, std::allocator<> > >, std::equal_to unordered_set.h:729
+    #7 model_list::is_model_supported model_list.hpp:225
+    #8 RestHandler::handle_ps rest_handler.cpp:1343
+    #9 operator() server.cpp:995
+    #10 __invoke_impl<void, create_lm_server invoke.h:63
+    #11 __invoke_r<void, create_lm_server invoke.h:113
+    #12 _M_invoke std_function.h:292
+    #13 std::function<void  std_function.h:593
+    #14 operator() server.cpp:844
+    #15 WebServer::handle_request server.cpp:902
+    #16 HttpSession::handle_request server.cpp:322
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=1919153)
+
+  Write of size 8 at 0x724000001c10 by thread T5:
+    #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
+    #1 std::unique_ptr<> >::reset unique_ptr.h:530
+    #2 RestHandler::ensure_model_loaded rest_handler.cpp:597
+    #3 RestHandler::handle_openai_completion rest_handler.cpp:1744
+    #4 operator() server.cpp:1130
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:902
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Previous read of size 8 at 0x724000001c10 by thread T12:
+    #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
+    #1 std::unique_ptr<> >::get unique_ptr.h:491
+    #2 std::unique_ptr<> >::operator bool unique_ptr.h:508
+    #3 RestHandler::handle_ps rest_handler.cpp:1343
+    #4 operator() server.cpp:995
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:902
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:

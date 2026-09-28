@@ -1,0 +1,3 @@
+red 0 gemma4-it:e4b 200 61.076069
+red 1 llama3.2:1b 200 23.885899
+red 2 gemma4-it:e4b 200 56.981559

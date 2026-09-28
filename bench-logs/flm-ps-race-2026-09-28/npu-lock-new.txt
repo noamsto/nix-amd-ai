@@ -1,0 +1,5 @@
+INFO chat_code=200 completions_code=200 embeddings_code=200 server_alive=true
+PASS queued-v1-completions
+PASS queued-api-embeddings
+PASS all-200
+PASS server-alive
