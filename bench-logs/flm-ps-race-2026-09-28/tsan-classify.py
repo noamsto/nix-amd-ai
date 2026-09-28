@@ -2,40 +2,59 @@
 """tsan-classify.py <tsan log file> [<tsan log file> ...]
 
 Splits each ThreadSanitizer log (TSAN_OPTIONS log_path=<prefix> writes one
-file per pid, <prefix>.<pid>) into individual "data race" reports and buckets
-each one, in this order (first match wins):
+file per pid, <prefix>.<pid>) into individual reports -- data races and every
+other "WARNING: ThreadSanitizer: <kind>" report (heap-use-after-free,
+lock-order-inversion, etc.) -- and buckets each one, in this order (first
+match wins):
 
   libc-tz       glibc localtime/tzset/gmtime races -- reported, never gates
                 red/green (these fire on any concurrent time formatting,
                 unrelated to #184).
   ps-pair       RestHandler::handle_ps racing on RestHandler::ensure_model_loaded
                 -- the #184 race this harness exists to catch.
-  model-state   some other RestHandler/AutoModel state race.
+  model-state   some other RestHandler/AutoModel state race or report.
+  incomplete    the report has no SUMMARY line, or (data races only) one of
+                the two access stacks never got a header at all -- a
+                truncated or malformed report, not a real "other".
   failed-restore  TSan could not symbolize/unwind one side of the race.
   other         anything else.
 
-Classification looks only at the two ACCESS stacks of each report (the
-"Write/Read of size N ..." block and the "Previous write/read of size N ..."
-block that races with it), plus the "Location is ..." allocation stack. A
-function name appearing elsewhere in the report -- e.g. in a thread-creation
-backtrace or an unrelated "as if synchronized via sleep" hint -- is not
-enough to classify a report: only frames that are actually part of the two
-racing accesses count.
+For data races, classification looks only at the two ACCESS stacks of each
+report (the "Write/Read of size N ..." block and the "Previous write/read of
+size N ..." block that races with it), plus the "Location is ..." allocation
+stack. A function name appearing elsewhere in the report -- e.g. in a
+thread-creation backtrace or an unrelated "as if synchronized via sleep"
+hint -- is not enough to classify a report: only frames that are actually
+part of the two racing accesses count. incomplete is checked only after
+ps-pair and model-state have had a chance on whatever WAS parsed, so a
+truncated report that still proves one of those keeps that bucket.
+
+For every other report kind, there is no fixed two-stack shape to anchor on,
+so any stack in the report (access, free, or allocation) naming a
+RestHandler:: or AutoModel:: frame buckets it model-state; anything else is
+other, unless it has no SUMMARY line at all, which makes it incomplete.
 
 Prints a one-line dedup summary per report, a count per bucket, and a final
 machine-readable line:
-  "BUCKETS ps-pair=N model-state=N failed-restore=N libc-tz=N other=N".
-Always exits 0 -- callers (race.sh) apply the red/green oracle themselves.
+  "BUCKETS ps-pair=N model-state=N incomplete=N failed-restore=N libc-tz=N
+  other=N skipped=N".
+Exits 2 if any input file could not be read (after printing everything
+else), 0 otherwise -- callers (race.sh) apply the red/green oracle
+themselves.
 
 --self-test runs the classifier against synthetic reports covering a genuine
 ps-pair, a tz race that happens to mention handle_ps/ensure_model_loaded
-outside the access stacks, and a non-tz race where ensure_model_loaded only
-appears in a thread-creation stack (must NOT be model-state).
+outside the access stacks, a non-tz race where ensure_model_loaded only
+appears in a thread-creation stack (must NOT be model-state), an
+AutoModel::-only data race, a race where both access stacks failed to
+restore, a heap-use-after-free naming an AutoModel:: frame, and a truncated
+report with no SUMMARY line.
 """
 import re
 import sys
 
-WARNING_RE = re.compile(r"WARNING: ThreadSanitizer: data race")
+WARNING_RE = re.compile(r"WARNING: ThreadSanitizer: (\S.*)")
+SUMMARY_RE = re.compile(r"SUMMARY: ThreadSanitizer:")
 DELIM_RE = re.compile(r"^=+$")
 
 # Stack 1: the primary access ("Write of size 8 ... by thread T3:" or
@@ -58,6 +77,10 @@ MODEL_STATE_ALLOC_MARKERS = (
     "std::make_shared<RestHandler",
     "RestHandler::RestHandler",
 )
+# Non-data-race reports (heap-use-after-free, lock-order-inversion, ...) have
+# no fixed two-stack shape, so any frame naming one of these anywhere in the
+# report is enough to call it model-state.
+MODEL_STATE_FRAME_MARKERS = ("RestHandler::", "AutoModel::")
 NOISE_PREFIXES = (
     "std::",
     "__gnu_cxx::",
@@ -108,7 +131,7 @@ def top_frames(lines, n=3):
 
 
 def split_reports(text):
-    """Yield the text of each data-race report in a TSan log."""
+    """Yield the text of each ThreadSanitizer report in a TSan log."""
     lines = text.splitlines()
     chunks = []
     current = []
@@ -124,6 +147,19 @@ def split_reports(text):
     for chunk in chunks:
         if any(WARNING_RE.search(line) for line in chunk):
             yield "\n".join(chunk)
+
+
+def report_kind(report):
+    """Return the "<kind>" from a report's "WARNING: ThreadSanitizer: <kind>"
+    line (e.g. "data race", "heap-use-after-free"), or None if it has none."""
+    m = WARNING_RE.search(report)
+    if not m:
+        return None
+    return re.sub(r"\s*\(pid=\d+\)\s*$", "", m.group(1)).strip()
+
+
+def has_summary(report):
+    return bool(SUMMARY_RE.search(report))
 
 
 def parse_report(report):
@@ -192,7 +228,28 @@ def is_failed_restore(frames):
     return any("[failed to restore the stack]" in line for line in frames)
 
 
+def classify_non_race(report):
+    """Bucket a non-data-race report (heap-use-after-free,
+    lock-order-inversion, ...): there's no fixed two-stack shape to anchor
+    on, so any frame in the whole report naming RestHandler:: or
+    AutoModel:: is enough."""
+    for line in report.splitlines():
+        func = frame_func(line)
+        if func and any(m in func for m in MODEL_STATE_FRAME_MARKERS):
+            return "model-state"
+    return "other"
+
+
 def classify(report):
+    kind = report_kind(report)
+    complete_summary = has_summary(report)
+
+    if kind is None or not kind.startswith("data race"):
+        bucket = classify_non_race(report)
+        if bucket != "model-state" and not complete_summary:
+            bucket = "incomplete"
+        return bucket, []
+
     stack1, stack2, heap_alloc = parse_report(report)
     stacks = [s for s in (stack1, stack2) if s is not None]
 
@@ -225,6 +282,14 @@ def classify(report):
     ):
         return "model-state", stacks
 
+    # incomplete is checked only now -- after ps-pair and model-state have
+    # had their chance on whatever WAS parsed -- so a truncated report that
+    # already proves one of those keeps that bucket instead of losing it.
+    missing_stack = stack1 is None or stack2 is None
+    has_restore_marker = "[failed to restore the stack]" in report
+    if not complete_summary or (missing_stack and not has_restore_marker):
+        return "incomplete", stacks
+
     if is_failed_restore(f1) or is_failed_restore(f2):
         return "failed-restore", stacks
 
@@ -245,17 +310,19 @@ def classify_text(text):
     return [classify(r) for r in split_reports(text)]
 
 
-BUCKET_ORDER = ("ps-pair", "model-state", "failed-restore", "libc-tz", "other")
+BUCKET_ORDER = ("ps-pair", "model-state", "incomplete", "failed-restore", "libc-tz", "other")
 
 
 def run(paths):
     counts = {b: 0 for b in BUCKET_ORDER}
+    skipped = 0
     for path in paths:
         try:
             with open(path, "r", errors="replace") as f:
                 text = f.read()
         except OSError as e:
             print(f"skip {path}: {e}", file=sys.stderr)
+            skipped += 1
             continue
         results = classify_text(text)
         for bucket, access_stacks in results:
@@ -264,8 +331,13 @@ def run(paths):
     print()
     for bucket in BUCKET_ORDER:
         print(f"{bucket}: {counts[bucket]}")
-    print("BUCKETS " + " ".join(f"{b}={counts[b]}" for b in BUCKET_ORDER))
-    return 0
+    print(f"skipped: {skipped}")
+    print(
+        "BUCKETS "
+        + " ".join(f"{b}={counts[b]}" for b in BUCKET_ORDER)
+        + f" skipped={skipped}"
+    )
+    return 2 if skipped else 0
 
 
 PS_PAIR_REPORT = """==================
@@ -337,6 +409,59 @@ SUMMARY: ThreadSanitizer: data race in SomeUnrelated::method
 ==================
 """
 
+# Both access stacks are AutoModel::, no RestHandler:: frame at all -- must
+# still be model-state.
+AUTOMODEL_RACE_REPORT = """==================
+WARNING: ThreadSanitizer: data race (pid=12345)
+  Write of size 8 at 0x7b0400000400 by thread T4:
+    #0 AutoModel::clear_context() automodel.cpp:120:5 (flm+0x1010)
+    #1 RestHandler::handle_generate(nlohmann::json const&, ...) rest_handler.cpp:700:9 (flm+0x2020)
+
+  Previous read of size 8 at 0x7b0400000400 by thread T6:
+    #0 AutoModel::insert(std::vector<int> const&) automodel.cpp:80:5 (flm+0x3030)
+    #1 RestHandler::handle_chat(nlohmann::json const&, ...) rest_handler.cpp:900:9 (flm+0x4040)
+
+SUMMARY: ThreadSanitizer: data race in AutoModel::clear_context
+==================
+"""
+
+# Both access stacks are unsymbolized. A complete SUMMARY line is present, so
+# this must be failed-restore, not incomplete.
+FAILED_RESTORE_REPORT = """==================
+WARNING: ThreadSanitizer: data race (pid=12345)
+  Write of size 8 at 0x7b0400000500 by thread T8:
+    [failed to restore the stack]
+
+  Previous read of size 8 at 0x7b0400000500 by thread T9:
+    [failed to restore the stack]
+
+SUMMARY: ThreadSanitizer: data race in ??
+==================
+"""
+
+# A non-data-race kind naming an AutoModel:: frame -- must be model-state.
+HEAP_UAF_AUTOMODEL_REPORT = """==================
+WARNING: ThreadSanitizer: heap-use-after-free (pid=12345)
+  Write of size 8 at 0x7b0400000600 by thread T2:
+    #0 AutoModel::insert(std::vector<int> const&) automodel.cpp:80:5 (flm+0x5050)
+    #1 RestHandler::handle_chat(nlohmann::json const&, ...) rest_handler.cpp:900:9 (flm+0x6060)
+
+  Previous write of size 8 at 0x7b0400000600 by thread T1:
+    #0 operator delete(void*) <null> (flm+0x7070)
+    #1 AutoModel::~AutoModel() automodel.cpp:30:1 (flm+0x8080)
+
+SUMMARY: ThreadSanitizer: heap-use-after-free in AutoModel::insert
+==================
+"""
+
+# Truncated mid-report: no "Previous ..." block and no SUMMARY line at all.
+INCOMPLETE_REPORT = """==================
+WARNING: ThreadSanitizer: data race (pid=12345)
+  Write of size 8 at 0x7b0400000700 by thread T3:
+    #0 SomeUnrelated::method() foo.cpp:10:5 (flm+0x9090)
+==================
+"""
+
 
 def self_test():
     reports = list(split_reports(PS_PAIR_REPORT))
@@ -354,6 +479,26 @@ def self_test():
     bucket, _ = classify(reports[0])
     assert bucket != "model-state", f"expected NOT model-state, got {bucket}"
     assert bucket == "other", f"expected other, got {bucket}"
+
+    reports = list(split_reports(AUTOMODEL_RACE_REPORT))
+    assert len(reports) == 1, f"expected 1 report, got {len(reports)}"
+    bucket, _ = classify(reports[0])
+    assert bucket == "model-state", f"expected model-state, got {bucket}"
+
+    reports = list(split_reports(FAILED_RESTORE_REPORT))
+    assert len(reports) == 1, f"expected 1 report, got {len(reports)}"
+    bucket, _ = classify(reports[0])
+    assert bucket == "failed-restore", f"expected failed-restore, got {bucket}"
+
+    reports = list(split_reports(HEAP_UAF_AUTOMODEL_REPORT))
+    assert len(reports) == 1, f"expected 1 report, got {len(reports)}"
+    bucket, _ = classify(reports[0])
+    assert bucket == "model-state", f"expected model-state, got {bucket}"
+
+    reports = list(split_reports(INCOMPLETE_REPORT))
+    assert len(reports) == 1, f"expected 1 report, got {len(reports)}"
+    bucket, _ = classify(reports[0])
+    assert bucket == "incomplete", f"expected incomplete, got {bucket}"
 
     print("self-test OK")
     return 0

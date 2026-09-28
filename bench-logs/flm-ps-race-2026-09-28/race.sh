@@ -9,9 +9,12 @@
 # fixed true for label=green (ps-serving-snapshot.patch applied).
 #
 # Oracle:
-#   red:   ps-pair >= 1 (the race must reproduce) -- the ONLY gate.
-#   green: ps-pair == 0 and model-state == 0, and every poll and every
-#          chat/completions request answered 200.
+#   red:   ps-pair >= 1 AND model-state >= 1 (both the #184 race and the
+#          post-send tail race must reproduce) -- gates for red.
+#   green: ps-pair == 0, model-state == 0 and incomplete == 0, and every
+#          poll, chat/completions and queue request answered 200.
+#   both:  FAIL if any TSan log was unreadable (skipped > 0), the classifier
+#          exited non-zero, or no TSan logs were found at all.
 set -u
 
 FLM=${1:?usage: race.sh <flm> <outdir> <label>}
@@ -19,11 +22,19 @@ outdir=${2:?usage: race.sh <flm> <outdir> <label>}
 label=${3:?usage: race.sh <flm> <outdir> <label>}
 mkdir -p "$outdir"
 
+# Fresh run: drop this label's previous outputs so a stale log or result file
+# from an earlier run can't leak into this run's classification or oracle.
+rm -f "$outdir/ps-codes-$label".*.txt
+rm -f "$outdir/tsan-$label".*
+rm -f "$outdir/chat-$label.txt" "$outdir/completions-$label.txt" \
+      "$outdir/queue-$label.txt" "$outdir/race-$label.txt"
+
 LIB=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
 PORT=58604
 POLLERS=${POLLERS:-4}
 SWAPS=${SWAPS:-6}
 COMPLETIONS=3
+QUEUE_ROUNDS=${QUEUE_ROUNDS:-4}
 CLASSIFY="$(dirname "$0")/tsan-classify.py"
 
 pid=""
@@ -142,6 +153,31 @@ else
     echo "$label $i $model $(post /v1/completions "$body")" >>"$completions_file"
   done
 
+  # Concurrent-queue phase: B queues behind A on the NPU token. This is the
+  # only phase where the previous handler's post-send tail (clear_context /
+  # prompt_cache.reset) can overlap the next request -- sequential phases
+  # never queue one behind another.
+  queue_file="$outdir/queue-$label.txt"
+  : >"$queue_file"
+  chat_body='{"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 20."}],"stream":false,"options":{"num_predict":16,"top_k":1}}'
+  completions_body='{"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 20."}],"stream":false,"max_tokens":16,"temperature":0}'
+  queue_a_file="$outdir/.queue-a-$label"
+  queue_b_file="$outdir/.queue-b-$label"
+  for ((i = 0; i < QUEUE_ROUNDS; i++)); do
+    route=/api/chat
+    body=$chat_body
+    [ $((i % 2)) -eq 1 ] && route=/v1/chat/completions && body=$completions_body
+    post "$route" "$body" >"$queue_a_file" &
+    queue_a_pid=$!
+    sleep 0.3
+    post "$route" "$body" >"$queue_b_file" &
+    queue_b_pid=$!
+    wait "$queue_a_pid" "$queue_b_pid"
+    echo "$label $i $route A $(cat "$queue_a_file")" >>"$queue_file"
+    echo "$label $i $route B $(cat "$queue_b_file")" >>"$queue_file"
+  done
+  rm -f "$queue_a_file" "$queue_b_file"
+
   stop_pollers
   stop
   sleep 2
@@ -153,24 +189,26 @@ if pgrep -x flm >/dev/null; then
 fi
 
 shopt -s nullglob
-tsan_logs=("$outdir/tsan-$label".*)
-shopt -u nullglob
+tsan_logs=("$outdir/tsan-$label".[0-9]*)
 poll_files=("$outdir/ps-codes-$label".*.txt)
+shopt -u nullglob
 
 all_poll_codes=$(cat "${poll_files[@]}" 2>/dev/null)
 total_polls=$(printf '%s\n' "$all_poll_codes" | grep -c . || true)
 poll_hist=$(printf '%s\n' "$all_poll_codes" | sort | uniq -c | tr '\n' ';')
 
-chat_codes=$(awk '{print $4}' "${chat_file:-/dev/null}" "${completions_file:-/dev/null}" 2>/dev/null)
-chat_hist=$(printf '%s\n' "$chat_codes" | sort | uniq -c | tr '\n' ';')
+# http_code is always the second-to-last field: chat/completions lines end
+# "... model http_code time_total", queue lines end "... A|B http_code time_total".
+req_codes=$(awk '{print $(NF-1)}' "${chat_file:-/dev/null}" "${completions_file:-/dev/null}" "${queue_file:-/dev/null}" 2>/dev/null)
+req_hist=$(printf '%s\n' "$req_codes" | sort | uniq -c | tr '\n' ';')
 
 all_polls_200=true
 [ -n "$all_poll_codes" ] || all_polls_200=false
 printf '%s\n' "$all_poll_codes" | grep -qv '^200$' && all_polls_200=false
 
-all_chat_200=true
-[ -n "$chat_codes" ] || all_chat_200=false
-printf '%s\n' "$chat_codes" | grep -qv '^200$' && all_chat_200=false
+all_req_200=true
+[ -n "$req_codes" ] || all_req_200=false
+printf '%s\n' "$req_codes" | grep -qv '^200$' && all_req_200=false
 
 result_file="$outdir/race-$label.txt"
 : >"$result_file"
@@ -178,21 +216,35 @@ log() { echo "$1" | tee -a "$result_file"; }
 
 log "INFO total_polls=$total_polls"
 log "INFO poll_code_histogram: $poll_hist"
-log "INFO chat_completions_code_histogram: $chat_hist"
+log "INFO chat_completions_queue_code_histogram: $req_hist"
 
 ps_pair=0
 model_state=0
+incomplete=0
+skipped=0
 if [ "${#tsan_logs[@]}" -eq 0 ]; then
   log "FAIL tsan-logs-present: no TSan log files found for label=$label (TSan aborted at startup?)"
   rc=1
 else
   summary="$outdir/tsan-$label.summary.txt"
   classify_out=$(python3 "$CLASSIFY" "${tsan_logs[@]}")
+  classify_rc=$?
   printf '%s\n' "$classify_out" >"$summary"
   buckets_line=$(printf '%s\n' "$classify_out" | grep '^BUCKETS ')
   ps_pair=$(printf '%s\n' "$buckets_line" | grep -oE 'ps-pair=[0-9]+' | cut -d= -f2)
   model_state=$(printf '%s\n' "$buckets_line" | grep -oE 'model-state=[0-9]+' | cut -d= -f2)
+  incomplete=$(printf '%s\n' "$buckets_line" | grep -oE 'incomplete=[0-9]+' | cut -d= -f2)
+  skipped=$(printf '%s\n' "$buckets_line" | grep -oE 'skipped=[0-9]+' | cut -d= -f2)
   log "INFO $buckets_line"
+
+  if [ "$classify_rc" -ne 0 ]; then
+    log "FAIL classifier-clean-exit (rc=$classify_rc)"
+    rc=1
+  fi
+  if [ "${skipped:-0}" -gt 0 ]; then
+    log "FAIL no-skipped-logs (skipped=$skipped)"
+    rc=1
+  fi
 
   case "$label" in
     red)
@@ -202,12 +254,19 @@ else
         log "FAIL ps-pair-reproduced (ps-pair=$ps_pair)"
         rc=1
       fi
+      if [ "${model_state:-0}" -ge 1 ]; then
+        log "PASS tail-race-reproduced (model-state=$model_state)"
+      else
+        log "FAIL tail-race-reproduced (model-state=$model_state)"
+        rc=1
+      fi
       ;;
     green)
       if [ "${ps_pair:-1}" -eq 0 ]; then log "PASS no-ps-pair"; else log "FAIL no-ps-pair (ps-pair=$ps_pair)"; rc=1; fi
       if [ "${model_state:-1}" -eq 0 ]; then log "PASS no-model-state"; else log "FAIL no-model-state (model-state=$model_state)"; rc=1; fi
+      if [ "${incomplete:-1}" -eq 0 ]; then log "PASS no-incomplete"; else log "FAIL no-incomplete (incomplete=$incomplete)"; rc=1; fi
       if $all_polls_200; then log "PASS all-poll-200"; else log "FAIL all-poll-200"; rc=1; fi
-      if $all_chat_200; then log "PASS all-chat-completions-200"; else log "FAIL all-chat-completions-200"; rc=1; fi
+      if $all_req_200; then log "PASS all-chat-completions-queue-200"; else log "FAIL all-chat-completions-queue-200"; rc=1; fi
       ;;
     *)
       log "FAIL unknown label '$label' (want red|green)"

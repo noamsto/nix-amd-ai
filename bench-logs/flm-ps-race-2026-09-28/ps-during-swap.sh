@@ -8,6 +8,9 @@
 # that the reported model name never goes stale (no llama3.2:1b answer once
 # the first [] appears at/after the request was sent, and gemma4-it:e4b
 # shows up at/after the reply).
+#
+# Exit code reflects the oracle in $out_file (any FAIL line -> nonzero), not
+# just process bookkeeping: the base build is expected to FAIL no-stale.
 set -u
 
 FLM=${1:?usage: ps-during-swap.sh <flm> <outdir> <label>}
@@ -20,7 +23,11 @@ PORT=58606
 tsv="$outdir/ps-swap-$label.tsv"
 times_file="$outdir/ps-swap-$label.times"
 out_file="$outdir/ps-swap-$label.txt"
+stop_flag="$outdir/.stop-poller-$label"
 : >"$tsv"
+: >"$times_file"
+: >"$out_file"
+rm -f "$stop_flag"
 
 pid=""
 poller_pid=""
@@ -40,11 +47,14 @@ stop() {
   pid=""
 }
 
+# The poller finishes its in-flight poll and exits on the stop flag, so no
+# poll is cut off mid-request (curl would record 000).
 stop_poller() {
   [ -n "$poller_pid" ] || return 0
-  kill "$poller_pid" 2>/dev/null
+  touch "$stop_flag"
   wait "$poller_pid" 2>/dev/null
   poller_pid=""
+  rm -f "$stop_flag"
 }
 
 # shellcheck disable=SC2329 # invoked indirectly via trap
@@ -101,7 +111,7 @@ poll_once() {
 }
 
 poller_loop() {
-  while :; do
+  while [ ! -e "$stop_flag" ]; do
     poll_once
     sleep 0.05
   done
@@ -111,6 +121,8 @@ wait_for_no_flm
 
 if ! up; then
   stop
+  echo "FAIL server-up" >"$out_file"
+  rc=1
 else
   poller_loop &
   poller_pid=$!
@@ -220,6 +232,8 @@ with open(out_path, "w") as f:
         print(line)
         f.write(line + "\n")
 PY
+
+  grep -q '^FAIL' "$out_file" && rc=1
 fi
 
 if pgrep -x flm >/dev/null; then

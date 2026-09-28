@@ -18,10 +18,24 @@ flake.packages.x86_64-linux.fastflowlm.overrideAttrs (old: {
   patches =
     if fixed
     then old.patches
-    else builtins.filter (p: baseNameOf p != "ps-serving-snapshot.patch") old.patches;
-  configurePhase = builtins.replaceStrings
-    [ "-DCMAKE_BUILD_TYPE=Release" ]
-    [ "-DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fsanitize=thread '-DCMAKE_CXX_FLAGS=-fsanitize=thread -g' -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread -DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=thread" ]
-    old.configurePhase;
+    else
+      let
+        filtered = builtins.filter (p: baseNameOf p != "ps-serving-snapshot.patch") old.patches;
+      in
+      # A renamed/missing patch file would silently no-op the filter and build
+      # the "red" case with the fix still applied.
+      assert builtins.length filtered == builtins.length old.patches - 1;
+      filtered;
+  configurePhase =
+    let
+      replaced = builtins.replaceStrings
+        [ "-DCMAKE_BUILD_TYPE=Release" ]
+        [ "-DCMAKE_BUILD_TYPE=Release -DCMAKE_C_FLAGS=-fsanitize=thread '-DCMAKE_CXX_FLAGS=-fsanitize=thread -g' -DCMAKE_EXE_LINKER_FLAGS=-fsanitize=thread -DCMAKE_SHARED_LINKER_FLAGS=-fsanitize=thread" ]
+        old.configurePhase;
+    in
+    # An upstream configurePhase rewrite could drop the substring and silently
+    # build without TSan instrumentation.
+    assert replaced != old.configurePhase;
+    replaced;
   dontStrip = true;
 })

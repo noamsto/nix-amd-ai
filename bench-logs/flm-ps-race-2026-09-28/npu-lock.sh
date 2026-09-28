@@ -22,6 +22,14 @@ mkdir -p "$outdir"
 LIB=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
 PORT=58605
 server_log="$outdir/server-npu-lock-$label.log"
+chat_code_file="$outdir/npu-lock-$label.chat-code.txt"
+completions_code_file="$outdir/npu-lock-$label.completions-code.txt"
+embeddings_code_file="$outdir/npu-lock-$label.embeddings-code.txt"
+# Reset now, not just inside the up()-success branch below: a failed up()
+# must not leave a previous run's code behind for the caller to misread.
+: >"$chat_code_file"
+: >"$completions_code_file"
+: >"$embeddings_code_file"
 
 pid=""
 rc=0
@@ -86,10 +94,6 @@ log() { echo "$1" | tee -a "$result_file"; }
 if ! up; then
   log "FAIL server-up: never became ready"
 else
-  chat_code_file="$outdir/npu-lock-$label.chat-code.txt"
-  completions_code_file="$outdir/npu-lock-$label.completions-code.txt"
-  embeddings_code_file="$outdir/npu-lock-$label.embeddings-code.txt"
-
   chat_body='{"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 400, separated by commas."}],"stream":false,"options":{"num_predict":512,"top_k":1}}'
   completions_body='{"model":"llama3.2:1b","prompt":"Say hi.","max_tokens":4}'
   embeddings_body='{"model":"embed-gemma:300m","input":"hello"}'
