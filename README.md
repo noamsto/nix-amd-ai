@@ -260,8 +260,9 @@ sibling `llamacpp.*_bin` paths.
 
 Per-*model* eviction knobs (`pinned`, `evict_idle_timeout`,
 `downsize_idle_timeout`, `evict_weight_factor`, and a per-recipe `auto_evict`
-override) live in lemond's separate `recipe_options.json` and are set through
-lemonade itself, not through this option.
+override) live in lemond's separate `recipe_options.json`; set them with
+[`lemonade.recipeOptions`](#per-model-recipe-options-lemonaderecipeoptions)
+below.
 
 Reconciliation only ever writes keys, never deletes them: dropping a key from
 `settings` stops it being re-applied but leaves the last value in the persisted
@@ -283,6 +284,45 @@ origin is listed in `LEMONADE_ALLOWED_ORIGINS`. Like host/port, this is env-only
 schemes are always allowed, so this only matters once `lemonade.host` is
 bound to something a LAN or remote browser can reach; the module warns if
 you set the former without the latter.
+
+### Per-model recipe options: `lemonade.recipeOptions`
+
+`lemonade.settings` reaches lemond's global runtime config; the per-model
+knobs — most usefully `pinned`, which exempts a model from auto-eviction — live
+in a different file, `recipe_options.json`, keyed by canonical model ID. That
+file has no packaged defaults layer: lemond reads it as bare user state, so the
+module merges its entries into it on every `lemond` start rather than seeding
+it once.
+
+```nix
+hardware.amd-npu.lemonade.recipeOptions = {
+  "builtin.Gemma4-2B-FLM" = { pinned = true; };
+  "builtin.Qwen3.6-30B-GGUF" = { evict_idle_timeout = 900; };
+};
+```
+
+Keys are the canonical IDs `lemonade list` reports (`builtin.<name>` for the
+built-in registry, `user.<name>` for a model registered through the web UI or
+`lemonade.customModels`). `pinned = true` is the mixed NPU + GPU case from
+[#67](https://github.com/noamsto/nix-amd-ai/issues/67): it keeps the small NPU
+model resident without having to raise the global `max_loaded_models` cap.
+
+The five eviction keys — `pinned`, `auto_evict`, `evict_idle_timeout`,
+`downsize_idle_timeout`, `evict_weight_factor` — are typed, so a wrong type
+fails at eval. Every other recipe option (`ctx_size`, `llamacpp_args`, …)
+passes through unchanged, which is also why a typo of a known key is treated as
+an unknown option and ignored by lemonade rather than rejected.
+
+The merge is per key and module keys win on conflict, so a `ctx_size` or args
+value the web UI set for the same model survives alongside the declared pin.
+For `user.<name>` models, `customModels.<name>.recipe_options` already supplies
+a lower-precedence default; this option is the higher layer and also the only
+declarative path for built-ins.
+
+As with `lemonade.settings`, the merge only ever writes keys, never deletes
+them: dropping a key stops it being re-applied but leaves the last value in
+the persisted file. A key explicitly set to `null` is pruned rather than
+written.
 
 ### Declarative models: `lemonade.models`
 

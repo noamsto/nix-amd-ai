@@ -169,6 +169,14 @@
     (pkgs.formats.json {}).generate "lemonade-user-models.json"
     cfg.lemonade.customModels;
 
+  # recipe_options.json has no packager defaults layer -- lemond loads it as
+  # bare user state (load_optional_json) -- so there is nothing to merge under;
+  # the module adds the entries directly. Known keys default to null and are
+  # pruned here so an unset one never overwrites a UI value at merge time.
+  lemonadeRecipeOptionsFile =
+    (pkgs.formats.json {}).generate "lemonade-recipe-options.json"
+    (lib.mapAttrs (_: lib.filterAttrs (_: v: v != null)) cfg.lemonade.recipeOptions);
+
   # LEMONADE_DEFAULTS_PATH only seeds config.json on lemond's first run — after
   # that the persisted file wins for every key it holds, so module-declared
   # values rot. Re-apply ours each start. See noamsto/nix-amd-ai#67 and #68.
@@ -212,6 +220,27 @@
       else
         rm -f "$tmp"
         echo "lemond: $models is unreadable, leaving it untouched" >&2
+      fi
+    ''
+    + optionalString (cfg.lemonade.recipeOptions != {}) ''
+
+      # recipe_options.json is the highest-precedence layer of a model's recipe
+      # options and lemond treats it as bare user state, so a declared pin is
+      # gone the moment the web UI saves over the file. Re-apply ours each start.
+      # Merge per key so a UI-set ctx_size/args for the same model survives;
+      # module keys win on conflict. Like user_models.json, this file is ours to
+      # create -- lemond treats a missing one as empty.
+      recipeOptions="$configDir/recipe_options.json"
+      mkdir -p "$configDir"
+      [ -f "$recipeOptions" ] || echo '{}' >"$recipeOptions"
+
+      tmp="$recipeOptions.nix-reconcile"
+      if jq -s '.[0] * .[1]' "$recipeOptions" ${lemonadeRecipeOptionsFile} >"$tmp"; then
+        chmod --reference="$recipeOptions" "$tmp"
+        mv "$tmp" "$recipeOptions"
+      else
+        rm -f "$tmp"
+        echo "lemond: $recipeOptions is unreadable, leaving it untouched" >&2
       fi
     '';
   };
@@ -504,6 +533,69 @@ in {
           These keys are re-applied on every `lemond` start, so they stay
           declarative; keys not listed here are left to whatever the web UI
           persisted in `''${XDG_CONFIG_HOME:-~/.config}/lemonade/config.json`.
+        '';
+      };
+
+      recipeOptions = mkOption {
+        type = types.attrsOf (types.submodule {
+          freeformType = types.json;
+          options = {
+            pinned = mkOption {
+              type = types.nullOr types.bool;
+              default = null;
+              description = "Exempt the model from auto-eviction and downsize entirely (lemonade default false). Unset takes lemonade's default.";
+            };
+            auto_evict = mkOption {
+              type = types.nullOr types.bool;
+              default = null;
+              description = "Per-model auto-eviction override; null (unset) falls back to the global `lemonade.settings.auto_evict`.";
+            };
+            evict_idle_timeout = mkOption {
+              type = types.nullOr types.ints.unsigned;
+              default = null;
+              description = "Seconds a model may sit idle before it is unloaded (lemonade default 300).";
+            };
+            downsize_idle_timeout = mkOption {
+              type = types.nullOr types.ints.unsigned;
+              default = null;
+              description = "Seconds a model may sit idle before it is downsized (lemonade default 60).";
+            };
+            evict_weight_factor = mkOption {
+              type = types.nullOr types.numbers.nonnegative;
+              default = null;
+              description = "Eviction-protection weight; higher protects the model from pressure eviction (lemonade default 1.0).";
+            };
+          };
+        });
+        default = {};
+        example = lib.literalExpression ''
+          {
+            "builtin.Gemma4-2B-FLM" = { pinned = true; };
+            "builtin.Qwen3.6-30B-GGUF" = { evict_idle_timeout = 900; };
+          }
+        '';
+        description = ''
+          Per-model recipe options, keyed by canonical model ID: `builtin.<name>`
+          for the built-in registry, `user.<name>` for a model registered through
+          the web UI or `lemonade.customModels`. Find the ID with `lemonade
+          list`. Merged into
+          `''${XDG_CONFIG_HOME:-~/.config}/lemonade/recipe_options.json` -- the
+          file the web UI writes -- so these are the highest-precedence layer:
+          a key here wins over both a built-in's registry default and
+          `customModels.<name>.recipe_options` (which already covers the lower
+          layer for `user.` models; the gap this closes is built-ins, plus a
+          pin that does not require listing the model in `customModels`).
+
+          Re-applied on every `lemond` start, because `recipe_options.json` has
+          no packaged defaults layer and a web UI save would otherwise drop a
+          declared pin. The merge is per key, so a UI-set `ctx_size` or args for
+          the same model survive alongside the declared option.
+
+          The eviction keys above are typed, so a wrong type fails at eval.
+          Every other recipe option (`ctx_size`, `llamacpp_args`, …) passes
+          through unchanged, which means a typo of a known key is treated as an
+          unknown option and ignored by lemonade rather than rejected. A key set
+          to `null` is pruned, not written.
         '';
       };
 

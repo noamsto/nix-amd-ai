@@ -779,6 +779,103 @@
                 touch $out
               '';
 
+            # recipeOptions must reach recipe_options.json on every lemond start,
+            # per-key so a UI-set ctx_size/args for the same model survives, and
+            # must leave the file alone entirely when the option is unset.
+            module-eval-lemonade-recipe-options = let
+              mkSys = recipeOptions:
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu = {
+                        enable = true;
+                        enableLemonade = true;
+                        lemonade = {
+                          user = "testuser";
+                          inherit recipeOptions;
+                        };
+                      };
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config;
+              configured = mkSys {
+                "builtin.Gemma4-2B-FLM" = {pinned = true;};
+                "builtin.Qwen3.6-30B-GGUF" = {evict_idle_timeout = 900;};
+              };
+              plain = mkSys {};
+            in
+              pkgs.runCommand "module-eval-lemonade-recipe-options" {
+                nativeBuildInputs = [pkgs.jq];
+                configuredUnit = configured.systemd.units."lemond.service".unit;
+                plainUnit = plain.systemd.units."lemond.service".unit;
+              } ''
+                # Grep the script file the ExecStartPre path points at, not the
+                # path string (same idiom as the other module-eval checks).
+                configuredScript=$(sed -n 's/^ExecStartPre=//p' "$configuredUnit"/lemond.service)
+                plainScript=$(sed -n 's/^ExecStartPre=//p' "$plainUnit"/lemond.service)
+
+                # Option unset: the reconcile hook must not touch recipe_options.json
+                # at all -- not even create it.
+                if grep -qF 'recipe_options.json' "$plainScript"; then
+                  echo "recipe_options step emitted with recipeOptions unset" >&2
+                  exit 1
+                fi
+                export HOME=$TMPDIR/home-plain
+                unset XDG_CONFIG_HOME
+                "$plainScript"
+                [ ! -e "$HOME/.config/lemonade/recipe_options.json" ] \
+                  || { echo "unset recipeOptions still created recipe_options.json" >&2; exit 1; }
+
+                # Option set: the step is present.
+                grep -qF 'recipe_options.json' "$configuredScript" \
+                  || { echo "missing recipe_options step" >&2; exit 1; }
+
+                # Exercise the generated script directly against temp files.
+                export HOME=$TMPDIR/home
+                unset XDG_CONFIG_HOME
+                mkdir -p "$HOME/.config/lemonade"
+                ro=$HOME/.config/lemonade/recipe_options.json
+
+                # Missing file -> created with the module's entries.
+                "$configuredScript"
+                jq -e '."builtin.Gemma4-2B-FLM".pinned == true' "$ro" >/dev/null
+                jq -e '."builtin.Qwen3.6-30B-GGUF".evict_idle_timeout == 900' "$ro" >/dev/null
+
+                # A UI-set ctx_size on the same model survives alongside the
+                # module's pinned, and a model the module never names is left
+                # alone. Mode is preserved.
+                echo '{"builtin.Gemma4-2B-FLM":{"ctx_size":8192},"user.Other":{"ctx_size":4096}}' >"$ro"
+                chmod 600 "$ro"
+                "$configuredScript"
+                jq -e '."builtin.Gemma4-2B-FLM".ctx_size == 8192' "$ro" >/dev/null
+                jq -e '."builtin.Gemma4-2B-FLM".pinned == true' "$ro" >/dev/null
+                jq -e '."user.Other".ctx_size == 4096' "$ro" >/dev/null
+                [ "$(stat -c %a "$ro")" = 600 ]
+
+                # An unreadable file is left untouched. The nix build sandbox is
+                # unprivileged, so chmod 000 denies this reader.
+                cp "$ro" "$ro.before"
+                chmod 000 "$ro"
+                "$configuredScript" 2>/dev/null || true
+                chmod 600 "$ro"
+                cmp -s "$ro" "$ro.before" \
+                  || { echo "unreadable recipe_options.json was modified" >&2; exit 1; }
+
+                touch $out
+              '';
+
             module-eval-lemonade-models = let
               mkSys = lemonadeExtra:
                 (inputs.nixpkgs.lib.nixosSystem {
