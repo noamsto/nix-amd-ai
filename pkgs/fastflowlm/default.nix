@@ -33,8 +33,8 @@ stdenv.mkDerivation (finalAttrs: {
   };
 
   # flm serve's request handling has bugs, found by running OpenFlowLM-Next's
-  # server-api conformance suite against it (#164, #171, #173) and by review
-  # (#175):
+  # server-api conformance suite against it (#164, #171, #173), by review
+  # (#175), and by the conformance runs' startup probe (#178):
   #   - server-error-handling.patch: a malformed request body could throw
   #     twice while the server built its own error response, escaping every
   #     catch before the NPU lock was released and wedging it permanently
@@ -77,20 +77,33 @@ stdenv.mkDerivation (finalAttrs: {
   #     model that declares no prompt names (embed-gemma: hardcoded prefixes)
   #     keeps task_query when the request names none; a model that declares
   #     prompt names would require one (missing_required_parameter).
+  #   - ps-loaded-models.patch (#178): GET /api/ps built its entry from
+  #     current_model_tag unconditionally, so with no chat model loaded (flm
+  #     serve with no tag, a non-chat startup tag such as embed-gemma:300m,
+  #     or after a failed load) it looked up the "model-faker" sentinel -- a
+  #     missing-key read on a const json, undefined behavior that answered
+  #     400 -- and since GET /api/ps isn't serialized by the NPU lock, the
+  #     same UB was reachable mid-load, when the new engine is set before
+  #     current_model_tag. It now lists the chat model only when a chat
+  #     engine is loaded under a real tag ({"models": []} otherwise), and
+  #     like Ollama also lists a loaded --embed model. Whisper (--asr) is
+  #     not listed.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
   # that is on the branch commit per this repo's CLAUDE.md, not here. Still
   # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
   # request validation, the NPU-lock leak, the status mapping, model
-  # substitution, leaking exception text, and ignoring the task prompt. A
-  # bump that breaks any patch fails the build rather than silently losing it.
+  # substitution, leaking exception text, ignoring the task prompt, and
+  # reporting the no-model sentinel in /api/ps. A bump that breaks any patch
+  # fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
     ./patches/model-identity.patch
     ./patches/no-exception-text.patch
     ./patches/embed-task-prompt.patch
+    ./patches/ps-loaded-models.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
