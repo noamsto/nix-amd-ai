@@ -1,0 +1,80 @@
+== llama (llama3.2:1b) ==
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":false,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=1 first_line_s=0.613 total_s=0.613
+{"model":"llama3.2:1b","message":{"role":"assistant","content":"1, 2, 3, 4, 5","images":null},"done":true,"prompt_eval_count":47,"eval_count":13,"total_duration":602536320,"load_duration":2505,"prompt_eval_duration":393345696,"eval_duration":192338000,"done_reason":"stop"}
+PASS llama/nonstream-chat
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"max_tokens":32}
+HTTP 200 lines=15 first_line_s=0.393 total_s=0.601
+content: 1, 2, 3, 4, 5
+PASS llama/stream-openai
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=14 first_line_s=0.39 total_s=0.599
+   0.390	{"model":"llama3.2:1b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+   0.405	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.420	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   0.435	{"model":"llama3.2:1b","message":{"role":"assistant","content":"2","thinking":""},"done":false}
+   0.450	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.465	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   0.480	{"model":"llama3.2:1b","message":{"role":"assistant","content":"3","thinking":""},"done":false}
+   0.494	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.509	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   0.524	{"model":"llama3.2:1b","message":{"role":"assistant","content":"4","thinking":""},"done":false}
+   0.539	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.554	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   0.569	{"model":"llama3.2:1b","message":{"role":"assistant","content":"5","thinking":""},"done":false}
+   0.599	{"model":"llama3.2:1b","message":{"role":"assistant","content":""},"done":true,"done_reason":"stop","prompt_eval_count":47,"eval_count":13,"total_duration":586131456,"load_duration":2244,"prompt_eval_duration":375580640,"eval_duration":192328000}
+prefill log lines during stream-chat: 1
+content: 1, 2, 3, 4, 5
+PASS llama/stream-chat/server-alive
+PASS llama/stream-chat/tokens
+PASS llama/stream-chat/matches-nonstream
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":false,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=1 first_line_s=0.601 total_s=0.601
+PASS llama/nonstream-after
+== gemma4 (gemma4-it:e4b) ==
+$ POST /api/chat {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":false,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=1 first_line_s=2.271 total_s=2.271
+{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"1, 2, 3, 4, 5","images":null},"done":true,"prompt_eval_count":21,"eval_count":13,"total_duration":2229795328,"load_duration":2024,"prompt_eval_duration":1185694080,"eval_duration":931454000,"done_reason":"stop"}
+PASS gemma4/nonstream-chat
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"max_tokens":32}
+HTTP 200 lines=15 first_line_s=1.18 total_s=2.189
+content: 1, 2, 3, 4, 5
+PASS gemma4/stream-openai
+$ POST /api/chat {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":true,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=14 first_line_s=1.208 total_s=2.217
+   1.208	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+   1.280	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.352	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   1.424	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"2","thinking":""},"done":false}
+   1.495	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.568	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   1.640	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"3","thinking":""},"done":false}
+   1.712	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.783	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   1.855	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"4","thinking":""},"done":false}
+   1.927	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.999	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   2.071	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"5","thinking":""},"done":false}
+   2.217	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":""},"done":true,"done_reason":"stop","prompt_eval_count":21,"eval_count":13,"total_duration":2208199424,"load_duration":1843,"prompt_eval_duration":1165774336,"eval_duration":931776000}
+prefill log lines during stream-chat: 1
+content: 1, 2, 3, 4, 5
+PASS gemma4/stream-chat/server-alive
+PASS gemma4/stream-chat/tokens
+PASS gemma4/stream-chat/matches-nonstream
+$ POST /api/chat {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Count from 1 to 5, separated by commas."}],"stream":false,"top_k":1,"options":{"num_predict":32}}
+HTTP 200 lines=1 first_line_s=2.236 total_s=2.236
+PASS gemma4/nonstream-after
+== summary ==
+PASS llama/nonstream-chat
+PASS llama/stream-openai
+PASS llama/stream-chat/server-alive
+PASS llama/stream-chat/tokens
+PASS llama/stream-chat/matches-nonstream
+PASS llama/nonstream-after
+PASS gemma4/nonstream-chat
+PASS gemma4/stream-openai
+PASS gemma4/stream-chat/server-alive
+PASS gemma4/stream-chat/tokens
+PASS gemma4/stream-chat/matches-nonstream
+PASS gemma4/nonstream-after
+12 passed, 0 failed

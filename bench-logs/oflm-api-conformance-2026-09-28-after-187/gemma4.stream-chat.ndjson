@@ -1,0 +1,14 @@
+   1.208	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+   1.280	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.352	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   1.424	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"2","thinking":""},"done":false}
+   1.495	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.568	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   1.640	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"3","thinking":""},"done":false}
+   1.712	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.783	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   1.855	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"4","thinking":""},"done":false}
+   1.927	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.999	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   2.071	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"5","thinking":""},"done":false}
+   2.217	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":""},"done":true,"done_reason":"stop","prompt_eval_count":21,"eval_count":13,"total_duration":2208199424,"load_duration":1843,"prompt_eval_duration":1165774336,"eval_duration":931776000}

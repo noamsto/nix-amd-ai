@@ -1,0 +1,154 @@
+[FLM]  Using user-specified port: 58603
+[FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
+[FLM]  Starting server on port 58603...
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:60224
+[FLM]  WebServer started on port 58603 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[TCP]  Read 90 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 15:00:55 09:28:2026
+[LOG]  Target: /api/version
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:60224
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:60230
+[TCP]  Read 341 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 15:00:55 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "options": {
+        "num_predict": 32
+    },
+    "stream": false,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start generating...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 21 tokens
+[31m[FLM]  Creating checkpoint at context length 21[0m
+[31m[FLM]  Restoring checkpoint at context length 21[0m
+[31m[FLM]  Checkpoint before generation: 21, restore point: 21, user context length: 21[0m
+
+[FLM]  Model RAW Output: 
+1, 2, 3, 4, 5
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:60230
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:60234
+[TCP]  Read 338 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 15:00:57 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 32,
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "stream": true,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start prefill...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 21 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+1, 2, 3, 4, 5
+[31m[FLM]  Creating checkpoint at context length 35[0m
+ChatCompletionChunk: {"id":"chatcmpl-791653ea8a8c38b303ac31ff","object":"chat.completion.chunk","created":1790596857,"model":"gemma4-it:e4b","system_fingerprint":"fp_adba130877b86fe7","choices":[{"index":0,"delta":{"content":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":21,"completion_tokens":13,"total_tokens":34,"active_kv_tokens":34,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":0.103759765625,"load_duration":1.803e-06,"prefill_duration_ttft":1.171224704,"decoding_duration":0.931217,"prefill_speed_tps":17.92994967428556,"decoding_speed_tps":13.960226241574198}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:60246
+[TCP]  Read 340 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 15:00:59 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "options": {
+        "num_predict": 32
+    },
+    "stream": true,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start generating...
+[FLM]  Total images: 0
+[FLM]  Conversation context diverged from cache, clearing context...
+[FLM]  Prefill chunk 1/1 with 21 tokens
+
+[FLM]  Model RAW Output: 
+1, 2, 3, 4, 5
+[31m[FLM]  Creating checkpoint at context length 35[0m
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:51866
+[TCP]  Read 341 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 15:01:03 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Count from...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "options": {
+        "num_predict": 32
+    },
+    "stream": false,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start generating...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 21 tokens
+[31m[FLM]  Creating checkpoint at context length 21[0m
+[31m[FLM]  Restoring checkpoint at context length 21[0m
+[31m[FLM]  Checkpoint before generation: 21, restore point: 21, user context length: 21[0m
+
+[FLM]  Model RAW Output: 
+1, 2, 3, 4, 5
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51866
