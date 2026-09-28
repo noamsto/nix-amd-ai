@@ -848,10 +848,12 @@
                 mkdir -p "$HOME/.config/lemonade"
                 ro=$HOME/.config/lemonade/recipe_options.json
 
-                # Missing file -> created with the module's entries.
+                # Missing file -> created with exactly the module's entries.
+                # Exact-object assertions also pin the null pruning: an unset
+                # typed key serialized as null would shadow a lower layer.
                 "$configuredScript"
-                jq -e '."builtin.Gemma4-2B-FLM".pinned == true' "$ro" >/dev/null
-                jq -e '."builtin.Qwen3.6-30B-GGUF".evict_idle_timeout == 900' "$ro" >/dev/null
+                jq -e '."builtin.Gemma4-2B-FLM" == {"pinned": true}' "$ro" >/dev/null
+                jq -e '."builtin.Qwen3.6-30B-GGUF" == {"evict_idle_timeout": 900}' "$ro" >/dev/null
 
                 # A UI-set ctx_size on the same model survives alongside the
                 # module's pinned, and a model the module never names is left
@@ -859,9 +861,8 @@
                 echo '{"builtin.Gemma4-2B-FLM":{"ctx_size":8192},"user.Other":{"ctx_size":4096}}' >"$ro"
                 chmod 600 "$ro"
                 "$configuredScript"
-                jq -e '."builtin.Gemma4-2B-FLM".ctx_size == 8192' "$ro" >/dev/null
-                jq -e '."builtin.Gemma4-2B-FLM".pinned == true' "$ro" >/dev/null
-                jq -e '."user.Other".ctx_size == 4096' "$ro" >/dev/null
+                jq -e '."builtin.Gemma4-2B-FLM" == {"ctx_size": 8192, "pinned": true}' "$ro" >/dev/null
+                jq -e '."user.Other" == {"ctx_size": 4096}' "$ro" >/dev/null
                 [ "$(stat -c %a "$ro")" = 600 ]
 
                 # An unreadable file is left untouched. The nix build sandbox is

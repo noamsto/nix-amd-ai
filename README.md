@@ -301,9 +301,10 @@ hardware.amd-npu.lemonade.recipeOptions = {
 };
 ```
 
-Keys are the canonical IDs `lemonade list` reports (`builtin.<name>` for the
-built-in registry, `user.<name>` for a model registered through the web UI or
-`lemonade.customModels`). `pinned = true` is the mixed NPU + GPU case from
+Keys are canonical IDs, not the bare names `lemonade list` prints: prefix a
+listed name with `builtin.` for the built-in registry or `user.` for a model
+registered through the web UI or `lemonade.customModels`. A bare key silently
+matches nothing. `pinned = true` is the mixed NPU + GPU case from
 [#67](https://github.com/noamsto/nix-amd-ai/issues/67): it keeps the small NPU
 model resident without having to raise the global `max_loaded_models` cap.
 

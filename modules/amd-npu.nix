@@ -577,8 +577,9 @@ in {
         description = ''
           Per-model recipe options, keyed by canonical model ID: `builtin.<name>`
           for the built-in registry, `user.<name>` for a model registered through
-          the web UI or `lemonade.customModels`. Find the ID with `lemonade
-          list`. Merged into
+          the web UI or `lemonade.customModels`. `lemonade list` prints the bare
+          `<name>`; prefix it yourself, since a bare key matches nothing.
+          Merged into
           `''${XDG_CONFIG_HOME:-~/.config}/lemonade/recipe_options.json` -- the
           file the web UI writes -- so these are the highest-precedence layer:
           a key here wins over both a built-in's registry default and
