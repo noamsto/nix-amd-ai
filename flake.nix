@@ -395,19 +395,18 @@
                 touch $out
               '';
 
-            # Device-free; proves the kernel sets shipped and the list --json
-            # regression (#164) stays fixed.
+            # Device-free: the kernel sets shipped, and a size-mismatched model
+            # file keeps its warning off the stdout lemonade parses as JSON.
             openflowlm-smoke =
               pkgs.runCommand "openflowlm-smoke" {
                 nativeBuildInputs = [pkgs.jq];
                 OFLM = linuxPackages.openflowlm;
               } ''
-                export HOME=$TMPDIR/home # first line, oflm creates ~/.config/oflm on start
+                export HOME=$TMPDIR/home # oflm creates ~/.config/oflm on start
                 mkdir -p "$HOME"
 
                 "$OFLM/bin/oflm" version --json | jq -e '.version == "0.1.0"'
 
-                # a size-mismatched model file must not put a warning on stdout ahead of the JSON lemonade parses
                 store=$TMPDIR/store
                 mkdir -p "$store/models/Llama-3.2-1B-NPU2"
                 echo x > "$store/models/Llama-3.2-1B-NPU2/config.json"
@@ -674,9 +673,6 @@
                 realDefaults = defaultsOf real;
                 offDefaults = defaultsOf off;
                 offHasLink = builtins.toJSON (off.environment.etc ? "lemonade/backends/flm-npu");
-                # oflm reads only its own name (upstream update.hpp:62, plain
-                # getenv, no fallback to FLM_); the module must also set
-                # OFLM_DISABLE_UPDATE_CHECK when real is oflm, not just FLM_.
                 realLemondNoUpdate = real.systemd.services.lemond.environment.OFLM_DISABLE_UPDATE_CHECK or "";
                 realSessionNoUpdate = real.environment.sessionVariables.OFLM_DISABLE_UPDATE_CHECK or "";
               } ''
