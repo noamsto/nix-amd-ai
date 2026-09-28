@@ -1,0 +1,11 @@
+INFO disconnect={"status": 200, "chunks": 5, "elapsed_s": 0.448, "error": null} chat_code=500 chat_time_total=0.002065 completions_again_code=500 completions_again_done=false server_alive=true
+FAIL chat-200
+FAIL completions-again-done
+PASS server-alive
+PASS no-heap-corruption
+FAIL no-runlist-error
+INFO npu-locked-count=1 request-queued-count=0
+INFO error: 61:1790608442.372	[ERROR]  handle_chat: The runlist is submitted for execution and cannot be reset. Please use wait() to ensure that all commands have completed before calling reset().: Invalid argument
+INFO error: 63:1790608442.373	[ERROR]  handle_chat: The runlist is submitted for execution and cannot be reset. Please use wait() to ensure that all commands have completed before calling reset().: Invalid argument
+INFO error: 84:1790608442.380	[ERROR]  handle_openai_completion: The runlist is submitted for execution and cannot be reset. Please use wait() to ensure that all commands have completed before calling reset().: Invalid argument
+INFO error: 85:1790608442.380	[ERROR]  handle_openai_completion: The runlist is submitted for execution and cannot be reset. Please use wait() to ensure that all commands have completed before calling reset().: Invalid argument

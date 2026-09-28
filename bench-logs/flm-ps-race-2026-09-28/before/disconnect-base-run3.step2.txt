@@ -1,0 +1,3 @@
+INFO code=500 time_total=0.002065
+BODY (first 500 bytes):
+{"error":{"message":"Internal error","type":"server_error"}}

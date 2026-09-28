@@ -1,0 +1,3 @@
+INFO code=200 time_total=5.227974
+BODY (first 500 bytes):
+{"model":"llama3.2:1b","message":{"role":"assistant","content":"Hi.","images":null},"done":true,"prompt_eval_count":38,"eval_count":2,"total_duration":429079808,"load_duration":2745,"prompt_eval_duration":383867616,"eval_duration":29468000,"done_reason":"stop"}

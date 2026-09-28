@@ -1,0 +1,62 @@
+1790608371.379	[FLM]  Using user-specified port: 58607
+1790608371.892	[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+1790608373.742	[FLM]  Starting server on port 58607...
+1790608373.742	[🔗 ]  TCP connection established - Remote: 127.0.0.1:59932
+1790608373.742	[FLM]  WebServer started on port 58607 with 10 I/O threads
+1790608373.742	[FLM]  Press Ctrl+C to stop.
+1790608373.742	[TCP]  Read 90 bytes from socket
+1790608373.742	================================================
+1790608373.742	[⬇️ ]  Incoming Request: GET
+1790608373.742	[LOG]  Time stamp: 18:12:53 09:28:2026
+1790608373.742	[LOG]  Target: /api/version
+1790608373.742	[LOG]  Version: 11
+1790608373.742	[LOG]  Keep-Alive: 1
+1790608373.742	================================================
+1790608373.742	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59932
+1790608373.767	[🔗 ]  TCP connection established - Remote: 127.0.0.1:59940
+1790608373.767	[TCP]  Read 269 bytes from socket
+1790608373.767	================================================
+1790608373.767	[⬇️ ]  Incoming Request: POST
+1790608373.767	[LOG]  Time stamp: 18:12:53 09:28:2026
+1790608373.767	[LOG]  Target: /v1/completions
+1790608373.767	[LOG]  Version: 11
+1790608373.767	[LOG]  Keep-Alive: 1
+1790608373.767	[LOG]  Body: 
+1790608373.767	{
+1790608373.767	    "max_tokens": 512,
+1790608373.767	    "model": "llama3.2:1b",
+1790608373.767	    "prompt": "Count from 1 to 1000, separated by commas.",
+1790608373.767	    "stream": true,
+1790608373.767	    "temperature": 0
+1790608373.767	}
+1790608373.767	[FLM]  Start generating...
+1790608373.767	[FLM]  Prefill chunk 1/1 with 48 tokens
+1790608374.222	[🔴 ]  Client disconnected; cancelling active request
+1790608374.232	[🔗 ]  TCP connection established - Remote: 127.0.0.1:59944
+1790608374.232	[TCP]  Read 266 bytes from socket
+1790608374.232	================================================
+1790608374.232	[⬇️ ]  Incoming Request: POST
+1790608374.232	[LOG]  Time stamp: 18:12:54 09:28:2026
+1790608374.232	[LOG]  Target: /api/chat
+1790608374.232	[LOG]  Version: 11
+1790608374.232	[LOG]  Keep-Alive: 1
+1790608374.232	[LOG]  Body: 
+1790608374.232	{
+1790608374.232	    "messages": [
+1790608374.232	        {
+1790608374.232	            "content": "Say hi.",
+1790608374.232	            "role": "user"
+1790608374.232	        }
+1790608374.232	    ],
+1790608374.232	    "model": "llama3.2:1b",
+1790608374.232	    "options": {
+1790608374.232	        "num_predict": 4,
+1790608374.232	        "top_k": 1
+1790608374.232	    },
+1790608374.232	    "stream": false
+1790608374.232	}
+1790608374.232	[🟢 ]  NPU Locked!
+1790608374.232	[FLM]  Start generating...
+1790608374.232	[FLM]  Conversation context diverged from cache, clearing context...
+1790608374.233	[ERROR]  handle_chat: The runlist is submitted for execution and cannot be reset. Please use wait() to ensure that all commands have completed before calling reset().: Invalid argument
+1790608374.233	[🔵 ]  NPU Lock Released!

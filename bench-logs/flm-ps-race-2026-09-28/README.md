@@ -1,7 +1,8 @@
-# `flm serve` `GET /api/ps` races model swaps (#184), on halo
+# `flm serve` `GET /api/ps` races model swaps (#184, #192), on halo
 
 Red/green for #184 under ThreadSanitizer, production-build probes for the NPU
-lock and for `/api/ps` during a swap, and a rerun of OFLM-Next's server-api
+lock (including #192's measured disconnect sequence) and for `/api/ps` during
+a swap, and a rerun of OFLM-Next's server-api
 conformance suite using the same method as
 [`oflm-api-conformance-2026-09-28-after-187`](../oflm-api-conformance-2026-09-28-after-187/).
 
@@ -204,6 +205,46 @@ chat was decoding. The chat died with
 `[ERROR] handle_chat: bad command state, can't launch`
 ([`before/server-npu-lock-base.log`](before/server-npu-lock-base.log)), an XRT
 fault, and answered 500.
+
+### #192's disconnect sequence
+
+[`disconnect.sh`](disconnect.sh) replays the sequence measured in #192 on
+`llama3.2:1b`, with each server log line stamped in wall-clock seconds:
+1. A streaming `/v1/completions` (`max_tokens: 512`). The client disconnects
+   after 5 chunks, and the server keeps decoding (#191).
+2. Immediately after, a non-streaming `/api/chat` (`num_predict: 4`).
+3. Then a second streaming `/v1/completions` (`max_tokens: 8`), read to the end.
+
+The base build is the one #192 measured on (`fqkyn7…`, the same as main). It
+was run three times, because what the overlap breaks varies from run to run.
+
+| Run | Step 2 `/api/chat` | Step 3 `/v1/completions` | Server afterwards |
+| --- | --- | --- | --- |
+| base 1 ([txt](before/disconnect-base.txt)) | **500** in 6 ms: `The runlist is submitted for execution and cannot be reset` | 200, but logs `handle_openai_completion: bad command state, can't launch` | alive |
+| base 2 ([txt](before/disconnect-base-run2.txt)) | same runlist error logged, then **SIGSEGV**: no reply (`000`) | server gone | **dead** |
+| base 3 ([txt](before/disconnect-base-run3.txt)) | **500** in 2 ms, runlist error | **500**, runlist error | alive |
+| new ([txt](disconnect-new.txt)) | **queued** (`NPU busy, request queued (1/10): POST /api/chat`), 200 after 5.2 s | 200, `[DONE]` | alive, no `ERROR` lines |
+
+On base, the step-1 `/v1/completions` never logs `NPU Locked!`, so the step-2
+chat takes the lock at once while the orphaned decode is still using the NPU.
+Run 2's core dump (`coredumpctl`) shows where it died:
+
+```
+#0 alloc_run(std::shared_ptr<xrt::kernel_impl> const&)   libxrt_coreutil.so.2
+#1 xrt::run::run(xrt::kernel const&)                    libxrt_coreutil.so.2
+#2 llama_npu::Impl::set_context_length(int)             libllama_npu.so
+#3 AutoModel::clear_context()                           flm
+#4 RestHandler::handle_chat(...)                        flm
+```
+
+`#3` is the chat's error-path `clear_context()`. It rebuilds NPU runs while the
+unlocked `/v1/completions` is still submitting its own.
+
+#192's heap corruption (`double free or corruption`) did not recur in these
+three runs; the SIGSEGV in run 2 is this build's crash instead. On the new build,
+the step-1 `/v1/completions` holds the token, so the chat waits for the
+orphaned 512-token decode to finish (about 4.8 s). That wait is #191's missing
+cancellation, not a lock problem.
 
 ## `/api/ps` during a swap: latency and flip point
 
