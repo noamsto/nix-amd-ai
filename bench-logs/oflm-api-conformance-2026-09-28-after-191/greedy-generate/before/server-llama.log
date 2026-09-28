@@ -1,24 +1,56 @@
 [FLM]  Using user-specified port: 58601
 [FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
 [FLM]  Starting server on port 58601...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:35730
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59240
 [FLM]  WebServer started on port 58601 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 17:17:37 09:28:2026
+[LOG]  Time stamp: 18:06:37 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35730
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:35744
-[TCP]  Read 307 bytes from socket
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59240
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59248
+[TCP]  Read 266 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 17:17:37 09:28:2026
-[LOG]  Target: /v1/completions
+[LOG]  Time stamp: 18:06:37 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Say hi.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "options": {
+        "num_predict": 1
+    },
+    "stream": false,
+    "top_k": 1
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start generating...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+
+[FLM]  Model RAW Output: 
+Hi
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59248
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59258
+[TCP]  Read 294 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 18:06:38 09:28:2026
+[LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 [LOG]  Body: 
@@ -26,9 +58,9 @@
     "max_tokens": 512,
     "model": "llama3.2:1b",
     "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
-    "stream": false,
-    "top_k": 1
+    "stream": true
 }
+[🟢 ]  NPU Locked!
 [FLM]  Start generating...
 [FLM]  Prefill chunk 1/1 with 54 tokens
 
@@ -50,14 +82,14 @@ The printing press was a major innovation in the history of communication. It al
 The printing press was a mechanical device that used a combination of gravity and pressure to transfer the ink onto the paper. The machine consisted of a wooden frame that held the metal plate in place, a metal plate that was engraved with the text, and a type of metal alloy that was used to create the type. The type was a metal block that was used to print individual characters on the paper.
 
 The printing press was a significant innovation in the history of communication. It allowed people to mass-produce written materials, making it possible to disse
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35744
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:44076
-[TCP]  Read 307 bytes from socket
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:55432
+[TCP]  Read 295 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 17:17:46 09:28:2026
-[LOG]  Target: /v1/completions
+[LOG]  Time stamp: 18:06:46 09:28:2026
+[LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 [LOG]  Body: 
@@ -65,9 +97,9 @@ The printing press was a significant innovation in the history of communication.
     "max_tokens": 512,
     "model": "llama3.2:1b",
     "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
-    "stream": false,
-    "top_k": 1
+    "stream": false
 }
+[🟢 ]  NPU Locked!
 [FLM]  Start generating...
 [FLM]  Conversation context diverged from cache, clearing context...
 [FLM]  Prefill chunk 1/1 with 54 tokens
@@ -88,5 +120,6 @@ The Development of the Printing Press
 The printing press was a remarkable innovation that had a profound impact on society. The first printing press was a large, cumbersome machine that required a lot of space and labor to operate. However, as the technology improved, the printing press became smaller, more portable, and more efficient. The first movable-type printing press was invented by Johannes Gutenberg, a German goldsmith and printer, in the 1440s. The press, known as the "Gutenberg Press," was a combination of a type press and a movable-type press.
 
 The Gutenberg Press was a revolutionary innovation that enabled mass production of printed materials. The press, which was about 20 inches tall and 10 inches wide, could print individual characters on a sheet of paper. The characters were arranged in a specific order, with the most important characters at the top and the least important characters at the bottom. The press was powered by a hand-cranked mechanism, which allowed
+[🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:44076
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55432

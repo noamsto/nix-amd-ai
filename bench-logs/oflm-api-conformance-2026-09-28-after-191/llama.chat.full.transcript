@@ -1,514 +1,514 @@
-   0.412	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   0.426	{"model":"llama3.2:1b","message":{"role":"assistant","content":" History","thinking":""},"done":false}
-   0.442	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   0.459	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   0.475	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
-   0.490	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
-   0.505	{"model":"llama3.2:1b","message":{"role":"assistant","content":":","thinking":""},"done":false}
-   0.520	{"model":"llama3.2:1b","message":{"role":"assistant","content":" A","thinking":""},"done":false}
-   0.535	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Revolutionary","thinking":""},"done":false}
-   0.550	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Innovation","thinking":""},"done":false}
-   0.566	{"model":"llama3.2:1b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
-   0.581	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   0.596	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   0.611	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   0.626	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   0.641	{"model":"llama3.2:1b","message":{"role":"assistant","content":" invented","thinking":""},"done":false}
-   0.656	{"model":"llama3.2:1b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
-   0.671	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Johannes","thinking":""},"done":false}
-   0.686	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
-   0.701	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   0.716	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   0.730	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
-   0.745	{"model":"llama3.2:1b","message":{"role":"assistant","content":"15","thinking":""},"done":false}
-   0.760	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
-   0.775	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
-   0.790	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   0.805	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   0.820	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   0.835	{"model":"llama3.2:1b","message":{"role":"assistant","content":" game","thinking":""},"done":false}
-   0.850	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-changing","thinking":""},"done":false}
-   0.864	{"model":"llama3.2:1b","message":{"role":"assistant","content":" innovation","thinking":""},"done":false}
-   0.879	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   0.896	{"model":"llama3.2:1b","message":{"role":"assistant","content":" revolution","thinking":""},"done":false}
-   0.910	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ized","thinking":""},"done":false}
-   0.925	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   0.940	{"model":"llama3.2:1b","message":{"role":"assistant","content":" way","thinking":""},"done":false}
-   0.955	{"model":"llama3.2:1b","message":{"role":"assistant","content":" people","thinking":""},"done":false}
-   0.970	{"model":"llama3.2:1b","message":{"role":"assistant","content":" communicated","thinking":""},"done":false}
-   0.985	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.000	{"model":"llama3.2:1b","message":{"role":"assistant","content":" learned","thinking":""},"done":false}
-   1.015	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.030	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   1.045	{"model":"llama3.2:1b","message":{"role":"assistant","content":" created","thinking":""},"done":false}
-   1.060	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   1.075	{"model":"llama3.2:1b","message":{"role":"assistant","content":" This","thinking":""},"done":false}
-   1.090	{"model":"llama3.2:1b","message":{"role":"assistant","content":" remarkable","thinking":""},"done":false}
-   1.106	{"model":"llama3.2:1b","message":{"role":"assistant","content":" device","thinking":""},"done":false}
-   1.123	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.138	{"model":"llama3.2:1b","message":{"role":"assistant","content":" which","thinking":""},"done":false}
-   1.155	{"model":"llama3.2:1b","message":{"role":"assistant","content":" combined","thinking":""},"done":false}
-   1.172	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   1.187	{"model":"llama3.2:1b","message":{"role":"assistant","content":" principles","thinking":""},"done":false}
-   1.202	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   1.217	{"model":"llama3.2:1b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
-   1.232	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
-   1.247	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   1.262	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mechanical","thinking":""},"done":false}
-   1.277	{"model":"llama3.2:1b","message":{"role":"assistant","content":" pressure","thinking":""},"done":false}
-   1.292	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.307	{"model":"llama3.2:1b","message":{"role":"assistant","content":" enabled","thinking":""},"done":false}
-   1.322	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
-   1.337	{"model":"llama3.2:1b","message":{"role":"assistant","content":" production","thinking":""},"done":false}
-   1.352	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   1.367	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
-   1.382	{"model":"llama3.2:1b","message":{"role":"assistant","content":" materials","thinking":""},"done":false}
-   1.397	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.412	{"model":"llama3.2:1b","message":{"role":"assistant","content":" transforming","thinking":""},"done":false}
-   1.427	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   1.442	{"model":"llama3.2:1b","message":{"role":"assistant","content":" world","thinking":""},"done":false}
-   1.457	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   1.472	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ways","thinking":""},"done":false}
-   1.487	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   1.503	{"model":"llama3.2:1b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
-   1.519	{"model":"llama3.2:1b","message":{"role":"assistant","content":" both","thinking":""},"done":false}
-   1.534	{"model":"llama3.2:1b","message":{"role":"assistant","content":" profound","thinking":""},"done":false}
-   1.549	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   1.564	{"model":"llama3.2:1b","message":{"role":"assistant","content":" far","thinking":""},"done":false}
-   1.579	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-reaching","thinking":""},"done":false}
-   1.594	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   1.610	{"model":"llama3.2:1b","message":{"role":"assistant","content":" In","thinking":""},"done":false}
-   1.625	{"model":"llama3.2:1b","message":{"role":"assistant","content":" this","thinking":""},"done":false}
-   1.640	{"model":"llama3.2:1b","message":{"role":"assistant","content":" essay","thinking":""},"done":false}
-   1.655	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.670	{"model":"llama3.2:1b","message":{"role":"assistant","content":" we","thinking":""},"done":false}
-   1.685	{"model":"llama3.2:1b","message":{"role":"assistant","content":" will","thinking":""},"done":false}
-   1.700	{"model":"llama3.2:1b","message":{"role":"assistant","content":" delve","thinking":""},"done":false}
-   1.715	{"model":"llama3.2:1b","message":{"role":"assistant","content":" into","thinking":""},"done":false}
-   1.730	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   1.745	{"model":"llama3.2:1b","message":{"role":"assistant","content":" fascinating","thinking":""},"done":false}
-   1.760	{"model":"llama3.2:1b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
-   1.775	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   1.790	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   1.805	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   1.820	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   1.835	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.850	{"model":"llama3.2:1b","message":{"role":"assistant","content":" tracing","thinking":""},"done":false}
-   1.865	{"model":"llama3.2:1b","message":{"role":"assistant","content":" its","thinking":""},"done":false}
-   1.880	{"model":"llama3.2:1b","message":{"role":"assistant","content":" development","thinking":""},"done":false}
-   1.895	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.910	{"model":"llama3.2:1b","message":{"role":"assistant","content":" evolution","thinking":""},"done":false}
-   1.925	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   1.940	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   1.955	{"model":"llama3.2:1b","message":{"role":"assistant","content":" impact","thinking":""},"done":false}
-   1.970	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
-   1.985	{"model":"llama3.2:1b","message":{"role":"assistant","content":" society","thinking":""},"done":false}
-   2.000	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
-   2.015	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   2.030	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Early","thinking":""},"done":false}
-   2.045	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Days","thinking":""},"done":false}
-   2.060	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   2.076	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
-   2.091	{"model":"llama3.2:1b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
-   2.106	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   2.121	{"model":"llama3.2:1b","message":{"role":"assistant","content":" concept","thinking":""},"done":false}
-   2.136	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   2.151	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   2.167	{"model":"llama3.2:1b","message":{"role":"assistant","content":" dates","thinking":""},"done":false}
-   2.183	{"model":"llama3.2:1b","message":{"role":"assistant","content":" back","thinking":""},"done":false}
-   2.201	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   2.219	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ancient","thinking":""},"done":false}
-   2.235	{"model":"llama3.2:1b","message":{"role":"assistant","content":" China","thinking":""},"done":false}
-   2.250	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   2.266	{"model":"llama3.2:1b","message":{"role":"assistant","content":" where","thinking":""},"done":false}
-   2.281	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
-   2.296	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   2.311	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
-   2.326	{"model":"llama3.2:1b","message":{"role":"assistant","content":" invented","thinking":""},"done":false}
-   2.341	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   2.356	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   2.371	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
-   2.386	{"model":"llama3.2:1b","message":{"role":"assistant","content":"2","thinking":""},"done":false}
-   2.401	{"model":"llama3.2:1b","message":{"role":"assistant","content":"nd","thinking":""},"done":false}
-   2.416	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
-   2.431	{"model":"llama3.2:1b","message":{"role":"assistant","content":" AD","thinking":""},"done":false}
-   2.446	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   2.461	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   2.477	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
-   2.492	{"model":"llama3.2:1b","message":{"role":"assistant","content":" known","thinking":""},"done":false}
-   2.507	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
-   2.522	{"model":"llama3.2:1b","message":{"role":"assistant","content":" book","thinking":""},"done":false}
-   2.537	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   2.552	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   2.567	{"model":"llama3.2:1b","message":{"role":"assistant","content":" \"","thinking":""},"done":false}
-   2.582	{"model":"llama3.2:1b","message":{"role":"assistant","content":"B","thinking":""},"done":false}
-   2.597	{"model":"llama3.2:1b","message":{"role":"assistant","content":"am","thinking":""},"done":false}
-   2.613	{"model":"llama3.2:1b","message":{"role":"assistant","content":"boo","thinking":""},"done":false}
-   2.628	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Book","thinking":""},"done":false}
-   2.643	{"model":"llama3.2:1b","message":{"role":"assistant","content":",\"","thinking":""},"done":false}
-   2.658	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   2.673	{"model":"llama3.2:1b","message":{"role":"assistant","content":" collection","thinking":""},"done":false}
-   2.688	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   2.703	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Buddhist","thinking":""},"done":false}
-   2.718	{"model":"llama3.2:1b","message":{"role":"assistant","content":" scriptures","thinking":""},"done":false}
-   2.735	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   2.750	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   2.765	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
-   2.780	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
-   2.795	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
-   2.810	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   2.826	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   2.841	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
-   2.856	{"model":"llama3.2:1b","message":{"role":"assistant","content":"8","thinking":""},"done":false}
-   2.871	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
-   2.886	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
-   2.901	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   2.916	{"model":"llama3.2:1b","message":{"role":"assistant","content":" However","thinking":""},"done":false}
-   2.931	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   2.946	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
-   2.961	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   2.977	{"model":"llama3.2:1b","message":{"role":"assistant","content":" not","thinking":""},"done":false}
-   2.992	{"model":"llama3.2:1b","message":{"role":"assistant","content":" until","thinking":""},"done":false}
-   3.007	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   3.023	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
-   3.038	{"model":"llama3.2:1b","message":{"role":"assistant","content":"10","thinking":""},"done":false}
-   3.053	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
-   3.068	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
-   3.083	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   3.098	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   3.113	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
-   3.128	{"model":"llama3.2:1b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
-   3.143	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-type","thinking":""},"done":false}
-   3.158	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   3.174	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   3.190	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   3.205	{"model":"llama3.2:1b","message":{"role":"assistant","content":" developed","thinking":""},"done":false}
-   3.220	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   3.235	{"model":"llama3.2:1b","message":{"role":"assistant","content":" China","thinking":""},"done":false}
-   3.250	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   3.265	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   3.280	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   3.296	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   3.312	{"model":"llama3.2:1b","message":{"role":"assistant","content":" known","thinking":""},"done":false}
-   3.329	{"model":"llama3.2:1b","message":{"role":"assistant","content":" as","thinking":""},"done":false}
-   3.344	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   3.359	{"model":"llama3.2:1b","message":{"role":"assistant","content":" \"","thinking":""},"done":false}
-   3.374	{"model":"llama3.2:1b","message":{"role":"assistant","content":"R","thinking":""},"done":false}
-   3.389	{"model":"llama3.2:1b","message":{"role":"assistant","content":"it","thinking":""},"done":false}
-   3.405	{"model":"llama3.2:1b","message":{"role":"assistant","content":"uo","thinking":""},"done":false}
-   3.420	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
-   3.435	{"model":"llama3.2:1b","message":{"role":"assistant","content":",\"","thinking":""},"done":false}
-   3.450	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   3.465	{"model":"llama3.2:1b","message":{"role":"assistant","content":" invented","thinking":""},"done":false}
-   3.480	{"model":"llama3.2:1b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
-   3.495	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   3.510	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Chinese","thinking":""},"done":false}
-   3.527	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monk","thinking":""},"done":false}
-   3.542	{"model":"llama3.2:1b","message":{"role":"assistant","content":" W","thinking":""},"done":false}
-   3.558	{"model":"llama3.2:1b","message":{"role":"assistant","content":"uz","thinking":""},"done":false}
-   3.573	{"model":"llama3.2:1b","message":{"role":"assistant","content":"h","thinking":""},"done":false}
-   3.588	{"model":"llama3.2:1b","message":{"role":"assistant","content":"eng","thinking":""},"done":false}
-   3.603	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   3.618	{"model":"llama3.2:1b","message":{"role":"assistant","content":" who","thinking":""},"done":false}
-   3.633	{"model":"llama3.2:1b","message":{"role":"assistant","content":" created","thinking":""},"done":false}
-   3.648	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   3.663	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
-   3.679	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   3.695	{"model":"llama3.2:1b","message":{"role":"assistant","content":" could","thinking":""},"done":false}
-   3.710	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
-   3.726	{"model":"llama3.2:1b","message":{"role":"assistant","content":" individual","thinking":""},"done":false}
-   3.741	{"model":"llama3.2:1b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
-   3.756	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
-   3.771	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   3.786	{"model":"llama3.2:1b","message":{"role":"assistant","content":" sheet","thinking":""},"done":false}
-   3.801	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   3.817	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
-   3.832	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
-   3.848	{"model":"llama3.2:1b","message":{"role":"assistant","content":"In","thinking":""},"done":false}
-   3.864	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   3.880	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
-   3.895	{"model":"llama3.2:1b","message":{"role":"assistant","content":"12","thinking":""},"done":false}
-   3.910	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
-   3.925	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
-   3.940	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   3.956	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   3.971	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   3.986	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   4.001	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   4.016	{"model":"llama3.2:1b","message":{"role":"assistant","content":" introduced","thinking":""},"done":false}
-   4.031	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   4.047	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
-   4.062	{"model":"llama3.2:1b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
-   4.077	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   4.093	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monks","thinking":""},"done":false}
-   4.109	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   4.124	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   4.139	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Benedict","thinking":""},"done":false}
-   4.155	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ine","thinking":""},"done":false}
-   4.170	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monastery","thinking":""},"done":false}
-   4.185	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   4.200	{"model":"llama3.2:1b","message":{"role":"assistant","content":" St","thinking":""},"done":false}
-   4.215	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   4.231	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Gall","thinking":""},"done":false}
-   4.248	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   4.263	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Switzerland","thinking":""},"done":false}
-   4.278	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   4.293	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   4.309	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monks","thinking":""},"done":false}
-   4.324	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   4.339	{"model":"llama3.2:1b","message":{"role":"assistant","content":" who","thinking":""},"done":false}
-   4.355	{"model":"llama3.2:1b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
-   4.370	{"model":"llama3.2:1b","message":{"role":"assistant","content":" familiar","thinking":""},"done":false}
-   4.387	{"model":"llama3.2:1b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
-   4.403	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   4.418	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Chinese","thinking":""},"done":false}
-   4.433	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   4.448	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   4.463	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   4.478	{"model":"llama3.2:1b","message":{"role":"assistant","content":" adapted","thinking":""},"done":false}
-   4.494	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   4.509	{"model":"llama3.2:1b","message":{"role":"assistant","content":" technology","thinking":""},"done":false}
-   4.524	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   4.539	{"model":"llama3.2:1b","message":{"role":"assistant","content":" create","thinking":""},"done":false}
-   4.554	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   4.570	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
-   4.585	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   4.601	{"model":"llama3.2:1b","message":{"role":"assistant","content":" could","thinking":""},"done":false}
-   4.617	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
-   4.632	{"model":"llama3.2:1b","message":{"role":"assistant","content":" individual","thinking":""},"done":false}
-   4.647	{"model":"llama3.2:1b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
-   4.662	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
-   4.677	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   4.692	{"model":"llama3.2:1b","message":{"role":"assistant","content":" sheet","thinking":""},"done":false}
-   4.708	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   4.723	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
-   4.738	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   4.753	{"model":"llama3.2:1b","message":{"role":"assistant","content":" This","thinking":""},"done":false}
-   4.768	{"model":"llama3.2:1b","message":{"role":"assistant","content":" early","thinking":""},"done":false}
-   4.783	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   4.798	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   4.814	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   4.829	{"model":"llama3.2:1b","message":{"role":"assistant","content":" called","thinking":""},"done":false}
-   4.844	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   4.859	{"model":"llama3.2:1b","message":{"role":"assistant","content":" \"","thinking":""},"done":false}
-   4.874	{"model":"llama3.2:1b","message":{"role":"assistant","content":"Mon","thinking":""},"done":false}
-   4.889	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ument","thinking":""},"done":false}
-   4.905	{"model":"llama3.2:1b","message":{"role":"assistant","content":"um","thinking":""},"done":false}
-   4.920	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
-   4.935	{"model":"llama3.2:1b","message":{"role":"assistant","content":",\"","thinking":""},"done":false}
-   4.950	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   4.965	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
-   4.980	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   4.996	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
-   5.013	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   5.028	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
-   5.044	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   5.059	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
-   5.074	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
-   5.091	{"model":"llama3.2:1b","message":{"role":"assistant","content":" books","thinking":""},"done":false}
-   5.107	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   5.122	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
-   5.138	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
-   5.153	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   5.168	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Development","thinking":""},"done":false}
-   5.185	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   5.203	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   5.219	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
-   5.234	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
-   5.249	{"model":"llama3.2:1b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
-   5.265	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   5.280	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   5.295	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   5.311	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   5.326	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   5.342	{"model":"llama3.2:1b","message":{"role":"assistant","content":" major","thinking":""},"done":false}
-   5.357	{"model":"llama3.2:1b","message":{"role":"assistant","content":" innovation","thinking":""},"done":false}
-   5.373	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   5.388	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   5.404	{"model":"llama3.2:1b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
-   5.419	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   5.436	{"model":"llama3.2:1b","message":{"role":"assistant","content":" communication","thinking":""},"done":false}
-   5.453	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   5.470	{"model":"llama3.2:1b","message":{"role":"assistant","content":" It","thinking":""},"done":false}
-   5.485	{"model":"llama3.2:1b","message":{"role":"assistant","content":" allowed","thinking":""},"done":false}
-   5.500	{"model":"llama3.2:1b","message":{"role":"assistant","content":" people","thinking":""},"done":false}
-   5.516	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   5.531	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
-   5.548	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-produ","thinking":""},"done":false}
-   5.564	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ce","thinking":""},"done":false}
-   5.579	{"model":"llama3.2:1b","message":{"role":"assistant","content":" written","thinking":""},"done":false}
-   5.594	{"model":"llama3.2:1b","message":{"role":"assistant","content":" materials","thinking":""},"done":false}
-   5.609	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   5.625	{"model":"llama3.2:1b","message":{"role":"assistant","content":" making","thinking":""},"done":false}
-   5.640	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
-   5.655	{"model":"llama3.2:1b","message":{"role":"assistant","content":" possible","thinking":""},"done":false}
-   5.670	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   5.685	{"model":"llama3.2:1b","message":{"role":"assistant","content":" disse","thinking":""},"done":false}
-   5.700	{"model":"llama3.2:1b","message":{"role":"assistant","content":"minate","thinking":""},"done":false}
-   5.716	{"model":"llama3.2:1b","message":{"role":"assistant","content":" knowledge","thinking":""},"done":false}
-   5.731	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   5.746	{"model":"llama3.2:1b","message":{"role":"assistant","content":" news","thinking":""},"done":false}
-   5.761	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   5.776	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   5.792	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ideas","thinking":""},"done":false}
-   5.807	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
-   5.822	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   5.837	{"model":"llama3.2:1b","message":{"role":"assistant","content":" large","thinking":""},"done":false}
-   5.852	{"model":"llama3.2:1b","message":{"role":"assistant","content":" scale","thinking":""},"done":false}
-   5.867	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   5.883	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   5.898	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
-   5.913	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   5.928	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   5.943	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   5.958	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   5.974	{"model":"llama3.2:1b","message":{"role":"assistant","content":" simple","thinking":""},"done":false}
-   5.989	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
-   6.005	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   6.020	{"model":"llama3.2:1b","message":{"role":"assistant","content":" consisted","thinking":""},"done":false}
-   6.036	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   6.051	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   6.066	{"model":"llama3.2:1b","message":{"role":"assistant","content":" wooden","thinking":""},"done":false}
-   6.081	{"model":"llama3.2:1b","message":{"role":"assistant","content":" frame","thinking":""},"done":false}
-   6.098	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   6.114	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   6.130	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   6.146	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
-   6.161	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   6.176	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   6.191	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   6.207	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
-   6.223	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   6.238	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   6.255	{"model":"llama3.2:1b","message":{"role":"assistant","content":" alloy","thinking":""},"done":false}
-   6.273	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   6.289	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   6.305	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
-   6.320	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   6.335	{"model":"llama3.2:1b","message":{"role":"assistant","content":" engraved","thinking":""},"done":false}
-   6.350	{"model":"llama3.2:1b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
-   6.366	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   6.381	{"model":"llama3.2:1b","message":{"role":"assistant","content":" text","thinking":""},"done":false}
-   6.396	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   6.412	{"model":"llama3.2:1b","message":{"role":"assistant","content":" be","thinking":""},"done":false}
-   6.429	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
-   6.445	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   6.461	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   6.477	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   6.492	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   6.508	{"model":"llama3.2:1b","message":{"role":"assistant","content":" alloy","thinking":""},"done":false}
-   6.525	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   6.541	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
-   6.556	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   6.572	{"model":"llama3.2:1b","message":{"role":"assistant","content":" create","thinking":""},"done":false}
-   6.587	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   6.602	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
-   6.619	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
-   6.635	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   6.651	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   6.666	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   6.681	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   6.696	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   6.712	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mechanical","thinking":""},"done":false}
-   6.727	{"model":"llama3.2:1b","message":{"role":"assistant","content":" device","thinking":""},"done":false}
-   6.742	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   6.757	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
-   6.773	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   6.788	{"model":"llama3.2:1b","message":{"role":"assistant","content":" combination","thinking":""},"done":false}
-   6.803	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   6.818	{"model":"llama3.2:1b","message":{"role":"assistant","content":" gravity","thinking":""},"done":false}
-   6.834	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   6.849	{"model":"llama3.2:1b","message":{"role":"assistant","content":" pressure","thinking":""},"done":false}
-   6.864	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   6.879	{"model":"llama3.2:1b","message":{"role":"assistant","content":" transfer","thinking":""},"done":false}
-   6.895	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   6.910	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ink","thinking":""},"done":false}
-   6.925	{"model":"llama3.2:1b","message":{"role":"assistant","content":" onto","thinking":""},"done":false}
-   6.940	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   6.956	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
-   6.971	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   6.986	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   7.001	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
-   7.017	{"model":"llama3.2:1b","message":{"role":"assistant","content":" consisted","thinking":""},"done":false}
-   7.032	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   7.047	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   7.062	{"model":"llama3.2:1b","message":{"role":"assistant","content":" wooden","thinking":""},"done":false}
-   7.078	{"model":"llama3.2:1b","message":{"role":"assistant","content":" frame","thinking":""},"done":false}
-   7.093	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   7.108	{"model":"llama3.2:1b","message":{"role":"assistant","content":" held","thinking":""},"done":false}
-   7.123	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   7.139	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   7.154	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
-   7.169	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   7.184	{"model":"llama3.2:1b","message":{"role":"assistant","content":" place","thinking":""},"done":false}
-   7.200	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   7.215	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   7.232	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   7.247	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
-   7.262	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   7.277	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   7.293	{"model":"llama3.2:1b","message":{"role":"assistant","content":" engraved","thinking":""},"done":false}
-   7.308	{"model":"llama3.2:1b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
-   7.323	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   7.340	{"model":"llama3.2:1b","message":{"role":"assistant","content":" text","thinking":""},"done":false}
-   7.357	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   7.375	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
-   7.392	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   7.408	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
-   7.425	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   7.442	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   7.459	{"model":"llama3.2:1b","message":{"role":"assistant","content":" alloy","thinking":""},"done":false}
-   7.475	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   7.490	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   7.506	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
-   7.521	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   7.536	{"model":"llama3.2:1b","message":{"role":"assistant","content":" create","thinking":""},"done":false}
-   7.552	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   7.568	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
-   7.584	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   7.599	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
-   7.615	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
-   7.630	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   7.645	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   7.661	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
-   7.676	{"model":"llama3.2:1b","message":{"role":"assistant","content":" block","thinking":""},"done":false}
-   7.691	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
-   7.707	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   7.722	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
-   7.737	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   7.753	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
-   7.768	{"model":"llama3.2:1b","message":{"role":"assistant","content":" individual","thinking":""},"done":false}
-   7.783	{"model":"llama3.2:1b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
-   7.799	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
-   7.814	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   7.829	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
-   7.844	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
-   7.860	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   7.875	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
-   7.890	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
-   7.906	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
-   7.921	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
-   7.936	{"model":"llama3.2:1b","message":{"role":"assistant","content":" significant","thinking":""},"done":false}
-   7.951	{"model":"llama3.2:1b","message":{"role":"assistant","content":" innovation","thinking":""},"done":false}
-   7.967	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
-   7.982	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   7.997	{"model":"llama3.2:1b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
-   8.013	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   8.028	{"model":"llama3.2:1b","message":{"role":"assistant","content":" communication","thinking":""},"done":false}
-   8.043	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
-   8.059	{"model":"llama3.2:1b","message":{"role":"assistant","content":" It","thinking":""},"done":false}
-   8.074	{"model":"llama3.2:1b","message":{"role":"assistant","content":" allowed","thinking":""},"done":false}
-   8.089	{"model":"llama3.2:1b","message":{"role":"assistant","content":" people","thinking":""},"done":false}
-   8.104	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   8.120	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
-   8.135	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-produ","thinking":""},"done":false}
-   8.150	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ce","thinking":""},"done":false}
-   8.166	{"model":"llama3.2:1b","message":{"role":"assistant","content":" written","thinking":""},"done":false}
-   8.181	{"model":"llama3.2:1b","message":{"role":"assistant","content":" materials","thinking":""},"done":false}
-   8.196	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
-   8.212	{"model":"llama3.2:1b","message":{"role":"assistant","content":" making","thinking":""},"done":false}
-   8.227	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
-   8.242	{"model":"llama3.2:1b","message":{"role":"assistant","content":" possible","thinking":""},"done":false}
-   8.258	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
-   8.273	{"model":"llama3.2:1b","message":{"role":"assistant","content":" disse","thinking":""},"done":false}
-   8.273	{"model":"llama3.2:1b","message":{"role":"assistant","content":""},"done":true,"done_reason":"length","prompt_eval_count":54,"eval_count":512,"total_duration":8271880192,"load_duration":2014,"prompt_eval_duration":409588352,"eval_duration":7789795000}
+   0.391	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   0.405	{"model":"llama3.2:1b","message":{"role":"assistant","content":" History","thinking":""},"done":false}
+   0.420	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   0.435	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   0.450	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
+   0.465	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
+   0.480	{"model":"llama3.2:1b","message":{"role":"assistant","content":":","thinking":""},"done":false}
+   0.495	{"model":"llama3.2:1b","message":{"role":"assistant","content":" A","thinking":""},"done":false}
+   0.510	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Revolutionary","thinking":""},"done":false}
+   0.524	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Innovation","thinking":""},"done":false}
+   0.539	{"model":"llama3.2:1b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+   0.554	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   0.569	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   0.584	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   0.599	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.614	{"model":"llama3.2:1b","message":{"role":"assistant","content":" invented","thinking":""},"done":false}
+   0.629	{"model":"llama3.2:1b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+   0.644	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Johannes","thinking":""},"done":false}
+   0.659	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+   0.674	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   0.689	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   0.704	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   0.719	{"model":"llama3.2:1b","message":{"role":"assistant","content":"15","thinking":""},"done":false}
+   0.734	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+   0.749	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+   0.764	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.779	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   0.794	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   0.809	{"model":"llama3.2:1b","message":{"role":"assistant","content":" game","thinking":""},"done":false}
+   0.824	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-changing","thinking":""},"done":false}
+   0.839	{"model":"llama3.2:1b","message":{"role":"assistant","content":" innovation","thinking":""},"done":false}
+   0.854	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   0.869	{"model":"llama3.2:1b","message":{"role":"assistant","content":" revolution","thinking":""},"done":false}
+   0.884	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ized","thinking":""},"done":false}
+   0.899	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   0.914	{"model":"llama3.2:1b","message":{"role":"assistant","content":" way","thinking":""},"done":false}
+   0.929	{"model":"llama3.2:1b","message":{"role":"assistant","content":" people","thinking":""},"done":false}
+   0.944	{"model":"llama3.2:1b","message":{"role":"assistant","content":" communicated","thinking":""},"done":false}
+   0.959	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   0.974	{"model":"llama3.2:1b","message":{"role":"assistant","content":" learned","thinking":""},"done":false}
+   0.989	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.004	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   1.020	{"model":"llama3.2:1b","message":{"role":"assistant","content":" created","thinking":""},"done":false}
+   1.035	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   1.050	{"model":"llama3.2:1b","message":{"role":"assistant","content":" This","thinking":""},"done":false}
+   1.065	{"model":"llama3.2:1b","message":{"role":"assistant","content":" remarkable","thinking":""},"done":false}
+   1.080	{"model":"llama3.2:1b","message":{"role":"assistant","content":" device","thinking":""},"done":false}
+   1.095	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.110	{"model":"llama3.2:1b","message":{"role":"assistant","content":" which","thinking":""},"done":false}
+   1.125	{"model":"llama3.2:1b","message":{"role":"assistant","content":" combined","thinking":""},"done":false}
+   1.140	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   1.155	{"model":"llama3.2:1b","message":{"role":"assistant","content":" principles","thinking":""},"done":false}
+   1.170	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   1.185	{"model":"llama3.2:1b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
+   1.200	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+   1.215	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   1.230	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mechanical","thinking":""},"done":false}
+   1.245	{"model":"llama3.2:1b","message":{"role":"assistant","content":" pressure","thinking":""},"done":false}
+   1.260	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.275	{"model":"llama3.2:1b","message":{"role":"assistant","content":" enabled","thinking":""},"done":false}
+   1.290	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
+   1.305	{"model":"llama3.2:1b","message":{"role":"assistant","content":" production","thinking":""},"done":false}
+   1.320	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   1.335	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
+   1.350	{"model":"llama3.2:1b","message":{"role":"assistant","content":" materials","thinking":""},"done":false}
+   1.365	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.380	{"model":"llama3.2:1b","message":{"role":"assistant","content":" transforming","thinking":""},"done":false}
+   1.395	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   1.410	{"model":"llama3.2:1b","message":{"role":"assistant","content":" world","thinking":""},"done":false}
+   1.425	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   1.440	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ways","thinking":""},"done":false}
+   1.455	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   1.470	{"model":"llama3.2:1b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+   1.485	{"model":"llama3.2:1b","message":{"role":"assistant","content":" both","thinking":""},"done":false}
+   1.500	{"model":"llama3.2:1b","message":{"role":"assistant","content":" profound","thinking":""},"done":false}
+   1.515	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   1.530	{"model":"llama3.2:1b","message":{"role":"assistant","content":" far","thinking":""},"done":false}
+   1.545	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-reaching","thinking":""},"done":false}
+   1.560	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   1.575	{"model":"llama3.2:1b","message":{"role":"assistant","content":" In","thinking":""},"done":false}
+   1.590	{"model":"llama3.2:1b","message":{"role":"assistant","content":" this","thinking":""},"done":false}
+   1.605	{"model":"llama3.2:1b","message":{"role":"assistant","content":" essay","thinking":""},"done":false}
+   1.620	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.635	{"model":"llama3.2:1b","message":{"role":"assistant","content":" we","thinking":""},"done":false}
+   1.650	{"model":"llama3.2:1b","message":{"role":"assistant","content":" will","thinking":""},"done":false}
+   1.665	{"model":"llama3.2:1b","message":{"role":"assistant","content":" delve","thinking":""},"done":false}
+   1.681	{"model":"llama3.2:1b","message":{"role":"assistant","content":" into","thinking":""},"done":false}
+   1.696	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   1.711	{"model":"llama3.2:1b","message":{"role":"assistant","content":" fascinating","thinking":""},"done":false}
+   1.726	{"model":"llama3.2:1b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
+   1.742	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   1.757	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   1.772	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   1.787	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   1.802	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.817	{"model":"llama3.2:1b","message":{"role":"assistant","content":" tracing","thinking":""},"done":false}
+   1.832	{"model":"llama3.2:1b","message":{"role":"assistant","content":" its","thinking":""},"done":false}
+   1.847	{"model":"llama3.2:1b","message":{"role":"assistant","content":" development","thinking":""},"done":false}
+   1.862	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.877	{"model":"llama3.2:1b","message":{"role":"assistant","content":" evolution","thinking":""},"done":false}
+   1.893	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   1.908	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   1.923	{"model":"llama3.2:1b","message":{"role":"assistant","content":" impact","thinking":""},"done":false}
+   1.938	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
+   1.953	{"model":"llama3.2:1b","message":{"role":"assistant","content":" society","thinking":""},"done":false}
+   1.968	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
+   1.983	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   1.998	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Early","thinking":""},"done":false}
+   2.013	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Days","thinking":""},"done":false}
+   2.028	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   2.043	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
+   2.058	{"model":"llama3.2:1b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+   2.073	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   2.088	{"model":"llama3.2:1b","message":{"role":"assistant","content":" concept","thinking":""},"done":false}
+   2.103	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   2.118	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   2.134	{"model":"llama3.2:1b","message":{"role":"assistant","content":" dates","thinking":""},"done":false}
+   2.149	{"model":"llama3.2:1b","message":{"role":"assistant","content":" back","thinking":""},"done":false}
+   2.164	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   2.179	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ancient","thinking":""},"done":false}
+   2.194	{"model":"llama3.2:1b","message":{"role":"assistant","content":" China","thinking":""},"done":false}
+   2.209	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   2.224	{"model":"llama3.2:1b","message":{"role":"assistant","content":" where","thinking":""},"done":false}
+   2.239	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
+   2.254	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   2.269	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
+   2.284	{"model":"llama3.2:1b","message":{"role":"assistant","content":" invented","thinking":""},"done":false}
+   2.299	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   2.314	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   2.330	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   2.345	{"model":"llama3.2:1b","message":{"role":"assistant","content":"2","thinking":""},"done":false}
+   2.360	{"model":"llama3.2:1b","message":{"role":"assistant","content":"nd","thinking":""},"done":false}
+   2.375	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+   2.390	{"model":"llama3.2:1b","message":{"role":"assistant","content":" AD","thinking":""},"done":false}
+   2.405	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   2.420	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   2.435	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
+   2.450	{"model":"llama3.2:1b","message":{"role":"assistant","content":" known","thinking":""},"done":false}
+   2.465	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
+   2.480	{"model":"llama3.2:1b","message":{"role":"assistant","content":" book","thinking":""},"done":false}
+   2.495	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   2.510	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   2.525	{"model":"llama3.2:1b","message":{"role":"assistant","content":" \"","thinking":""},"done":false}
+   2.540	{"model":"llama3.2:1b","message":{"role":"assistant","content":"B","thinking":""},"done":false}
+   2.555	{"model":"llama3.2:1b","message":{"role":"assistant","content":"am","thinking":""},"done":false}
+   2.570	{"model":"llama3.2:1b","message":{"role":"assistant","content":"boo","thinking":""},"done":false}
+   2.586	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Book","thinking":""},"done":false}
+   2.601	{"model":"llama3.2:1b","message":{"role":"assistant","content":",\"","thinking":""},"done":false}
+   2.616	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   2.631	{"model":"llama3.2:1b","message":{"role":"assistant","content":" collection","thinking":""},"done":false}
+   2.646	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   2.661	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Buddhist","thinking":""},"done":false}
+   2.676	{"model":"llama3.2:1b","message":{"role":"assistant","content":" scriptures","thinking":""},"done":false}
+   2.691	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   2.706	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   2.721	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
+   2.736	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
+   2.751	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
+   2.766	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   2.782	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   2.797	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   2.812	{"model":"llama3.2:1b","message":{"role":"assistant","content":"8","thinking":""},"done":false}
+   2.827	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+   2.842	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+   2.857	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   2.872	{"model":"llama3.2:1b","message":{"role":"assistant","content":" However","thinking":""},"done":false}
+   2.887	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   2.902	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
+   2.917	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   2.932	{"model":"llama3.2:1b","message":{"role":"assistant","content":" not","thinking":""},"done":false}
+   2.947	{"model":"llama3.2:1b","message":{"role":"assistant","content":" until","thinking":""},"done":false}
+   2.962	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   2.977	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   2.992	{"model":"llama3.2:1b","message":{"role":"assistant","content":"10","thinking":""},"done":false}
+   3.007	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+   3.022	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+   3.039	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   3.054	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   3.069	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
+   3.084	{"model":"llama3.2:1b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
+   3.099	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-type","thinking":""},"done":false}
+   3.114	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   3.129	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   3.145	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   3.160	{"model":"llama3.2:1b","message":{"role":"assistant","content":" developed","thinking":""},"done":false}
+   3.175	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   3.190	{"model":"llama3.2:1b","message":{"role":"assistant","content":" China","thinking":""},"done":false}
+   3.205	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   3.220	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   3.235	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   3.250	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   3.265	{"model":"llama3.2:1b","message":{"role":"assistant","content":" known","thinking":""},"done":false}
+   3.281	{"model":"llama3.2:1b","message":{"role":"assistant","content":" as","thinking":""},"done":false}
+   3.296	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   3.311	{"model":"llama3.2:1b","message":{"role":"assistant","content":" \"","thinking":""},"done":false}
+   3.326	{"model":"llama3.2:1b","message":{"role":"assistant","content":"R","thinking":""},"done":false}
+   3.341	{"model":"llama3.2:1b","message":{"role":"assistant","content":"it","thinking":""},"done":false}
+   3.356	{"model":"llama3.2:1b","message":{"role":"assistant","content":"uo","thinking":""},"done":false}
+   3.371	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
+   3.386	{"model":"llama3.2:1b","message":{"role":"assistant","content":",\"","thinking":""},"done":false}
+   3.401	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   3.416	{"model":"llama3.2:1b","message":{"role":"assistant","content":" invented","thinking":""},"done":false}
+   3.432	{"model":"llama3.2:1b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+   3.447	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   3.462	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Chinese","thinking":""},"done":false}
+   3.477	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monk","thinking":""},"done":false}
+   3.492	{"model":"llama3.2:1b","message":{"role":"assistant","content":" W","thinking":""},"done":false}
+   3.507	{"model":"llama3.2:1b","message":{"role":"assistant","content":"uz","thinking":""},"done":false}
+   3.522	{"model":"llama3.2:1b","message":{"role":"assistant","content":"h","thinking":""},"done":false}
+   3.537	{"model":"llama3.2:1b","message":{"role":"assistant","content":"eng","thinking":""},"done":false}
+   3.552	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   3.568	{"model":"llama3.2:1b","message":{"role":"assistant","content":" who","thinking":""},"done":false}
+   3.583	{"model":"llama3.2:1b","message":{"role":"assistant","content":" created","thinking":""},"done":false}
+   3.598	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   3.613	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
+   3.628	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   3.643	{"model":"llama3.2:1b","message":{"role":"assistant","content":" could","thinking":""},"done":false}
+   3.658	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
+   3.674	{"model":"llama3.2:1b","message":{"role":"assistant","content":" individual","thinking":""},"done":false}
+   3.689	{"model":"llama3.2:1b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
+   3.704	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
+   3.719	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   3.734	{"model":"llama3.2:1b","message":{"role":"assistant","content":" sheet","thinking":""},"done":false}
+   3.750	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   3.765	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
+   3.780	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
+   3.795	{"model":"llama3.2:1b","message":{"role":"assistant","content":"In","thinking":""},"done":false}
+   3.811	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   3.826	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+   3.841	{"model":"llama3.2:1b","message":{"role":"assistant","content":"12","thinking":""},"done":false}
+   3.856	{"model":"llama3.2:1b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+   3.871	{"model":"llama3.2:1b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+   3.887	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   3.902	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   3.917	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   3.932	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   3.947	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   3.962	{"model":"llama3.2:1b","message":{"role":"assistant","content":" introduced","thinking":""},"done":false}
+   3.978	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   3.993	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
+   4.008	{"model":"llama3.2:1b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+   4.023	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   4.038	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monks","thinking":""},"done":false}
+   4.053	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   4.069	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   4.084	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Benedict","thinking":""},"done":false}
+   4.099	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ine","thinking":""},"done":false}
+   4.114	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monastery","thinking":""},"done":false}
+   4.129	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   4.145	{"model":"llama3.2:1b","message":{"role":"assistant","content":" St","thinking":""},"done":false}
+   4.160	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   4.175	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Gall","thinking":""},"done":false}
+   4.191	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   4.206	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Switzerland","thinking":""},"done":false}
+   4.221	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   4.236	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   4.251	{"model":"llama3.2:1b","message":{"role":"assistant","content":" monks","thinking":""},"done":false}
+   4.266	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   4.282	{"model":"llama3.2:1b","message":{"role":"assistant","content":" who","thinking":""},"done":false}
+   4.297	{"model":"llama3.2:1b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+   4.312	{"model":"llama3.2:1b","message":{"role":"assistant","content":" familiar","thinking":""},"done":false}
+   4.327	{"model":"llama3.2:1b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
+   4.342	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   4.357	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Chinese","thinking":""},"done":false}
+   4.372	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   4.387	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   4.403	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   4.418	{"model":"llama3.2:1b","message":{"role":"assistant","content":" adapted","thinking":""},"done":false}
+   4.433	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   4.448	{"model":"llama3.2:1b","message":{"role":"assistant","content":" technology","thinking":""},"done":false}
+   4.463	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   4.478	{"model":"llama3.2:1b","message":{"role":"assistant","content":" create","thinking":""},"done":false}
+   4.494	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   4.509	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
+   4.524	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   4.539	{"model":"llama3.2:1b","message":{"role":"assistant","content":" could","thinking":""},"done":false}
+   4.554	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
+   4.569	{"model":"llama3.2:1b","message":{"role":"assistant","content":" individual","thinking":""},"done":false}
+   4.584	{"model":"llama3.2:1b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
+   4.600	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
+   4.615	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   4.630	{"model":"llama3.2:1b","message":{"role":"assistant","content":" sheet","thinking":""},"done":false}
+   4.646	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   4.661	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
+   4.676	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   4.691	{"model":"llama3.2:1b","message":{"role":"assistant","content":" This","thinking":""},"done":false}
+   4.707	{"model":"llama3.2:1b","message":{"role":"assistant","content":" early","thinking":""},"done":false}
+   4.722	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   4.737	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   4.752	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   4.767	{"model":"llama3.2:1b","message":{"role":"assistant","content":" called","thinking":""},"done":false}
+   4.782	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   4.797	{"model":"llama3.2:1b","message":{"role":"assistant","content":" \"","thinking":""},"done":false}
+   4.813	{"model":"llama3.2:1b","message":{"role":"assistant","content":"Mon","thinking":""},"done":false}
+   4.828	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ument","thinking":""},"done":false}
+   4.843	{"model":"llama3.2:1b","message":{"role":"assistant","content":"um","thinking":""},"done":false}
+   4.858	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
+   4.873	{"model":"llama3.2:1b","message":{"role":"assistant","content":",\"","thinking":""},"done":false}
+   4.889	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   4.904	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
+   4.919	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   4.934	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
+   4.949	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   4.965	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
+   4.980	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   4.995	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
+   5.011	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
+   5.026	{"model":"llama3.2:1b","message":{"role":"assistant","content":" books","thinking":""},"done":false}
+   5.041	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   5.056	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
+   5.072	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
+   5.087	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   5.102	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Development","thinking":""},"done":false}
+   5.117	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   5.132	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   5.148	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
+   5.163	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
+   5.178	{"model":"llama3.2:1b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+   5.193	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   5.209	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   5.224	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   5.239	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   5.255	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   5.270	{"model":"llama3.2:1b","message":{"role":"assistant","content":" major","thinking":""},"done":false}
+   5.285	{"model":"llama3.2:1b","message":{"role":"assistant","content":" innovation","thinking":""},"done":false}
+   5.300	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   5.316	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   5.331	{"model":"llama3.2:1b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
+   5.346	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   5.361	{"model":"llama3.2:1b","message":{"role":"assistant","content":" communication","thinking":""},"done":false}
+   5.376	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   5.392	{"model":"llama3.2:1b","message":{"role":"assistant","content":" It","thinking":""},"done":false}
+   5.407	{"model":"llama3.2:1b","message":{"role":"assistant","content":" allowed","thinking":""},"done":false}
+   5.422	{"model":"llama3.2:1b","message":{"role":"assistant","content":" people","thinking":""},"done":false}
+   5.437	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   5.452	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
+   5.468	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-produ","thinking":""},"done":false}
+   5.483	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ce","thinking":""},"done":false}
+   5.498	{"model":"llama3.2:1b","message":{"role":"assistant","content":" written","thinking":""},"done":false}
+   5.513	{"model":"llama3.2:1b","message":{"role":"assistant","content":" materials","thinking":""},"done":false}
+   5.529	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   5.544	{"model":"llama3.2:1b","message":{"role":"assistant","content":" making","thinking":""},"done":false}
+   5.559	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
+   5.574	{"model":"llama3.2:1b","message":{"role":"assistant","content":" possible","thinking":""},"done":false}
+   5.589	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   5.605	{"model":"llama3.2:1b","message":{"role":"assistant","content":" disse","thinking":""},"done":false}
+   5.620	{"model":"llama3.2:1b","message":{"role":"assistant","content":"minate","thinking":""},"done":false}
+   5.636	{"model":"llama3.2:1b","message":{"role":"assistant","content":" knowledge","thinking":""},"done":false}
+   5.651	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   5.666	{"model":"llama3.2:1b","message":{"role":"assistant","content":" news","thinking":""},"done":false}
+   5.681	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   5.696	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   5.712	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ideas","thinking":""},"done":false}
+   5.727	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
+   5.742	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   5.757	{"model":"llama3.2:1b","message":{"role":"assistant","content":" large","thinking":""},"done":false}
+   5.773	{"model":"llama3.2:1b","message":{"role":"assistant","content":" scale","thinking":""},"done":false}
+   5.788	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   5.803	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   5.818	{"model":"llama3.2:1b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
+   5.834	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   5.849	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   5.864	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   5.879	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   5.895	{"model":"llama3.2:1b","message":{"role":"assistant","content":" simple","thinking":""},"done":false}
+   5.910	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
+   5.925	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   5.940	{"model":"llama3.2:1b","message":{"role":"assistant","content":" consisted","thinking":""},"done":false}
+   5.956	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   5.971	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   5.986	{"model":"llama3.2:1b","message":{"role":"assistant","content":" wooden","thinking":""},"done":false}
+   6.001	{"model":"llama3.2:1b","message":{"role":"assistant","content":" frame","thinking":""},"done":false}
+   6.017	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   6.032	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.047	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   6.063	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
+   6.078	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   6.093	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   6.108	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.124	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+   6.139	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   6.154	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   6.169	{"model":"llama3.2:1b","message":{"role":"assistant","content":" alloy","thinking":""},"done":false}
+   6.185	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   6.201	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   6.216	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
+   6.231	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   6.247	{"model":"llama3.2:1b","message":{"role":"assistant","content":" engraved","thinking":""},"done":false}
+   6.262	{"model":"llama3.2:1b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
+   6.277	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.292	{"model":"llama3.2:1b","message":{"role":"assistant","content":" text","thinking":""},"done":false}
+   6.308	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   6.323	{"model":"llama3.2:1b","message":{"role":"assistant","content":" be","thinking":""},"done":false}
+   6.338	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printed","thinking":""},"done":false}
+   6.354	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   6.369	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   6.384	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.400	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   6.415	{"model":"llama3.2:1b","message":{"role":"assistant","content":" alloy","thinking":""},"done":false}
+   6.430	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   6.446	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
+   6.461	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   6.476	{"model":"llama3.2:1b","message":{"role":"assistant","content":" create","thinking":""},"done":false}
+   6.491	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.507	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+   6.522	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
+   6.537	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   6.552	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   6.568	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   6.583	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   6.598	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.613	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mechanical","thinking":""},"done":false}
+   6.629	{"model":"llama3.2:1b","message":{"role":"assistant","content":" device","thinking":""},"done":false}
+   6.644	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   6.659	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
+   6.675	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.690	{"model":"llama3.2:1b","message":{"role":"assistant","content":" combination","thinking":""},"done":false}
+   6.705	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   6.720	{"model":"llama3.2:1b","message":{"role":"assistant","content":" gravity","thinking":""},"done":false}
+   6.736	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   6.751	{"model":"llama3.2:1b","message":{"role":"assistant","content":" pressure","thinking":""},"done":false}
+   6.766	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   6.782	{"model":"llama3.2:1b","message":{"role":"assistant","content":" transfer","thinking":""},"done":false}
+   6.797	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.812	{"model":"llama3.2:1b","message":{"role":"assistant","content":" ink","thinking":""},"done":false}
+   6.827	{"model":"llama3.2:1b","message":{"role":"assistant","content":" onto","thinking":""},"done":false}
+   6.843	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.858	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
+   6.874	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   6.889	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   6.904	{"model":"llama3.2:1b","message":{"role":"assistant","content":" machine","thinking":""},"done":false}
+   6.920	{"model":"llama3.2:1b","message":{"role":"assistant","content":" consisted","thinking":""},"done":false}
+   6.935	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   6.950	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.966	{"model":"llama3.2:1b","message":{"role":"assistant","content":" wooden","thinking":""},"done":false}
+   6.981	{"model":"llama3.2:1b","message":{"role":"assistant","content":" frame","thinking":""},"done":false}
+   6.996	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   7.012	{"model":"llama3.2:1b","message":{"role":"assistant","content":" held","thinking":""},"done":false}
+   7.027	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   7.042	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   7.058	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
+   7.073	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   7.088	{"model":"llama3.2:1b","message":{"role":"assistant","content":" place","thinking":""},"done":false}
+   7.104	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   7.119	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   7.134	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   7.150	{"model":"llama3.2:1b","message":{"role":"assistant","content":" plate","thinking":""},"done":false}
+   7.165	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   7.180	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   7.196	{"model":"llama3.2:1b","message":{"role":"assistant","content":" engraved","thinking":""},"done":false}
+   7.211	{"model":"llama3.2:1b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
+   7.227	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   7.242	{"model":"llama3.2:1b","message":{"role":"assistant","content":" text","thinking":""},"done":false}
+   7.258	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   7.273	{"model":"llama3.2:1b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   7.289	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   7.304	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+   7.320	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   7.335	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   7.351	{"model":"llama3.2:1b","message":{"role":"assistant","content":" alloy","thinking":""},"done":false}
+   7.366	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   7.381	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   7.397	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
+   7.412	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   7.427	{"model":"llama3.2:1b","message":{"role":"assistant","content":" create","thinking":""},"done":false}
+   7.443	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   7.458	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+   7.473	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   7.488	{"model":"llama3.2:1b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   7.504	{"model":"llama3.2:1b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+   7.519	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   7.535	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   7.550	{"model":"llama3.2:1b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+   7.565	{"model":"llama3.2:1b","message":{"role":"assistant","content":" block","thinking":""},"done":false}
+   7.581	{"model":"llama3.2:1b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   7.596	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   7.611	{"model":"llama3.2:1b","message":{"role":"assistant","content":" used","thinking":""},"done":false}
+   7.627	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   7.642	{"model":"llama3.2:1b","message":{"role":"assistant","content":" print","thinking":""},"done":false}
+   7.657	{"model":"llama3.2:1b","message":{"role":"assistant","content":" individual","thinking":""},"done":false}
+   7.673	{"model":"llama3.2:1b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
+   7.688	{"model":"llama3.2:1b","message":{"role":"assistant","content":" on","thinking":""},"done":false}
+   7.703	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   7.718	{"model":"llama3.2:1b","message":{"role":"assistant","content":" paper","thinking":""},"done":false}
+   7.734	{"model":"llama3.2:1b","message":{"role":"assistant","content":".\n\n","thinking":""},"done":false}
+   7.749	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   7.765	{"model":"llama3.2:1b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+   7.780	{"model":"llama3.2:1b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+   7.796	{"model":"llama3.2:1b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   7.811	{"model":"llama3.2:1b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   7.826	{"model":"llama3.2:1b","message":{"role":"assistant","content":" significant","thinking":""},"done":false}
+   7.841	{"model":"llama3.2:1b","message":{"role":"assistant","content":" innovation","thinking":""},"done":false}
+   7.857	{"model":"llama3.2:1b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   7.872	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   7.888	{"model":"llama3.2:1b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
+   7.903	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   7.918	{"model":"llama3.2:1b","message":{"role":"assistant","content":" communication","thinking":""},"done":false}
+   7.934	{"model":"llama3.2:1b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   7.949	{"model":"llama3.2:1b","message":{"role":"assistant","content":" It","thinking":""},"done":false}
+   7.964	{"model":"llama3.2:1b","message":{"role":"assistant","content":" allowed","thinking":""},"done":false}
+   7.980	{"model":"llama3.2:1b","message":{"role":"assistant","content":" people","thinking":""},"done":false}
+   7.995	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   8.010	{"model":"llama3.2:1b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
+   8.026	{"model":"llama3.2:1b","message":{"role":"assistant","content":"-produ","thinking":""},"done":false}
+   8.041	{"model":"llama3.2:1b","message":{"role":"assistant","content":"ce","thinking":""},"done":false}
+   8.057	{"model":"llama3.2:1b","message":{"role":"assistant","content":" written","thinking":""},"done":false}
+   8.072	{"model":"llama3.2:1b","message":{"role":"assistant","content":" materials","thinking":""},"done":false}
+   8.087	{"model":"llama3.2:1b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   8.103	{"model":"llama3.2:1b","message":{"role":"assistant","content":" making","thinking":""},"done":false}
+   8.118	{"model":"llama3.2:1b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
+   8.133	{"model":"llama3.2:1b","message":{"role":"assistant","content":" possible","thinking":""},"done":false}
+   8.149	{"model":"llama3.2:1b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+   8.164	{"model":"llama3.2:1b","message":{"role":"assistant","content":" disse","thinking":""},"done":false}
+   8.164	{"model":"llama3.2:1b","message":{"role":"assistant","content":""},"done":true,"done_reason":"length","prompt_eval_count":54,"eval_count":512,"total_duration":8163052032,"load_duration":2856,"prompt_eval_duration":388698752,"eval_duration":7700620000}

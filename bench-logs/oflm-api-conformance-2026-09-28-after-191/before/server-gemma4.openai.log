@@ -1,0 +1,202 @@
+1790606818.306	[FLM]  Using user-specified port: 58603
+1790606818.821	[FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
+1790606822.885	[FLM]  Starting server on port 58603...
+1790606822.885	[🔗 ]  TCP connection established - Remote: 127.0.0.1:36144
+1790606822.885	[FLM]  WebServer started on port 58603 with 10 I/O threads
+1790606822.885	[FLM]  [Press Ctrl+C to stop.TCP]  
+1790606822.885	Read 90 bytes from socket
+1790606822.885	================================================
+1790606822.885	[⬇️ ]  Incoming Request: GET
+1790606822.885	[LOG]  Time stamp: 17:47:02 09:28:2026
+1790606822.885	[LOG]  Target: /api/version
+1790606822.885	[LOG]  Version: 11
+1790606822.885	[LOG]  Keep-Alive: 1
+1790606822.885	================================================
+1790606822.885	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:36144
+1790606822.911	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38784
+1790606822.911	[TCP]  Read 344 bytes from socket
+1790606822.911	================================================
+1790606822.911	[⬇️ ]  Incoming Request: POST
+1790606822.911	[LOG]  Time stamp: 17:47:02 09:28:2026
+1790606822.911	[LOG]  Target: /v1/chat/completions
+1790606822.911	[LOG]  Version: 11
+1790606822.911	[LOG]  Keep-Alive: 1
+1790606822.911	[LOG]  Body: 
+1790606822.911	{
+1790606822.911	    "max_tokens": 512,
+1790606822.911	    "messages": [
+1790606822.911	        {
+1790606822.911	            "content": "Write a de...ing press.",
+1790606822.911	            "role": "user"
+1790606822.911	        }
+1790606822.911	    ],
+1790606822.911	    "model": "gemma4-it:e4b",
+1790606822.911	    "stream": true,
+1790606822.911	    "top_k": 1
+1790606822.911	}
+1790606822.911	[🟢 ]  NPU Locked!
+1790606822.911	[FLM]  Start prefill...
+1790606822.911	[FLM]  Total images: 0
+1790606822.911	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790606824.094	[FLM]  Start generating...
+1790606862.108	
+1790606862.108	[FLM]  Model RAW Output: 
+1790606862.108	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790606862.108	
+1790606862.108	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790606862.108	
+1790606862.108	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790606862.108	
+1790606862.108	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790606862.108	
+1790606862.108	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790606862.108	
+1790606862.108	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790606862.108	
+1790606862.108	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790606862.108	
+1790606862.108	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790606862.111	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790606862.113	ChatCompletionChunk: {"id":"chatcmpl-2fd584abf47c17ecd5b137f2","object":"chat.completion.chunk","created":1790606822,"model":"gemma4-it:e4b","system_fingerprint":"fp_5401093b2f0477d6","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":30,"completion_tokens":512,"total_tokens":542,"active_kv_tokens":542,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":1.654052734375,"load_duration":1.723e-06,"prefill_duration_ttft":1.183128448,"decoding_duration":37.852604,"prefill_speed_tps":25.356502965263836,"decoding_speed_tps":13.526150010709964}}
+1790606862.113	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790606862.113	[🔵 ]  NPU Lock Released!
+1790606862.144	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49250
+1790606862.144	[TCP]  Read 344 bytes from socket
+1790606862.144	================================================
+1790606862.144	[⬇️ ]  Incoming Request: POST
+1790606862.144	[LOG]  Time stamp: 17:47:42 09:28:2026
+1790606862.144	[LOG]  Target: /v1/chat/completions
+1790606862.144	[LOG]  Version: 11
+1790606862.144	[LOG]  Keep-Alive: 1
+1790606862.144	[LOG]  Body: 
+1790606862.144	{
+1790606862.144	    "max_tokens": 512,
+1790606862.144	    "messages": [
+1790606862.144	        {
+1790606862.144	            "content": "Write a de...ing press.",
+1790606862.144	            "role": "user"
+1790606862.144	        }
+1790606862.144	    ],
+1790606862.144	    "model": "gemma4-it:e4b",
+1790606862.144	    "stream": true,
+1790606862.144	    "top_k": 1
+1790606862.144	}
+1790606862.144	[🟢 ]  NPU Locked!
+1790606862.144	[FLM]  Prompt cache miss.
+1790606862.144	[FLM]  Clearing context...
+1790606862.178	[FLM]  Start prefill...
+1790606862.178	[FLM]  Total images: 0
+1790606862.178	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790606863.334	[FLM]  Start generating...
+1790606863.622	[🔴 ]  Client disconnected; cancelling active request
+1790606863.622	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49264
+1790606863.622	[TCP]  Read 270 bytes from socket
+1790606863.622	================================================
+1790606863.622	[⬇️ ]  Incoming Request: POST
+1790606863.622	[LOG]  Time stamp: 17:47:43 09:28:2026
+1790606863.622	[LOG]  Target: /api/chat
+1790606863.623	[LOG]  Version: 11
+1790606863.623	[LOG]  Keep-Alive: 1
+1790606863.623	[LOG]  Body: 
+1790606863.623	{
+1790606863.623	    "messages": [
+1790606863.623	        {
+1790606863.623	            "content": "Say hi.",
+1790606863.623	            "role": "user"
+1790606863.623	        }
+1790606863.623	    ],
+1790606863.623	    "model": "gemma4-it:e4b",
+1790606863.623	    "options": {
+1790606863.623	        "num_predict": 4
+1790606863.623	    },
+1790606863.623	    "stream": false,
+1790606863.623	    "top_k": 1
+1790606863.623	}
+1790606863.623	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790606863.694	
+1790606863.694	[FLM]  Model RAW Output: 
+1790606863.694	## The Unfolding Page:
+1790606863.694	[31m[FLM]  Creating checkpoint at context length 35[0m
+1790606863.695	[❌ ]  Generation Cancelled!
+1790606863.695	ChatCompletionChunk: {"id":"chatcmpl-aef87b9dcb867adf9c7eda7f","object":"chat.completion.chunk","created":1790606862,"model":"gemma4-it:e4b","system_fingerprint":"fp_dcc2f2c254607133","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":30,"completion_tokens":5,"total_tokens":35,"active_kv_tokens":35,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":0.1068115234375,"load_duration":1.623e-06,"prefill_duration_ttft":1.155537024,"decoding_duration":0.358606,"prefill_speed_tps":25.9619548114107,"decoding_speed_tps":13.9428788140745}}
+1790606864.029	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790606864.029	[FLM]  Start generating...
+1790606864.029	[FLM]  Total images: 0
+1790606864.029	[FLM]  Conversation context diverged from cache, clearing context...
+1790606864.061	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790606865.221	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790606865.222	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790606865.254	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790606865.540	
+1790606865.540	[FLM]  Model RAW Output: 
+1790606865.540	Hi! How can I
+1790606865.540	[🔵 ]  NPU Lock Released!
+1790606865.540	================================================
+1790606865.540	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:49264
+1790606866.595	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49268
+1790606866.595	[TCP]  Read 54288 bytes from socket
+1790606866.595	================================================
+1790606866.595	[⬇️ ]  Incoming Request: POST
+1790606866.595	[LOG]  Time stamp: 17:47:46 09:28:2026
+1790606866.595	[LOG]  Target: /v1/chat/completions
+1790606866.595	[LOG]  Version: 11
+1790606866.595	[LOG]  Keep-Alive: 1
+1790606866.596	[LOG]  Body: 
+1790606866.596	{
+1790606866.596	    "max_tokens": 512,
+1790606866.596	    "messages": [
+1790606866.596	        {
+1790606866.596	            "content": "The quick ...ext above.",
+1790606866.596	            "role": "user"
+1790606866.596	        }
+1790606866.596	    ],
+1790606866.596	    "model": "gemma4-it:e4b",
+1790606866.596	    "stream": true,
+1790606866.596	    "top_k": 1
+1790606866.596	}
+1790606866.596	[🟢 ]  NPU Locked!
+1790606866.596	[FLM]  Prompt cache miss.
+1790606866.596	[FLM]  Clearing context...
+1790606866.629	[FLM]  Start prefill...
+1790606866.629	[FLM]  Total images: 0
+1790606866.637	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790606866.895	[🔴 ]  Client disconnected; cancelling active request
+1790606866.896	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49270
+1790606866.896	[TCP]  Read 270 bytes from socket
+1790606866.896	================================================
+1790606866.896	[⬇️ ]  Incoming Request: POST
+1790606866.896	[LOG]  Time stamp: 17:47:46 09:28:2026
+1790606866.896	[LOG]  Target: /api/chat
+1790606866.896	[LOG]  Version: 11
+1790606866.896	[LOG]  Keep-Alive: 1
+1790606866.896	[LOG]  Body: 
+1790606866.896	{
+1790606866.896	    "messages": [
+1790606866.896	        {
+1790606866.896	            "content": "Say hi.",
+1790606866.896	            "role": "user"
+1790606866.896	        }
+1790606866.896	    ],
+1790606866.896	    "model": "gemma4-it:e4b",
+1790606866.896	    "options": {
+1790606866.896	        "num_predict": 4
+1790606866.896	    },
+1790606866.896	    "stream": false,
+1790606866.896	    "top_k": 1
+1790606866.896	}
+1790606866.896	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790606872.672	[❌ ]  Prefill Cancelled!
+1790606872.673	ChatCompletionChunk: {"id":"chatcmpl-e5117aafa12ff77eeff37850","object":"chat.completion.chunk","created":1790606866,"model":"gemma4-it:e4b","system_fingerprint":"fp_7304d331c89ec644","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":12015,"completion_tokens":0,"total_tokens":12015,"active_kv_tokens":0,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":0.0,"load_duration":1.413e-06,"prefill_duration_ttft":6.03570176,"decoding_duration":0.0,"prefill_speed_tps":1990.6550187131843,"decoding_speed_tps":null}}
+1790606873.006	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790606873.006	[FLM]  Start generating...
+1790606873.006	[FLM]  Total images: 0
+1790606873.006	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790606874.225	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790606874.226	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790606874.258	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790606874.543	
+1790606874.544	[FLM]  Model RAW Output: 
+1790606874.544	Hi! How can I
+1790606874.544	[🔵 ]  NPU Lock Released!
+1790606874.544	================================================
+1790606874.544	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:49270

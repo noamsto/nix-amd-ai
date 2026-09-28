@@ -1,5 +1,5 @@
-   0.394	{"model":"llama3.2:1b","response":"The","thinking":"","done":false}
-   0.409	{"model":"llama3.2:1b","response":" History","thinking":"","done":false}
-   0.424	{"model":"llama3.2:1b","response":" of","thinking":"","done":false}
-   0.439	{"model":"llama3.2:1b","response":" the","thinking":"","done":false}
-   0.454	{"model":"llama3.2:1b","response":" Printing","thinking":"","done":false}
+   0.384	{"model":"llama3.2:1b","response":"The","thinking":"","done":false}
+   0.399	{"model":"llama3.2:1b","response":" history","thinking":"","done":false}
+   0.414	{"model":"llama3.2:1b","response":" of","thinking":"","done":false}
+   0.429	{"model":"llama3.2:1b","response":" the","thinking":"","done":false}
+   0.444	{"model":"llama3.2:1b","response":" printing","thinking":"","done":false}

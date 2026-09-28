@@ -16,6 +16,9 @@
 #            (non-streaming: after DECODE_CLOSE_S), mid-decode
 #   prefill  streaming only: a ~12k-token prompt, closed PREFILL_CLOSE_S after
 #            sending, during the first prefill chunk
+#   queued   generate-ns only: sent while a normal /api/chat holds the NPU,
+#            closed PREFILL_CLOSE_S later while it waits in the queue; its
+#            hold is timed from its dequeue, not from the close
 # After each close the probe sends a small non-streaming /api/chat at once.
 #
 # The server log is stamped per line with wall-clock time, so the time from
@@ -24,12 +27,13 @@
 # under HOLD_BOUND_S; mid-prefill, no further prefill chunk starts after the
 # chunk already running (one 4096-token chunk takes ~1.8s on llama and ~8.5s
 # on gemma4 here). Non-streaming /api/chat is not probed.
+# ENDPOINTS="<ep> ..." limits the run to those endpoints.
 set -u
 
 FLM=${1:?usage: disconnect.sh <flm-binary> <outdir>}
 outdir=${2:?usage: disconnect.sh <flm-binary> <outdir>}
-mkdir -p "$outdir"
-outdir=$(cd "$outdir" && pwd)
+mkdir -p "$outdir" || exit 1
+outdir=$(cd "$outdir" && pwd) || exit 1
 
 libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
 health_url=http://127.0.0.1:13305/api/v1/health
@@ -130,7 +134,7 @@ record() {
 # (send PREFILL_PROMPT, close after PREFILL_CLOSE_S, before any output).
 probe() {
   python3 - "$@" <<'PY'
-import http.client, json, os, socket, sys, time
+import http.client, json, os, socket, sys, threading, time
 port, model, endpoint, mode, prefix = sys.argv[1:6]
 n = int(os.environ["NUM_PREDICT"])
 prompt = os.environ["PREFILL_PROMPT"] if mode == "prefill" else os.environ["PROMPT"]
@@ -162,6 +166,19 @@ def reason_of(j):
     return {"finish_reason": (j.get("choices") or [{}])[0].get("finish_reason"),
             "completion_tokens": (j.get("usage") or {}).get("completion_tokens")}
 
+blocker = None
+if mode == "queued":
+    # Hold the NPU with a normal request so the probed one waits in the queue.
+    def block():
+        b = http.client.HTTPConnection("127.0.0.1", int(port), timeout=600)
+        b.request("POST", "/api/chat", json.dumps({"model": model, "messages": msgs, "stream": False,
+                                                  "top_k": 1, "options": {"num_predict": n}}),
+                  {"Content-Type": "application/json"})
+        b.getresponse().read()
+    blocker = threading.Thread(target=block)
+    blocker.start()
+    time.sleep(0.5)
+
 conn = http.client.HTTPConnection("127.0.0.1", int(port), timeout=600)
 t0 = time.time()
 conn.request("POST", path, json.dumps(body), {"Content-Type": "application/json"})
@@ -175,8 +192,8 @@ def close():
     return t
 
 content, chunks, last, t_close, status = "", 0, None, None, None
-if mode == "prefill" or (mode == "decode" and not stream):
-    time.sleep(float(os.environ["PREFILL_CLOSE_S" if mode == "prefill" else "DECODE_CLOSE_S"]))
+if mode in ("prefill", "queued") or (mode == "decode" and not stream):
+    time.sleep(float(os.environ["DECODE_CLOSE_S" if mode == "decode" else "PREFILL_CLOSE_S"]))
     t_close = close()
 elif not stream:
     resp = conn.getresponse()
@@ -238,11 +255,13 @@ fj = json.loads(fr.read())
 summary["followup_status"] = fr.status
 summary["followup_wall_s"] = round(time.time() - t_close, 3)
 summary["followup_server_total_s"] = round(fj.get("total_duration", 0) / 1e9, 3)
+if blocker:
+    blocker.join()
 print(json.dumps(summary))
 PY
 }
 
-# npu_hold <log> <t_close> <endpoint> -- polls the log (up to
+# npu_hold <log> <t_close> <endpoint> <mode> -- polls the log (up to
 # 180s) for the first line after t_close showing the request's work over, and
 # prints the seconds to it. On the locked routes that is the NPU coming free:
 # "NPU Lock Released!" (nothing queued), "Dequeuing NPU request" (handed to the
@@ -253,14 +272,14 @@ PY
 npu_hold() {
   python3 - "$@" <<'PY'
 import json, sys, time
-log, t_close, endpoint = sys.argv[1], float(sys.argv[2]), sys.argv[3]
+log, t_close, endpoint, mode = sys.argv[1], float(sys.argv[2]), sys.argv[3], sys.argv[4]
 if endpoint.startswith("completions"):
     ends = ("Model RAW Output", "Prefill Cancelled!")
 else:
     ends = ("NPU Lock Released", "Dequeuing NPU request", "NPU Locked!")
 deadline = time.time() + 180
 while True:
-    end = disc = None
+    end = disc = start = None
     chunks = 0
     for line in open(log, errors="replace"):
         ts, _, text = line.partition("\t")
@@ -274,10 +293,15 @@ while True:
             disc = round(t - t_close, 3)
         if t < t_close:
             continue
+        if mode == "queued" and start is None:
+            # The blocker hands the NPU to the probed request.
+            if "Dequeuing NPU request" in text:
+                start = t
+            continue
         if "Prefill chunk" in text and "Prefill chunk 1/" not in text:
             chunks += 1
         if any(m in text for m in ends):
-            end = round(t - t_close, 3)
+            end = round(t - (start if mode == "queued" else t_close), 3)
             break
     if end is not None or time.time() > deadline:
         break
@@ -291,7 +315,7 @@ check_disconnect() {
   local label=$1 ep=$2 mode=$3 port=$4 model=$5 bound=$HOLD_BOUND_S disc hold hold_s
   disc=$(probe "$port" "$model" "$ep" "$mode" "$outdir/$label.$ep.$mode")
   sleep 1
-  hold=$(npu_hold "$outdir/server-$label.log" "$(jq -r .t_close <<<"$disc")" "$ep")
+  hold=$(npu_hold "$outdir/server-$label.$ep.log" "$(jq -r .t_close <<<"$disc")" "$ep" "$mode")
   echo "$ep $mode: $disc $hold"
   hold_s=$(jq -r .npu_hold_s <<<"$hold")
   if [[ "$mode" == prefill ]]; then
@@ -312,12 +336,14 @@ probe_model() { # <model> <port> <label>
   local model=$1 port=$2 label=$3 ep full
 
   echo "== $label ($model) =="
-  if ! start_server "$model" "$port" "$label"; then
-    record "$label/startup" FAIL "server did not become ready"
-    return
-  fi
-
-  for ep in chat generate openai completions generate-ns completions-ns; do
+  # A fresh server per endpoint: flm serve never returns the connection slot
+  # of a streaming client that disconnected (send_chunk_data's write-error
+  # path skips the decrement), and it refuses every connection after 10.
+  for ep in ${ENDPOINTS:-chat generate openai completions generate-ns completions-ns}; do
+    if ! start_server "$model" "$port" "$label.$ep"; then
+      record "$label/$ep/startup" FAIL "server did not become ready"
+      continue
+    fi
     full=$(probe "$port" "$model" "$ep" full "$outdir/$label.$ep.full")
     echo "$ep full: $full"
     if jq -e '.status == 200 and .content_chunks > 0' <<<"$full" >/dev/null; then
@@ -327,15 +353,15 @@ probe_model() { # <model> <port> <label>
     fi
     check_disconnect "$label" "$ep" decode "$port" "$model"
     [[ "$ep" == *-ns ]] || check_disconnect "$label" "$ep" prefill "$port" "$model"
+    # /v1/completions takes no NPU lock (#192), so it never queues.
+    [[ "$ep" == generate-ns ]] && check_disconnect "$label" "$ep" queued "$port" "$model"
     if kill -0 "$server_pid" 2>/dev/null; then
       record "$label/$ep/server-alive" PASS
     else
-      record "$label/$ep/server-alive" FAIL "flm serve exited (see server-$label.log)"
-      return
+      record "$label/$ep/server-alive" FAIL "flm serve exited (see server-$label.$ep.log)"
     fi
+    stop_server
   done
-
-  stop_server
 }
 
 probe_model llama3.2:1b 58601 llama
