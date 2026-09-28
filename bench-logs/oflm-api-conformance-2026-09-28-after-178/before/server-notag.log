@@ -1,0 +1,36 @@
+[FLM]  Using user-specified port: 58601
+[FLM]  Starting server on port 58601...
+[FLM]  WebServer started on port 58601 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:48530
+[TCP]  Read 90 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 13:22:19 09:28:2026
+[LOG]  Target: /api/version
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:48530
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:48540
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 13:22:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[ERROR]  handle_ps: [json.exception.invalid_iterator.207] cannot use key() for non-object iterators
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:48540
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:48548
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 13:22:19 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[ERROR]  handle_ps: [json.exception.invalid_iterator.207] cannot use key() for non-object iterators
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:48548

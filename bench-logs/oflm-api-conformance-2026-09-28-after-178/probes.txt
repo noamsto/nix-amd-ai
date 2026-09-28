@@ -1,0 +1,44 @@
+== state nonchat ==
+$ GET /api/ps
+{"models":[]}
+HTTP 200
+PASS nonchat
+== state notag ==
+$ GET /api/ps
+{"models":[]}
+HTTP 200
+PASS notag
+== state chat ==
+$ GET /api/ps
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:23:52.11332+00:00"}]}
+HTTP 200
+PASS chat
+== state embedonly ==
+$ GET /api/ps
+{"models":[{"name":"embed-gemma:300m","model":"embed-gemma:300m","size":300000000,"details":{"family":"embed-gemma","format":"NPU2","parameter_size":"300M","quantization_level":"none","think":false},"expires_at":"2026-09-28T11:23:54.16680+00:00"}]}
+HTTP 200
+PASS embedonly
+== state chat+embed ==
+$ GET /api/ps
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:23:58.23945+00:00"},{"name":"embed-gemma:300m","model":"embed-gemma:300m","size":300000000,"details":{"family":"embed-gemma","format":"NPU2","parameter_size":"300M","quantization_level":"none","think":false},"expires_at":"2026-09-28T11:23:58.23945+00:00"}]}
+HTTP 200
+PASS chat+embed
+== state nonchat-then-load ==
+$ GET /api/ps
+{"models":[]}
+HTTP 200
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790591043,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":2,"total_tokens":40,"kv_token_occupancy_rate_percentage":0.030517578125,"load_duration":2.083960448,"prefill_duration_ttft":0.393464,"decoding_duration":0.029499,"prefill_speed_tps":96.57808592399813,"decoding_speed_tps":67.79890843757416},"service_tier":"default"}
+HTTP 200
+$ GET /api/ps
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:24:03.14500+00:00"}]}
+HTTP 200
+PASS nonchat-then-load
+== summary ==
+PASS nonchat
+PASS notag
+PASS chat
+PASS embedonly
+PASS chat+embed
+PASS nonchat-then-load
+6 passed, 0 failed
