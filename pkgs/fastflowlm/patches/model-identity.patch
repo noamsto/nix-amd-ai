@@ -1,5 +1,5 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 6500795..bad5298 100644
+index 6500795..111bdc1 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
 @@ -48,6 +48,34 @@ static json require_field(const json& request, const char* field, RequiredFieldT
@@ -48,7 +48,7 @@ index 6500795..bad5298 100644
          }
      }
      else {
-@@ -405,47 +434,91 @@ RestHandler::~RestHandler() = default;
+@@ -405,47 +434,115 @@ RestHandler::~RestHandler() = default;
  
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
@@ -77,9 +77,57 @@ index 6500795..bad5298 100644
 +            return ModelLoad::Unknown;
          }
 -        std::pair<std::string, std::unique_ptr<AutoModel>> auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
--        auto_chat_engine = std::move(auto_model.second);
--        auto_chat_engine->set_server_mode(true);
--        ensure_tag = auto_model.first;
++        return auto_chat_engine ? ModelLoad::Ok : ModelLoad::NoModel;
++    }
++    if (ensure_tag == current_model_tag && auto_chat_engine) {
++        return ModelLoad::Ok;
++    }
++    // Checked BEFORE anything is unloaded: a request for a model that does not
++    // exist must not evict the one currently serving.
++    if (!supported_models.is_model_supported(ensure_tag)) {
++        header_print("ERROR", "unknown model '" + ensure_tag + "' -- refusing; '" +
++                              current_model_tag + "' stays loaded");
++        return ModelLoad::Unknown;
++    }
++    // embed-gemma and whisper-v3 are in the model list, but get_auto_model()
++    // substitutes Llama for them instead of refusing. A model_list.json entry
++    // missing details.family, or with a non-string one, is a server-side config
++    // fault; fail the load like the reads below instead of letting the
++    // json::exception surface as a client error. Resolved before anything is
++    // unloaded, so the refusal does not evict the model that is serving.
++    std::string family;
++    try {
++        auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
++        family = info["details"]["family"];
++    }
++    catch (const std::exception& e) {
++        header_print("ERROR", "model '" + ensure_tag + "' has a malformed model-list entry: " + std::string(e.what()));
++        return ModelLoad::LoadFailed;
++    }
++    if (family == "whisper-v3" || family == "embed-gemma") {
++        header_print("ERROR", "model '" + ensure_tag + "' is not a chat model -- refusing; '" +
++                              current_model_tag + "' stays loaded");
++        return ModelLoad::NotChatModel;
++    }
++
++    if (downloader.is_model_downloaded(ensure_tag) == ModelDownloader::ModelStatus::Incompatible) {
++        header_print("ERROR", "model '" + ensure_tag + "' is not compatible with this version of FastFlowLM -- refusing; '" +
++                              current_model_tag + "' stays loaded");
++        return ModelLoad::LoadFailed;
++    }
++
++    std::this_thread::sleep_for(std::chrono::milliseconds(500));
++    if (auto_chat_engine != nullptr) {
++        auto_chat_engine.reset();
++    }
++    // get_auto_model() re-reads details.family and maps it to an engine family;
++    // a family the build does not know is the same server-side config fault.
++    std::pair<std::string, std::unique_ptr<AutoModel>> auto_model;
++    try {
++        auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
+         auto_chat_engine = std::move(auto_model.second);
+         auto_chat_engine->set_server_mode(true);
+         ensure_tag = auto_model.first;
 -        switch (downloader.is_model_downloaded(ensure_tag)) {
 -            case ModelDownloader::ModelStatus::Ready:
 -                break;
@@ -97,42 +145,15 @@ index 6500795..bad5298 100644
 -        }
 -        catch (const std::exception& e) {
 -            header_print("ERROR", "Failed to load model: " + std::string(e.what()));
-+        return auto_chat_engine ? ModelLoad::Ok : ModelLoad::NoModel;
 +    }
-+    if (ensure_tag == current_model_tag && auto_chat_engine) {
-+        return ModelLoad::Ok;
-+    }
-+    // Checked BEFORE anything is unloaded: a request for a model that does not
-+    // exist must not evict the one currently serving.
-+    if (!supported_models.is_model_supported(ensure_tag)) {
-+        header_print("ERROR", "unknown model '" + ensure_tag + "' -- refusing; '" +
-+                              current_model_tag + "' stays loaded");
-+        return ModelLoad::Unknown;
-+    }
-+    // embed-gemma and whisper-v3 are in the model list, but get_auto_model()
-+    // substitutes Llama for them instead of refusing.
-+    auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
-+    std::string family = info["details"]["family"];
-+    if (family == "whisper-v3" || family == "embed-gemma") {
-+        header_print("ERROR", "model '" + ensure_tag + "' is not a chat model -- refusing; '" +
-+                              current_model_tag + "' stays loaded");
-+        return ModelLoad::NotChatModel;
-+    }
-+
-+    if (downloader.is_model_downloaded(ensure_tag) == ModelDownloader::ModelStatus::Incompatible) {
-+        header_print("ERROR", "model '" + ensure_tag + "' is not compatible with this version of FastFlowLM -- refusing; '" +
-+                              current_model_tag + "' stays loaded");
++    catch (const std::exception& e) {
++        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
++        this->auto_chat_engine.reset();
++        this->npu_device_inst.reset();
++        this->npu_device_inst = flm_rt::device(0);
++        this->current_model_tag = "model-faker";
 +        return ModelLoad::LoadFailed;
 +    }
-+
-+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
-+    if (auto_chat_engine != nullptr) {
-+        auto_chat_engine.reset();
-+    }
-+    std::pair<std::string, std::unique_ptr<AutoModel>> auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
-+    auto_chat_engine = std::move(auto_model.second);
-+    auto_chat_engine->set_server_mode(true);
-+    ensure_tag = auto_model.first;
 +    switch (downloader.is_model_downloaded(ensure_tag)) {
 +        case ModelDownloader::ModelStatus::Ready:
 +            break;
@@ -176,7 +197,7 @@ index 6500795..bad5298 100644
  }
  
  ///@brief Ensure the asr model is loaded
-@@ -691,9 +764,8 @@ void RestHandler::handle_generate(const json& request,
+@@ -691,9 +788,8 @@ void RestHandler::handle_generate(const json& request,
          int length_limit = request.value("max_tokens", 4096);
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
@@ -188,7 +209,7 @@ index 6500795..bad5298 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -808,13 +880,12 @@ void RestHandler::handle_chat(const json& request,
+@@ -808,13 +904,12 @@ void RestHandler::handle_chat(const json& request,
          int length_limit = options.value("num_predict", 4096);
  
          auto load_start_time = time_utils::now();
@@ -205,7 +226,7 @@ index 6500795..bad5298 100644
          configure_chat_engine_parameters(options, request);
  
          // messages = normalize_messages(messages);
-@@ -919,6 +990,17 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -919,6 +1014,17 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -223,7 +244,7 @@ index 6500795..bad5298 100644
          if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
              send_response(err);
              return;
-@@ -932,6 +1014,24 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -932,6 +1038,24 @@ void RestHandler::handle_embeddings(const json& request,
              return;
          }
          std::string model = request["model"].get<std::string>();
@@ -248,7 +269,7 @@ index 6500795..bad5298 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1176,9 +1276,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1176,9 +1300,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
          }
  
          auto load_start_time = time_utils::now();
@@ -260,7 +281,7 @@ index 6500795..bad5298 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1233,7 +1332,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1233,7 +1356,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
              }
          }
  
@@ -269,7 +290,7 @@ index 6500795..bad5298 100644
              current_messages = convert_tool_responses_gemma4(current_messages);
          }
  
-@@ -1472,16 +1571,10 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -1472,16 +1595,10 @@ void RestHandler::handle_openai_completion(const json& request,
          bool stream = request.value("stream", false);
          json options = request.value("options", json::object());
  

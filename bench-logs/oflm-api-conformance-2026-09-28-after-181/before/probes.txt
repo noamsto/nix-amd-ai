@@ -1,0 +1,33 @@
+== case missing-family (base) ==
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T12:35:01.01763+00:00"}]}
+HTTP 200
+PASS missing-family/loaded
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Say hi"}],"stream":false,"max_tokens":8}
+{"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+HTTP 400
+PASS missing-family/status
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T12:35:01.02325+00:00"}]}
+HTTP 200
+PASS missing-family/not-evicted
+-- [ERROR] ensure_model_loaded line --
+(none found)
+== case unknown-family (base) ==
+$ GET /api/ps 
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T12:35:04.10063+00:00"}]}
+HTTP 200
+PASS unknown-family/loaded
+$ POST /v1/chat/completions {"model":"gemma4-it:e4b","messages":[{"role":"user","content":"Say hi"}],"stream":false,"max_tokens":8}
+{"error":{"message":"Internal error","type":"server_error"}}
+HTTP 500
+PASS unknown-family/status
+-- [ERROR] ensure_model_loaded line --
+(none found)
+== summary (base) ==
+PASS missing-family/loaded
+PASS missing-family/status
+PASS missing-family/not-evicted
+PASS unknown-family/loaded
+PASS unknown-family/status
+5 passed, 0 failed

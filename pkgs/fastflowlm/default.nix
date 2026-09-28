@@ -56,7 +56,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     model that fails to load gets 500 (a "server_error" type now maps to
   #     500 in the status mapping above). An omitted `model` is still served
   #     by the loaded chat model; /v1/embeddings still requires `model`
-  #     (#171) and refuses any tag but the loaded one.
+  #     (#171) and refuses any tag but the loaded one. A model_list.json entry
+  #     with a missing or non-string `details.family` now fails the load as
+  #     500 model_load_failed, not a 400 (#181).
   #   - no-exception-text.patch (#175): handlers built client error bodies
   #     from a caught exception's e.what(), which for nlohmann errors
   #     reflects request bytes and library internals. Bodies now carry a
