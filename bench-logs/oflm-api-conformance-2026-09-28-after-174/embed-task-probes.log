@@ -1,0 +1,16 @@
+PASS  no prompt_name -> 200 with a vector
+PASS  no prompt_name keeps the default task_query -- byte-identical to prompt_name=query
+PASS  prompt_name=query and prompt_name=document differ -- cosine 0.957706
+PASS  query vs document cosine well under 0.9999
+PASS  prompt_name=query reproducible
+PASS  prompt_name=document reproducible
+PASS  task_type is an alias for prompt_name
+PASS  the two spellings may agree (query/search_query)
+PASS  disagreeing prompt_name/task_type -> 400 invalid_value -- 400 {'error': {'message': "'prompt_name' and 'task_type' are aliases and disagree ('task_type' says 'document'). Send one, or send the same task in both.", 'type': 'invalid_request_error', 'param': 't...
+PASS  disagreement message names both fields -- 'prompt_name' and 'task_type' are aliases and disagree ('task_type' says 'document'). Send one, or send the same task in both.
+PASS  unknown task name -> 400 invalid_value -- 400 {'error': {'message': "unknown prompt_name 'not_a_task'. Known: [query, search_query, Retrieval-query, document, search_document, Retrieval-document, clustering, Clustering, classification, Classi...
+PASS  unknown-name message quotes the value and accepted names -- unknown prompt_name 'not_a_task'. Known: [query, search_query, Retrieval-query, document, search_document, Retrieval-document, clustering, Clustering, classification, Classification, MultilabelClassif...
+PASS  non-string prompt_name -> 400 invalid_value -- 400 {'error': {'message': "'prompt_name' must be a string, one of [query, search_query, Retrieval-query, document, search_document, Retrieval-document, clustering, Clustering, classification, Classifi...
+PASS  non-string task_type -> 400 invalid_value -- 400 {'error': {'message': "'task_type' must be a string, one of [query, search_query, Retrieval-query, document, search_document, Retrieval-document, clustering, Clustering, classification, Classifica...
+
+=== ALL PASS ===
