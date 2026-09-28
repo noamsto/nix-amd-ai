@@ -19,12 +19,13 @@
 #   queued   generate-ns only: sent while a normal /api/chat holds the NPU,
 #            closed PREFILL_CLOSE_S later while it waits in the queue; its
 #            hold is timed from its dequeue, not from the close
-# After each close the probe sends a small non-streaming /api/chat at once.
+# After each close the probe sends a small non-streaming /api/chat at once,
+# except on /v1/completions, which takes no NPU lock (#192).
 #
 # The server log is stamped per line with wall-clock time, so the time from
 # the close to the first line showing the work over is the NPU hold after the
-# disconnect. The contract, on every probed endpoint: mid-decode, that hold is
-# under HOLD_BOUND_S; mid-prefill, no further prefill chunk starts after the
+# disconnect. The contract, on every probed endpoint: mid-decode and after a
+# queued request's dequeue, that hold is under HOLD_BOUND_S; mid-prefill, no further prefill chunk starts after the
 # chunk already running (one 4096-token chunk takes ~1.8s on llama and ~8.5s
 # on gemma4 here). Non-streaming /api/chat is not probed.
 # ENDPOINTS="<ep> ..." limits the run to those endpoints.
@@ -131,7 +132,8 @@ record() {
 # summary line and writes <prefix>.transcript (arrival-stamped lines) and
 # <prefix>.content. Modes: full (read to the end), decode (close after 5
 # content chunks, or after DECODE_CLOSE_S on a non-streaming endpoint), prefill
-# (send PREFILL_PROMPT, close after PREFILL_CLOSE_S, before any output).
+# (send PREFILL_PROMPT, close after PREFILL_CLOSE_S, before any output), queued
+# (close after PREFILL_CLOSE_S while a blocker request holds the NPU).
 probe() {
   python3 - "$@" <<'PY'
 import http.client, json, os, socket, sys, threading, time
@@ -267,7 +269,8 @@ PY
 # "NPU Lock Released!" (nothing queued), "Dequeuing NPU request" (handed to the
 # follow-up) or "NPU Locked!" (the follow-up found it free). /v1/completions
 # takes no lock, so there it is generate() logging its raw output on return,
-# or the patched build logging a cancelled prefill. Also prints when the server logged
+# or the patched build logging a cancelled prefill. In queued mode the time
+# runs from the probed request's dequeue. Also prints when the server logged
 # the disconnect, and how many further prefill chunks started after the close.
 npu_hold() {
   python3 - "$@" <<'PY'
