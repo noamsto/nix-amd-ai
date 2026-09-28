@@ -10,9 +10,14 @@ models and ports. Only the `flm` build under test changed.
 `/nix/store/5gga3wag3iqndlk6hnlnvic2idl7vlm4-fastflowlm-1.0.6`.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/embed-task-prompt.patch`
 after `no-exception-text.patch`,
-`/nix/store/8gq9j6m68klpv79xs933s1m4xqvgxjg6-fastflowlm-1.0.6`. (An earlier
-build `5kacynz5...` carried the same patch; the only later change is a C++
-comment, compiled out, and every log here was rerun on the final build.)
+`/nix/store/3zwn4w4pk26rqsp9mmmyz0npkxqgxm8h-fastflowlm-1.0.6` (the branch head,
+which after the #178/#183 squash also carries `ps-loaded-models.patch`; that
+patch touches `/api/ps` only and not the embedding path). This is the #182 review
+fix pass: the patch's task helpers and the `handle_embeddings` resolution block
+are now under one `FASTFLOWLM_LINUX_LIMITED_MODELS` guard (see below), and
+`embed-task-probes.py`'s alias rows assert the non-default task. (`8gq9j6m6...`,
+`r2csw5wb...` and `mwmqyki...` carried the same guard; `5kacynz5...` was the
+pre-guard patch. The probes here were rerun with the repaired alias checks.)
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`
 (`specs/server-api/spec.md:147-193`, `SERVER-EMBED-TASK-PROMPT`).
 **Models:** `llama3.2:1b` (chat), `gemma4-it:e4b` (chat), `embed-gemma:300m`
@@ -56,7 +61,10 @@ suite-assumption gap as the #171/#175 runs.
 ## Task-prompt probes
 
 [`embed-task-probes.py`](embed-task-probes.py) checks both the vector
-behaviour and the refusals. Old build `8 FAIL` ([`before/embed-task-probes.log`](before/embed-task-probes.log));
+behaviour and the refusals. The alias rows compare against the **non-default**
+`document` task (and assert the result is not the query vector), so a server that
+ignores `task_type` fails them instead of passing by comparing against the
+default. Old build `10 FAIL` ([`before/embed-task-probes.log`](before/embed-task-probes.log));
 new build all PASS ([`embed-task-probes.log`](embed-task-probes.log)).
 
 | Probe | Old | New |
@@ -64,10 +72,24 @@ new build all PASS ([`embed-task-probes.log`](embed-task-probes.log)).
 | no `prompt_name` -> 200, default `task_query` | PASS | PASS |
 | `query` and `document` differ | **FAIL** cosine 1.000000 | PASS cosine 0.957706 |
 | each prompt reproducible | PASS | PASS |
-| `task_type` alias, and agreeing spellings | PASS | PASS |
+| `task_type` alias (`task_type=document`) | **FAIL** returns the query vector | PASS |
+| agreeing spellings (`prompt_name=document, task_type=search_document`) | **FAIL** returns the query vector | PASS |
 | disagreeing spellings -> 400 `invalid_value` naming both | **FAIL** 200 | PASS |
 | unknown name -> 400 `invalid_value`, message quotes it and the accepted names | **FAIL** 200 | PASS |
 | non-string `prompt_name`/`task_type` -> 400 `invalid_value` | **FAIL** 200 | PASS |
+
+### LIMITED build guard
+
+`embed-task-prompt.patch`'s task helpers and the `handle_embeddings`
+resolution block reference `embedding_task_type_t`, which `rest_handler.hpp`
+only pulls in when embedding models are built. They are now under the same
+`#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS` as the embed loop they feed, so a
+LIMITED build stops failing on the undeclared enum. Scratch compile of the
+patched `rest_handler.cpp` with `-DFASTFLOWLM_LINUX_LIMITED_MODELS=1` (cmake +
+ninja, full dependency include path; raw log [`limited-compile.txt`](limited-compile.txt)):
+
+- pre-guard patch: fails with `'embedding_task_type_t' was not declared in this scope` (`rest_handler.cpp:84`).
+- post-guard patch (this branch): compiles clean.
 
 ### Manual prefix check
 

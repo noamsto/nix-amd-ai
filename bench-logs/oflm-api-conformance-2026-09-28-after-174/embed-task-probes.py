@@ -96,10 +96,14 @@ def main():
           vec(prompt_name="query") == vectors["query"])
     check("prompt_name=document reproducible",
           vec(prompt_name="document") == vectors["document"])
+    # Non-default task: comparing against vectors["query"] would pass on a
+    # server that ignores task_type, since query is also the default.
+    doc_alias = vec(task_type="document")
     check("task_type is an alias for prompt_name",
-          vec(task_type="query") == vectors["query"])
-    check("the two spellings may agree (query/search_query)",
-          vec(prompt_name="query", task_type="search_query") == vectors["query"])
+          doc_alias == vectors["document"] and doc_alias != vectors["query"])
+    agree_alias = vec(prompt_name="document", task_type="search_document")
+    check("the two spellings may agree (document/search_document)",
+          agree_alias == vectors["document"] and agree_alias != vectors["query"])
 
     st, body = embed(prompt_name="query", task_type="document")
     m = err(body).get("message", "")

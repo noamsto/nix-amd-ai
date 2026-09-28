@@ -34,13 +34,17 @@ index d0ef9d7..e1c2d5d 100644
  };
 \ No newline at end of file
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index fd1916a..d463e2a 100644
+index fd1916a..a0413f2 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -76,6 +76,87 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
+@@ -76,6 +76,92 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
      }
  }
  
++// Guarded with the embed loop below: these use embedding_task_type_t, whose
++// header rest_handler.hpp includes only when embedding models are built, and a
++// FASTFLOWLM_LINUX_LIMITED_MODELS build supports no embedding.
++#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
 +// The REST names for an embedding task, and the enum each maps to. Ported from
 +// OpenFlowLM-Next's openai_compat::task_names() (src/server/openai_compat.hpp,
 +// Vegard Berget). NOT the model's own vocabulary: several names are aliases for
@@ -121,14 +125,16 @@ index fd1916a..d463e2a 100644
 +    if (!task_given && declares_names)   return TaskPolicy::Required;
 +    return TaskPolicy::Ok;
 +}
++#endif
 +
  // e.what() can quote the request's own bytes and nlohmann's type-system
  // internals, so it goes to the server log, never into the response body.
  // request_fault marks a catch around prompt processing (insert(), or
-@@ -1037,6 +1118,66 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -1037,6 +1123,66 @@ void RestHandler::handle_embeddings(const json& request,
          model = loaded;
  #endif
  
++#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
 +        // The request's task prompt. embed-gemma prepends a different prefix
 +        // per task, so the resolved task or a refusal -- never a substitute.
 +        // Ported from OpenFlowLM-Next's SERVER-EMBED-TASK-PROMPT.
@@ -136,12 +142,10 @@ index fd1916a..d463e2a 100644
 +        const std::string accepted = task_names_csv();
 +        bool supports_prompts = false;
 +        bool declares_names = false;
-+#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
 +        if (this->auto_embedding_engine) {
 +            supports_prompts = this->auto_embedding_engine->supports_task_prompts();
 +            declares_names = !this->auto_embedding_engine->prompt_names().empty();
 +        }
-+#endif
 +        const TaskResolution tr = resolve_task(request);
 +        using TRS = TaskResolution::Status;
 +        const TaskPolicy policy =
@@ -188,11 +192,12 @@ index fd1916a..d463e2a 100644
 +            return;
 +        }
 +        if (tr.status == TRS::Ok) task = tr.task;
++#endif
 +
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1054,7 +1195,7 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -1054,7 +1200,7 @@ void RestHandler::handle_embeddings(const json& request,
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
              for (size_t i = 0; i < inputs.size(); ++i) {
                  std::cout << "Embedding input[" << i << "]: " << "\n" << inputs[i] << std::endl;
