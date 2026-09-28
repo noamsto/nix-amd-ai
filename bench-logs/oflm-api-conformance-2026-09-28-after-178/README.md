@@ -13,7 +13,9 @@ tree is identical to `328ebd2`, #182's squash-merge that this branch sits on),
 out path the after-174 run ended on.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/ps-loaded-models.patch`
 after `embed-task-prompt.patch`,
-`/nix/store/hyfz6rf9453d7p322vczrkc7wv8qxaq4-fastflowlm-1.0.6`.
+`/nix/store/bnyjhnp4rk1fkdp44j7sk2y27jmrqssv-fastflowlm-1.0.6`.
+**Round-1 build:** the first version of the patch, before review,
+`/nix/store/hyfz6rf9453d7p322vczrkc7wv8qxaq4-fastflowlm-1.0.6` (see below).
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
@@ -37,6 +39,7 @@ Server logs are the `server-<state>.log` files.
 | `--embed 1`, no tag | 200, `embed-gemma:300m` | **400** `Invalid request` | 200, `embed-gemma:300m` |
 | `llama3.2:1b --embed 1` | 200, `llama3.2:1b` then `embed-gemma:300m` | 200, `llama3.2:1b` only | 200, both |
 | `embed-gemma:300m`, then a chat request for `llama3.2:1b` | 200, `llama3.2:1b` | 200, `llama3.2:1b` | 200, `llama3.2:1b` |
+| no tag, `/api/ps` polled every 0.1s while the first chat request loads `llama3.2:1b` | every poll 200, `[]` or `llama3.2:1b` | **19 of 23 polls 400** | 24 of 24 polls 200 (20 `[]`, 4 `llama3.2:1b`) |
 
 On the old build, the 400 body is the generic one from
 `no-exception-text.patch`. The cause is in the server log:
@@ -44,7 +47,8 @@ On the old build, the 400 body is the generic one from
 non-object iterators`. `handle_ps` looked up the `model-faker` sentinel, and
 `rectify_model_tag` indexed a missing key on a const json. That is undefined
 behavior, so a 400 was not guaranteed either. The new build never looks the
-sentinel up. It lists the chat model only while a chat engine is loaded. The
+sentinel up. It lists the chat model only while a chat engine is loaded under
+a tag the model list knows. The
 `llama3.2:1b` entry has the same fields and values as before; only
 `expires_at` differs.
 
@@ -60,8 +64,20 @@ models, and no `/api/*` endpoint can use one.
 downloader reports as incompatible, is refused before anything is unloaded,
 so the served model stays loaded and the sentinel is never set. Every path in
 `ensure_model_loaded` that does set it also resets `auto_chat_engine`. That is
-the same state as the two no-chat startups above. The patch keys on the
-engine, so the sentinel is never looked up.
+the same state as the two no-chat startups above.
+
+## Round 1: the load window
+
+The first version of the patch listed the chat model whenever
+`auto_chat_engine` was set. Review found that `ensure_model_loaded` sets the
+new engine before it updates `current_model_tag`. `GET /api/ps` is not
+serialized by the NPU lock, so a `/api/ps` during the first load still saw the
+sentinel. The `ps-during-load` state reproduces that on the round-1 build:
+16 of 25 polls answered 400 ([`round1/probes.txt`](round1/probes.txt)). The
+patch now also requires `current_model_tag` to be a supported tag, which is
+the precondition `rectify_model_tag` needs. While one chat model replaces
+another, `/api/ps` still reports the outgoing model until the new tag is set,
+as it did before this change.
 
 ## Conformance rerun
 

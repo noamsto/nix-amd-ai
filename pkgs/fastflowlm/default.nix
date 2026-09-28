@@ -82,9 +82,12 @@ stdenv.mkDerivation (finalAttrs: {
   #     serve with no tag, a non-chat startup tag such as embed-gemma:300m,
   #     or after a failed load) it looked up the "model-faker" sentinel -- a
   #     missing-key read on a const json, undefined behavior that answered
-  #     400. It now lists the loaded chat model only when one is loaded
-  #     ({"models": []} otherwise), and like Ollama also lists a loaded
-  #     --embed model. Whisper (--asr) is not listed.
+  #     400 -- and since GET /api/ps isn't serialized by the NPU lock, the
+  #     same UB was reachable mid-load, when the new engine is set before
+  #     current_model_tag. It now lists the chat model only when a chat
+  #     engine is loaded under a real tag ({"models": []} otherwise), and
+  #     like Ollama also lists a loaded --embed model. Whisper (--asr) is
+  #     not listed.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for

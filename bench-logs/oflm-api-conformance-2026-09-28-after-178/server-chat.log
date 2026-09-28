@@ -1,35 +1,35 @@
 [FLM]  Using user-specified port: 58601
 [FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
 [FLM]  Starting server on port 58601...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:37580
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:54752
 [FLM]  WebServer started on port 58601 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:23:52 09:28:2026
+[LOG]  Time stamp: 13:35:39 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:37580
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51438
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:54752
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:54758
 [TCP]  Read 85 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:23:52 09:28:2026
+[LOG]  Time stamp: 13:35:39 09:28:2026
 [LOG]  Target: /api/ps
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51438
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51450
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:54758
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:54762
 [TCP]  Read 85 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:23:52 09:28:2026
+[LOG]  Time stamp: 13:35:39 09:28:2026
 [LOG]  Target: /api/ps
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51450
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:54762

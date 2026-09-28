@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Exercises GET /api/ps of `flm serve` across server states (no chat model
-# loaded, embed-only, chat model, chat+embed, and a nonchat->load transition).
+# loaded, embed-only, chat model, chat+embed, a nonchat->load transition, and
+# a poll-during-the-first-load race).
 # Usage: probes.sh <flm-binary> <outdir> [state...]
 set -u
 
@@ -12,7 +13,7 @@ mkdir -p "$outdir"
 port=58601
 base="http://127.0.0.1:$port"
 libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
-all_states=(nonchat notag chat embedonly "chat+embed" nonchat-then-load)
+all_states=(nonchat notag chat embedonly "chat+embed" nonchat-then-load ps-during-load)
 states=("$@")
 [[ ${#states[@]} -eq 0 ]] && states=("${all_states[@]}")
 
@@ -22,12 +23,10 @@ fail_count=0
 results=()
 
 cleanup() {
-  if [[ -n "$server_pid" ]] && kill -0 "$server_pid" 2>/dev/null; then
-    kill -TERM "$server_pid" 2>/dev/null
-    wait "$server_pid" 2>/dev/null
-  fi
+  [[ -n "$server_pid" ]] && stop_server exit
+  return 0
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT; trap 'exit 130' INT; trap 'exit 143' TERM
 
 # probe METHOD PATH [BODY] -- prints "$ GET/POST ..." then body and HTTP code.
 probe() {
@@ -63,6 +62,7 @@ start_for_state() {
     chat) start_server "$state" llama3.2:1b ;;
     embedonly) start_server "$state" --embed 1 ;;
     "chat+embed") start_server "$state" llama3.2:1b --embed 1 ;;
+    ps-during-load) start_server "$state" ;;
     *) echo "unknown state $state" >&2; return 1 ;;
   esac
 }
@@ -173,6 +173,59 @@ run_state() {
       probe GET /api/ps
       get_silent /api/ps
       if [[ "$last_code" == 200 ]] && jq -e '[.models[].name] == ["llama3.2:1b"]' >/dev/null 2>&1 <<<"$last_body"; then
+        record "$state" PASS
+      else
+        record "$state" FAIL "expected only llama3.2:1b after load, got HTTP $last_code: $last_body"
+      fi
+      ;;
+    ps-during-load)
+      local chat_out
+      chat_out=$(mktemp)
+      curl -sS -m 120 -w '\nHTTP %{http_code}\n' -H 'Content-Type: application/json' \
+        --data-binary '{"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}' \
+        "$base/v1/chat/completions" >"$chat_out" 2>&1 &
+      local chat_pid=$!
+
+      local poll_count=0
+      local observations=()
+      while kill -0 "$chat_pid" 2>/dev/null; do
+        local resp code body names
+        resp=$(curl -sS -m 10 -w '\nHTTP %{http_code}\n' "$base/api/ps")
+        code=$(tail -n1 <<<"$resp" | awk '{print $2}')
+        body=$(sed '$d' <<<"$resp")
+        names=$(jq -c '[.models[].name]' 2>/dev/null <<<"$body") || names=${body:0:200}
+        observations+=("HTTP $code $names")
+        (( poll_count++ ))
+        sleep 0.1
+      done
+      wait "$chat_pid" 2>/dev/null
+
+      printf '$ POST /v1/chat/completions %s\n' \
+        '{"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}'
+      cat "$chat_out"
+      rm -f "$chat_out"
+
+      echo "polls during load: $poll_count"
+      local uniq_obs
+      uniq_obs=$(printf '%s\n' "${observations[@]}" | sort | uniq -c)
+      echo "$uniq_obs"
+
+      probe GET /api/ps
+      get_silent /api/ps
+
+      local bad_obs=""
+      for obs in "${observations[@]}"; do
+        if [[ "$obs" != "HTTP 200 []" && "$obs" != 'HTTP 200 ["llama3.2:1b"]' ]]; then
+          bad_obs=$obs
+          break
+        fi
+      done
+
+      if [[ -n "$bad_obs" ]]; then
+        record "$state" FAIL "bad observation during load: $bad_obs"
+      elif (( poll_count < 5 )); then
+        record "$state" FAIL "load window not exercised ($poll_count polls)"
+      elif [[ "$last_code" == 200 ]] && jq -e '[.models[].name] == ["llama3.2:1b"]' >/dev/null 2>&1 <<<"$last_body"; then
         record "$state" PASS
       else
         record "$state" FAIL "expected only llama3.2:1b after load, got HTTP $last_code: $last_body"

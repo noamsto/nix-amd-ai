@@ -4,32 +4,32 @@
 [FLM]  Starting server on port 58601...
 [FLM]  WebServer started on port 58601 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53034
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32806
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:22:36 09:28:2026
+[LOG]  Time stamp: 13:35:24 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53034
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53044
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32806
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32818
 [TCP]  Read 85 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:22:36 09:28:2026
+[LOG]  Time stamp: 13:35:24 09:28:2026
 [LOG]  Target: /api/ps
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 [ERROR]  handle_ps: [json.exception.invalid_iterator.207] cannot use key() for non-object iterators
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53044
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53056
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32818
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32824
 [TCP]  Read 238 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 13:22:36 09:28:2026
+[LOG]  Time stamp: 13:35:24 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -54,24 +54,24 @@
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53056
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53070
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32824
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32826
 [TCP]  Read 85 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:22:40 09:28:2026
+[LOG]  Time stamp: 13:35:26 09:28:2026
 [LOG]  Target: /api/ps
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53070
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53086
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32826
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32834
 [TCP]  Read 85 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 13:22:40 09:28:2026
+[LOG]  Time stamp: 13:35:26 09:28:2026
 [LOG]  Target: /api/ps
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53086
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32834

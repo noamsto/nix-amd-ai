@@ -10,7 +10,7 @@ HTTP 400
 FAIL notag: expected 200 + empty models, got HTTP 400: {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 == state chat ==
 $ GET /api/ps
-{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:22:23.19202+00:00"}]}
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:35:15.09532+00:00"}]}
 HTTP 200
 PASS chat
 == state embedonly ==
@@ -20,25 +20,37 @@ HTTP 400
 FAIL embedonly: expected only embed-gemma:300m, got HTTP 400: {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 == state chat+embed ==
 $ GET /api/ps
-{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:22:34.01909+00:00"}]}
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:35:22.03883+00:00"}]}
 HTTP 200
-FAIL chat+embed: expected chat+embed model set, got HTTP 200: {"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:22:34.02240+00:00"}]}
+FAIL chat+embed: expected chat+embed model set, got HTTP 200: {"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:35:22.03993+00:00"}]}
 == state nonchat-then-load ==
 $ GET /api/ps
 {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 HTTP 400
 $ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
-{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790590960,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":1,"total_tokens":39,"kv_token_occupancy_rate_percentage":0.029754638671875,"load_duration":3.07327744,"prefill_duration_ttft":0.627652864,"decoding_duration":0.023986,"prefill_speed_tps":60.543020162176774,"decoding_speed_tps":41.69098640873843},"service_tier":"default"}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790591726,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":1,"total_tokens":39,"kv_token_occupancy_rate_percentage":0.029754638671875,"load_duration":2.14208768,"prefill_duration_ttft":0.459064,"decoding_duration":0.018179,"prefill_speed_tps":82.77712911489465,"decoding_speed_tps":55.00852632157984},"service_tier":"default"}
 HTTP 200
 $ GET /api/ps
-{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:22:40.02790+00:00"}]}
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:35:26.22657+00:00"}]}
 HTTP 200
 PASS nonchat-then-load
+== state ps-during-load ==
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790591731,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":1,"total_tokens":39,"kv_token_occupancy_rate_percentage":0.029754638671875,"load_duration":2.116812928,"prefill_duration_ttft":0.392296992,"decoding_duration":0.014805,"prefill_speed_tps":96.86538712996301,"decoding_speed_tps":67.54474839581222},"service_tier":"default"}
+HTTP 200
+polls during load: 23
+      4 HTTP 200 ["llama3.2:1b"]
+     19 HTTP 400 {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+$ GET /api/ps
+{"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:35:31.15274+00:00"}]}
+HTTP 200
+FAIL ps-during-load: bad observation during load: HTTP 400 {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 == summary ==
 FAIL nonchat: expected 200 + empty models, got HTTP 400: {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 FAIL notag: expected 200 + empty models, got HTTP 400: {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
 PASS chat
 FAIL embedonly: expected only embed-gemma:300m, got HTTP 400: {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
-FAIL chat+embed: expected chat+embed model set, got HTTP 200: {"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:22:34.02240+00:00"}]}
+FAIL chat+embed: expected chat+embed model set, got HTTP 200: {"models":[{"name":"llama3.2:1b","model":"llama3.2:1b","size":1000000000,"details":{"family":"llama3","parameter_size":"1B","quantization_level":"Q4_1","think":false},"expires_at":"2026-09-28T11:35:22.03993+00:00"}]}
 PASS nonchat-then-load
-2 passed, 4 failed
+FAIL ps-during-load: bad observation during load: HTTP 400 {"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+2 passed, 5 failed
