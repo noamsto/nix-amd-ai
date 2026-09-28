@@ -16,11 +16,12 @@
 #            (non-streaming: after DECODE_CLOSE_S), mid-decode
 #   prefill  streaming only: a ~12k-token prompt, closed PREFILL_CLOSE_S after
 #            sending, during the first prefill chunk
-#   queued   generate-ns only: sent while a normal /api/chat holds the NPU,
+#   queued   non-streaming only: sent while a normal /api/chat holds the NPU,
 #            closed PREFILL_CLOSE_S later while it waits in the queue; its
 #            hold is timed from its dequeue, not from the close
-# After each close the probe sends a small non-streaming /api/chat at once,
-# except on /v1/completions, which takes no NPU lock (#192).
+# After each close the probe sends a small non-streaming /api/chat at
+# once; every probed endpoint holds the NPU lock, /v1/completions included
+# now that #196 lists it in requires_npu_access().
 #
 # The server log is stamped per line with wall-clock time, so the time from
 # the close to the first line showing the work over is the NPU hold after the
@@ -240,12 +241,6 @@ if t_close is None:
     sys.exit(0)
 
 summary["t_close"] = t_close
-if kind == "completions":
-    # /v1/completions never takes the NPU lock (requires_npu_access() omits
-    # it), so a follow-up would run on the NPU concurrently with it; the log
-    # alone times this one.
-    print(json.dumps(summary))
-    sys.exit(0)
 
 # Disconnected: time a small follow-up; it cannot start until the NPU is free.
 f = http.client.HTTPConnection("127.0.0.1", int(port), timeout=600)
@@ -267,19 +262,15 @@ PY
 # 180s) for the first line after t_close showing the request's work over, and
 # prints the seconds to it. On the locked routes that is the NPU coming free:
 # "NPU Lock Released!" (nothing queued), "Dequeuing NPU request" (handed to the
-# follow-up) or "NPU Locked!" (the follow-up found it free). /v1/completions
-# takes no lock, so there it is generate() logging its raw output on return,
-# or the patched build logging a cancelled prefill. In queued mode the time
-# runs from the probed request's dequeue. Also prints when the server logged
-# the disconnect, and how many further prefill chunks started after the close.
+# follow-up) or "NPU Locked!" (the follow-up found it free). In queued mode the
+# time runs from the probed request's dequeue. Also prints when the server
+# logged the disconnect, and how many further prefill chunks started after the
+# close.
 npu_hold() {
   python3 - "$@" <<'PY'
 import json, sys, time
 log, t_close, endpoint, mode = sys.argv[1], float(sys.argv[2]), sys.argv[3], sys.argv[4]
-if endpoint.startswith("completions"):
-    ends = ("Model RAW Output", "Prefill Cancelled!")
-else:
-    ends = ("NPU Lock Released", "Dequeuing NPU request", "NPU Locked!")
+ends = ("NPU Lock Released", "Dequeuing NPU request", "NPU Locked!")
 deadline = time.time() + 180
 while True:
     end = disc = start = None
@@ -356,8 +347,9 @@ probe_model() { # <model> <port> <label>
     fi
     check_disconnect "$label" "$ep" decode "$port" "$model"
     [[ "$ep" == *-ns ]] || check_disconnect "$label" "$ep" prefill "$port" "$model"
-    # /v1/completions takes no NPU lock (#192), so it never queues.
-    [[ "$ep" == generate-ns ]] && check_disconnect "$label" "$ep" queued "$port" "$model"
+    # queued mode: every route that takes the NPU lock can be closed while it
+    # waits behind another request, so probe both non-streaming routes.
+    [[ "$ep" == *-ns ]] && check_disconnect "$label" "$ep" queued "$port" "$model"
     if kill -0 "$server_pid" 2>/dev/null; then
       record "$label/$ep/server-alive" PASS
     else

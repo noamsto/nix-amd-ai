@@ -1,23 +1,23 @@
 [FLM]  Using user-specified port: 58601
 [FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
 [FLM]  Starting server on port 58601...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52050
-[FLM]  WebServer started on port 58601 with 10 I/O threads
-[FLM]  Press Ctrl+C to stop.
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:36152
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:08:23 09:28:2026
+[FLM]  WebServer started on port 58601 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[LOG]  Time stamp: 20:39:30 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:52050
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52066
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:36152
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:36154
 [TCP]  Read 266 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:08:23 09:28:2026
+[LOG]  Time stamp: 20:39:30 09:28:2026
 [LOG]  Target: /api/chat
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -44,12 +44,12 @@
 Hi
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:52066
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52068
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:36154
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:36158
 [TCP]  Read 294 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:08:23 09:28:2026
+[LOG]  Time stamp: 20:39:30 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -84,11 +84,11 @@ The printing press was a mechanical device that used a combination of gravity an
 The printing press was a significant innovation in the history of communication. It allowed people to mass-produce written materials, making it possible to disse
 [🔒 ]  Closing TCP connection (streaming, non-keep-alive)
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:33498
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:35002
 [TCP]  Read 295 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:08:32 09:28:2026
+[LOG]  Time stamp: 20:39:39 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -122,4 +122,4 @@ The printing press was a remarkable innovation that had a profound impact on soc
 The Gutenberg Press was a revolutionary innovation that enabled mass production of printed materials. The press, which was about 20 inches tall and 10 inches wide, could print individual characters on a sheet of paper. The characters were arranged in a specific order, with the most important characters at the top and the least important characters at the bottom. The press was powered by a hand-cranked mechanism, which allowed
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:33498
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35002

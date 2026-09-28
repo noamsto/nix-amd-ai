@@ -1,5 +1,5 @@
-   0.381	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
-   0.396	{"model":"llama3.2:1b","message":{"role":"assistant","content":" History","thinking":""},"done":false}
-   0.411	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
-   0.425	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
-   0.440	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
+   0.388	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   0.403	{"model":"llama3.2:1b","message":{"role":"assistant","content":" History","thinking":""},"done":false}
+   0.418	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   0.433	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   0.447	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}

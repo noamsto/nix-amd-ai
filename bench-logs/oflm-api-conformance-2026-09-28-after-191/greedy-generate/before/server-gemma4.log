@@ -1,23 +1,23 @@
 [FLM]  Using user-specified port: 58603
 [FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
 [FLM]  Starting server on port 58603...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:59022
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:38898
 [FLM]  WebServer started on port 58603 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:07:00 09:28:2026
+[LOG]  Time stamp: 20:38:00 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59022
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:59024
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:38898
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:38914
 [TCP]  Read 268 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:07:00 09:28:2026
+[LOG]  Time stamp: 20:38:00 09:28:2026
 [LOG]  Target: /api/chat
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -48,12 +48,12 @@
 Hi!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59024
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:59032
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:38914
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:38922
 [TCP]  Read 296 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:07:01 09:28:2026
+[LOG]  Time stamp: 20:38:01 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -87,11 +87,11 @@ The most significant early technological leap, however, came from East Asia. Chi
 [31m[FLM]  Creating checkpoint at context length 542[0m
 [🔒 ]  Closing TCP connection (streaming, non-keep-alive)
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51050
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59870
 [TCP]  Read 297 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:07:40 09:28:2026
+[LOG]  Time stamp: 20:38:41 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -126,4 +126,4 @@ The most significant early technological leap, however, came from East Asia. Chi
 [31m[FLM]  Creating checkpoint at context length 542[0m
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51050
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59870

@@ -4,14 +4,17 @@ Red/green for #191, plus a rerun of OFLM-Next's server-api conformance suite
 using the same method as
 [`oflm-api-conformance-2026-09-28-after-187`](../oflm-api-conformance-2026-09-28-after-187/).
 The `run_spec_tests.py` shim, `conformance.sh`, the OFLM-Next commit, the
-models and the ports are the same. Only the `flm` build under test changed.
+models and the ports are the same. Only the `flm` build under test changed;
+`disconnect.sh` dropped its `/v1/completions` follow-up exception once #196 put
+that route behind the NPU lock.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
-**Base build (red):** `main` at 46d7a73 (the #187 tip),
-`/nix/store/fqkyn7jv5mqvzc51fgq4vghv33slqar7-fastflowlm-1.0.6`.
-**New build (green):** this branch, adding
+**Base build (red):** `main` at ae40eed (#196); #193 (cfb936b) above it
+only bumps flake.lock/lemonade, so the fastflowlm derivation is unchanged.
+`/nix/store/hzqppl44zhfxpk0nl1wv6r8fd69g4w4p-fastflowlm-1.0.6`.
+**New build (green):** this branch, rebased onto cfb936b, adding
 `pkgs/fastflowlm/patches/cancel-client-disconnect.patch`,
-`/nix/store/2h9q6mk7h6iff0b02yz17vnsda7w0pak-fastflowlm-1.0.6`.
+`/nix/store/vrjxsjfalvp7169snygf1slcvph2xyp6-fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (port 58601) and `gemma4-it:e4b` (port 58603).
 
@@ -62,38 +65,40 @@ fresh `flm serve` per endpoint, these cases against six endpoints: streaming
   or after 2 s on a non-streaming endpoint.
 - `prefill` (streaming only) sends a ~12k-token prompt, which is three
   4096-token prefill chunks, and closes 0.3 s later, during chunk 1.
-- `queued` (`generate-ns` only) sends the request while a normal `/api/chat`
-  holds the NPU, and closes it 0.3 s later, while it waits in the queue.
+- `queued` (non-streaming endpoints) sends the request while a normal
+  `/api/chat` holds the NPU, and closes it 0.3 s later, while it waits in the
+  queue.
 
 After each close the probe sends a small non-streaming `/api/chat` at once.
-The server log is stamped per line with wall-clock time. The hold is the time
-from the close to the first line showing the work over: the NPU lock
-released, handed to the queued follow-up, or taken by it. For `queued` it is
-timed from the request's own dequeue instead. `/v1/completions` never takes the
-NPU lock (#192), so the probe sends it no follow-up (one would run on the NPU
-concurrently) and times it by `generate()`'s raw-output line or
-`Prefill Cancelled!`. Each endpoint gets its own server because every
-disconnected stream leaks one of `flm serve`'s 10 connection slots (#194).
+Every probed endpoint holds the NPU lock, `/v1/completions` included now that
+#196 lists it in `requires_npu_access()`, so one follow-up is sent on every
+route and the hold is always timed by the lock. The server log is stamped per
+line with wall-clock time. The hold is the time from the close to the first
+line showing the work over: the NPU lock released, handed to the queued
+follow-up, or taken by it. For `queued` it is timed from the request's own
+dequeue instead. Each endpoint gets its own server because every disconnected
+stream leaks one of `flm serve`'s 10 connection slots (#194).
 
 The contract is the same for both builds. Mid-decode and after a dequeue, the
 hold must be under 2 s. Mid-prefill, no further prefill chunk may start (the
 chunk already on the NPU cannot be interrupted). Red:
-[`before/disconnect.txt`](before/disconnect.txt), 28 passed, 18 failed. Green:
-[`disconnect.txt`](disconnect.txt), 46 passed, 0 failed.
+[`before/disconnect.txt`](before/disconnect.txt), 28 passed, 20 failed. Green:
+[`disconnect.txt`](disconnect.txt), 48 passed, 0 failed.
 
 | Case | llama red | llama green | gemma4 red | gemma4 green |
 | --- | --- | --- | --- | --- |
-| streaming `/api/chat`, mid-decode | **8.01 s** | 0.35 s | **38.43 s** | 0.41 s |
-| streaming `/api/generate`, mid-decode | **8.06 s** | 0.35 s | **38.05 s** | 0.41 s |
-| streaming `/v1/completions`, mid-decode | **7.70 s** | 0.02 s | **37.76 s** | 0.07 s |
-| non-streaming `/api/generate`, mid-decode | **6.51 s** | 0.34 s | **37.56 s** | 0.39 s |
-| non-streaming `/api/generate`, closed while queued | **8.45 s** | 0.33 s | **39.53 s** | 0.33 s |
-| non-streaming `/v1/completions`, mid-decode | **6.13 s** | 0.01 s | **37.33 s** | 0.06 s |
+| streaming `/api/chat`, mid-decode | **8.02 s** | 0.35 s | **38.11 s** | 0.44 s |
+| streaming `/api/generate`, mid-decode | **8.07 s** | 0.35 s | **38.04 s** | 0.41 s |
+| streaming `/v1/completions`, mid-decode | **8.02 s** | 0.35 s | **38.07 s** | 0.44 s |
+| non-streaming `/api/generate`, mid-decode | **6.51 s** | 0.34 s | **37.54 s** | 0.39 s |
+| non-streaming `/api/generate`, closed while queued | **8.46 s** | 0.34 s | **39.49 s** | 0.36 s |
+| non-streaming `/v1/completions`, mid-decode | **6.45 s** | 0.35 s | **37.51 s** | 0.39 s |
+| non-streaming `/v1/completions`, closed while queued | **8.45 s** | 0.34 s | **39.48 s** | 0.37 s |
 | `/v1/chat/completions` (control), mid-decode | 0.35 s | 0.35 s | 0.41 s | 0.41 s |
-| streaming `/api/chat`, mid-prefill | **7.61 s, +2 chunks** | 1.84 s, +0 | **25.17 s, +2 chunks** | 6.37 s, +0 |
-| streaming `/api/generate`, mid-prefill | **7.62 s, +2 chunks** | 1.84 s, +0 | **25.15 s, +2 chunks** | 6.08 s, +0 |
-| streaming `/v1/completions`, mid-prefill | **7.29 s, +2 chunks** | 1.49 s, +0 | **24.81 s, +2 chunks** | 5.74 s, +0 |
-| `/v1/chat/completions` (control), mid-prefill | 1.83 s, +0 | 1.87 s, +0 | 6.11 s, +0 | 6.13 s, +0 |
+| streaming `/api/chat`, mid-prefill | **7.66 s, +2 chunks** | 1.84 s, +0 | **25.17 s, +2 chunks** | 6.11 s, +0 |
+| streaming `/api/generate`, mid-prefill | **7.70 s, +2 chunks** | 1.83 s, +0 | **25.14 s, +2 chunks** | 6.12 s, +0 |
+| streaming `/v1/completions`, mid-prefill | **7.63 s, +2 chunks** | 1.83 s, +0 | **25.18 s, +2 chunks** | 6.12 s, +0 |
+| `/v1/chat/completions` (control), mid-prefill | 1.83 s, +0 | 1.86 s, +0 | 6.12 s, +0 | 6.14 s, +0 |
 
 The server logged the disconnect within 1 ms of the close in every case that
 was not queued, on both builds. On red, nothing read the cancelled token. A
@@ -162,8 +167,6 @@ PASS/FAIL/SKIP lines are identical to the after-187 logs.
 ## Not measured
 
 - A streaming disconnect before the handler's `reset()` (see above).
-- A non-streaming `/v1/completions` closed while queued. That route never
-  queues (#192).
 - A disconnect during a model load.
 - Non-streaming `/api/chat`, which still ignores a disconnect (see above).
 - `POST /api/cancel` cancels the same token. With this patch, a live client

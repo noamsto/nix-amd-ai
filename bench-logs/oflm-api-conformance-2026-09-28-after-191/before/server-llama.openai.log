@@ -1,191 +1,191 @@
-1790606481.112	[FLM]  Using user-specified port: 58601
-1790606481.627	[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
-1790606483.344	[FLM]  Starting server on port 58601...
-1790606483.344	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49282
-1790606483.344	[FLM]  WebServer started on port 58601 with 10 I/O threads
-1790606483.344	[FLM]  Press Ctrl+C to stop.
-1790606483.344	[TCP]  Read 90 bytes from socket
-1790606483.344	================================================
-1790606483.344	[⬇️ ]  Incoming Request: GET
-1790606483.344	[LOG]  Time stamp: 17:41:23 09:28:2026
-1790606483.344	[LOG]  Target: /api/version
-1790606483.344	[LOG]  Version: 11
-1790606483.344	[LOG]  Keep-Alive: 1
-1790606483.344	================================================
-1790606483.344	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:49282
-1790606483.371	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49284
-1790606483.371	[TCP]  Read 342 bytes from socket
-1790606483.371	================================================
-1790606483.371	[⬇️ ]  Incoming Request: POST
-1790606483.371	[LOG]  Time stamp: 17:41:23 09:28:2026
-1790606483.371	[LOG]  Target: /v1/chat/completions
-1790606483.371	[LOG]  Version: 11
-1790606483.371	[LOG]  Keep-Alive: 1
-1790606483.371	[LOG]  Body: 
-1790606483.371	{
-1790606483.371	    "max_tokens": 512,
-1790606483.371	    "messages": [
-1790606483.371	        {
-1790606483.371	            "content": "Write a de...ing press.",
-1790606483.371	            "role": "user"
-1790606483.371	        }
-1790606483.371	    ],
-1790606483.371	    "model": "llama3.2:1b",
-1790606483.371	    "stream": true,
-1790606483.371	    "top_k": 1
-1790606483.371	}
-1790606483.371	[🟢 ]  NPU Locked!
-1790606483.371	[FLM]  Start prefill...
-1790606483.372	[FLM]  Prefill chunk 1/1 with 54 tokens
-1790606483.763	[FLM]  Start generating...
-1790606491.520	
-1790606491.520	[FLM]  Model RAW Output: 
-1790606491.520	The History of the Printing Press: A Revolutionary Innovation
-1790606491.520	
-1790606491.520	The printing press, invented by Johannes Gutenberg in the 15th century, was a game-changing innovation that revolutionized the way people communicated, learned, and created. This remarkable device, which combined the principles of movable type and mechanical pressure, enabled mass production of printed materials, transforming the world in ways that were both profound and far-reaching. In this essay, we will delve into the fascinating history of the printing press, tracing its development, evolution, and impact on society.
-1790606491.520	
-1790606491.520	The Early Days of Printing
-1790606491.520	
-1790606491.520	The concept of printing dates back to ancient China, where paper was first invented in the 2nd century AD. The first known printed book was the "Bamboo Book," a collection of Buddhist scriptures that was printed on paper in the 8th century. However, it was not until the 10th century that the first movable-type printing press was developed in China. The press, known as the "Rituo Press," was invented by the Chinese monk Wuzheng, who created a machine that could print individual characters on a sheet of paper.
-1790606491.520	
-1790606491.520	In the 12th century, the printing press was introduced to Europe by the monks of the Benedictine monastery in St. Gall, Switzerland. The monks, who were familiar with the Chinese printing press, adapted the technology to create a machine that could print individual characters on a sheet of paper. This early printing press was called the "Monumentum Press," and it was used to print the first printed books in Europe.
-1790606491.520	
-1790606491.520	The Development of the Printing Press
-1790606491.520	
-1790606491.520	The printing press was a major innovation in the history of communication. It allowed people to mass-produce written materials, making it possible to disseminate knowledge, news, and ideas on a large scale. The first printing press was a simple machine that consisted of a wooden frame, a metal plate, and a type of metal alloy. The plate was engraved with the text to be printed, and the metal alloy was used to create the type.
-1790606491.520	
-1790606491.520	The printing press was a mechanical device that used a combination of gravity and pressure to transfer the ink onto the paper. The machine consisted of a wooden frame that held the metal plate in place, a metal plate that was engraved with the text, and a type of metal alloy that was used to create the type. The type was a metal block that was used to print individual characters on the paper.
-1790606491.520	
-1790606491.520	The printing press was a significant innovation in the history of communication. It allowed people to mass-produce written materials, making it possible to disse
-1790606491.520	ChatCompletionChunk: {"id":"chatcmpl-8f7560291bc7d0f6a7aebc04","object":"chat.completion.chunk","created":1790606483,"model":"llama3.2:1b","system_fingerprint":"fp_c3abaca15b1da0f6","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":54,"completion_tokens":512,"total_tokens":566,"active_kv_tokens":566,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.43182373046875,"load_duration":2.896e-06,"prefill_duration_ttft":0.39091024,"decoding_duration":7.692497,"prefill_speed_tps":138.13912881893296,"decoding_speed_tps":66.5583619987112}}
-1790606491.520	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
-1790606491.520	[🔵 ]  NPU Lock Released!
-1790606491.556	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49296
-1790606491.556	[TCP]  Read 342 bytes from socket
-1790606491.556	================================================
-1790606491.556	[⬇️ ]  Incoming Request: POST
-1790606491.556	[LOG]  Time stamp: 17:41:31 09:28:2026
-1790606491.556	[LOG]  Target: /v1/chat/completions
-1790606491.556	[LOG]  Version: 11
-1790606491.556	[LOG]  Keep-Alive: 1
-1790606491.556	[LOG]  Body: 
-1790606491.556	{
-1790606491.556	    "max_tokens": 512,
-1790606491.556	    "messages": [
-1790606491.556	        {
-1790606491.556	            "content": "Write a de...ing press.",
-1790606491.556	            "role": "user"
-1790606491.556	        }
-1790606491.556	    ],
-1790606491.556	    "model": "llama3.2:1b",
-1790606491.556	    "stream": true,
-1790606491.556	    "top_k": 1
-1790606491.556	}
-1790606491.556	[🟢 ]  NPU Locked!
-1790606491.556	[FLM]  Prompt cache miss.
-1790606491.556	[FLM]  Clearing context...
-1790606491.558	[FLM]  Start prefill...
-1790606491.558	[FLM]  Prefill chunk 1/1 with 54 tokens
-1790606491.941	[FLM]  Start generating...
-1790606492.004	[🔴 ]  Client disconnected; cancelling active request
-1790606492.004	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49304
-1790606492.004	[TCP]  Read 268 bytes from socket
-1790606492.004	================================================
-1790606492.004	[⬇️ ]  Incoming Request: POST
-1790606492.004	[LOG]  Time stamp: 17:41:32 09:28:2026
-1790606492.004	[LOG]  Target: /api/chat
-1790606492.004	[LOG]  Version: 11
-1790606492.004	[LOG]  Keep-Alive: 1
-1790606492.004	[LOG]  Body: 
-1790606492.004	{
-1790606492.004	    "messages": [
-1790606492.004	        {
-1790606492.004	            "content": "Say hi.",
-1790606492.004	            "role": "user"
-1790606492.004	        }
-1790606492.004	    ],
-1790606492.004	    "model": "llama3.2:1b",
-1790606492.004	    "options": {
-1790606492.004	        "num_predict": 4
-1790606492.004	    },
-1790606492.004	    "stream": false,
-1790606492.004	    "top_k": 1
-1790606492.004	}
-1790606492.004	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
-1790606492.018	
-1790606492.018	[FLM]  Model RAW Output: 
-1790606492.018	The History of the Printing Press
-1790606492.018	[❌ ]  Generation Cancelled!
-1790606492.018	ChatCompletionChunk: {"id":"chatcmpl-49e816cf1c49a242bb38a38b","object":"chat.completion.chunk","created":1790606491,"model":"llama3.2:1b","system_fingerprint":"fp_14479dd4de933508","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":54,"completion_tokens":5,"total_tokens":59,"active_kv_tokens":59,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.045013427734375,"load_duration":1.733e-06,"prefill_duration_ttft":0.383206752,"decoding_duration":0.076227,"prefill_speed_tps":140.91609742826242,"decoding_speed_tps":65.59355608904981}}
-1790606492.351	[🟡 ]  Dequeuing NPU request (0 remaining)...
-1790606492.352	[FLM]  Start generating...
-1790606492.352	[FLM]  Conversation context diverged from cache, clearing context...
-1790606492.353	[FLM]  Prefill chunk 1/1 with 38 tokens
-1790606492.779	
-1790606492.779	[FLM]  Model RAW Output: 
-1790606492.779	Hi.
-1790606492.779	[🔵 ]  NPU Lock Released!
-1790606492.779	================================================
-1790606492.780	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:49304
-1790606493.830	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47818
-1790606493.830	[TCP]  Read 54286 bytes from socket
-1790606493.830	================================================
-1790606493.830	[⬇️ ]  Incoming Request: POST
-1790606493.830	[LOG]  Time stamp: 17:41:33 09:28:2026
-1790606493.830	[LOG]  Target: /v1/chat/completions
-1790606493.830	[LOG]  Version: 11
-1790606493.830	[LOG]  Keep-Alive: 1
-1790606493.830	[LOG]  Body: 
-1790606493.830	{
-1790606493.830	    "max_tokens": 512,
-1790606493.830	    "messages": [
-1790606493.830	        {
-1790606493.830	            "content": "The quick ...ext above.",
-1790606493.830	            "role": "user"
-1790606493.830	        }
-1790606493.830	    ],
-1790606493.830	    "model": "llama3.2:1b",
-1790606493.830	    "stream": true,
-1790606493.830	    "top_k": 1
-1790606493.830	}
-1790606493.830	[🟢 ]  NPU Locked!
-1790606493.831	[FLM]  Prompt cache miss.
-1790606493.831	[FLM]  Clearing context...
-1790606493.832	[FLM]  Start prefill...
-1790606493.842	[FLM]  Prefill chunk 1/3 with 4096 tokens
-1790606494.130	[🔴 ]  Client disconnected; cancelling active request
-1790606494.130	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47824
-1790606494.130	[TCP]  Read 268 bytes from socket
-1790606494.131	================================================
-1790606494.131	[⬇️ ]  Incoming Request: POST
-1790606494.131	[LOG]  Time stamp: 17:41:34 09:28:2026
-1790606494.131	[LOG]  Target: /api/chat
-1790606494.131	[LOG]  Version: 11
-1790606494.131	[LOG]  Keep-Alive: 1
-1790606494.131	[LOG]  Body: 
-1790606494.131	{
-1790606494.131	    "messages": [
-1790606494.131	        {
-1790606494.131	            "content": "Say hi.",
-1790606494.131	            "role": "user"
-1790606494.131	        }
-1790606494.131	    ],
-1790606494.131	    "model": "llama3.2:1b",
-1790606494.131	    "options": {
-1790606494.131	        "num_predict": 4
-1790606494.131	    },
-1790606494.131	    "stream": false,
-1790606494.131	    "top_k": 1
-1790606494.131	}
-1790606494.131	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
-1790606495.624	[❌ ]  Prefill Cancelled!
-1790606495.624	ChatCompletionChunk: {"id":"chatcmpl-58d740192ec743aa62b4404f","object":"chat.completion.chunk","created":1790606493,"model":"llama3.2:1b","system_fingerprint":"fp_01ba0cb53d45d07d","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":12042,"completion_tokens":0,"total_tokens":12042,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":2.235e-06,"prefill_duration_ttft":1.782323072,"decoding_duration":0.0,"prefill_speed_tps":6756.350848607541,"decoding_speed_tps":null}}
-1790606495.957	[🟡 ]  Dequeuing NPU request (0 remaining)...
-1790606495.957	[FLM]  Start generating...
-1790606495.958	[FLM]  Prefill chunk 1/1 with 38 tokens
-1790606496.406	
-1790606496.406	[FLM]  Model RAW Output: 
-1790606496.406	Hi.
-1790606496.406	[🔵 ]  NPU Lock Released!
-1790606496.406	================================================
-1790606496.406	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:47824
+1790617997.232	[FLM]  Using user-specified port: 58601
+1790617997.745	[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+1790617999.428	[FLM]  Starting server on port 58601...
+1790617999.428	[🔗 ]  TCP connection established - Remote: 127.0.0.1:34024
+1790617999.428	[FLM]  WebServer started on port 58601 with 10 I/O threads
+1790617999.428	[FLM]  Press Ctrl+C to stop.
+1790617999.428	[TCP]  Read 90 bytes from socket
+1790617999.428	================================================
+1790617999.428	[⬇️ ]  Incoming Request: GET
+1790617999.428	[LOG]  Time stamp: 20:53:19 09:28:2026
+1790617999.428	[LOG]  Target: /api/version
+1790617999.428	[LOG]  Version: 11
+1790617999.428	[LOG]  Keep-Alive: 1
+1790617999.428	================================================
+1790617999.428	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34024
+1790617999.460	[🔗 ]  TCP connection established - Remote: 127.0.0.1:34038
+1790617999.460	[TCP]  Read 342 bytes from socket
+1790617999.460	================================================
+1790617999.460	[⬇️ ]  Incoming Request: POST
+1790617999.460	[LOG]  Time stamp: 20:53:19 09:28:2026
+1790617999.460	[LOG]  Target: /v1/chat/completions
+1790617999.460	[LOG]  Version: 11
+1790617999.460	[LOG]  Keep-Alive: 1
+1790617999.460	[LOG]  Body: 
+1790617999.460	{
+1790617999.460	    "max_tokens": 512,
+1790617999.460	    "messages": [
+1790617999.460	        {
+1790617999.460	            "content": "Write a de...ing press.",
+1790617999.460	            "role": "user"
+1790617999.460	        }
+1790617999.460	    ],
+1790617999.460	    "model": "llama3.2:1b",
+1790617999.460	    "stream": true,
+1790617999.460	    "top_k": 1
+1790617999.460	}
+1790617999.460	[🟢 ]  NPU Locked!
+1790617999.460	[FLM]  Start prefill...
+1790617999.461	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790617999.847	[FLM]  Start generating...
+1790618007.617	
+1790618007.617	[FLM]  Model RAW Output: 
+1790618007.617	The History of the Printing Press: A Revolutionary Innovation
+1790618007.617	
+1790618007.617	The printing press, invented by Johannes Gutenberg in the 15th century, was a game-changing innovation that revolutionized the way people communicated, learned, and created. This remarkable device, which combined the principles of movable type and mechanical pressure, enabled mass production of printed materials, transforming the world in ways that were both profound and far-reaching. In this essay, we will delve into the fascinating history of the printing press, tracing its development, evolution, and impact on society.
+1790618007.617	
+1790618007.617	The Early Days of Printing
+1790618007.617	
+1790618007.617	The concept of printing dates back to ancient China, where paper was first invented in the 2nd century AD. The first known printed book was the "Bamboo Book," a collection of Buddhist scriptures that was printed on paper in the 8th century. However, it was not until the 10th century that the first movable-type printing press was developed in China. The press, known as the "Rituo Press," was invented by the Chinese monk Wuzheng, who created a machine that could print individual characters on a sheet of paper.
+1790618007.617	
+1790618007.617	In the 12th century, the printing press was introduced to Europe by the monks of the Benedictine monastery in St. Gall, Switzerland. The monks, who were familiar with the Chinese printing press, adapted the technology to create a machine that could print individual characters on a sheet of paper. This early printing press was called the "Monumentum Press," and it was used to print the first printed books in Europe.
+1790618007.617	
+1790618007.617	The Development of the Printing Press
+1790618007.617	
+1790618007.617	The printing press was a major innovation in the history of communication. It allowed people to mass-produce written materials, making it possible to disseminate knowledge, news, and ideas on a large scale. The first printing press was a simple machine that consisted of a wooden frame, a metal plate, and a type of metal alloy. The plate was engraved with the text to be printed, and the metal alloy was used to create the type.
+1790618007.617	
+1790618007.617	The printing press was a mechanical device that used a combination of gravity and pressure to transfer the ink onto the paper. The machine consisted of a wooden frame that held the metal plate in place, a metal plate that was engraved with the text, and a type of metal alloy that was used to create the type. The type was a metal block that was used to print individual characters on the paper.
+1790618007.617	
+1790618007.617	The printing press was a significant innovation in the history of communication. It allowed people to mass-produce written materials, making it possible to disse
+1790618007.617	ChatCompletionChunk: {"id":"chatcmpl-fdafa9fd6f4ae7b83eb810a8","object":"chat.completion.chunk","created":1790617999,"model":"llama3.2:1b","system_fingerprint":"fp_dc7abe518fc3abaa","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":54,"completion_tokens":512,"total_tokens":566,"active_kv_tokens":566,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.43182373046875,"load_duration":1.452e-06,"prefill_duration_ttft":0.385713952,"decoding_duration":7.692,"prefill_speed_tps":140.0001211260307,"decoding_speed_tps":66.56266250650026}}
+1790618007.617	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790618007.617	[🔵 ]  NPU Lock Released!
+1790618007.650	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38568
+1790618007.650	[TCP]  Read 342 bytes from socket
+1790618007.650	================================================
+1790618007.650	[⬇️ ]  Incoming Request: POST
+1790618007.650	[LOG]  Time stamp: 20:53:27 09:28:2026
+1790618007.650	[LOG]  Target: /v1/chat/completions
+1790618007.650	[LOG]  Version: 11
+1790618007.650	[LOG]  Keep-Alive: 1
+1790618007.650	[LOG]  Body: 
+1790618007.650	{
+1790618007.650	    "max_tokens": 512,
+1790618007.650	    "messages": [
+1790618007.650	        {
+1790618007.650	            "content": "Write a de...ing press.",
+1790618007.650	            "role": "user"
+1790618007.650	        }
+1790618007.650	    ],
+1790618007.650	    "model": "llama3.2:1b",
+1790618007.650	    "stream": true,
+1790618007.650	    "top_k": 1
+1790618007.650	}
+1790618007.650	[🟢 ]  NPU Locked!
+1790618007.650	[FLM]  Prompt cache miss.
+1790618007.650	[FLM]  Clearing context...
+1790618007.652	[FLM]  Start prefill...
+1790618007.652	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790618008.049	[FLM]  Start generating...
+1790618008.109	[🔴 ]  Client disconnected; cancelling active request
+1790618008.110	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38584
+1790618008.110	[TCP]  Read 268 bytes from socket
+1790618008.110	================================================
+1790618008.110	[⬇️ ]  Incoming Request: POST
+1790618008.110	[LOG]  Time stamp: 20:53:28 09:28:2026
+1790618008.110	[LOG]  Target: /api/chat
+1790618008.110	[LOG]  Version: 11
+1790618008.110	[LOG]  Keep-Alive: 1
+1790618008.110	[LOG]  Body: 
+1790618008.110	{
+1790618008.110	    "messages": [
+1790618008.110	        {
+1790618008.110	            "content": "Say hi.",
+1790618008.110	            "role": "user"
+1790618008.110	        }
+1790618008.110	    ],
+1790618008.110	    "model": "llama3.2:1b",
+1790618008.110	    "options": {
+1790618008.110	        "num_predict": 4
+1790618008.110	    },
+1790618008.110	    "stream": false,
+1790618008.110	    "top_k": 1
+1790618008.110	}
+1790618008.110	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790618008.124	
+1790618008.124	[FLM]  Model RAW Output: 
+1790618008.124	The History of the Printing Press
+1790618008.124	[❌ ]  Generation Cancelled!
+1790618008.124	ChatCompletionChunk: {"id":"chatcmpl-8d76be995672864e24a3ca47","object":"chat.completion.chunk","created":1790618007,"model":"llama3.2:1b","system_fingerprint":"fp_853b5e0974606097","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":54,"completion_tokens":5,"total_tokens":59,"active_kv_tokens":59,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.045013427734375,"load_duration":1.463e-06,"prefill_duration_ttft":0.396373536,"decoding_duration":0.07402,"prefill_speed_tps":136.2351294815,"decoding_speed_tps":67.54931099702783}}
+1790618008.457	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790618008.457	[FLM]  Start generating...
+1790618008.457	[FLM]  Conversation context diverged from cache, clearing context...
+1790618008.459	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790618008.888	
+1790618008.888	[FLM]  Model RAW Output: 
+1790618008.888	Hi.
+1790618008.888	================================================
+1790618008.888	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:38584
+1790618008.889	[🔵 ]  NPU Lock Released!
+1790618009.944	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38588
+1790618009.944	[TCP]  Read 54286 bytes from socket
+1790618009.944	================================================
+1790618009.944	[⬇️ ]  Incoming Request: POST
+1790618009.944	[LOG]  Time stamp: 20:53:29 09:28:2026
+1790618009.944	[LOG]  Target: /v1/chat/completions
+1790618009.944	[LOG]  Version: 11
+1790618009.944	[LOG]  Keep-Alive: 1
+1790618009.944	[LOG]  Body: 
+1790618009.944	{
+1790618009.944	    "max_tokens": 512,
+1790618009.944	    "messages": [
+1790618009.944	        {
+1790618009.944	            "content": "The quick ...ext above.",
+1790618009.944	            "role": "user"
+1790618009.944	        }
+1790618009.944	    ],
+1790618009.944	    "model": "llama3.2:1b",
+1790618009.944	    "stream": true,
+1790618009.944	    "top_k": 1
+1790618009.944	}
+1790618009.944	[🟢 ]  NPU Locked!
+1790618009.944	[FLM]  Prompt cache miss.
+1790618009.944	[FLM]  Clearing context...
+1790618009.946	[FLM]  Start prefill...
+1790618009.953	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790618010.244	[🔴 ]  Client disconnected; cancelling active request
+1790618010.244	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38598
+1790618010.244	[TCP]  Read 268 bytes from socket
+1790618010.244	================================================
+1790618010.244	[⬇️ ]  Incoming Request: POST
+1790618010.244	[LOG]  Time stamp: 20:53:30 09:28:2026
+1790618010.244	[LOG]  Target: /api/chat
+1790618010.244	[LOG]  Version: 11
+1790618010.244	[LOG]  Keep-Alive: 1
+1790618010.244	[LOG]  Body: 
+1790618010.244	{
+1790618010.244	    "messages": [
+1790618010.244	        {
+1790618010.244	            "content": "Say hi.",
+1790618010.244	            "role": "user"
+1790618010.244	        }
+1790618010.244	    ],
+1790618010.244	    "model": "llama3.2:1b",
+1790618010.244	    "options": {
+1790618010.244	        "num_predict": 4
+1790618010.244	    },
+1790618010.244	    "stream": false,
+1790618010.244	    "top_k": 1
+1790618010.244	}
+1790618010.244	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790618011.735	[❌ ]  Prefill Cancelled!
+1790618011.736	ChatCompletionChunk: {"id":"chatcmpl-2000843c085fa35b04212310","object":"chat.completion.chunk","created":1790618009,"model":"llama3.2:1b","system_fingerprint":"fp_82015da9e0bfac6b","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":12042,"completion_tokens":0,"total_tokens":12042,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":1.543e-06,"prefill_duration_ttft":1.781948416,"decoding_duration":0.0,"prefill_speed_tps":6757.771376475132,"decoding_speed_tps":null}}
+1790618012.070	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790618012.070	[FLM]  Start generating...
+1790618012.071	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790618012.516	
+1790618012.516	[FLM]  Model RAW Output: 
+1790618012.516	Hi.
+1790618012.516	================================================
+1790618012.516	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:38598
+1790618012.517	[🔵 ]  NPU Lock Released!
