@@ -1,0 +1,354 @@
+[FLM]  Using user-specified port: 58603
+[FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
+[FLM]  Starting server on port 58603...
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34126
+[FLM]  WebServer started on port 58603 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[TCP]  Read 90 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 20:22:26 09:28:2026
+[LOG]  Target: /api/version
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34126
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34130
+[TCP]  Read 128 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/models
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34130
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34136
+[TCP]  Read 320 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34136
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34138
+[TCP]  Read 320 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34138
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34150
+[TCP]  Read 303 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b"
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34150
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34152
+[TCP]  Read 264 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "model": "oflm-test-no-such-model:0b",
+    "prompt": "Say ok."
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34152
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34162
+[TCP]  Read 276 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": ""
+}
+[🟢 ]  NPU Locked!
+[ERROR]  request set 'model' to '', which is not a model name -- refusing
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34162
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34168
+[TCP]  Read 287 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "model-faker"
+}
+[🟢 ]  NPU Locked!
+[ERROR]  request set 'model' to 'model-faker', which is not a model name -- refusing
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34168
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34172
+[TCP]  Read 320 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34172
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34180
+[TCP]  Read 319 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34180
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34184
+[TCP]  Read 307 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:27 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start prefill...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 12 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok.
+[31m[FLM]  Creating checkpoint at context length 15[0m
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34184
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34186
+[TCP]  Read 320 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:28 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34186
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34190
+[TCP]  Read 307 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:28 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 12 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok.
+[31m[FLM]  Creating checkpoint at context length 15[0m
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34190
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34194
+[TCP]  Read 207 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:29 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Error parsing request body: [json.exception.parse_error.101] parse error at line 1, column 16: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '"�"'
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34194
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34210
+[TCP]  Read 307 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 20:22:29 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "gemma4-it:e4b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Total images: 0
+[FLM]  Prefill chunk 1/1 with 12 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok.
+[31m[FLM]  Creating checkpoint at context length 15[0m
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:34210
