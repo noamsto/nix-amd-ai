@@ -674,6 +674,11 @@
                 realDefaults = defaultsOf real;
                 offDefaults = defaultsOf off;
                 offHasLink = builtins.toJSON (off.environment.etc ? "lemonade/backends/flm-npu");
+                # oflm reads only its own name (upstream update.hpp:62, plain
+                # getenv, no fallback to FLM_); the module must also set
+                # OFLM_DISABLE_UPDATE_CHECK when real is oflm, not just FLM_.
+                realLemondNoUpdate = real.systemd.services.lemond.environment.OFLM_DISABLE_UPDATE_CHECK or "";
+                realSessionNoUpdate = real.environment.sessionVariables.OFLM_DISABLE_UPDATE_CHECK or "";
               } ''
                 case "$defaultBin" in *-fastflowlm-wrapped/bin/flm) ;; *) echo "default: $defaultBin" >&2; exit 1 ;; esac
                 case "$swappedBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "swapped: $swappedBin" >&2; exit 1 ;; esac
@@ -682,6 +687,8 @@
                   jq -e '.flm.npu_bin == "/etc/lemonade/backends/flm-npu"' "$f" >/dev/null
                   jq -e '.flm.prefer_system == true' "$f" >/dev/null
                 done
+                test "$realLemondNoUpdate" = 1 || { echo "real: lemond service missing OFLM_DISABLE_UPDATE_CHECK" >&2; exit 1; }
+                test "$realSessionNoUpdate" = 1 || { echo "real: sessionVariables missing OFLM_DISABLE_UPDATE_CHECK" >&2; exit 1; }
                 touch $out
               '';
 

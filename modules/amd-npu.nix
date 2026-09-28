@@ -803,6 +803,8 @@ in {
         # nix manages the version; FLM's auto-update probe on every run/serve
         # is noise on a read-only nix-store binary. New in FLM 0.9.41.
         FLM_DISABLE_UPDATE_CHECK = "1";
+        # OpenFlowLM-Next's oflm reads only its own name (upstream update.hpp:62).
+        OFLM_DISABLE_UPDATE_CHECK = "1";
       }
       // optionalAttrs cfg.enableLemonade {
         # v10.7.0 reads backend bin paths + tuning only from config.json; point
@@ -889,6 +891,8 @@ in {
           # Suppress FLM's auto-update probe in the lemond-spawned subprocess.
           # New in FLM 0.9.41.
           FLM_DISABLE_UPDATE_CHECK = "1";
+          # OpenFlowLM-Next's oflm reads only its own name (upstream update.hpp:62).
+          OFLM_DISABLE_UPDATE_CHECK = "1";
         }
         // optionalAttrs config.programs.nix-ld.enable {
           # nix-ld exports these only as session vars; the unit doesn't inherit

@@ -535,9 +535,22 @@ FLM models it recognizes are reused without re-downloading. But OFLM treats a
 file whose size differs from its own manifest as missing and re-pulls it in
 place: on halo, FLM's `Qwen3.6-35B-A3B-NPU2/model.q4nx` (21.0 GB) differs from
 OFLM's manifest (23.2 GB), so pulling that model through lemonade would
-overwrite FLM's copy. To keep the stores separate, create `~/.config/oflm` in
-the home of `hardware.amd-npu.lemonade.user` (`lemond` runs as that user)
-before first use, or set `OFLM_MODEL_PATH`; models are then downloaded again.
+overwrite FLM's copy. To keep the stores separate, point `oflm` at its own
+directory the way lemonade itself understands, by setting `FLM_MODEL_PATH`
+(the name `oflm` also honours, as a legacy alias for `OFLM_MODEL_PATH`) on
+`lemond`:
+
+```nix
+systemd.services.lemond.environment.FLM_MODEL_PATH = "/var/lib/oflm";
+```
+
+The directory must be writable by `hardware.amd-npu.lemonade.user`; models are
+then downloaded again. Creating `~/.config/oflm` or setting `OFLM_MODEL_PATH`
+instead also separates the stores, but lemonade reads a FLM model's
+`config.json` only from `FLM_MODEL_PATH` or FastFlowLM's own directories, so it can no longer
+find each model's max context length (measured on halo, for `lfm2-1.2b-FLM`
+and `llama3.2-1b-FLM`) and falls back to its 32768-token auto context cap
+(from lemonade's source).
 
 Measured on halo only (Ryzen AI MAX+ 395, XDNA2 NPU, 8 columns), 2026-09-28,
 with the module-wrapped binary:
