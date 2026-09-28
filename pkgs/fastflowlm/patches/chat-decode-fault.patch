@@ -1,0 +1,31 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index e83f714..98c46c2 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -159,8 +159,8 @@ static TaskPolicy task_policy(bool supports_prompts, bool declares_names, bool t
+ 
+ // e.what() can quote the request's own bytes and nlohmann's type-system
+ // internals, so it goes to the server log, never into the response body.
+-// request_fault marks a catch around prompt processing (insert(), or
+-// generate_with_prompt(), which also decodes), where a chat template
++// request_fault marks a catch around prompt processing (insert(), or the
++// prefill phase of generate_with_prompt()), where a chat template
+ // rejecting the conversation throws a plain std::runtime_error.
+ // Elsewhere a json::exception almost always means a request field had a
+ // shape a handler didn't expect; anything else is a server fault.
+@@ -1031,9 +1031,14 @@ void RestHandler::handle_chat(const json& request,
+             //std::string response_text = auto_chat_engine->generate_with_prompt(meta_info, uniformed_input, length_limit, std::cout);
+             std::string response_text;
+             try {
++                // Every insert path (AutoModel::_shared_insert, Qwen3VL_Flash::insert,
++                // Qwen3_5_Omni::insert) sets meta_info.prompt_tokens right after prefill,
++                // and meta_info is per-request and starts at 0. So a fault while
++                // prompt_tokens is still 0 is still in the prefill/template phase (request
++                // fault); one after prefill is sampling/decode (server fault).
+                 response_text = auto_chat_engine->generate_with_prompt(meta_info, uniformed_input, length_limit, nstream);
+             } catch (const std::exception& e) {
+-                send_response(exception_error("handle_chat", e, true));
++                send_response(exception_error("handle_chat", e, meta_info.prompt_tokens == 0));
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }

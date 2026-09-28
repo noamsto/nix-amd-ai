@@ -1,0 +1,32 @@
+diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel.cpp
+index 78a4a0f..946f84e 100644
+--- a/src/common/AutoModel/automodel.cpp
++++ b/src/common/AutoModel/automodel.cpp
+@@ -6,6 +6,7 @@
+ /// \note This is a source file for the auto_model class
+ 
+ #include "AutoModel/automodel.hpp"
++#include <cstdlib>
+ 
+ 
+ AutoModel::AutoModel(flm_rt::device* npu_device_inst, std::string current_model) {
+@@ -233,6 +234,9 @@ bool AutoModel::_shared_insert(chat_meta_info_t& meta_info, std::vector<int>& to
+ }
+ 
+ buffer<bf16> AutoModel::_chunked_insert(chat_meta_info_t& meta_info, std::vector<int>& tokens, std::function<bool()> is_cancelled, void* payload, int first_len_run) {
++    if (std::getenv("FLM_INJECT_PREFILL_FAULT")) {
++        throw std::runtime_error("injected prefill fault");
++    }
+     int max_prefill_len = meta_info.max_prefill_len;
+     // log2 of a non-positive length is not a number to shift by; an unset or
+     // degenerate limit means "no chunking", which the < 512 branch below is
+@@ -290,6 +294,9 @@ void AutoModel::_apply_tool_choice_mask(buffer<bf16>& y, const chat_meta_info_t&
+ }
+ 
+ std::string AutoModel::_shared_generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (std::getenv("FLM_INJECT_DECODE_FAULT")) {
++        throw std::runtime_error("injected decode fault");
++    }
+     std::vector<int> sampled_tokens;
+     std::string result;
+     if (length_limit > 0){

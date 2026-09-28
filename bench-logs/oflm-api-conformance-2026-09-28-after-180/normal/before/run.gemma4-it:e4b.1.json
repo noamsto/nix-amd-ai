@@ -1,0 +1,12 @@
+{
+  "done": true,
+  "done_reason": "stop",
+  "eval_count": 15,
+  "message": {
+    "content": "The three primary colors are **red**, **yellow**, and **blue**.",
+    "images": null,
+    "role": "assistant"
+  },
+  "model": "gemma4-it:e4b",
+  "prompt_eval_count": 14
+}

@@ -1,0 +1,12 @@
+{
+  "done": true,
+  "done_reason": "stop",
+  "eval_count": 17,
+  "message": {
+    "content": "The three primary colors are:\n\n1. Red\n2. Blue\n3. Yellow",
+    "images": null,
+    "role": "assistant"
+  },
+  "model": "llama3.2:1b",
+  "prompt_eval_count": 40
+}

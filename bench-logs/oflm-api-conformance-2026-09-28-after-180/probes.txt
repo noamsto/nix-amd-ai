@@ -1,0 +1,41 @@
+== mode decode-fault ==
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say hi"}],"stream":false}
+{"error":{"message":"Internal error","type":"server_error"}}
+HTTP 500
+PASS decode-fault/a
+$ POST /api/generate {"model":"llama3.2:1b","prompt":"Say hi","stream":false}
+{"error":{"message":"Internal error","type":"server_error"}}
+HTTP 500
+PASS decode-fault/b-control
+-- [ERROR] handle_chat lines for mode decode-fault --
+[ERROR]  handle_chat: injected decode fault
+== mode prefill-fault ==
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say hi"}],"stream":false}
+{"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+HTTP 400
+PASS prefill-fault/c
+-- [ERROR] handle_chat lines for mode prefill-fault --
+[ERROR]  handle_chat: injected prefill fault
+== mode plain ==
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say hi"}],"stream":false,"options":"x"}
+{"error":{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}}
+HTTP 400
+PASS plain/d
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"system","content":"You are terse."}],"stream":false,"tools":[{"type":"function","function":{"name":"noop","description":"no-op","parameters":{"type":"object","properties":{}}}}]}
+{"model":"llama3.2:1b","message":{"role":"assistant","content":"I'll provide short answers. What's on your mind?","images":null},"done":true,"prompt_eval_count":34,"eval_count":12,"total_duration":586074816,"load_duration":2104,"prompt_eval_duration":390169152,"eval_duration":177312000,"done_reason":"stop"}
+HTTP 200
+SKIP plain/e: attempted trigger (system-only messages + tools) did not raise a template exception; /api/chat likely doesn't forward tools into the chat template the way /v1/chat/completions does; got HTTP 200
+$ POST /api/chat {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say hi"}],"stream":false}
+{"model":"llama3.2:1b","message":{"role":"assistant","content":"Hi","images":null},"done":true,"prompt_eval_count":37,"eval_count":1,"total_duration":420712512,"load_duration":2875,"prompt_eval_duration":390201728,"eval_duration":14753000,"done_reason":"stop"}
+HTTP 200
+PASS plain/f
+-- [ERROR] handle_chat lines for mode plain --
+[ERROR]  handle_chat: [json.exception.type_error.306] cannot use value() with string
+== summary ==
+PASS decode-fault/a
+PASS decode-fault/b-control
+PASS prefill-fault/c
+PASS plain/d
+SKIP plain/e: attempted trigger (system-only messages + tools) did not raise a template exception; /api/chat likely doesn't forward tools into the chat template the way /v1/chat/completions does; got HTTP 200
+PASS plain/f
+5 passed, 0 failed

@@ -1,0 +1,15 @@
+=== variance: before run1 vs run2 ===
+--- llama3.2:1b ---
+diff exit: 0
+--- gemma4-it:e4b ---
+diff exit: 0
+=== variance: after run1 vs run2 ===
+--- llama3.2:1b ---
+diff exit: 0
+--- gemma4-it:e4b ---
+diff exit: 0
+=== before vs after (BASE vs NEW), run1 ===
+--- llama3.2:1b ---
+diff exit: 0
+--- gemma4-it:e4b ---
+diff exit: 0

@@ -88,15 +88,26 @@ stdenv.mkDerivation (finalAttrs: {
   #     engine is loaded under a real tag ({"models": []} otherwise), and
   #     like Ollama also lists a loaded --embed model. Whisper (--asr) is
   #     not listed.
+  #   - chat-decode-fault.patch (#180): non-streaming /api/chat ran
+  #     generate_with_prompt() -- prefill then decode -- inside a catch that
+  #     answered any exception 400 invalid_request_error, so a decode-time
+  #     NPU/runtime fault was reported as a non-retryable client error. The
+  #     catch now answers 400 only while meta_info.prompt_tokens is still 0
+  #     (template/prefill) and 500 server_error after. The insert()+generate()
+  #     split the other handlers use was not taken because it would change
+  #     the answer for Qwen3.5 and Qwen3.6-MoE (their generate() forces think
+  #     tokens) and GPT-OSS (generate_with_prompt adds the
+  #     <|start|>assistant...<|end|> wrapper).
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
   # that is on the branch commit per this repo's CLAUDE.md, not here. Still
   # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
   # request validation, the NPU-lock leak, the status mapping, model
-  # substitution, leaking exception text, ignoring the task prompt, and
-  # reporting the no-model sentinel in /api/ps. A bump that breaks any patch
-  # fails the build rather than silently losing it.
+  # substitution, leaking exception text, ignoring the task prompt, reporting
+  # the no-model sentinel in /api/ps, and classifying /api/chat decode faults
+  # as client errors. A bump that breaks any patch fails the build rather
+  # than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
@@ -104,6 +115,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/no-exception-text.patch
     ./patches/embed-task-prompt.patch
     ./patches/ps-loaded-models.patch
+    ./patches/chat-decode-fault.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
