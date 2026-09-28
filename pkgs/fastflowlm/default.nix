@@ -67,18 +67,30 @@ stdenv.mkDerivation (finalAttrs: {
   #     500 server_error "Internal error". A malformed max_prefill_len or
   #     model path entry in model_list.json now fails the model load (500
   #     model_load_failed) rather than reaching the handler as a JSON error.
-  # None of the patches carries attribution: require_field, safe_dump and the
-  # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget) --
-  # the Co-authored-by trailer for that is on the branch commit per this
-  # repo's CLAUDE.md, not here. Still unfixed on ROCm/FastFlowLM main as of
-  # v1.0.6; drop once upstream fixes request validation, the NPU-lock leak,
-  # the status mapping, model substitution, and leaking exception text. A
+  #   - embed-task-prompt.patch (#174): handle_embeddings ignored the
+  #     request's prompt_name/task_type and always embedded with task_query,
+  #     so a document index was built as if every text were a query and
+  #     nothing downstream could tell -- the vector is correctly shaped and
+  #     normed either way. The REST names are now mapped onto the model's
+  #     task enum (OpenFlowLM-Next's task_names/resolve_task/task_policy),
+  #     and an unknown or non-string task is refused 400 invalid_value. A
+  #     model that declares no prompt names (embed-gemma: hardcoded prefixes)
+  #     keeps task_query when the request names none; a model that declares
+  #     prompt names would require one (missing_required_parameter).
+  # None of the patches carries attribution: require_field, safe_dump, the
+  # model-identity checks and the embedding task-prompt mapping are ported
+  # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
+  # that is on the branch commit per this repo's CLAUDE.md, not here. Still
+  # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
+  # request validation, the NPU-lock leak, the status mapping, model
+  # substitution, leaking exception text, and ignoring the task prompt. A
   # bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
     ./patches/model-identity.patch
     ./patches/no-exception-text.patch
+    ./patches/embed-task-prompt.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
