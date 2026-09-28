@@ -1,0 +1,120 @@
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -20,6 +20,34 @@
+ #include <random>
+ #include "server.hpp"
+ 
++// request["field"] on a const json& is undefined behavior when the key is
++// missing (JSON_ASSERT is compiled out in release builds): it segfaults or
++// returns garbage instead of throwing, and every handler below read its
++// required fields this way. Check presence and type before reading.
++// Ported from OpenFlowLM-Next's openai_compat::require_field
++// (src/server/openai_compat.hpp, Vegard Berget).
++enum class RequiredFieldType { String, Array };
++
++static json require_field(const json& request, const char* field, RequiredFieldType type) {
++    const char* want = type == RequiredFieldType::String ? "a string" : "an array";
++    if (!request.is_object())
++        return json{{"error", {
++            {"message", "the request body must be a JSON object."},
++            {"type", "invalid_request_error"}, {"param", ""}, {"code", "invalid_value"}}}};
++    if (!request.contains(field))
++        return json{{"error", {
++            {"message", std::string(field) + " is required and must be " + want + "."},
++            {"type", "invalid_request_error"}, {"param", field},
++            {"code", "missing_required_parameter"}}}};
++    const json& v = request[field];
++    const bool right = type == RequiredFieldType::String ? v.is_string() : v.is_array();
++    if (!right)
++        return json{{"error", {
++            {"message", std::string(field) + " must be " + want + "."},
++            {"type", "invalid_request_error"}, {"param", field}, {"code", "invalid_value"}}}};
++    return json();
++}
++
+ ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
+ ///@param messages the original messages
+ ///@return normalized messages with consecutive user messages merged
+@@ -600,7 +628,11 @@
+     std::function<void(const json&)> send_response,
+     StreamResponseCallback send_streaming_response) {
+     try {
+-        std::string model = request["model"];
++        if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
++            send_response(err);
++            return;
++        }
++        std::string model = request["model"].get<std::string>();
+         json info = {
+             {"modelfile", ""},
+             {"parameters", ""},
+@@ -638,7 +670,11 @@
+                                  StreamResponseCallback send_streaming_response,
+                                  std::shared_ptr<CancellationToken> cancellation_token) {
+     try {
+-        std::string prompt = request["prompt"];
++        if (json err = require_field(request, "prompt", RequiredFieldType::String); !err.is_null()) {
++            send_response(err);
++            return;
++        }
++        std::string prompt = request["prompt"].get<std::string>();
+         bool stream = request.value("stream", true);
+         std::string model = request.value("model", current_model_tag);
+         json options = request.value("options", json::object());
+@@ -752,6 +788,10 @@
+                              StreamResponseCallback send_streaming_response,
+                              std::shared_ptr<CancellationToken> cancellation_token) {
+     try {
++        if (json err = require_field(request, "messages", RequiredFieldType::Array); !err.is_null()) {
++            send_response(err);
++            return;
++        }
+         nlohmann::ordered_json messages = request["messages"];
+         bool stream = request.value("stream", false);
+         std::string model = request.value("model", current_model_tag);
+@@ -870,7 +910,19 @@
+                                    std::function<void(const json&)> send_response,
+                                    StreamResponseCallback send_streaming_response) {
+     try {
+-        std::string model = request["model"];
++        if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
++            send_response(err);
++            return;
++        }
++        if (!request.contains("input") || !(request["input"].is_string() || request["input"].is_array())) {
++            json err = {{"error", {
++                {"message", "input is required and must be a string or an array of strings."},
++                {"type", "invalid_request_error"}, {"param", "input"},
++                {"code", "missing_required_parameter"}}}};
++            send_response(err);
++            return;
++        }
++        std::string model = request["model"].get<std::string>();
+         std::vector<std::string> inputs;
+ 
+         if (request["input"].is_string()) {
+@@ -1090,6 +1142,10 @@
+                                                std::shared_ptr<CancellationToken> cancellation_token) {
+     static std::string model_used_for_last_message = "model-faker";
+     try {
++        if (json err = require_field(request, "messages", RequiredFieldType::Array); !err.is_null()) {
++            send_response(err);
++            return;
++        }
+         // Extract OpenAI-style parameters
+         json current_messages = request["messages"];
+         std::string model = request.value("model", current_model_tag);
+@@ -1364,8 +1420,12 @@
+     StreamResponseCallback send_streaming_response,
+     std::shared_ptr<CancellationToken> cancellation_token) {
+     try {
++        if (json err = require_field(request, "prompt", RequiredFieldType::String); !err.is_null()) {
++            send_response(err);
++            return;
++        }
+         // Extract OpenAI-style parameters
+-        std::string prompt = request["prompt"];
++        std::string prompt = request["prompt"].get<std::string>();
+         std::string model = request.value("model", current_model_tag);
+         std::string reasoning_effort = request.value("reasoning_effort", "medium");
+         bool stream = request.value("stream", false);

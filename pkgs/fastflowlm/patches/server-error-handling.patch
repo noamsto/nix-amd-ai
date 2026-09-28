@@ -1,0 +1,268 @@
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -129,6 +129,38 @@
+ 
+ }
+ 
++// A malformed body with invalid UTF-8 used to wedge the server permanently:
++// nlohmann puts the offending bytes into a caught exception's e.what(), and
++// the default .dump() validates UTF-8, so building {"error": e.what()} and
++// dumping it threw a second time, escaping the catch before it released the
++// NPU lock. error_handler_t::replace substitutes U+FFFD instead of throwing.
++// Ported from OpenFlowLM-Next's server.cpp (Vegard Berget).
++static std::string safe_dump(const json& j) {
++    return j.dump(-1, ' ', false, json::error_handler_t::replace);
++}
++
++// Releases the NPU lock exactly once per held acquisition, regardless of
++// which exit path process_task takes, including an exception that escapes
++// every catch in process_task uncaught (WebServer::start() wraps ioc.run()
++// in a try/catch per I/O thread, so that doesn't crash the process, but it
++// skips a manually-placed release call and wedges the NPU the same way).
++// Takes a closure rather than a WebServer* + method, since this struct is
++// not a member or friend of WebServer and process_next_npu_request() is
++// private.
++struct NpuReleaseGuard {
++    std::function<void()> release_fn;
++    bool needs_npu;
++    std::atomic<bool> released{false};
++    NpuReleaseGuard(std::function<void()> release_fn, bool needs_npu)
++        : release_fn(std::move(release_fn)), needs_npu(needs_npu) {}
++    void release() {
++        if (needs_npu && !released.exchange(true)) {
++            release_fn();
++        }
++    }
++    ~NpuReleaseGuard() { release(); }
++};
++
+ // NPU Access Manager implementation
+ bool NPUAccessManager::try_acquire_npu_access() {
+     std::lock_guard<std::mutex> lock(g_npu_access_mutex);
+@@ -440,8 +472,12 @@
+             chunk_content = data_str;
+         }
+     } else {
+-        // Regular JSON object, format for Ollama compatibility
+-        chunk_content = data.dump() + "\n";
++        // Regular JSON object, format for Ollama compatibility. A chunk can
++        // carry a handler's own non-UTF-8 error text, and this runs outside
++        // process_task's try/catch, so a plain .dump() throw here is caught
++        // only by the blanket per-I/O-thread catch in WebServer::start(),
++        // dropping the chunk and the rest of the stream with no response.
++        chunk_content = safe_dump(data) + "\n";
+     }
+     
+     // std::cout << "Chunk: " << chunk_content;
+@@ -667,7 +703,7 @@
+     if (it == routes.end()) {
+         // No route: respond 404 synchronously.
+         res.result(http::status::not_found);
+-        res.body() = json{ {"error", "Not Found"} }.dump();
++        res.body() = safe_dump(json{ {"error", "Not Found"} });
+         res.set(http::field::content_type, is_json ? "application/json" : "multipart/form-data");
+         res.prepare_payload();
+         return false; 
+@@ -685,35 +721,59 @@
+         auto& req_ref = *req_ptr;
+         auto& res_ref = *res_ptr;
+ 
++        // Constructed only once process_task actually runs (not in
++        // handle_request above), so it never fires for the queue-full 503
++        // path, which returns before process_task is ever called.
++        auto npu_guard = std::make_shared<NpuReleaseGuard>(
++            [this] { this->process_next_npu_request(); }, needs_npu);
++
+         // Parse JSON request body
+         json request_json;
+         try {
+             if (!req_ref.body().empty()) {
+                 if(is_json)
+                     request_json = json::parse(req_ref.body());
+-                //else 
++                //else
+                     //do some parse to the MultiPart request?
+                     //std::map<std::string, MultipartPart> parts = parse_multipart(req_ref);
+             }
+         }
+         catch (const std::exception& e) {
+             res_ref.result(http::status::bad_request);
+-            res_ref.body() = json{ {"error", "Invalid JSON"} }.dump();
++            res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
+             res_ref.set(http::field::content_type, "application/json");
+             res_ref.prepare_payload();
+ 
+             // Only write from callback when deferred
+             if (is_deferred && session) session->write_response_from_callback();
+ 
+-            if (needs_npu) {
+-                this->process_next_npu_request();
+-            }
++            npu_guard->release();
+             return;
+         }
+ 
+         auto cancellation_token = std::make_shared<CancellationToken>(session);
+         session->set_cancellation_token(cancellation_token);
+ 
++        // A non-string request_id threw here, outside every try, while this
++        // request held the NPU lock -- which was then never released, so
++        // every request queued behind it waited forever. Refuse it the way a
++        // body that does not parse is refused above.
++        if (request_json.contains("request_id") && !request_json["request_id"].is_string()) {
++            res_ref.result(http::status::bad_request);
++            res_ref.body() = safe_dump(json{ {"error", {
++                {"message", "request_id must be a string."},
++                {"type", "invalid_request_error"},
++                {"param", "request_id"},
++                {"code", "invalid_value"}}} });
++            res_ref.set(http::field::content_type, "application/json");
++            res_ref.prepare_payload();
++
++            if (is_deferred && session) session->write_response_from_callback();
++
++            npu_guard->release();
++            return;
++        }
++
+         std::string request_id;
+         if (request_json.contains("request_id")) {
+             request_id = request_json["request_id"];
+@@ -725,41 +785,42 @@
+ 
+         register_active_request(request_id, cancellation_token);
+ 
+-        // catch is_deferred 
+-        auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
++        // catch is_deferred
++        auto send_response = [res_ptr, session, this, request_id, npu_guard, is_deferred, cancellation_token](const json& response_data) {
+             auto& response_ref = *res_ptr;
+             http::status status = http::status::ok;
+ 
+-            if (response_data.contains("error") &&
+-                response_data["error"].contains("code"))
+-            {
+-                int code = response_data["error"]["code"].get<int>();
+-
+-                if (code == 400) {
+-                    status = http::status::bad_request;
++            // `code` can be a STRING ("missing_required_parameter",
++            // "invalid_value") or absent entirely; only a numeric code is
++            // trusted, anything else defaults to 400.
++            if (response_data.contains("error")) {
++                const json& err = response_data["error"];
++                int code = 400;
++                if (err.is_object() && err.contains("code") && err["code"].is_number_integer()) {
++                    code = err["code"].get<int>();
++                }
++                if (code >= 400 && code <= 599) {
++                    status = static_cast<http::status>(code);
+                 }
+-                //else if () {
+-
+-                //}
+             }
+ 
+             response_ref.result(status);
+-            response_ref.body() = response_data.dump();
++            // response_data can be a handler's own {"error": e.what()} body,
++            // and e.what() is not guaranteed valid UTF-8.
++            response_ref.body() = safe_dump(response_data);
+             response_ref.set(http::field::content_type, "application/json");
+             response_ref.prepare_payload();
+             cancellation_token->complete();
+             unregister_active_request(request_id);
+ 
+-            if (needs_npu) {
+-                this->process_next_npu_request();
+-            }
++            npu_guard->release();
+ 
+             if (is_deferred && session) {
+                 session->write_response_from_callback();
+             }
+         };
+ 
+-        auto send_streaming_response = [session, this, request_id, needs_npu, cancellation_token](const json& data, bool is_final) {
++        auto send_streaming_response = [session, this, request_id, npu_guard, cancellation_token](const json& data, bool is_final) {
+             if (is_final) {
+                 cancellation_token->complete();
+             }
+@@ -770,27 +831,42 @@
+             if (is_final) {
+                 unregister_active_request(request_id);
+ 
+-                if (needs_npu) {
+-                    this->process_next_npu_request();
+-                }
++                npu_guard->release();
+             }
+         };
+ 
+         try {
+             it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
+         }
++        catch (const json::parse_error& e) {
++            // A route handler's own redundant json::parse(req.body()) throws
++            // here (skipped by is_json above when Content-Type wasn't
++            // application/json) -- refuse it like the parse failure above,
++            // not the generic 500 below.
++            cancellation_token->complete();
++            unregister_active_request(request_id);
++
++            res_ref.result(http::status::bad_request);
++            res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
++            res_ref.set(http::field::content_type, "application/json");
++            res_ref.prepare_payload();
++
++            npu_guard->release();
++
++            if (is_deferred && session) {
++                session->write_response_from_callback();
++            }
++        }
+         catch (const std::exception& e) {
+             cancellation_token->complete();
+             unregister_active_request(request_id);
+ 
+             res_ref.result(http::status::internal_server_error);
+-            res_ref.body() = json{ {"error", std::string("Handler exception: ") + e.what()} }.dump();
++            res_ref.body() = safe_dump(json{ {"error", std::string("Handler exception: ") + e.what()} });
+             res_ref.set(http::field::content_type, "application/json");
+             res_ref.prepare_payload();
+ 
+-            if (needs_npu) {
+-                this->process_next_npu_request();
+-            }
++            npu_guard->release();
+ 
+             if (is_deferred && session) {
+                 session->write_response_from_callback();
+@@ -801,13 +877,11 @@
+             unregister_active_request(request_id);
+ 
+             res_ref.result(http::status::internal_server_error);
+-            res_ref.body() = json{ {"error", "Unknown handler exception"} }.dump();
++            res_ref.body() = safe_dump(json{ {"error", "Unknown handler exception"} });
+             res_ref.set(http::field::content_type, "application/json");
+             res_ref.prepare_payload();
+ 
+-            if (needs_npu) {
+-                this->process_next_npu_request();
+-            }
++            npu_guard->release();
+ 
+             if (is_deferred && session) {
+                 session->write_response_from_callback();
+@@ -836,9 +910,9 @@
+ 
+     if (npu_request_queue_.size() >= max_npu_queue_) {
+         res.result(http::status::service_unavailable);
+-        res.body() = json{
++        res.body() = safe_dump(json{
+             {"error", "NPU is in use and request queue is full (limit: " + std::to_string(max_npu_queue_) + "). Please try again later."}
+-        }.dump();
++        });
+         res.set(http::field::content_type, "application/json");
+         res.prepare_payload();
+         header_print("🚫 ", "NPU busy and queue full, request denied: " + key);

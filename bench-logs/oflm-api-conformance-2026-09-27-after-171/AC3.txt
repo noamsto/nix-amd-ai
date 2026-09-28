@@ -1,0 +1,21 @@
+=== AC3 re-verification on final build ===
+{"error":"Invalid JSON"}
+HTTP_CODE:400
+
+--- server log ---
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:58550
+[TCP]  Read 184 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 23:13:01 09:27:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58550
+
+=== followup normal chat ===
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790539982,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"OK"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":41,"completion_tokens":1,"total_tokens":42,"kv_token_occupancy_rate_percentage":0.03204345703125,"load_duration":5.11e-07,"prefill_duration_ttft":0.384882816,"decoding_duration":0.014792,"prefill_speed_tps":106.52593021975811,"decoding_speed_tps":67.60411032990805},"service_tier":"default"}
+HTTP_CODE:200

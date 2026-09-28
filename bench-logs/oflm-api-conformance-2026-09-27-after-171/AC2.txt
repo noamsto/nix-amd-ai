@@ -1,0 +1,24 @@
+=== AC2 final spot-check ===
+--- POST /api/show {} ---
+{"error":{"message":"model is required and must be a string.","type":"invalid_request_error","param":"model","code":"missing_required_parameter"}}
+HTTP_CODE:400
+
+--- POST /api/generate {} ---
+{"error":{"message":"prompt is required and must be a string.","type":"invalid_request_error","param":"prompt","code":"missing_required_parameter"}}
+HTTP_CODE:400
+
+--- POST /api/chat {} ---
+{"error":{"message":"messages is required and must be an array.","type":"invalid_request_error","param":"messages","code":"missing_required_parameter"}}
+HTTP_CODE:400
+
+--- POST /v1/completions {} ---
+{"error":{"message":"prompt is required and must be a string.","type":"invalid_request_error","param":"prompt","code":"missing_required_parameter"}}
+HTTP_CODE:400
+
+--- POST /v1/chat/completions {} ---
+{"error":{"message":"messages is required and must be an array.","type":"invalid_request_error","param":"messages","code":"missing_required_parameter"}}
+HTTP_CODE:400
+
+=== followup normal chat ===
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790541215,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"OK"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":41,"completion_tokens":1,"total_tokens":42,"kv_token_occupancy_rate_percentage":0.03204345703125,"load_duration":6.81e-07,"prefill_duration_ttft":0.508419392,"decoding_duration":0.014797,"prefill_speed_tps":80.64208534358973,"decoding_speed_tps":67.5812664729337},"service_tier":"default"}
+HTTP_CODE:200
