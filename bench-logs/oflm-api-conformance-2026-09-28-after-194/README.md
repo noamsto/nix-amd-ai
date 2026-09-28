@@ -7,16 +7,23 @@ same method as
 the same `run_spec_tests.py` shim, the same OFLM-Next commit, and the same models
 and ports as after-187. Only the `flm` build under test changed.
 
+This is the post-rebase rerun: #196 merged (main @ `ae40eed`) and inserted
+`ps-serving-snapshot.patch` ahead of the #194 patch, so
+`connection-slot-release.patch` was regenerated against the full series. Its
+hunks are byte-identical to the first run — only `@@` line numbers and blob
+hashes changed — so the relocation is mechanical.
+
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver
 `amdxdna`; kernel 7.2.8).
-**Old build (red):** `origin/main` @ `46d7a73` —
-`/nix/store/fqkyn7jv5mqvzc51fgq4vghv33slqar7-fastflowlm-1.0.6`.
+**Old build (red):** `origin/main` @ `ae40eed` —
+`/nix/store/hzqppl44zhfxpk0nl1wv6r8fd69g4w4p-fastflowlm-1.0.6`.
 **New build (green):** this branch, adding
-`pkgs/fastflowlm/patches/connection-slot-release.patch` on top of `46d7a73` —
-`/nix/store/rqjni0b4rr0ckb3khhqf4i5z1w7m6xc5-fastflowlm-1.0.6`.
+`pkgs/fastflowlm/patches/connection-slot-release.patch` after
+`ps-serving-snapshot.patch` on top of `ae40eed` —
+`/nix/store/1z0mbcmhl9jfrn9pbphvqy7a76jwpjzm-fastflowlm-1.0.6`.
 **Scratch debug build (counter logs):** green plus temporary `header_print("DBG", …)`
 instrumentation, never committed —
-`/nix/store/4qsdrqrpvv9wg13wpbjzaxp3z9m0pqnb-fastflowlm-1.0.6`.
+`/nix/store/b3qqswvly3a0af90rh6zymip8kzv30qs-fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (chat).
 
@@ -67,7 +74,7 @@ connection. On a leaking build the cap fills after ten aborts.
 
 | Run | Build | Aborts | Final connection | `Connection limit reached` lines | Log |
 | --- | --- | --- | --- | --- | --- |
-| red | `46d7a73` | 12 | **REFUSED** (`Connection reset by peer`) | 3 | [`before/server-red.log`](before/server-red.log), [`before/client-red.log`](before/client-red.log) |
+| red | `ae40eed` | 12 | **REFUSED** (`Connection reset by peer`) | 3 | [`before/server-red.log`](before/server-red.log), [`before/client-red.log`](before/client-red.log) |
 | green | this branch | 12 | **ACCEPTED** (`HTTP/1.1 200 OK`) | 0 | [`server-green.log`](server-green.log), [`client-green.log`](client-green.log) |
 
 ## No double-decrement / counter never below the real value
@@ -141,7 +148,7 @@ diff **empty** against after-187; no regressions.
 ## Reproduce
 
 ```
-nix build .#fastflowlm --no-link --print-out-paths   # red on 46d7a73, green here
+nix build .#fastflowlm --no-link --print-out-paths   # red on ae40eed, green here
 bash bench-logs/oflm-api-conformance-2026-09-28-after-194/disconnect.sh \
   /nix/store/<flm>/bin/flm 58701 12 bench-logs/oflm-api-conformance-2026-09-28-after-194 <label>
 bash bench-logs/oflm-api-conformance-2026-09-28-after-194/keepalive-nonstream.sh \

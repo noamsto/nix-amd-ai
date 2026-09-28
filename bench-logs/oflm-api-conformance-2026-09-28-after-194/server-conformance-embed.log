@@ -3,23 +3,23 @@
 [FLM]  Loading model: /home/noams/.config/flm/models/Embedding-Gemma-300M-NPU2
 [FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
 [FLM]  Starting server on port 58602...
-[FLM]  WebServer started on port 58602 with 10 I/O threads
-[FLM]  Press Ctrl+C to stop.
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:39130
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59412
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:35 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39130
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51464
+[FLM]  WebServer started on port 58602 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59412
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59428
 [TCP]  Read 232 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:35 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -33,12 +33,12 @@ Embedding input[0]:
 probe
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51464
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51474
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59428
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59438
 [TCP]  Read 300 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:35 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -51,12 +51,12 @@ probe
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51474
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51490
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59438
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59446
 [TCP]  Read 289 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:35 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -69,12 +69,12 @@ probe
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51490
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51492
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59446
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59448
 [TCP]  Read 280 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:35 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -86,32 +86,32 @@ probe
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51492
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51498
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59448
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59458
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51498
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51512
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59458
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59470
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51512
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51522
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59470
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59478
 [TCP]  Read 203 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -122,24 +122,24 @@ probe
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51522
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51532
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59478
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59482
 [TCP]  Read 181 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /api/show
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 [LOG]  Body: 
 {}
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51532
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51538
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59482
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59486
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -161,15 +161,15 @@ probe
 [FLM]  Start generating...
 
 [FLM]  Model RAW Output: 
-Ok.
+Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51538
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51552
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59486
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59488
 [TCP]  Read 185 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -178,12 +178,12 @@ Ok.
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51552
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51560
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59488
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59502
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:52 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -207,15 +207,15 @@ Ok.
 [FLM]  Start generating...
 
 [FLM]  Model RAW Output: 
-Ok.
+Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51560
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51566
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59502
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59508
 [TCP]  Read 181 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:53 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /api/chat
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -224,12 +224,12 @@ Ok.
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51566
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51576
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59508
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59510
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:53 09:28:2026
+[LOG]  Time stamp: 20:22:36 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -256,24 +256,26 @@ Ok.
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51576
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51590
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59510
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59524
 [TCP]  Read 187 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:53 09:28:2026
+[LOG]  Time stamp: 20:22:37 09:28:2026
 [LOG]  Target: /v1/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 [LOG]  Body: 
 {}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51590
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51594
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59524
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59534
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:53 09:28:2026
+[LOG]  Time stamp: 20:22:37 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -300,12 +302,12 @@ Ok
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51594
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51598
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59534
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59538
 [TCP]  Read 192 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:53 09:28:2026
+[LOG]  Time stamp: 20:22:37 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -314,12 +316,12 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51598
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51612
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59538
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59548
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:53 09:28:2026
+[LOG]  Time stamp: 20:22:37 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -346,12 +348,12 @@ Ok
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51612
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51620
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59548
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59554
 [TCP]  Read 223 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -360,13 +362,15 @@ Ok
     "model": "llama3.2:1b",
     "prompt": 5
 }
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51620
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51628
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59554
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59560
 [TCP]  Read 226 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -380,12 +384,12 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51628
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51638
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59560
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59572
 [TCP]  Read 233 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -393,12 +397,12 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51638
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51646
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59572
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59586
 [TCP]  Read 234 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /api/chat
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -406,12 +410,12 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51646
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51656
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59586
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59590
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -430,13 +434,13 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51656
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59590
 [🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51666
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59606
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -463,12 +467,12 @@ Ok
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51666
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51682
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59606
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59620
 [TCP]  Read 307 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -487,13 +491,13 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51682
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59620
 [🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51690
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59626
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:54 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -517,15 +521,15 @@ Ok
 [FLM]  Start generating...
 
 [FLM]  Model RAW Output: 
-Ok.
+Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51690
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51696
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59626
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59640
 [TCP]  Read 311 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:55 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -546,13 +550,13 @@ Ok.
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51696
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59640
 [🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51698
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59646
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:55 09:28:2026
+[LOG]  Time stamp: 20:22:38 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -579,12 +583,12 @@ Ok.
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51698
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51712
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59646
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59662
 [TCP]  Read 308 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:55 09:28:2026
+[LOG]  Time stamp: 20:22:39 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -605,13 +609,13 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51712
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59662
 [🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51718
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59668
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:55 09:28:2026
+[LOG]  Time stamp: 20:22:39 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -638,12 +642,12 @@ Ok
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51718
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:51722
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59668
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:59680
 [TCP]  Read 333 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 19:03:56 09:28:2026
+[LOG]  Time stamp: 20:22:39 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -671,4 +675,4 @@ Ok
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51722
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59680

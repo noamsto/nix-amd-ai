@@ -10,5 +10,6 @@ abort 9: read 64 bytes, RST
 abort 10: read 64 bytes, RST
 abort 11: recv failed: [Errno 104] Connection reset by peer
 abort 11: read 0 bytes, RST
+abort 12: recv failed: [Errno 104] Connection reset by peer
 abort 12: read 0 bytes, RST
 final: [Errno 104] Connection reset by peer
