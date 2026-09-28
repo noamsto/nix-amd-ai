@@ -1,9 +1,9 @@
-# 8 ps-pair reports from tsan-red.1919153 (raw log not committed: 3.4 MB).
+# 8 ps-pair reports from tsan-red.650626 (raw log not committed: 3.4 MB).
 # Access stacks cut to frames #0-#16, signatures shortened; Location line kept.
 
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 8 at 0x724000001c10 by thread T13:
+  Write of size 8 at 0x724000001c10 by thread T12:
     #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
     #1 std::unique_ptr<> >::reset unique_ptr.h:530
     #2 RestHandler::ensure_model_loaded rest_handler.cpp:597
@@ -22,7 +22,7 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
     #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
     #16 complete composed.hpp:156
 
-  Previous read of size 8 at 0x724000001c10 by thread T9:
+  Previous read of size 8 at 0x724000001c10 by thread T13:
     #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
     #1 std::unique_ptr<> >::get unique_ptr.h:491
     #2 std::unique_ptr<> >::operator bool unique_ptr.h:508
@@ -44,9 +44,9 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
   Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
 
 ==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 8 at 0x724000001c58 by thread T13:
+  Write of size 8 at 0x724000001c58 by thread T12:
     #0 memcpy <null>
     #1 std::char_traits<>::copy char_traits.h:429
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
@@ -65,7 +65,7 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
     #15 HttpSession::handle_request server.cpp:322
     #16 operator() server.cpp:255
 
-  Previous read of size 8 at 0x724000001c58 by thread T10:
+  Previous read of size 8 at 0x724000001c58 by thread T14:
     #0 memcpy <null>
     #1 std::char_traits<>::copy char_traits.h:429
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
@@ -87,9 +87,9 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
   Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
 
 ==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 8 at 0x724000001c50 by thread T13:
+  Write of size 8 at 0x724000001c50 by thread T12:
     #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
     #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:328
@@ -130,9 +130,9 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
   Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
 
 ==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 1 at 0x724000001c63 by thread T11:
+  Write of size 1 at 0x724000001c63 by thread T9:
     #0 std::char_traits<>::assign char_traits.h:352
     #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:273
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:328
@@ -151,7 +151,7 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
     #15 operator() server.cpp:255
     #16 complete composed.hpp:156
 
-  Previous read of size 6 at 0x724000001c60 by thread T8:
+  Previous read of size 6 at 0x724000001c60 by thread T13:
     #0 memcpy <null>
     #1 std::char_traits<>::copy char_traits.h:429
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
@@ -173,52 +173,9 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
   Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
 
 ==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 8 at 0x724000001c10 by thread T12:
-    #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
-    #1 std::unique_ptr<> >::reset unique_ptr.h:530
-    #2 RestHandler::ensure_model_loaded rest_handler.cpp:597
-    #3 RestHandler::handle_chat rest_handler.cpp:1002
-    #4 operator() server.cpp:985
-    #5 __invoke_impl<void, create_lm_server invoke.h:63
-    #6 __invoke_r<void, create_lm_server invoke.h:113
-    #7 _M_invoke std_function.h:292
-    #8 std::function<void  std_function.h:593
-    #9 operator() server.cpp:844
-    #10 WebServer::handle_request server.cpp:910
-    #11 HttpSession::handle_request server.cpp:322
-    #12 operator() server.cpp:255
-    #13 complete composed.hpp:156
-    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
-    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
-    #16 complete composed.hpp:156
-
-  Previous read of size 8 at 0x724000001c10 by thread T9:
-    #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
-    #1 std::unique_ptr<> >::get unique_ptr.h:491
-    #2 std::unique_ptr<> >::operator bool unique_ptr.h:508
-    #3 RestHandler::handle_ps rest_handler.cpp:1343
-    #4 operator() server.cpp:995
-    #5 __invoke_impl<void, create_lm_server invoke.h:63
-    #6 __invoke_r<void, create_lm_server invoke.h:113
-    #7 _M_invoke std_function.h:292
-    #8 std::function<void  std_function.h:593
-    #9 operator() server.cpp:844
-    #10 WebServer::handle_request server.cpp:902
-    #11 HttpSession::handle_request server.cpp:322
-    #12 operator() server.cpp:255
-    #13 complete composed.hpp:156
-    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
-    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
-    #16 complete composed.hpp:156
-
-  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
-
-==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
-
-  Write of size 8 at 0x724000001c58 by thread T12:
+  Write of size 8 at 0x724000001c58 by thread T14:
     #0 memcpy <null>
     #1 std::char_traits<>::copy char_traits.h:429
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
@@ -237,7 +194,7 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
     #15 HttpSession::handle_request server.cpp:322
     #16 operator() server.cpp:255
 
-  Previous read of size 8 at 0x724000001c58 by thread T5:
+  Previous read of size 8 at 0x724000001c58 by thread T13:
     #0 memcpy <null>
     #1 std::char_traits<>::copy char_traits.h:429
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_S_copy basic_string.h:453
@@ -259,9 +216,9 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
   Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
 
 ==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 8 at 0x724000001c50 by thread T12:
+  Write of size 8 at 0x724000001c50 by thread T14:
     #0 std::__cxx11::basic_string<>, std::allocator<> >::_M_length basic_string.h:234
     #1 std::__cxx11::basic_string<>, std::allocator<> >::_M_set_length basic_string.h:272
     #2 std::__cxx11::basic_string<>, std::allocator<> >::_M_assign basic_string.tcc:328
@@ -280,7 +237,7 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
     #15 operator() server.cpp:255
     #16 complete composed.hpp:156
 
-  Previous read of size 8 at 0x724000001c50 by thread T7:
+  Previous read of size 8 at 0x724000001c50 by thread T8:
     #0 std::__cxx11::basic_string<>, std::allocator<> >::size basic_string.h:1165
     #1 std::__cxx11::basic_string<>, std::allocator<> >::length basic_string.h:1176
     #2 std::__str_hash_base<>, std::__cxx11::basic_string<>, std::allocator<> > >::operator basic_string.h:4910
@@ -302,9 +259,9 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
   Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
 
 ==================
-WARNING: ThreadSanitizer: data race (pid=1919153)
+WARNING: ThreadSanitizer: data race (pid=650626)
 
-  Write of size 8 at 0x724000001c10 by thread T5:
+  Write of size 8 at 0x724000001c10 by thread T7:
     #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
     #1 std::unique_ptr<> >::reset unique_ptr.h:530
     #2 RestHandler::ensure_model_loaded rest_handler.cpp:597
@@ -323,7 +280,50 @@ WARNING: ThreadSanitizer: data race (pid=1919153)
     #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
     #16 complete composed.hpp:156
 
-  Previous read of size 8 at 0x724000001c10 by thread T12:
+  Previous read of size 8 at 0x724000001c10 by thread T10:
+    #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
+    #1 std::unique_ptr<> >::get unique_ptr.h:491
+    #2 std::unique_ptr<> >::operator bool unique_ptr.h:508
+    #3 RestHandler::handle_ps rest_handler.cpp:1343
+    #4 operator() server.cpp:995
+    #5 __invoke_impl<void, create_lm_server invoke.h:63
+    #6 __invoke_r<void, create_lm_server invoke.h:113
+    #7 _M_invoke std_function.h:292
+    #8 std::function<void  std_function.h:593
+    #9 operator() server.cpp:844
+    #10 WebServer::handle_request server.cpp:902
+    #11 HttpSession::handle_request server.cpp:322
+    #12 operator() server.cpp:255
+    #13 complete composed.hpp:156
+    #14 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+    #15 operator()<boost::system::error_code, long unsigned int> composed.hpp:150
+    #16 complete composed.hpp:156
+
+  Location is heap block of size 248 at 0x724000001c00 allocated by main thread:
+
+==================
+WARNING: ThreadSanitizer: data race (pid=650626)
+
+  Write of size 8 at 0x724000001c10 by thread T12:
+    #0 std::__uniq_ptr_impl<> >::reset unique_ptr.h:202
+    #1 std::__uniq_ptr_impl<> >::operator= unique_ptr.h:184
+    #2 std::__uniq_ptr_data<>, true, true>::operator= unique_ptr.h:236
+    #3 std::unique_ptr<> >::operator= unique_ptr.h:418
+    #4 RestHandler::ensure_model_loaded rest_handler.cpp:604
+    #5 RestHandler::handle_openai_completion rest_handler.cpp:1744
+    #6 operator() server.cpp:1130
+    #7 __invoke_impl<void, create_lm_server invoke.h:63
+    #8 __invoke_r<void, create_lm_server invoke.h:113
+    #9 _M_invoke std_function.h:292
+    #10 std::function<void  std_function.h:593
+    #11 operator() server.cpp:844
+    #12 WebServer::handle_request server.cpp:902
+    #13 HttpSession::handle_request server.cpp:322
+    #14 operator() server.cpp:255
+    #15 complete composed.hpp:156
+    #16 operator()<boost::asio::detail::composed_op<boost::beast::http::detail::read_op<boost::asi read.hpp:325
+
+  Previous read of size 8 at 0x724000001c10 by thread T10:
     #0 std::__uniq_ptr_impl<> >::_M_ptr unique_ptr.h:192
     #1 std::unique_ptr<> >::get unique_ptr.h:491
     #2 std::unique_ptr<> >::operator bool unique_ptr.h:508

@@ -11,10 +11,14 @@ conformance suite using the same method as
 path as the after-187 green build).
 **New build (green):** this branch, adding
 `pkgs/fastflowlm/patches/ps-serving-snapshot.patch`,
-`/nix/store/6y3hc05zlx0vy4vzbzyplv3q0w2i90lc-fastflowlm-1.0.6`.
+`/nix/store/hzqppl44zhfxpk0nl1wv6r8fd69g4w4p-fastflowlm-1.0.6`. The
+production probes below ran on
+`/nix/store/6y3hc05zlx0vy4vzbzyplv3q0w2i90lc-fastflowlm-1.0.6`, an earlier
+revision of the patch. Review changed only a comment in it after that run, so
+the compiled code is the same.
 **TSan builds:** [`tsan.nix`](tsan.nix), scratch only, not wired into the flake.
 The base patch set is `/nix/store/71kaddldrwvfwkvk380dgz5g0s18781k-fastflowlm-tsan-1.0.6`
-(`--arg fixed false`). All 9 patches is `/nix/store/m0598bixf0k7gsx04fp2ylkjzcdk5q7g-fastflowlm-tsan-1.0.6`.
+(`--arg fixed false`). All 9 patches is `/nix/store/d2yh66m27ji5c8mzp6rqms3qbqg4gf24-fastflowlm-tsan-1.0.6`.
 Both builds compile everything with `-fsanitize=thread -g` (followed by the
 forced Release `-O3`). `nm -D bin/flm` lists undefined `__tsan_func_entry` and
 `__tsan_read8`.
@@ -85,7 +89,13 @@ runs concurrently with those five.
 3. Sends 6 non-streaming `/api/chat` requests that alternate `gemma4-it:e4b` and
    `llama3.2:1b`, then 3 `/v1/completions` requests the same way. Every one
    swaps the model.
-4. Classifies the TSan reports with [`tsan-classify.py`](tsan-classify.py).
+4. Queue phase: 4 rounds, alternating `/api/chat` and `/v1/chat/completions`
+   on `llama3.2:1b`. Each round sends request A, then request B 0.3 s later,
+   so B queues behind A on the NPU token. Only then can the next request
+   overlap the tail A runs after sending its response (`clear_context()`,
+   `prompt_cache.reset()`); the sequential phases never overlap it.
+5. Classifies every TSan report with [`tsan-classify.py`](tsan-classify.py), of
+   any warning kind (not only data races).
 
 The classifier works per access stack, and the first bucket that matches wins:
 1. `libc-tz`: `tzset`/`localtime`/`gmtime`/`strftime` in either access stack's
@@ -93,27 +103,35 @@ The classifier works per access stack, and the first bucket that matches wins:
 2. `ps-pair`: `handle_ps` in one access stack and `ensure_model_loaded` in the
    other.
 3. `model-state`: `ensure_model_loaded` or `AutoModel::` in an access stack, or
-   a `RestHandler::` access to the RestHandler heap object.
-4. `failed-restore`, then `other`.
+   a `RestHandler::` access to the RestHandler heap object. Also any other
+   warning kind (e.g. heap-use-after-free) whose stacks contain `RestHandler::`
+   or `AutoModel::`.
+4. `incomplete` (a truncated report), `failed-restore`, then `other`.
 
-Red requires `ps-pair ≥ 1`. Green requires `ps-pair = 0` and `model-state = 0`,
-with every poll and every chat reply 200.
+A log the classifier cannot read fails the run.
+- Red requires `ps-pair ≥ 1` (the `/api/ps` race) and `model-state ≥ 1` (the
+  tail race).
+- Green requires `ps-pair`, `model-state` and `incomplete` all 0, with every
+  poll and every request answered 200.
 
 | | Red (base patch set) | Green (with the fix) |
 | --- | --- | --- |
-| `/api/ps` polls | 143067, all 200 | 167268, all 200 |
-| chat + completions | 9, all 200 | 9, all 200 |
+| `/api/ps` polls | 171699: 171693 × 200, 6 × `000` | 180118, all 200 |
+| chat + completions + queue | 17, all 200 | 17, all 200 |
 | `ps-pair` | **8** | 0 |
-| `model-state` | 0 | 0 |
-| `libc-tz` (not gating) | 76 | 69 |
-| verdict | [`before/race-red.txt`](before/race-red.txt): PASS (reproduced) | [`race-green.txt`](race-green.txt): PASS 4/4 |
+| `model-state` | **35** | 0 |
+| `other` | 57 | 0 |
+| `incomplete` / `failed-restore` / skipped logs | 1 / 0 / 0 | 0 / 0 / 0 |
+| `libc-tz` (not gating) | 83 | 78 |
+| verdict | [`before/race-red.txt`](before/race-red.txt): PASS 2/2 (both races reproduced) | [`race-green.txt`](race-green.txt): PASS 5/5 |
 
 The eight red reports ([`before/tsan-red.ps-pair.txt`](before/tsan-red.ps-pair.txt))
 are exactly the race in the issue:
 
 | Write (`ensure_model_loaded`) | Read (`handle_ps`) | Reports |
 | --- | --- | --- |
-| `rest_handler.cpp:597` `auto_chat_engine.reset()` | `:1343` `unique_ptr::operator bool` | 3 |
+| `rest_handler.cpp:597` `auto_chat_engine.reset()` | `:1343` `unique_ptr::operator bool` | 2 |
+| `rest_handler.cpp:604` `auto_chat_engine = std::move(...)` | `:1343` `unique_ptr::operator bool` | 1 |
 | `rest_handler.cpp:645` `current_model_tag = ensure_tag` | `:1343` `is_model_supported(current_model_tag)` (2), and the JSON entry's copies of `current_model_tag` (3, which TSan attributes to `:1373` under `-O3` inlining) | 5 |
 
 The writers came from both `handle_chat` and `handle_openai_completion`. Every
@@ -122,13 +140,29 @@ racing address is inside the RestHandler object: the 248-byte heap block that
 excerpt cuts access stacks at frame #16. The full
 classification, one line per report, is in
 [`before/tsan-red.summary.txt`](before/tsan-red.summary.txt) and
-[`tsan-green.summary.txt`](tsan-green.summary.txt). The raw TSan logs (3 MB) and
-the server logs (~60 MB each, one request banner per poll) are not committed.
+[`tsan-green.summary.txt`](tsan-green.summary.txt). The raw TSan logs (3 MB), the
+server logs (~65 MB each, one request banner per poll) and the raw per-poll
+status files are not committed.
 
-**Not caught by TSan:** the release-before-tail race. `model-state` was 0 on red
-too, so these sequential chats found no report of `clear_context()` running
-against the next `ensure_model_loaded`. That part of the fix rests on the code
-path described above, not on a TSan report.
+**The tail race** shows up only in the queue phase. The 35 red `model-state`
+reports ([`before/tsan-red.model-state.txt`](before/tsan-red.model-state.txt))
+come from the tails of `handle_chat` and `handle_openai_chat_completion`, the
+two routes the queue phase alternates. In each, the previous handler, after its
+response was sent, calls
+`AutoModel::clear_context()` (e.g. `rest_handler.cpp:1091`, right after
+`send_response`) or `profiler::reset()`, and that races the queued request's
+`AutoModel::_shared_insert` running on another I/O thread (dispatched through
+`server.cpp:930`, the queued-task lambda). In all 57 red `other` reports,
+both access stacks are under a RestHandler route handler: two NPU handlers
+running at once, racing inside the NPU runtime (`npu_app::_setup_kernel`,
+`llama_npu_sequence`, and XRT/ELFIO objects destroyed under one handler while
+the other uses them). With the release moved to after the handler returns,
+all three buckets are 0.
+
+On red, 6 `/api/ps` polls got no reply within curl's 30 s `--max-time`
+(`000`). They fall in the middle of the pollers' files, not at teardown, and
+red's last queue round took 240 s where green's took 2–4 s. That was not
+investigated further. It happened only on the base build.
 
 **`libc-tz`** is present on both builds and unchanged by the fix. The reports are
 `localtime()`'s shared static buffer and `tzset_internal`, reached from
