@@ -1,0 +1,328 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 6500795..a3009a7 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -48,6 +48,35 @@ static json require_field(const json& request, const char* field, RequiredFieldT
+     return json();
+ }
+ 
++// The error body for a non-Ok ensure_model_loaded() outcome.
++// Ported from OpenFlowLM-Next's openai_compat::model_error
++// (src/server/openai_compat.hpp, Vegard Berget).
++static json model_error(RestHandler::ModelLoad why, const std::string& model) {
++    switch (why) {
++        case RestHandler::ModelLoad::Unknown:
++            return json{{"error", {
++                {"message", "model '" + model + "' is not in this build's model list"},
++                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}};
++        case RestHandler::ModelLoad::NotChatModel:
++            return json{{"error", {
++                {"message", "model '" + model + "' is not a chat model; this endpoint serves "
++                            "text generation only"},
++                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}};
++        case RestHandler::ModelLoad::NoModel:
++            return json{{"error", {
++                {"message", "no chat model is loaded: this server was started without one. "
++                            "Name a model in the request's 'model' field, or start flm serve "
++                            "with a model tag."},
++                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}};
++        case RestHandler::ModelLoad::LoadFailed:
++        default:
++            return json{{"error", {
++                {"message", "model '" + model + "' is known to this build but could not be "
++                            "loaded; the server log says why"},
++                {"type", "server_error"}, {"param", "model"}, {"code", "model_load_failed"}}}};
++    }
++}
++
+ ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
+ ///@param messages the original messages
+ ///@return normalized messages with consecutive user messages merged
+@@ -389,7 +418,7 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+             header_print("Warning", "Default model tag '" << default_model_tag << "' is not supported. Falling back to 'llama3.2:1b'.");
+             this->default_model_tag = "llama3.2:1b";
+         }
+-        if (!ensure_model_loaded(default_model_tag)) {
++        if (ensure_model_loaded(default_model_tag) != ModelLoad::Ok) {
+             header_print("Error", "Failed to load default model: " + default_model_tag);
+         }
+     }
+@@ -405,47 +434,90 @@ RestHandler::~RestHandler() = default;
+ 
+ ///@brief Ensure the model is loaded
+ ///@param model_tag the model tag
+-bool RestHandler::ensure_model_loaded(const std::string& model_tag) {
+-    std::string ensure_tag = model_tag;
+-    if (current_model_tag != ensure_tag) {
+-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+-        if (auto_chat_engine != nullptr) {
+-            auto_chat_engine.reset();
++///@param model_field_present whether the request actually carried a "model" key
++RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model_tag, bool model_field_present) {
++    // Normalise FIRST: cut_tag() strips a registry prefix and rectify_model_tag()
++    // resolves a bare type ("granite") to its default variant ("granite:3b"). Both
++    // the sentinel check and the is_model_supported() check below need the same
++    // spelling current_model_tag was set to, or a prefixed/bare tag for the loaded
++    // model compares unequal to itself. rectify_model_tag() indexes config for the
++    // type, so it is only safe once is_model_supported() has confirmed the type
++    // exists.
++    std::string ensure_tag = supported_models.cut_tag(model_tag);
++    if (supported_models.is_model_supported(ensure_tag)) {
++        ensure_tag = supported_models.rectify_model_tag(ensure_tag);
++    }
++    // "model-faker" is the sentinel for `flm serve` started without a chat model,
++    // and the handlers default `model` to current_model_tag -- so a request naming
++    // no model arrives here as the sentinel.
++    if (ensure_tag.empty() || ensure_tag == "model-faker") {
++        if (model_field_present) {
++            header_print("ERROR", "request set 'model' to '" + ensure_tag +
++                                  "', which is not a model name -- refusing");
++            return ModelLoad::Unknown;
+         }
+-        std::pair<std::string, std::unique_ptr<AutoModel>> auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
+-        auto_chat_engine = std::move(auto_model.second);
+-        auto_chat_engine->set_server_mode(true);
+-        ensure_tag = auto_model.first;
+-        switch (downloader.is_model_downloaded(ensure_tag)) {
+-            case ModelDownloader::ModelStatus::Ready:
+-                break;
+-            case ModelDownloader::ModelStatus::Outdated:
+-            case ModelDownloader::ModelStatus::Missing:
+-                downloader.pull_model(ensure_tag, this->modelscope);
+-                break;
+-            case ModelDownloader::ModelStatus::Incompatible:
+-                return false;
+-            }
+-        auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
+-        auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
+-        try {
+-            auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption);
+-        }
+-        catch (const std::exception& e) {
+-            header_print("ERROR", "Failed to load model: " + std::string(e.what()));
++        return auto_chat_engine ? ModelLoad::Ok : ModelLoad::NoModel;
++    }
++    if (ensure_tag == current_model_tag && auto_chat_engine) {
++        return ModelLoad::Ok;
++    }
++    // Checked BEFORE anything is unloaded: a request for a model that does not
++    // exist must not evict the one currently serving.
++    if (!supported_models.is_model_supported(ensure_tag)) {
++        header_print("ERROR", "unknown model '" + ensure_tag + "' -- refusing; '" +
++                              current_model_tag + "' stays loaded");
++        return ModelLoad::Unknown;
++    }
++    // ... and the same question one level down. embed-gemma and whisper-v3 ARE in
++    // the model list, so the check above passes them; get_auto_model() substitutes
++    // Llama for them instead of refusing, so this endpoint must ask itself.
++    auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
++    std::string family = info["details"]["family"];
++    if (family == "whisper-v3" || family == "embed-gemma") {
++        header_print("ERROR", "model '" + ensure_tag + "' is not a chat model -- refusing; '" +
++                              current_model_tag + "' stays loaded");
++        return ModelLoad::NotChatModel;
++    }
++
++    std::this_thread::sleep_for(std::chrono::milliseconds(500));
++    if (auto_chat_engine != nullptr) {
++        auto_chat_engine.reset();
++    }
++    std::pair<std::string, std::unique_ptr<AutoModel>> auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
++    auto_chat_engine = std::move(auto_model.second);
++    auto_chat_engine->set_server_mode(true);
++    ensure_tag = auto_model.first;
++    switch (downloader.is_model_downloaded(ensure_tag)) {
++        case ModelDownloader::ModelStatus::Ready:
++            break;
++        case ModelDownloader::ModelStatus::Outdated:
++        case ModelDownloader::ModelStatus::Missing:
++            downloader.pull_model(ensure_tag, this->modelscope);
++            break;
++        case ModelDownloader::ModelStatus::Incompatible:
+             this->auto_chat_engine.reset();
+-            this->npu_device_inst.reset();
+-            this->npu_device_inst = flm_rt::device(0);
+             this->current_model_tag = "model-faker";
+-            return false;
++            return ModelLoad::LoadFailed;
+         }
+-        
+-        if (this->prefill_chunk_len == -1) {
+-            this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
+-        }
+-        current_model_tag = ensure_tag;
++    auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
++    auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
++    try {
++        auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption);
++    }
++    catch (const std::exception& e) {
++        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
++        this->auto_chat_engine.reset();
++        this->npu_device_inst.reset();
++        this->npu_device_inst = flm_rt::device(0);
++        this->current_model_tag = "model-faker";
++        return ModelLoad::LoadFailed;
++    }
++
++    if (this->prefill_chunk_len == -1) {
++        this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
+     }
+-    return true;
++    current_model_tag = ensure_tag;
++    return ModelLoad::Ok;
+ }
+ 
+ ///@brief Ensure the asr model is loaded
+@@ -691,9 +763,8 @@ void RestHandler::handle_generate(const json& request,
+         int length_limit = request.value("max_tokens", 4096);
+         auto load_start_time = time_utils::now();
+         // TODO: Use Another Check Function avoid loading again
+-        if (!ensure_model_loaded(model)) {
+-            json error_response = {{"error", "Failed to load " + model + " model!"}};
+-            send_response(error_response);
++        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model")); why != ModelLoad::Ok) {
++            send_response(model_error(why, model));
+             return;
+         }
+         auto load_end_time = time_utils::now();
+@@ -808,13 +879,12 @@ void RestHandler::handle_chat(const json& request,
+         int length_limit = options.value("num_predict", 4096);
+ 
+         auto load_start_time = time_utils::now();
+-        if (!ensure_model_loaded(model)) {
+-            json error_response = {{"error", "Failed to load " + model + " model!"}};
+-            send_response(error_response);
++        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model")); why != ModelLoad::Ok) {
++            send_response(model_error(why, model));
+             return;
+         }
+         auto load_end_time = time_utils::now();
+-       
++
+         configure_chat_engine_parameters(options, request);
+ 
+         // messages = normalize_messages(messages);
+@@ -919,6 +989,17 @@ void RestHandler::handle_embeddings(const json& request,
+                                    std::function<void(const json&)> send_response,
+                                    StreamResponseCallback send_streaming_response) {
+     try {
++#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
++        if (!this->embed || !this->auto_embedding_engine) {
++#else
++        if (!this->embed) {
++#endif
++            send_response(json{{"error", {
++                {"message", "no embedding model is loaded; start flm serve with --embed 1 to "
++                            "serve embeddings."},
++                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}});
++            return;
++        }
+         if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
+             send_response(err);
+             return;
+@@ -932,6 +1013,26 @@ void RestHandler::handle_embeddings(const json& request,
+             return;
+         }
+         std::string model = request["model"].get<std::string>();
++
++#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
++        // One embedding model is loaded per server; a request naming any other one
++        // used to be served by the loaded model anyway and echoed back under the
++        // name it was asked for.
++        std::string ensure_tag = supported_models.cut_tag(model);
++        if (supported_models.is_model_supported(ensure_tag)) {
++            ensure_tag = supported_models.rectify_model_tag(ensure_tag);
++        }
++        std::string loaded = this->auto_embedding_engine->get_current_model();
++        if (ensure_tag != loaded) {
++            send_response(json{{"error", {
++                {"message", "this server has '" + loaded + "' loaded, not '" + model +
++                            "'. One embedding model is loaded per server."},
++                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}});
++            return;
++        }
++        model = loaded;
++#endif
++
+         std::vector<std::string> inputs;
+ 
+         if (request["input"].is_string()) {
+@@ -1176,9 +1277,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+         }
+ 
+         auto load_start_time = time_utils::now();
+-        if (!ensure_model_loaded(model)) {
+-            json error_response = {{"error", "Failed to load " + model + " model!"}};
+-            send_response(error_response);
++        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model")); why != ModelLoad::Ok) {
++            send_response(model_error(why, model));
+             return;
+         }
+         auto load_end_time = time_utils::now();
+@@ -1472,16 +1572,10 @@ void RestHandler::handle_openai_completion(const json& request,
+         bool stream = request.value("stream", false);
+         json options = request.value("options", json::object());
+ 
+-        // direct return if model not supported
+-        if (!supported_models.is_model_supported(model)) {
+-            throw std::runtime_error("Model " + model + " is not supported.");
+-        }
+-       
+         int length_limit = request.value("max_tokens", 4096);
+ 
+-         if (!ensure_model_loaded(model)) {
+-            json error_response = {{"error", "Failed to load " + model + " model!"}};
+-            send_response(error_response);
++        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model")); why != ModelLoad::Ok) {
++            send_response(model_error(why, model));
+             return;
+         }
+ 
+diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
+index 69256de..0548bca 100644
+--- a/src/server/rest_handler.hpp
++++ b/src/server/rest_handler.hpp
+@@ -34,6 +34,12 @@ using StreamResponseCallback = std::function<void(const json&, bool)>; // data,
+ 
+ class RestHandler {
+ public:
++    // Why ensure_model_loaded() did not leave a model serving. Unknown / NotChatModel
++    // / NoModel are the CLIENT's mistake and answer 400; LoadFailed is ours and
++    // answers 500. Public so the file-static model_error() in rest_handler.cpp can
++    // take it as a parameter.
++    enum class ModelLoad { Ok, Unknown, NotChatModel, NoModel, LoadFailed };
++
+     RestHandler(model_list& models, ModelDownloader& downloader, program_args_t& args);
+     ~RestHandler();
+ 
+@@ -108,7 +114,7 @@ public:
+         std::shared_ptr<CancellationToken> cancellation_token = nullptr);
+ 
+ private:
+-    bool ensure_model_loaded(const std::string& model_tag);
++    ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false);
+     void ensure_asr_model_loaded(const std::string& model_tag);
+     void ensure_embed_model_loaded(const std::string& model_tag);
+     void configure_chat_engine_parameters(const json& options, const json& request);
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 2c7d363..d0c4176 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -792,12 +792,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+ 
+             // `code` can be a STRING ("missing_required_parameter",
+             // "invalid_value") or absent entirely; only a numeric code is
+-            // trusted, anything else defaults to 400.
++            // trusted. Absent a numeric code, a "server_error" type still maps
++            // to 500; anything else defaults to 400.
+             if (response_data.contains("error")) {
+                 const json& err = response_data["error"];
+                 int code = 400;
+                 if (err.is_object() && err.contains("code") && err["code"].is_number_integer()) {
+                     code = err["code"].get<int>();
++                } else if (err.is_object() && err.contains("type") && err["type"] == "server_error") {
++                    code = 500;
+                 }
+                 if (code >= 400 && code <= 599) {
+                     status = static_cast<http::status>(code);
