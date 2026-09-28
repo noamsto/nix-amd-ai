@@ -1,0 +1,16 @@
+# startup probe: flm serve embed-gemma:300m (a known, non-chat tag), NEW build
+$ GET /api/ps
+{"error":"[json.exception.invalid_iterator.207] cannot use key() for non-object iterators"}
+HTTP 400
+$ POST /v1/chat/completions {"messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
+{"error":{"message":"no chat model is currently loaded (none was given at startup, or the last load failed). Name a model in the request's 'model' field, or start flm serve with a model tag.","type":"invalid_request_error","param":"model","code":"model_not_found"}}
+HTTP 400
+  /api/ps -> null
+$ POST /v1/chat/completions {"model":"llama3.2:1b","messages":[{"role":"user","content":"Say ok."}],"max_tokens":8}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790585525,"model":"llama3.2:1b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok."},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":2,"total_tokens":40,"kv_token_occupan
+HTTP 200
+  /api/ps -> "llama3.2:1b"
+--- server log: load / refusal lines
+[ERROR]  model 'embed-gemma:300m' is not a chat model -- refusing; '' stays loaded
+[Error]  Failed to load default model: embed-gemma:300m
+[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2

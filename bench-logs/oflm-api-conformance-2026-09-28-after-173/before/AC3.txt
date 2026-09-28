@@ -1,0 +1,50 @@
+# AC3 probe, OLD build /nix/store/8pgdcx429na9a9wxiqiwwa0faz8rm3dl-fastflowlm-1.0.6, served model gemma4-it:e4b, port 58603
+$ curl -s /api/ps | jq -c ".models[0].name"
+"gemma4-it:e4b"
+server log lines so far: 25
+$ POST /v1/chat/completions {"model":"oflm-test-no-such-model:0b",...}
+{"id":"fastflowlm-chat-completion","object":"chat.completion","created":1790584197,"model":"oflm-test-no-such-model:0b","choices":[{"index":0,"message":{"role":"assistant","content":"Ok"},"logprobs":null,"finish_reason":"stop"}],"usage":{"prompt_tokens":38,"completion_tokens":1,"total_tokens":39,"kv_token_occupancy_rate_percentage":0.029754638671875,"load_duration":2.499118592,"prefill_duration_tt
+HTTP 200
+$ curl -s /api/ps | jq -c ".models[0].name"
+"llama3.2:1b"
+--- server log lines emitted by the bogus request:
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:50208
+[TCP]  Read 254 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 11:29:54 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b"
+}
+[🟢 ]  NPU Locked!
+[31m[ERROR]  Model tag 'oflm-test-no-such-model:0b' is not supported. Please check the model list.[0m
+[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:50208
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:50216
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 11:29:57 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:50216

@@ -1,0 +1,44 @@
+# AC3 probe, NEW build /nix/store/lp2xwjayy36j0byma058nrfdvili4b0r-fastflowlm-1.0.6, served model gemma4-it:e4b, port 58603
+$ curl -s /api/ps | jq -c ".models[0].name"
+"gemma4-it:e4b"
+$ POST /v1/chat/completions {"model":"oflm-test-no-such-model:0b",...}
+{"error":{"message":"model 'oflm-test-no-such-model:0b' is not in this build's model list","type":"invalid_request_error","param":"model","code":"model_not_found"}}
+HTTP 400
+$ curl -s /api/ps | jq -c ".models[0].name"
+"gemma4-it:e4b"
+--- server log lines emitted by the bogus request:
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:50008
+[TCP]  Read 254 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 11:51:46 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "oflm-test-no-such-model:0b"
+}
+[🟢 ]  NPU Locked!
+[ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:50008
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:50010
+[TCP]  Read 85 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 11:51:46 09:28:2026
+[LOG]  Target: /api/ps
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:50010
+Loading model lines over the whole gemma4 run: 1

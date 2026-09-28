@@ -32,8 +32,8 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
-  # flm serve's request handling has three bugs found by running
-  # OpenFlowLM-Next's server-api conformance suite against it (#164, #171):
+  # flm serve's request handling has four bugs found by running
+  # OpenFlowLM-Next's server-api conformance suite against it (#164, #171, #173):
   #   - server-error-handling.patch: a malformed request body could throw
   #     twice while the server built its own error response, escaping every
   #     catch before the NPU lock was released and wedging it permanently
@@ -46,15 +46,27 @@ stdenv.mkDerivation (finalAttrs: {
   #     `request["field"]` on a const json&, undefined behavior for a missing
   #     key (JSON_ASSERT is compiled out in release builds) that segfaults or
   #     returns garbage instead of throwing. Checks presence and type first.
-  # Neither patch carries attribution: require_field and safe_dump are ported
-  # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
-  # that is on the branch commit per this repo's CLAUDE.md, not here. Still
-  # unfixed on ROCm/FastFlowLM main as of v1.0.6; drop once upstream fixes
-  # request validation, the NPU-lock leak, and the status mapping. A bump
-  # that breaks either patch fails the build rather than silently losing it.
+  #   - model-identity.patch (#173): a request naming a model tag the build
+  #     does not know evicted the served model, loaded llama3.2:1b in its
+  #     place, and answered under the requested tag; /v1/embeddings likewise
+  #     labelled the loaded model's vectors with whatever name was asked for.
+  #     The tag is now resolved before anything is unloaded: unknown, empty,
+  #     "model-faker" and non-chat tags get 400 model_not_found, and a known
+  #     model that fails to load gets 500 (a "server_error" type now maps to
+  #     500 in the status mapping above). An omitted `model` is still served
+  #     by the loaded chat model; /v1/embeddings still requires `model`
+  #     (#171) and refuses any tag but the loaded one.
+  # None of the patches carries attribution: require_field, safe_dump and the
+  # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget) --
+  # the Co-authored-by trailer for that is on the branch commit per this
+  # repo's CLAUDE.md, not here. Still unfixed on ROCm/FastFlowLM main as of
+  # v1.0.6; drop once upstream fixes request validation, the NPU-lock leak,
+  # the status mapping, and model substitution. A bump that breaks any patch
+  # fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
+    ./patches/model-identity.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
