@@ -1,33 +1,33 @@
 [FLM]  Using user-specified port: 58702
 [FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
 [FLM]  Starting server on port 58702...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52482
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32786
 [FLM]  WebServer started on port 58702 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:42:11 09:28:2026
+[LOG]  Time stamp: 19:02:03 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:52482
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52496
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32786
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32792
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:42:11 09:28:2026
+[LOG]  Time stamp: 19:02:03 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:52496
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52498
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32792
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32798
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:11 09:28:2026
+[LOG]  Time stamp: 19:02:03 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -49,47 +49,15 @@
 [🔴 ]  Client disconnected; cancelling active request
 
 [FLM]  Model RAW Output: 
-The Ocean
+The History
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-c69d0dec2bf983792edb6565","object":"chat.completion.chunk","created":1790610131,"model":"llama3.2:1b","system_fingerprint":"fp_7d57b191f432c3ce","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.913e-06,"prefill_duration_ttft":0.390590176,"decoding_duration":0.01478,"prefill_speed_tps":143.37278160319116,"decoding_speed_tps":67.65899864682002}}
+ChatCompletionChunk: {"id":"chatcmpl-c74643eb3db89e3b659edcc7","object":"chat.completion.chunk","created":1790611323,"model":"llama3.2:1b","system_fingerprint":"fp_734e7fa7b74d8a5a","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.094e-06,"prefill_duration_ttft":0.391069312,"decoding_duration":0.014844,"prefill_speed_tps":143.19712204878914,"decoding_speed_tps":67.36728644570196}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:58042
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32802
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:13 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 1
-[LOG]  Body: 
-{
-    "messages": [
-        {
-            "content": "Write a ve...000 words.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": true
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 56 tokens
-[FLM]  Start generating...
-[🔴 ]  Client disconnected; cancelling active request
-
-[FLM]  Model RAW Output: 
-The Ocean
-[❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-cbd945d09099161370586903","object":"chat.completion.chunk","created":1790610133,"model":"llama3.2:1b","system_fingerprint":"fp_04549685100b811e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.144e-06,"prefill_duration_ttft":0.380026784,"decoding_duration":0.014832,"prefill_speed_tps":147.3580346378954,"decoding_speed_tps":67.4217907227616}}
-[🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:58044
-[TCP]  Read 281 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:15 09:28:2026
+[LOG]  Time stamp: 19:02:05 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -115,13 +83,13 @@ ChatCompletionChunk: {"id":"chatcmpl-cbd945d09099161370586903","object":"chat.co
 [FLM]  Model RAW Output: 
 The Ocean
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-eb7f9fb434943bb44cd1a2a6","object":"chat.completion.chunk","created":1790610135,"model":"llama3.2:1b","system_fingerprint":"fp_4386580be544a1f9","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.745e-06,"prefill_duration_ttft":0.39193696,"decoding_duration":0.014786,"prefill_speed_tps":142.8801203132259,"decoding_speed_tps":67.63154335181929}}
+ChatCompletionChunk: {"id":"chatcmpl-ec7cd69859f237833c8bf2c2","object":"chat.completion.chunk","created":1790611325,"model":"llama3.2:1b","system_fingerprint":"fp_88de51f499a3a9f5","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.715e-06,"prefill_duration_ttft":0.385453568,"decoding_duration":0.01481,"prefill_speed_tps":145.2833872846651,"decoding_speed_tps":67.5219446320054}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:58058
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32818
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:17 09:28:2026
+[LOG]  Time stamp: 19:02:07 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -147,13 +115,13 @@ ChatCompletionChunk: {"id":"chatcmpl-eb7f9fb434943bb44cd1a2a6","object":"chat.co
 [FLM]  Model RAW Output: 
 The Ocean
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-a95eb7c1b5ebf96c8406994a","object":"chat.completion.chunk","created":1790610137,"model":"llama3.2:1b","system_fingerprint":"fp_2de413cf1b040204","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.593e-06,"prefill_duration_ttft":0.38511472,"decoding_duration":0.014772,"prefill_speed_tps":145.4112166888869,"decoding_speed_tps":67.6956404007582}}
+ChatCompletionChunk: {"id":"chatcmpl-0cb218ca7f8ed801c19ece56","object":"chat.completion.chunk","created":1790611327,"model":"llama3.2:1b","system_fingerprint":"fp_8cc4c7eb7327b31e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.683e-06,"prefill_duration_ttft":0.379813408,"decoding_duration":0.014851,"prefill_speed_tps":147.44081915086053,"decoding_speed_tps":67.3355329607434}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:58064
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32820
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:19 09:28:2026
+[LOG]  Time stamp: 19:02:09 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -179,13 +147,13 @@ ChatCompletionChunk: {"id":"chatcmpl-a95eb7c1b5ebf96c8406994a","object":"chat.co
 [FLM]  Model RAW Output: 
 The Ocean
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-8817635492178bacb82e50fc","object":"chat.completion.chunk","created":1790610139,"model":"llama3.2:1b","system_fingerprint":"fp_e6a82153f72ef7ea","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.843e-06,"prefill_duration_ttft":0.386203968,"decoding_duration":0.014781,"prefill_speed_tps":145.00109952262326,"decoding_speed_tps":67.6544212164265}}
+ChatCompletionChunk: {"id":"chatcmpl-a673b2ddd2e9e7cf561a3fa2","object":"chat.completion.chunk","created":1790611329,"model":"llama3.2:1b","system_fingerprint":"fp_8e0b01a29e2fa766","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.605e-06,"prefill_duration_ttft":0.38224144,"decoding_duration":0.014827,"prefill_speed_tps":146.50426180897603,"decoding_speed_tps":67.44452687664396}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:58074
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:32826
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:21 09:28:2026
+[LOG]  Time stamp: 19:02:11 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -211,13 +179,13 @@ ChatCompletionChunk: {"id":"chatcmpl-8817635492178bacb82e50fc","object":"chat.co
 [FLM]  Model RAW Output: 
 The Ocean
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-de2867007686d861ca07f841","object":"chat.completion.chunk","created":1790610141,"model":"llama3.2:1b","system_fingerprint":"fp_4cde116780a06fa1","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.305e-06,"prefill_duration_ttft":0.389866016,"decoding_duration":0.014773,"prefill_speed_tps":143.63909061517174,"decoding_speed_tps":67.69105801123672}}
+ChatCompletionChunk: {"id":"chatcmpl-0ec5cbbcb1606de934746544","object":"chat.completion.chunk","created":1790611331,"model":"llama3.2:1b","system_fingerprint":"fp_7239cab5856c85ee","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.545e-06,"prefill_duration_ttft":0.390254848,"decoding_duration":0.014788,"prefill_speed_tps":143.4959752248869,"decoding_speed_tps":67.6223965377333}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52498
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:46806
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:22 09:28:2026
+[LOG]  Time stamp: 19:02:13 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -243,13 +211,13 @@ ChatCompletionChunk: {"id":"chatcmpl-de2867007686d861ca07f841","object":"chat.co
 [FLM]  Model RAW Output: 
 The Ocean
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-b445461d193680be8024de78","object":"chat.completion.chunk","created":1790610142,"model":"llama3.2:1b","system_fingerprint":"fp_8ad88a1a6b7b1d39","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.993e-06,"prefill_duration_ttft":0.390376608,"decoding_duration":0.01481,"prefill_speed_tps":143.45121826561902,"decoding_speed_tps":67.5219446320054}}
+ChatCompletionChunk: {"id":"chatcmpl-d4180298aa3b23964f6ceb13","object":"chat.completion.chunk","created":1790611333,"model":"llama3.2:1b","system_fingerprint":"fp_9f6837cb13e6ed38","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.884e-06,"prefill_duration_ttft":0.388561536,"decoding_duration":0.014826,"prefill_speed_tps":144.12131621797994,"decoding_speed_tps":67.44907594765951}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52502
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:46814
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:24 09:28:2026
+[LOG]  Time stamp: 19:02:15 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -275,45 +243,13 @@ ChatCompletionChunk: {"id":"chatcmpl-b445461d193680be8024de78","object":"chat.co
 [FLM]  Model RAW Output: 
 The History
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-7c755057b6ed445ad4b12a1e","object":"chat.completion.chunk","created":1790610144,"model":"llama3.2:1b","system_fingerprint":"fp_e946f84ca715a984","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.593e-06,"prefill_duration_ttft":0.4016264,"decoding_duration":0.014767,"prefill_speed_tps":139.43306515707135,"decoding_speed_tps":67.7185616577504}}
+ChatCompletionChunk: {"id":"chatcmpl-965b027ab46dfab8bfa6bb1d","object":"chat.completion.chunk","created":1790611335,"model":"llama3.2:1b","system_fingerprint":"fp_f22fffcb1d0fb8c9","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.994e-06,"prefill_duration_ttft":0.378956832,"decoding_duration":0.014859,"prefill_speed_tps":147.77408736623596,"decoding_speed_tps":67.29927989770509}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52518
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:46820
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:26 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 1
-[LOG]  Body: 
-{
-    "messages": [
-        {
-            "content": "Write a ve...000 words.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": true
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 56 tokens
-[FLM]  Start generating...
-[🔴 ]  Client disconnected; cancelling active request
-
-[FLM]  Model RAW Output: 
-The Ocean
-[❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-c75f9d6aeadc7b3e32199ef9","object":"chat.completion.chunk","created":1790610146,"model":"llama3.2:1b","system_fingerprint":"fp_0312282b4f52a4e5","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.894e-06,"prefill_duration_ttft":0.404261632,"decoding_duration":0.016705,"prefill_speed_tps":138.52415259630675,"decoding_speed_tps":59.86231667165519}}
-[🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52532
-[TCP]  Read 281 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:28 09:28:2026
+[LOG]  Time stamp: 19:02:17 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -339,45 +275,13 @@ ChatCompletionChunk: {"id":"chatcmpl-c75f9d6aeadc7b3e32199ef9","object":"chat.co
 [FLM]  Model RAW Output: 
 The History
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-99a83abd4cd848e2741147a6","object":"chat.completion.chunk","created":1790610148,"model":"llama3.2:1b","system_fingerprint":"fp_3bb7c87aa0a27e2e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.785e-06,"prefill_duration_ttft":0.385651488,"decoding_duration":0.014831,"prefill_speed_tps":145.20882647288008,"decoding_speed_tps":67.42633672712562}}
+ChatCompletionChunk: {"id":"chatcmpl-51a0c0f416bf5116c188ab9a","object":"chat.completion.chunk","created":1790611337,"model":"llama3.2:1b","system_fingerprint":"fp_fe2234b6fbf80e59","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.885e-06,"prefill_duration_ttft":0.39030848,"decoding_duration":0.014813,"prefill_speed_tps":143.4762575489008,"decoding_speed_tps":67.50826976304597}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:52536
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:46824
 [TCP]  Read 281 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:30 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 1
-[LOG]  Body: 
-{
-    "messages": [
-        {
-            "content": "Write a ve...000 words.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": true
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 56 tokens
-[FLM]  Start generating...
-[🔴 ]  Client disconnected; cancelling active request
-
-[FLM]  Model RAW Output: 
-The
-[❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-bc8811300d075b25f55acdfd","object":"chat.completion.chunk","created":1790610150,"model":"llama3.2:1b","system_fingerprint":"fp_8f2e0ed0b7693035","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":0,"total_tokens":56,"active_kv_tokens":56,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.042724609375,"load_duration":2.014e-06,"prefill_duration_ttft":0.385534336,"decoding_duration":0.0,"prefill_speed_tps":145.2529509589517,"decoding_speed_tps":null}}
-[🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:46144
-[TCP]  Read 281 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:42:32 09:28:2026
+[LOG]  Time stamp: 19:02:19 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
@@ -403,15 +307,111 @@ ChatCompletionChunk: {"id":"chatcmpl-bc8811300d075b25f55acdfd","object":"chat.co
 [FLM]  Model RAW Output: 
 The Ocean
 [❌ ]  Generation Cancelled!
-ChatCompletionChunk: {"id":"chatcmpl-cea61ac0a9d5b260592a67fe","object":"chat.completion.chunk","created":1790610152,"model":"llama3.2:1b","system_fingerprint":"fp_3ddba18591399ca1","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.793e-06,"prefill_duration_ttft":0.384554688,"decoding_duration":0.014813,"prefill_speed_tps":145.6229809373693,"decoding_speed_tps":67.50826976304597}}
+ChatCompletionChunk: {"id":"chatcmpl-79bdd4c5369995433448baaa","object":"chat.completion.chunk","created":1790611339,"model":"llama3.2:1b","system_fingerprint":"fp_392e4c1a23f12422","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.893e-06,"prefill_duration_ttft":0.384918528,"decoding_duration":0.014768,"prefill_speed_tps":145.48533241818902,"decoding_speed_tps":67.71397616468039}}
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:46146
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:46832
+[TCP]  Read 281 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:02:20 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Write a ve...000 words.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 56 tokens
+[FLM]  Start generating...
+[🔴 ]  Client disconnected; cancelling active request
+
+[FLM]  Model RAW Output: 
+The Ocean
+[❌ ]  Generation Cancelled!
+ChatCompletionChunk: {"id":"chatcmpl-7cb34e04ce37623f7c93099a","object":"chat.completion.chunk","created":1790611340,"model":"llama3.2:1b","system_fingerprint":"fp_53f6e82063f1b43e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":2.524e-06,"prefill_duration_ttft":0.379279904,"decoding_duration":0.014792,"prefill_speed_tps":147.64821286181302,"decoding_speed_tps":67.60411032990805}}
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34500
+[TCP]  Read 281 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:02:22 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Write a ve...000 words.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 56 tokens
+[FLM]  Start generating...
+[🔴 ]  Client disconnected; cancelling active request
+
+[FLM]  Model RAW Output: 
+The Ocean
+[❌ ]  Generation Cancelled!
+ChatCompletionChunk: {"id":"chatcmpl-011e26022db72b4a5a901bb2","object":"chat.completion.chunk","created":1790611342,"model":"llama3.2:1b","system_fingerprint":"fp_67a5c28f410d184e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.673e-06,"prefill_duration_ttft":0.386467136,"decoding_duration":0.014812,"prefill_speed_tps":144.9023598218711,"decoding_speed_tps":67.51282743721308}}
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34502
+[TCP]  Read 281 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:02:24 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "messages": [
+        {
+            "content": "Write a ve...000 words.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 56 tokens
+[FLM]  Start generating...
+[🔴 ]  Client disconnected; cancelling active request
+
+[FLM]  Model RAW Output: 
+The Ocean
+[❌ ]  Generation Cancelled!
+ChatCompletionChunk: {"id":"chatcmpl-4adf3ff7e939dc3695bf6530","object":"chat.completion.chunk","created":1790611344,"model":"llama3.2:1b","system_fingerprint":"fp_b619b9697d5421f5","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":56,"completion_tokens":1,"total_tokens":57,"active_kv_tokens":57,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.043487548828125,"load_duration":1.603e-06,"prefill_duration_ttft":0.382978688,"decoding_duration":0.014877,"prefill_speed_tps":146.22223573965556,"decoding_speed_tps":67.21785306177321}}
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:34508
 [TCP]  Read 65 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:42:34 09:28:2026
+[LOG]  Time stamp: 19:02:26 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:46146
+[🔒 ]  TCP connection closed - Remote endpoint unavailable

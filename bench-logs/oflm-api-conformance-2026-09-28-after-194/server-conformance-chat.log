@@ -1,33 +1,33 @@
 [FLM]  Using user-specified port: 58601
 [FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
 [FLM]  Starting server on port 58601...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57708
-[TCP[]  FLM]  WebServer started on port 58601 with 10 I/O threads
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57720
+[FLM]  WebServer started on port 58601 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
-Read 90 bytes from socket
+[TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57708
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57720
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57720
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57728
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57720
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57734
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57728
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57732
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -47,12 +47,12 @@ Read 90 bytes from socket
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57734
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57738
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57732
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57746
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -72,12 +72,12 @@ Read 90 bytes from socket
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57738
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57742
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57746
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57752
 [TCP]  Read 303 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -96,12 +96,12 @@ Read 90 bytes from socket
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57742
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57744
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57752
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57754
 [TCP]  Read 264 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -113,12 +113,12 @@ Read 90 bytes from socket
 }
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57744
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57752
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57754
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57762
 [TCP]  Read 276 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -137,12 +137,12 @@ Read 90 bytes from socket
 [ERROR]  request set 'model' to '', which is not a model name -- refusing
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57752
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57762
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57762
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57778
 [TCP]  Read 287 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -161,12 +161,12 @@ Read 90 bytes from socket
 [ERROR]  request set 'model' to 'model-faker', which is not a model name -- refusing
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57762
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57776
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57778
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57782
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -186,12 +186,12 @@ Read 90 bytes from socket
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57776
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57788
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57782
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57794
 [TCP]  Read 319 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -211,12 +211,12 @@ Read 90 bytes from socket
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57788
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57794
 [🔗 ]  TCP connection established - Remote: 127.0.0.1:57804
 [TCP]  Read 305 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -242,11 +242,11 @@ Ok
 [🔵 ]  NPU Lock Released!
 ================================================
 [🔒 ]  TCP connection closed - Remote: 127.0.0.1:57804
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57820
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57814
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -266,57 +266,12 @@ Ok
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'llama3.2:1b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57820
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57826
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57814
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57822
 [TCP]  Read 305 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:47 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 16,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok.
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57826
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57834
-[TCP]  Read 207 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:48 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Error parsing request body: [json.exception.parse_error.101] parse error at line 1, column 16: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '"�"'
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57834
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57848
-[TCP]  Read 305 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:48 09:28:2026
+[LOG]  Time stamp: 19:03:27 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -343,22 +298,195 @@ Ok.
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57848
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57850
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57822
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57824
+[TCP]  Read 207 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:28 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Error parsing request body: [json.exception.parse_error.101] parse error at line 1, column 16: syntax error while parsing value - invalid string: ill-formed UTF-8 byte; last read: '"�"'
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57824
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57830
+[TCP]  Read 305 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:28 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 16,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57830
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57838
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:48:48 09:28:2026
+[LOG]  Time stamp: 19:03:28 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57850
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57860
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57838
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57850
 [TCP]  Read 353 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:48 09:28:2026
+[LOG]  Time stamp: 19:03:28 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "List the f...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 46 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+The first forty prime numbers are: 2
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57850
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57864
+[TCP]  Read 346 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:29 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 256,
+    "messages": [
+        {
+            "content": "Reply with...hing else.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 45 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+No
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57864
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57876
+[TCP]  Read 352 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:29 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "List the f...by commas.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 46 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+The first forty prime numbers are: 2
+ChatCompletionChunk: {"id":"chatcmpl-a8a66a6e884331fa43fb4c54","object":"chat.completion.chunk","created":1790611409,"model":"llama3.2:1b","system_fingerprint":"fp_60d3b192c6c13928","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":2.514e-06,"prefill_duration_ttft":0.387065088,"decoding_duration":0.118069,"prefill_speed_tps":118.84306135096328,"decoding_speed_tps":67.75698955695398}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57878
+[TCP]  Read 345 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:30 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 256,
+    "messages": [
+        {
+            "content": "Reply with...hing else.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 45 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+No
+ChatCompletionChunk: {"id":"chatcmpl-faae9da54ff361c8e43c1c15","object":"chat.completion.chunk","created":1790611410,"model":"llama3.2:1b","system_fingerprint":"fp_92bf774f1ee8495c","choices":[{"index":0,"delta":{"content":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":45,"completion_tokens":1,"total_tokens":46,"active_kv_tokens":46,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.03509521484375,"load_duration":1.984e-06,"prefill_duration_ttft":0.38786992,"decoding_duration":0.014775,"prefill_speed_tps":116.01827746786861,"decoding_speed_tps":67.68189509306261}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57886
+[TCP]  Read 353 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:30 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -385,44 +513,12 @@ Ok
 The first 40 prime numbers, separated by
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57860
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57876
-[TCP]  Read 346 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:49 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 256,
-    "messages": [
-        {
-            "content": "Reply with...hing else.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 45 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-No
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57876
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57888
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57886
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57892
 [TCP]  Read 352 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:49 09:28:2026
+[LOG]  Time stamp: 19:03:31 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -447,78 +543,14 @@ No
 
 [FLM]  Model RAW Output: 
 The first forty prime numbers are: 2
-ChatCompletionChunk: {"id":"chatcmpl-48f8dfb8d30c2d6affbfb7cf","object":"chat.completion.chunk","created":1790610529,"model":"llama3.2:1b","system_fingerprint":"fp_408ca4f728d77659","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":2.705e-06,"prefill_duration_ttft":0.381654624,"decoding_duration":0.117973,"prefill_speed_tps":120.52782046209403,"decoding_speed_tps":67.812126503522}}
+ChatCompletionChunk: {"id":"chatcmpl-2eeb58c51ce279680541f394","object":"chat.completion.chunk","created":1790611411,"model":"llama3.2:1b","system_fingerprint":"fp_df137cbc16f3d5e3","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":1.653e-06,"prefill_duration_ttft":0.388409024,"decoding_duration":0.118015,"prefill_speed_tps":118.43185188199952,"decoding_speed_tps":67.78799305173071}}
 [🔒 ]  Closing TCP connection (streaming, non-keep-alive)
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57896
-[TCP]  Read 345 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:49 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 256,
-    "messages": [
-        {
-            "content": "Reply with...hing else.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": true
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 45 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-No
-ChatCompletionChunk: {"id":"chatcmpl-27a89cb927654598852ecedf","object":"chat.completion.chunk","created":1790610529,"model":"llama3.2:1b","system_fingerprint":"fp_28f6d5c99146b01a","choices":[{"index":0,"delta":{"content":null},"finish_reason":"stop"}],"usage":{"prompt_tokens":45,"completion_tokens":1,"total_tokens":46,"active_kv_tokens":46,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.03509521484375,"load_duration":1.803e-06,"prefill_duration_ttft":0.375455776,"decoding_duration":0.014754,"prefill_speed_tps":119.85432872925094,"decoding_speed_tps":67.778229632642}}
-[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
-[🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57898
-[TCP]  Read 353 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:50 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "List the f...by commas.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 46 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Here are the first 40 prime numbers,
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57898
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57904
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57894
 [TCP]  Read 352 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:50 09:28:2026
+[LOG]  Time stamp: 19:03:31 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -543,46 +575,14 @@ Here are the first 40 prime numbers,
 
 [FLM]  Model RAW Output: 
 The first forty prime numbers, separated by commas
-ChatCompletionChunk: {"id":"chatcmpl-ed1266a15bc8af194b9eed8b","object":"chat.completion.chunk","created":1790610530,"model":"llama3.2:1b","system_fingerprint":"fp_5fabe038c8ea6d5d","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":1.433e-06,"prefill_duration_ttft":0.376770272,"decoding_duration":0.118293,"prefill_speed_tps":122.09031183861555,"decoding_speed_tps":67.62868470661832}}
+ChatCompletionChunk: {"id":"chatcmpl-651b6d26e79a15672a414f26","object":"chat.completion.chunk","created":1790611411,"model":"llama3.2:1b","system_fingerprint":"fp_86d16658fda1805c","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":2.004e-06,"prefill_duration_ttft":0.385384992,"decoding_duration":0.118068,"prefill_speed_tps":119.36116079995145,"decoding_speed_tps":67.75756343801876}}
 [🔒 ]  Closing TCP connection (streaming, non-keep-alive)
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57910
-[TCP]  Read 352 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:51 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "List the f...by commas.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": true
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 46 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Here are the first 40 prime numbers,
-ChatCompletionChunk: {"id":"chatcmpl-77693d29793eddbb3adf363b","object":"chat.completion.chunk","created":1790610531,"model":"llama3.2:1b","system_fingerprint":"fp_e9687ccaa022bb9e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":1.934e-06,"prefill_duration_ttft":0.377496,"decoding_duration":0.118036,"prefill_speed_tps":121.85559582088285,"decoding_speed_tps":67.77593276627469}}
-[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
-[🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:57920
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57582
 [TCP]  Read 353 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:51 09:28:2026
+[LOG]  Time stamp: 19:03:32 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -606,17 +606,15 @@ ChatCompletionChunk: {"id":"chatcmpl-77693d29793eddbb3adf363b","object":"chat.co
 [FLM]  Start generating...
 
 [FLM]  Model RAW Output: 
-The first forty prime numbers are:
-
-2,
+The first forty prime numbers are: 2
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57920
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53396
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57582
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57584
 [TCP]  Read 352 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:52 09:28:2026
+[LOG]  Time stamp: 19:03:32 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -641,34 +639,34 @@ The first forty prime numbers are:
 
 [FLM]  Model RAW Output: 
 The first forty prime numbers are: 2
-ChatCompletionChunk: {"id":"chatcmpl-9b3e8e0c3cd100f2fcf4e2a0","object":"chat.completion.chunk","created":1790610532,"model":"llama3.2:1b","system_fingerprint":"fp_c6cb7604beea7319","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":1.393e-06,"prefill_duration_ttft":0.376222464,"decoding_duration":0.117921,"prefill_speed_tps":122.26808444909871,"decoding_speed_tps":67.84202983353262}}
+ChatCompletionChunk: {"id":"chatcmpl-a4662eabb44ba108be9f2312","object":"chat.completion.chunk","created":1790611412,"model":"llama3.2:1b","system_fingerprint":"fp_1f4a938a423e240f","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":46,"completion_tokens":8,"total_tokens":54,"active_kv_tokens":54,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.04119873046875,"load_duration":1.883e-06,"prefill_duration_ttft":0.381403712,"decoding_duration":0.118208,"prefill_speed_tps":120.60711144835423,"decoding_speed_tps":67.6773145641581}}
 [🔒 ]  Closing TCP connection (streaming, non-keep-alive)
 [🔵 ]  NPU Lock Released!
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53398
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57586
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:48:52 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53398
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53408
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57586
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57592
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:48:52 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53408
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53424
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57592
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57608
 [TCP]  Read 203 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:52 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -679,24 +677,24 @@ ChatCompletionChunk: {"id":"chatcmpl-9b3e8e0c3cd100f2fcf4e2a0","object":"chat.co
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53424
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53428
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57608
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57612
 [TCP]  Read 181 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:52 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /api/show
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 [LOG]  Body: 
 {}
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53428
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53430
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57612
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57622
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:52 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -723,12 +721,12 @@ ChatCompletionChunk: {"id":"chatcmpl-9b3e8e0c3cd100f2fcf4e2a0","object":"chat.co
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53430
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53444
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57622
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57632
 [TCP]  Read 185 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:53 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /api/generate
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -737,440 +735,12 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53444
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53458
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57632
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57640
 [TCP]  Read 304 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:53 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53458
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53460
-[TCP]  Read 181 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:53 09:28:2026
-[LOG]  Target: /api/chat
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53460
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53462
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:53 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53462
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53470
-[TCP]  Read 187 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{}
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53470
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53480
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53480
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53490
-[TCP]  Read 192 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53490
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53500
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53500
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53504
-[TCP]  Read 223 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "model": "llama3.2:1b",
-    "prompt": 5
-}
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53504
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53510
-[TCP]  Read 226 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /api/generate
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "model": "llama3.2:1b",
-    "prompt": [
-        "hi"
-    ]
-}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53510
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53526
-[TCP]  Read 233 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Error parsing request body: [json.exception.type_error.305] cannot use operator[] with a string argument with string
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53526
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53540
-[TCP]  Read 234 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /api/chat
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Error parsing request body: [json.exception.type_error.305] cannot use operator[] with a string argument with string
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53540
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53544
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "request_id": 5
-}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53544
-[🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53548
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:54 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53548
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53562
-[TCP]  Read 307 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:55 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "request_id": null
-}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53562
-[🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53576
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:55 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53576
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53590
-[TCP]  Read 311 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:55 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "request_id": {
-        "a": 1
-    }
-}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53590
-[🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53592
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:55 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "stream": false
-}
-[🟢 ]  NPU Locked!
-[FLM]  Prompt cache miss.
-[FLM]  Clearing context...
-[FLM]  Start prefill...
-[FLM]  Prefill chunk 1/1 with 38 tokens
-[FLM]  Start generating...
-
-[FLM]  Model RAW Output: 
-Ok
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53592
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53608
-[TCP]  Read 308 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:56 09:28:2026
-[LOG]  Target: /v1/chat/completions
-[LOG]  Version: 11
-[LOG]  Keep-Alive: 0
-[LOG]  Body: 
-{
-    "max_tokens": 8,
-    "messages": [
-        {
-            "content": "Say ok.",
-            "role": "user"
-        }
-    ],
-    "model": "llama3.2:1b",
-    "request_id": [
-        "x"
-    ]
-}
-[🟢 ]  NPU Locked!
-[🔵 ]  NPU Lock Released!
-================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53608
-[🔴 ]  Client disconnected; cancelling active request
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53624
-[TCP]  Read 304 bytes from socket
-================================================
-[⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:56 09:28:2026
+[LOG]  Time stamp: 19:03:33 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -1197,12 +767,440 @@ Ok
 Ok.
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53624
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53626
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57640
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57644
+[TCP]  Read 181 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:34 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57644
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57648
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:34 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57648
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57658
+[TCP]  Read 187 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:34 09:28:2026
+[LOG]  Target: /v1/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{}
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57658
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57664
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:34 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok.
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57664
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57676
+[TCP]  Read 192 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:34 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57676
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57688
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:34 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57688
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57704
+[TCP]  Read 223 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /v1/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "model": "llama3.2:1b",
+    "prompt": 5
+}
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57704
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57720
+[TCP]  Read 226 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /api/generate
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "model": "llama3.2:1b",
+    "prompt": [
+        "hi"
+    ]
+}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57720
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57726
+[TCP]  Read 233 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Error parsing request body: [json.exception.type_error.305] cannot use operator[] with a string argument with string
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57726
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57728
+[TCP]  Read 234 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /api/chat
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Error parsing request body: [json.exception.type_error.305] cannot use operator[] with a string argument with string
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57728
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57738
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "request_id": 5
+}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57738
+[🔴 ]  Client disconnected; cancelling active request
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57748
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57748
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57756
+[TCP]  Read 307 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "request_id": null
+}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57756
+[🔴 ]  Client disconnected; cancelling active request
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57762
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:35 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57762
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57764
+[TCP]  Read 311 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:36 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "request_id": {
+        "a": 1
+    }
+}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57764
+[🔴 ]  Client disconnected; cancelling active request
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57780
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:36 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57780
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57790
+[TCP]  Read 308 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:36 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "request_id": [
+        "x"
+    ]
+}
+[🟢 ]  NPU Locked!
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57790
+[🔴 ]  Client disconnected; cancelling active request
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57798
+[TCP]  Read 304 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 19:03:36 09:28:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 0
+[LOG]  Body: 
+{
+    "max_tokens": 8,
+    "messages": [
+        {
+            "content": "Say ok.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 38 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Ok
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57798
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57810
 [TCP]  Read 333 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:56 09:28:2026
+[LOG]  Time stamp: 19:03:37 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -1230,12 +1228,12 @@ Ok.
 Ok
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53626
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53632
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57810
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:57814
 [TCP]  Read 199 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:48:57 09:28:2026
+[LOG]  Time stamp: 19:03:37 09:28:2026
 [LOG]  Target: /v1/embeddings
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -1246,4 +1244,4 @@ Ok
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53632
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:57814

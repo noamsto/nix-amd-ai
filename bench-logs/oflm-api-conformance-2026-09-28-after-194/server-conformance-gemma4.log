@@ -1,33 +1,33 @@
 [FLM]  Using user-specified port: 58603
 [FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
 [FLM]  Starting server on port 58603...
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:46614
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:37964
 [FLM]  WebServer started on port 58603 with 10 I/O threads
 [FLM]  Press Ctrl+C to stop.
 [TCP]  Read 90 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /api/version
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 1
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:46614
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53640
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:37964
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39940
 [TCP]  Read 128 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: GET
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/models
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53640
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53642
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39940
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39944
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -47,12 +47,12 @@
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53642
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53658
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39944
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39954
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -72,12 +72,12 @@
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53658
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53660
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39954
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39968
 [TCP]  Read 303 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -96,12 +96,12 @@
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53660
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53662
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39968
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39970
 [TCP]  Read 264 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -113,12 +113,12 @@
 }
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53662
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53676
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39970
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39978
 [TCP]  Read 276 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -137,12 +137,12 @@
 [ERROR]  request set 'model' to '', which is not a model name -- refusing
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53676
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53680
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39978
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39988
 [TCP]  Read 287 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -161,12 +161,12 @@
 [ERROR]  request set 'model' to 'model-faker', which is not a model name -- refusing
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53680
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53686
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39988
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:39994
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -186,12 +186,12 @@
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53686
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53688
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39994
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:40004
 [TCP]  Read 319 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -211,12 +211,12 @@
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53688
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53702
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40004
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:40020
 [TCP]  Read 307 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:02 09:28:2026
+[LOG]  Time stamp: 19:03:43 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -243,12 +243,12 @@ Ok.
 [31m[FLM]  Creating checkpoint at context length 15[0m
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53702
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53708
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40020
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:40024
 [TCP]  Read 320 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:04 09:28:2026
+[LOG]  Time stamp: 19:03:44 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -268,12 +268,12 @@ Ok.
 [ERROR]  unknown model 'oflm-test-no-such-model:0b' -- refusing; 'gemma4-it:e4b' stays loaded
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53708
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53724
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40024
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:40034
 [TCP]  Read 307 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:04 09:28:2026
+[LOG]  Time stamp: 19:03:44 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -298,16 +298,16 @@ Ok.
 [FLM]  Start generating...
 
 [FLM]  Model RAW Output: 
-Ok.
-[31m[FLM]  Creating checkpoint at context length 15[0m
+ok
+[31m[FLM]  Creating checkpoint at context length 14[0m
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53724
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53738
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40034
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:40040
 [TCP]  Read 207 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:05 09:28:2026
+[LOG]  Time stamp: 19:03:46 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -315,12 +315,12 @@ Ok.
 [🟢 ]  NPU Locked!
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53738
-[🔗 ]  TCP connection established - Remote: 127.0.0.1:53750
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40040
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:40056
 [TCP]  Read 307 bytes from socket
 ================================================
 [⬇️ ]  Incoming Request: POST
-[LOG]  Time stamp: 18:49:05 09:28:2026
+[LOG]  Time stamp: 19:03:46 09:28:2026
 [LOG]  Target: /v1/chat/completions
 [LOG]  Version: 11
 [LOG]  Keep-Alive: 0
@@ -349,4 +349,4 @@ Ok.
 [31m[FLM]  Creating checkpoint at context length 15[0m
 [🔵 ]  NPU Lock Released!
 ================================================
-[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53750
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40056

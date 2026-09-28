@@ -13,10 +13,10 @@ and ports as after-187. Only the `flm` build under test changed.
 `/nix/store/fqkyn7jv5mqvzc51fgq4vghv33slqar7-fastflowlm-1.0.6`.
 **New build (green):** this branch, adding
 `pkgs/fastflowlm/patches/connection-slot-release.patch` on top of `46d7a73` —
-`/nix/store/9844b4vr9zxzfkkl9cbij10py9md102c-fastflowlm-1.0.6`.
+`/nix/store/rqjni0b4rr0ckb3khhqf4i5z1w7m6xc5-fastflowlm-1.0.6`.
 **Scratch debug build (counter logs):** green plus temporary `header_print("DBG", …)`
 instrumentation, never committed —
-`/nix/store/c8yd2pb2irx0hnvl63q25vd3gpa9aslm-fastflowlm-1.0.6`.
+`/nix/store/4qsdrqrpvv9wg13wpbjzaxp3z9m0pqnb-fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (chat).
 
