@@ -1,0 +1,124 @@
+== llama (llama3.2:1b) ==
+chat full: {"status": 200, "content_chunks": 513, "wall_s": 8.695, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/chat/full
+chat decode: {"status": 200, "content_chunks": 5, "wall_s": 0.538, "t_close": 1790603278.39906, "followup_status": 200, "followup_wall_s": 8.475, "followup_server_total_s": 0.429} {"npu_hold_s": 8.046, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+FAIL llama/chat/decode: work continued 8.046s after the client closed (bound 2s)
+chat prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603288.224862, "followup_status": 200, "followup_wall_s": 8.074, "followup_server_total_s": 0.447} {"npu_hold_s": 7.626, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 2}
+FAIL llama/chat/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 7.626s after it
+PASS llama/chat/server-alive
+generate full: {"status": 200, "content_chunks": 513, "wall_s": 8.146, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/generate/full
+generate decode: {"status": 200, "content_chunks": 5, "wall_s": 0.454, "t_close": 1790603305.9881003, "followup_status": 200, "followup_wall_s": 8.461, "followup_server_total_s": 0.434} {"npu_hold_s": 8.027, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+FAIL llama/generate/decode: work continued 8.027s after the client closed (bound 2s)
+generate prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603315.8010132, "followup_status": 200, "followup_wall_s": 8.383, "followup_server_total_s": 0.509} {"npu_hold_s": 7.873, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 2}
+FAIL llama/generate/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 7.873s after it
+PASS llama/generate/server-alive
+openai full: {"status": 200, "content_chunks": 513, "wall_s": 8.137, "finish_reason": "length", "completion_tokens": 512}
+PASS llama/openai/full
+openai decode: {"status": 200, "content_chunks": 5, "wall_s": 0.443, "t_close": 1790603333.8546393, "followup_status": 200, "followup_wall_s": 0.775, "followup_server_total_s": 0.426} {"npu_hold_s": 0.348, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/openai/decode
+openai prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603335.9824536, "followup_status": 200, "followup_wall_s": 2.268, "followup_server_total_s": 0.446} {"npu_hold_s": 1.822, "disconnect_logged_s": 0.001, "prefill_chunks_after_close": 0}
+PASS llama/openai/prefill
+PASS llama/openai/server-alive
+completions full: {"status": 200, "content_chunks": 513, "wall_s": 8.577, "finish_reason": "length", "completion_tokens": 512}
+PASS llama/completions/full
+completions decode: {"status": 200, "content_chunks": 5, "wall_s": 0.515, "t_close": 1790603348.4274406} {"npu_hold_s": 8.087, "disconnect_logged_s": 0.001, "prefill_chunks_after_close": 0}
+FAIL llama/completions/decode: work continued 8.087s after the client closed (bound 2s)
+completions prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603357.788558} {"npu_hold_s": 7.306, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 2}
+FAIL llama/completions/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 7.306s after it
+PASS llama/completions/server-alive
+generate-ns full: {"status": 200, "content_chunks": 1, "wall_s": 10.259, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/generate-ns/full
+generate-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790603378.191304, "followup_status": 200, "followup_wall_s": 7.519, "followup_server_total_s": 0.711} {"npu_hold_s": 6.807, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+FAIL llama/generate-ns/decode: work continued 6.807s after the client closed (bound 2s)
+PASS llama/generate-ns/server-alive
+completions-ns full: {"status": 200, "content_chunks": 1, "wall_s": 12.417, "finish_reason": "length", "completion_tokens": 512}
+PASS llama/completions-ns/full
+completions-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.002, "t_close": 1790603401.3784761} {"npu_hold_s": 10.048, "disconnect_logged_s": 0.001, "prefill_chunks_after_close": 0}
+FAIL llama/completions-ns/decode: work continued 10.048s after the client closed (bound 2s)
+PASS llama/completions-ns/server-alive
+== gemma4 (gemma4-it:e4b) ==
+chat full: {"status": 200, "content_chunks": 513, "wall_s": 42.015, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/chat/full
+chat decode: {"status": 200, "content_chunks": 5, "wall_s": 1.489, "t_close": 1790603464.065061, "followup_status": 200, "followup_wall_s": 40.242, "followup_server_total_s": 1.528} {"npu_hold_s": 38.713, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+FAIL gemma4/chat/decode: work continued 38.713s after the client closed (bound 2s)
+chat prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603505.66888, "followup_status": 200, "followup_wall_s": 31.808, "followup_server_total_s": 2.427} {"npu_hold_s": 29.38, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 2}
+FAIL gemma4/chat/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 29.38s after it
+PASS gemma4/chat/server-alive
+generate full: {"status": 200, "content_chunks": 513, "wall_s": 41.812, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/generate/full
+generate decode: {"status": 200, "content_chunks": 5, "wall_s": 1.567, "t_close": 1790603581.9715989, "followup_status": 200, "followup_wall_s": 40.201, "followup_server_total_s": 1.544} {"npu_hold_s": 38.656, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+FAIL gemma4/generate/decode: work continued 38.656s after the client closed (bound 2s)
+generate prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603623.5284376, "followup_status": 200, "followup_wall_s": 27.793, "followup_server_total_s": 1.645} {"npu_hold_s": 26.148, "disconnect_logged_s": 0.001, "prefill_chunks_after_close": 2}
+FAIL gemma4/generate/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 26.148s after it
+PASS gemma4/generate/server-alive
+openai full: {"status": 200, "content_chunks": 513, "wall_s": 39.526, "finish_reason": "length", "completion_tokens": 512}
+PASS gemma4/openai/full
+openai decode: {"status": 200, "content_chunks": 5, "wall_s": 1.506, "t_close": 1790603693.4400985, "followup_status": 200, "followup_wall_s": 1.944, "followup_server_total_s": 1.537} {"npu_hold_s": 0.407, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/openai/decode
+openai prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603696.7412574, "followup_status": 200, "followup_wall_s": 7.833, "followup_server_total_s": 1.546} {"npu_hold_s": 6.286, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/openai/prefill
+PASS gemma4/openai/server-alive
+completions full: {"status": 200, "content_chunks": 513, "wall_s": 39.717, "finish_reason": "length", "completion_tokens": 512}
+PASS gemma4/completions/full
+completions decode: {"status": 200, "content_chunks": 5, "wall_s": 1.477, "t_close": 1790603746.8519037} {"npu_hold_s": 38.413, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+FAIL gemma4/completions/decode: work continued 38.413s after the client closed (bound 2s)
+completions prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603786.2293673} {"npu_hold_s": 25.039, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 2}
+FAIL gemma4/completions/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 25.039s after it
+PASS gemma4/completions/server-alive
+generate-ns full: {"status": 200, "content_chunks": 1, "wall_s": 39.612, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/generate-ns/full
+generate-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.002, "t_close": 1790603852.9575408, "followup_status": 200, "followup_wall_s": 40.736, "followup_server_total_s": 1.656} {"npu_hold_s": 39.079, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+FAIL gemma4/generate-ns/decode: work continued 39.079s after the client closed (bound 2s)
+PASS gemma4/generate-ns/server-alive
+completions-ns full: {"status": 200, "content_chunks": 1, "wall_s": 39.491, "finish_reason": "length", "completion_tokens": 512}
+PASS gemma4/completions-ns/full
+completions-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790603936.2785575} {"npu_hold_s": 37.496, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+FAIL gemma4/completions-ns/decode: work continued 37.496s after the client closed (bound 2s)
+PASS gemma4/completions-ns/server-alive
+== summary ==
+PASS llama/chat/full
+FAIL llama/chat/decode: work continued 8.046s after the client closed (bound 2s)
+FAIL llama/chat/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 7.626s after it
+PASS llama/chat/server-alive
+PASS llama/generate/full
+FAIL llama/generate/decode: work continued 8.027s after the client closed (bound 2s)
+FAIL llama/generate/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 7.873s after it
+PASS llama/generate/server-alive
+PASS llama/openai/full
+PASS llama/openai/decode
+PASS llama/openai/prefill
+PASS llama/openai/server-alive
+PASS llama/completions/full
+FAIL llama/completions/decode: work continued 8.087s after the client closed (bound 2s)
+FAIL llama/completions/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 7.306s after it
+PASS llama/completions/server-alive
+PASS llama/generate-ns/full
+FAIL llama/generate-ns/decode: work continued 6.807s after the client closed (bound 2s)
+PASS llama/generate-ns/server-alive
+PASS llama/completions-ns/full
+FAIL llama/completions-ns/decode: work continued 10.048s after the client closed (bound 2s)
+PASS llama/completions-ns/server-alive
+PASS gemma4/chat/full
+FAIL gemma4/chat/decode: work continued 38.713s after the client closed (bound 2s)
+FAIL gemma4/chat/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 29.38s after it
+PASS gemma4/chat/server-alive
+PASS gemma4/generate/full
+FAIL gemma4/generate/decode: work continued 38.656s after the client closed (bound 2s)
+FAIL gemma4/generate/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 26.148s after it
+PASS gemma4/generate/server-alive
+PASS gemma4/openai/full
+PASS gemma4/openai/decode
+PASS gemma4/openai/prefill
+PASS gemma4/openai/server-alive
+PASS gemma4/completions/full
+FAIL gemma4/completions/decode: work continued 38.413s after the client closed (bound 2s)
+FAIL gemma4/completions/prefill: 2 more prefill chunk(s) ran after the client closed; work ended 25.039s after it
+PASS gemma4/completions/server-alive
+PASS gemma4/generate-ns/full
+FAIL gemma4/generate-ns/decode: work continued 39.079s after the client closed (bound 2s)
+PASS gemma4/generate-ns/server-alive
+PASS gemma4/completions-ns/full
+FAIL gemma4/completions-ns/decode: work continued 37.496s after the client closed (bound 2s)
+PASS gemma4/completions-ns/server-alive
+28 passed, 16 failed

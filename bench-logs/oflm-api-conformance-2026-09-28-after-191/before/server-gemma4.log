@@ -1,0 +1,913 @@
+1790603412.775	[FLM]  Using user-specified port: 58603
+1790603413.300	[FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
+1790603420.483	[FLM]  Starting server on port 58603...
+1790603420.483	[🔗 ]  TCP connection established - Remote: 127.0.0.1:35240
+1790603420.483	[TCP]  Read 90 bytes from socket
+1790603420.483	================================================[
+1790603420.483	[⬇️ ]  Incoming Request: GET
+1790603420.483	FLM]  WebServer started on port 58603 with 10 I/O threads
+1790603420.483	[FLM]  Press Ctrl+C to stop.
+1790603420.483	[LOG]  Time stamp: 16:50:20 09:28:2026
+1790603420.483	[LOG]  Target: /api/version
+1790603420.483	[LOG]  Version: 11
+1790603420.483	[LOG]  Keep-Alive: 1
+1790603420.483	================================================
+1790603420.483	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35240
+1790603420.529	[🔗 ]  TCP connection established - Remote: 127.0.0.1:35242
+1790603420.529	[TCP]  Read 347 bytes from socket
+1790603420.529	================================================
+1790603420.529	[⬇️ ]  Incoming Request: POST
+1790603420.529	[LOG]  Time stamp: 16:50:20 09:28:2026
+1790603420.529	[LOG]  Target: /api/chat
+1790603420.529	[LOG]  Version: 11
+1790603420.529	[LOG]  Keep-Alive: 1
+1790603420.529	[LOG]  Body: 
+1790603420.529	{
+1790603420.529	    "messages": [
+1790603420.529	        {
+1790603420.529	            "content": "Write a de...ing press.",
+1790603420.529	            "role": "user"
+1790603420.529	        }
+1790603420.529	    ],
+1790603420.529	    "model": "gemma4-it:e4b",
+1790603420.529	    "options": {
+1790603420.529	        "num_predict": 512
+1790603420.529	    },
+1790603420.529	    "stream": true,
+1790603420.529	    "top_k": 1
+1790603420.529	}
+1790603420.529	[🟢 ]  NPU Locked!
+1790603420.529	[FLM]  Start generating...
+1790603420.529	[FLM]  Total images: 0
+1790603420.529	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603462.537	
+1790603462.537	[FLM]  Model RAW Output: 
+1790603462.537	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603462.537	
+1790603462.537	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790603462.537	
+1790603462.537	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790603462.537	
+1790603462.537	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790603462.537	
+1790603462.537	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790603462.537	
+1790603462.537	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790603462.537	
+1790603462.537	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790603462.537	
+1790603462.537	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790603462.540	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603462.542	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790603462.542	[🔵 ]  NPU Lock Released!
+1790603462.577	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49800
+1790603462.577	[TCP]  Read 347 bytes from socket
+1790603462.577	================================================
+1790603462.577	[⬇️ ]  Incoming Request: POST
+1790603462.577	[LOG]  Time stamp: 16:51:02 09:28:2026
+1790603462.577	[LOG]  Target: /api/chat
+1790603462.577	[LOG]  Version: 11
+1790603462.577	[LOG]  Keep-Alive: 1
+1790603462.577	[LOG]  Body: 
+1790603462.577	{
+1790603462.577	    "messages": [
+1790603462.577	        {
+1790603462.577	            "content": "Write a de...ing press.",
+1790603462.577	            "role": "user"
+1790603462.577	        }
+1790603462.577	    ],
+1790603462.577	    "model": "gemma4-it:e4b",
+1790603462.577	    "options": {
+1790603462.577	        "num_predict": 512
+1790603462.577	    },
+1790603462.577	    "stream": true,
+1790603462.577	    "top_k": 1
+1790603462.577	}
+1790603462.577	[🟢 ]  NPU Locked!
+1790603462.577	[FLM]  Start generating...
+1790603462.577	[FLM]  Total images: 0
+1790603462.577	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603464.065	[🔴 ]  Client disconnected; cancelling active request
+1790603464.066	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49802
+1790603464.066	[TCP]  Read 270 bytes from socket
+1790603464.066	================================================
+1790603464.066	[⬇️ ]  Incoming Request: POST
+1790603464.066	[LOG]  Time stamp: 16:51:04 09:28:2026
+1790603464.066	[LOG]  Target: /api/chat
+1790603464.066	[LOG]  Version: 11
+1790603464.066	[LOG]  Keep-Alive: 1
+1790603464.066	[LOG]  Body: 
+1790603464.066	{
+1790603464.066	    "messages": [
+1790603464.066	        {
+1790603464.066	            "content": "Say hi.",
+1790603464.066	            "role": "user"
+1790603464.066	        }
+1790603464.066	    ],
+1790603464.066	    "model": "gemma4-it:e4b",
+1790603464.066	    "options": {
+1790603464.066	        "num_predict": 4
+1790603464.066	    },
+1790603464.066	    "stream": false,
+1790603464.066	    "top_k": 1
+1790603464.066	}
+1790603464.066	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603502.443	
+1790603502.443	[FLM]  Model RAW Output: 
+1790603502.443	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603502.443	
+1790603502.443	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790603502.443	
+1790603502.443	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790603502.443	
+1790603502.443	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790603502.443	
+1790603502.443	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790603502.443	
+1790603502.443	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790603502.444	
+1790603502.444	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790603502.444	
+1790603502.444	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790603502.444	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603502.778	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603502.778	[FLM]  Start generating...
+1790603502.778	[FLM]  Total images: 0
+1790603502.778	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603503.980	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603503.982	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603504.017	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603504.306	
+1790603504.306	[FLM]  Model RAW Output: 
+1790603504.306	Hi! How can I
+1790603504.306	[🔵 ]  NPU Lock Released!
+1790603504.306	================================================
+1790603504.307	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:49802
+1790603505.369	[🔗 ]  TCP connection established - Remote: 127.0.0.1:37066
+1790603505.369	[TCP]  Read 54291 bytes from socket
+1790603505.369	================================================
+1790603505.369	[⬇️ ]  Incoming Request: POST
+1790603505.369	[LOG]  Time stamp: 16:51:45 09:28:2026
+1790603505.369	[LOG]  Target: /api/chat
+1790603505.369	[LOG]  Version: 11
+1790603505.369	[LOG]  Keep-Alive: 1
+1790603505.369	[LOG]  Body: 
+1790603505.369	{
+1790603505.369	    "messages": [
+1790603505.369	        {
+1790603505.369	            "content": "The quick ...ext above.",
+1790603505.369	            "role": "user"
+1790603505.369	        }
+1790603505.369	    ],
+1790603505.369	    "model": "gemma4-it:e4b",
+1790603505.369	    "options": {
+1790603505.369	        "num_predict": 512
+1790603505.369	    },
+1790603505.369	    "stream": true,
+1790603505.369	    "top_k": 1
+1790603505.369	}
+1790603505.369	[🟢 ]  NPU Locked!
+1790603505.370	[FLM]  Start generating...
+1790603505.370	[FLM]  Total images: 0
+1790603505.378	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790603505.669	[🔴 ]  Client disconnected; cancelling active request
+1790603505.669	[🔗 ]  TCP connection established - Remote: 127.0.0.1:37070
+1790603505.669	[TCP]  Read 270 bytes from socket
+1790603505.669	================================================
+1790603505.669	[⬇️ ]  Incoming Request: POST
+1790603505.669	[LOG]  Time stamp: 16:51:45 09:28:2026
+1790603505.669	[LOG]  Target: /api/chat
+1790603505.669	[LOG]  Version: 11
+1790603505.669	[LOG]  Keep-Alive: 1
+1790603505.670	[LOG]  Body: 
+1790603505.670	{
+1790603505.670	    "messages": [
+1790603505.670	        {
+1790603505.670	            "content": "Say hi.",
+1790603505.670	            "role": "user"
+1790603505.670	        }
+1790603505.670	    ],
+1790603505.670	    "model": "gemma4-it:e4b",
+1790603505.670	    "options": {
+1790603505.670	        "num_predict": 4
+1790603505.670	    },
+1790603505.670	    "stream": false,
+1790603505.670	    "top_k": 1
+1790603505.670	}
+1790603505.670	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603511.598	[FLM]  Prefill chunk 2/3 with 4096 tokens
+1790603518.439	[FLM]  Prefill chunk 3/3 with 3823 tokens
+1790603534.714	
+1790603534.714	[FLM]  Model RAW Output: 
+1790603534.714	The text provided is a repetition of the pangram: **"The quick brown fox jumps over the lazy dog."**
+1790603534.714	
+1790603534.714	In summary, the text consists of **many repetitions of the sentence "The quick brown fox jumps over the lazy dog."**
+1790603534.714	[31m[FLM]  Creating checkpoint at context length 12066[0m
+1790603535.049	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603535.049	[FLM]  Start generating...
+1790603535.049	[FLM]  Total images: 0
+1790603535.049	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603537.091	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603537.093	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603537.133	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603537.476	
+1790603537.480	[FLM]  Model RAW Output: 
+1790603537.480	Hi! How can I
+1790603537.480	[🔵 ]  NPU Lock Released!
+1790603537.480	================================================
+1790603537.480	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:37070
+1790603538.561	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38856
+1790603538.561	[TCP]  Read 325 bytes from socket
+1790603538.561	================================================
+1790603538.561	[⬇️ ]  Incoming Request: POST
+1790603538.561	[LOG]  Time stamp: 16:52:18 09:28:2026
+1790603538.561	[LOG]  Target: /api/generate
+1790603538.561	[LOG]  Version: 11
+1790603538.561	[LOG]  Keep-Alive: 1
+1790603538.561	[LOG]  Body: 
+1790603538.561	{
+1790603538.561	    "max_tokens": 512,
+1790603538.561	    "model": "gemma4-it:e4b",
+1790603538.561	    "options": {
+1790603538.561	        "num_predict": 512
+1790603538.561	    },
+1790603538.561	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603538.561	    "stream": true
+1790603538.561	}
+1790603538.561	[🟢 ]  NPU Locked!
+1790603538.561	[FLM]  Start generating...
+1790603538.561	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603580.368	
+1790603580.369	[FLM]  Model RAW Output: 
+1790603580.369	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603580.369	
+1790603580.369	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603580.369	
+1790603580.369	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603580.369	
+1790603580.369	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603580.369	
+1790603580.369	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603580.369	
+1790603580.369	**A. Woodblock Printing (Xylography):**
+1790603580.369	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603580.369	
+1790603580.369	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603580.369	
+1790603580.369	**B. Movable Type in East Asia:**
+1790603580.369	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603580.369	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603580.371	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790603580.371	[🔵 ]  NPU Lock Released!
+1790603580.406	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58914
+1790603580.406	[TCP]  Read 325 bytes from socket
+1790603580.406	================================================
+1790603580.406	[⬇️ ]  Incoming Request: POST
+1790603580.406	[LOG]  Time stamp: 16:53:00 09:28:2026
+1790603580.406	[LOG]  Target: /api/generate
+1790603580.406	[LOG]  Version: 11
+1790603580.406	[LOG]  Keep-Alive: 1
+1790603580.406	[LOG]  Body: 
+1790603580.406	{
+1790603580.406	    "max_tokens": 512,
+1790603580.406	    "model": "gemma4-it:e4b",
+1790603580.406	    "options": {
+1790603580.406	        "num_predict": 512
+1790603580.406	    },
+1790603580.406	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603580.406	    "stream": true
+1790603580.406	}
+1790603580.406	[🟢 ]  NPU Locked!
+1790603580.406	[FLM]  Start generating...
+1790603580.407	[FLM]  Conversation context diverged from cache, clearing context...
+1790603580.442	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603581.972	[🔴 ]  Client disconnected; cancelling active request
+1790603581.972	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58926
+1790603581.972	[TCP]  Read 270 bytes from socket
+1790603581.972	================================================
+1790603581.972	[⬇️ ]  Incoming Request: POST
+1790603581.972	[LOG]  Time stamp: 16:53:01 09:28:2026
+1790603581.972	[LOG]  Target: /api/chat
+1790603581.972	[LOG]  Version: 11
+1790603581.972	[LOG]  Keep-Alive: 1
+1790603581.972	[LOG]  Body: 
+1790603581.972	{
+1790603581.972	    "messages": [
+1790603581.972	        {
+1790603581.972	            "content": "Say hi.",
+1790603581.972	            "role": "user"
+1790603581.972	        }
+1790603581.972	    ],
+1790603581.972	    "model": "gemma4-it:e4b",
+1790603581.972	    "options": {
+1790603581.972	        "num_predict": 4
+1790603581.972	    },
+1790603581.972	    "stream": false,
+1790603581.972	    "top_k": 1
+1790603581.972	}
+1790603581.972	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603620.293	
+1790603620.293	[FLM]  Model RAW Output: 
+1790603620.293	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603620.293	
+1790603620.293	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603620.293	
+1790603620.293	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603620.293	
+1790603620.293	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603620.293	
+1790603620.293	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603620.293	
+1790603620.293	**A. Woodblock Printing (Xylography):**
+1790603620.293	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603620.293	
+1790603620.293	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603620.293	
+1790603620.293	**B. Movable Type in East Asia:**
+1790603620.293	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603620.293	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603620.628	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603620.628	[FLM]  Start generating...
+1790603620.628	[FLM]  Total images: 0
+1790603620.628	[FLM]  Conversation context diverged from cache, clearing context...
+1790603620.663	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603621.852	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603621.853	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603621.887	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603622.172	
+1790603622.172	[FLM]  Model RAW Output: 
+1790603622.172	Hi! How can I
+1790603622.172	[🔵 ]  NPU Lock Released!
+1790603622.172	================================================
+1790603622.172	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58926
+1790603623.228	[🔗 ]  TCP connection established - Remote: 127.0.0.1:41036
+1790603623.228	[TCP]  Read 54269 bytes from socket
+1790603623.228	================================================
+1790603623.228	[⬇️ ]  Incoming Request: POST
+1790603623.228	[LOG]  Time stamp: 16:53:43 09:28:2026
+1790603623.228	[LOG]  Target: /api/generate
+1790603623.228	[LOG]  Version: 11
+1790603623.228	[LOG]  Keep-Alive: 1
+1790603623.229	[LOG]  Body: 
+1790603623.229	{
+1790603623.229	    "max_tokens": 512,
+1790603623.229	    "model": "gemma4-it:e4b",
+1790603623.229	    "options": {
+1790603623.229	        "num_predict": 512
+1790603623.229	    },
+1790603623.229	    "prompt": "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. Summarise the text above.",
+1790603623.229	    "stream": true
+1790603623.229	}
+1790603623.229	[🟢 ]  NPU Locked!
+1790603623.229	[FLM]  Start generating...
+1790603623.237	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790603623.529	[🔴 ]  Client disconnected; cancelling active request
+1790603623.529	[🔗 ]  TCP connection established - Remote: 127.0.0.1:41044
+1790603623.529	[TCP]  Read 270 bytes from socket
+1790603623.529	================================================
+1790603623.529	[⬇️ ]  Incoming Request: POST
+1790603623.529	[LOG]  Time stamp: 16:53:43 09:28:2026
+1790603623.529	[LOG]  Target: /api/chat
+1790603623.529	[LOG]  Version: 11
+1790603623.529	[LOG]  Keep-Alive: 1
+1790603623.529	[LOG]  Body: 
+1790603623.529	{
+1790603623.529	    "messages": [
+1790603623.529	        {
+1790603623.529	            "content": "Say hi.",
+1790603623.529	            "role": "user"
+1790603623.529	        }
+1790603623.529	    ],
+1790603623.529	    "model": "gemma4-it:e4b",
+1790603623.529	    "options": {
+1790603623.529	        "num_predict": 4
+1790603623.529	    },
+1790603623.529	    "stream": false,
+1790603623.529	    "top_k": 1
+1790603623.529	}
+1790603623.529	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603629.466	[FLM]  Prefill chunk 2/3 with 4096 tokens
+1790603636.400	[FLM]  Prefill chunk 3/3 with 3823 tokens
+1790603649.339	
+1790603649.339	[FLM]  Model RAW Output: 
+1790603649.339	The text provided is a repetition of the pangram: **"The quick brown fox jumps over the lazy dog."**
+1790603649.339	
+1790603649.339	In summary, the text consists of **many repetitions of the sentence "The quick brown fox jumps over the lazy dog."**
+1790603649.339	[31m[FLM]  Creating checkpoint at context length 12066[0m
+1790603649.676	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603649.676	[FLM]  Start generating...
+1790603649.676	[FLM]  Total images: 0
+1790603649.676	[FLM]  Conversation context diverged from cache, clearing context...
+1790603649.711	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603651.001	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603651.003	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603651.035	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603651.321	
+1790603651.321	[FLM]  Model RAW Output: 
+1790603651.321	Hi! How can I
+1790603651.321	[🔵 ]  NPU Lock Released!
+1790603651.321	================================================
+1790603651.321	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:41044
+1790603652.377	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47474
+1790603652.377	[TCP]  Read 344 bytes from socket
+1790603652.377	================================================
+1790603652.377	[⬇️ ]  Incoming Request: POST
+1790603652.377	[LOG]  Time stamp: 16:54:12 09:28:2026
+1790603652.377	[LOG]  Target: /v1/chat/completions
+1790603652.377	[LOG]  Version: 11
+1790603652.377	[LOG]  Keep-Alive: 1
+1790603652.377	[LOG]  Body: 
+1790603652.377	{
+1790603652.377	    "max_tokens": 512,
+1790603652.377	    "messages": [
+1790603652.377	        {
+1790603652.377	            "content": "Write a de...ing press.",
+1790603652.377	            "role": "user"
+1790603652.377	        }
+1790603652.377	    ],
+1790603652.377	    "model": "gemma4-it:e4b",
+1790603652.377	    "stream": true,
+1790603652.377	    "top_k": 1
+1790603652.377	}
+1790603652.377	[🟢 ]  NPU Locked!
+1790603652.377	[FLM]  Start prefill...
+1790603652.377	[FLM]  Total images: 0
+1790603652.377	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603653.601	[FLM]  Start generating...
+1790603691.899	
+1790603691.900	[FLM]  Model RAW Output: 
+1790603691.900	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603691.900	
+1790603691.900	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603691.900	
+1790603691.900	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603691.900	
+1790603691.900	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603691.900	
+1790603691.900	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603691.900	
+1790603691.900	**A. Woodblock Printing (Xylography):**
+1790603691.900	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603691.900	
+1790603691.900	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603691.900	
+1790603691.900	**B. Movable Type in East Asia:**
+1790603691.900	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603691.900	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603691.901	ChatCompletionChunk: {"id":"chatcmpl-ecf53cd108c16ffd845934f1","object":"chat.completion.chunk","created":1790603652,"model":"gemma4-it:e4b","system_fingerprint":"fp_98dc5176bd9a4339","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":30,"completion_tokens":512,"total_tokens":542,"active_kv_tokens":542,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":1.654052734375,"load_duration":1.823e-06,"prefill_duration_ttft":1.223547264,"decoding_duration":38.149456,"prefill_speed_tps":24.518873020012737,"decoding_speed_tps":13.420899107971552}}
+1790603691.901	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790603691.901	[🔵 ]  NPU Lock Released!
+1790603691.935	[🔗 ]  TCP connection established - Remote: 127.0.0.1:59382
+1790603691.935	[TCP]  Read 344 bytes from socket
+1790603691.935	================================================
+1790603691.935	[⬇️ ]  Incoming Request: POST
+1790603691.935	[LOG]  Time stamp: 16:54:51 09:28:2026
+1790603691.935	[LOG]  Target: /v1/chat/completions
+1790603691.935	[LOG]  Version: 11
+1790603691.935	[LOG]  Keep-Alive: 1
+1790603691.935	[LOG]  Body: 
+1790603691.935	{
+1790603691.935	    "max_tokens": 512,
+1790603691.935	    "messages": [
+1790603691.935	        {
+1790603691.935	            "content": "Write a de...ing press.",
+1790603691.935	            "role": "user"
+1790603691.935	        }
+1790603691.935	    ],
+1790603691.935	    "model": "gemma4-it:e4b",
+1790603691.935	    "stream": true,
+1790603691.935	    "top_k": 1
+1790603691.935	}
+1790603691.935	[🟢 ]  NPU Locked!
+1790603691.935	[FLM]  Prompt cache miss.
+1790603691.935	[FLM]  Clearing context...
+1790603691.968	[FLM]  Start prefill...
+1790603691.968	[FLM]  Total images: 0
+1790603691.968	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603693.152	[FLM]  Start generating...
+1790603693.440	[🔴 ]  Client disconnected; cancelling active request
+1790603693.440	[🔗 ]  TCP connection established - Remote: 127.0.0.1:40706
+1790603693.441	[TCP]  Read 270 bytes from socket
+1790603693.441	================================================
+1790603693.441	[⬇️ ]  Incoming Request: POST
+1790603693.441	[LOG]  Time stamp: 16:54:53 09:28:2026
+1790603693.441	[LOG]  Target: /api/chat
+1790603693.441	[LOG]  Version: 11
+1790603693.441	[LOG]  Keep-Alive: 1
+1790603693.441	[LOG]  Body: 
+1790603693.441	{
+1790603693.441	    "messages": [
+1790603693.441	        {
+1790603693.441	            "content": "Say hi.",
+1790603693.441	            "role": "user"
+1790603693.441	        }
+1790603693.441	    ],
+1790603693.441	    "model": "gemma4-it:e4b",
+1790603693.441	    "options": {
+1790603693.441	        "num_predict": 4
+1790603693.441	    },
+1790603693.441	    "stream": false,
+1790603693.441	    "top_k": 1
+1790603693.441	}
+1790603693.441	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603693.512	
+1790603693.512	[FLM]  Model RAW Output: 
+1790603693.512	## The Unfolding Page:
+1790603693.512	[31m[FLM]  Creating checkpoint at context length 35[0m
+1790603693.514	[❌ ]  Generation Cancelled!
+1790603693.514	ChatCompletionChunk: {"id":"chatcmpl-b5e68a8ccd738a6645ff6e6f","object":"chat.completion.chunk","created":1790603691,"model":"gemma4-it:e4b","system_fingerprint":"fp_39aa34ae77dc4d37","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":30,"completion_tokens":5,"total_tokens":35,"active_kv_tokens":35,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":0.1068115234375,"load_duration":1.573e-06,"prefill_duration_ttft":1.18400192,"decoding_duration":0.358664,"prefill_speed_tps":25.337796749518784,"decoding_speed_tps":13.940624093859434}}
+1790603693.847	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603693.847	[FLM]  Start generating...
+1790603693.847	[FLM]  Total images: 0
+1790603693.847	[FLM]  Conversation context diverged from cache, clearing context...
+1790603693.880	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603695.062	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603695.064	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603695.098	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603695.384	
+1790603695.384	[FLM]  Model RAW Output: 
+1790603695.384	Hi! How can I
+1790603695.384	[🔵 ]  NPU Lock Released!
+1790603695.384	================================================
+1790603695.384	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40706
+1790603696.441	[🔗 ]  TCP connection established - Remote: 127.0.0.1:40716
+1790603696.441	[TCP]  Read 54288 bytes from socket
+1790603696.441	================================================
+1790603696.441	[⬇️ ]  Incoming Request: POST
+1790603696.441	[LOG]  Time stamp: 16:54:56 09:28:2026
+1790603696.441	[LOG]  Target: /v1/chat/completions
+1790603696.441	[LOG]  Version: 11
+1790603696.441	[LOG]  Keep-Alive: 1
+1790603696.442	[LOG]  Body: 
+1790603696.442	{
+1790603696.442	    "max_tokens": 512,
+1790603696.442	    "messages": [
+1790603696.442	        {
+1790603696.442	            "content": "The quick ...ext above.",
+1790603696.442	            "role": "user"
+1790603696.442	        }
+1790603696.442	    ],
+1790603696.442	    "model": "gemma4-it:e4b",
+1790603696.442	    "stream": true,
+1790603696.442	    "top_k": 1
+1790603696.442	}
+1790603696.442	[🟢 ]  NPU Locked!
+1790603696.442	[FLM]  Prompt cache miss.
+1790603696.442	[FLM]  Clearing context...
+1790603696.477	[FLM]  Start prefill...
+1790603696.477	[FLM]  Total images: 0
+1790603696.484	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790603696.741	[🔴 ]  Client disconnected; cancelling active request
+1790603696.742	[🔗 ]  TCP connection established - Remote: 127.0.0.1:40728
+1790603696.742	[TCP]  Read 270 bytes from socket
+1790603696.742	================================================
+1790603696.742	[⬇️ ]  Incoming Request: POST
+1790603696.742	[LOG]  Time stamp: 16:54:56 09:28:2026
+1790603696.742	[LOG]  Target: /api/chat
+1790603696.742	[LOG]  Version: 11
+1790603696.742	[LOG]  Keep-Alive: 1
+1790603696.742	[LOG]  Body: 
+1790603696.742	{
+1790603696.742	    "messages": [
+1790603696.742	        {
+1790603696.742	            "content": "Say hi.",
+1790603696.742	            "role": "user"
+1790603696.742	        }
+1790603696.742	    ],
+1790603696.742	    "model": "gemma4-it:e4b",
+1790603696.742	    "options": {
+1790603696.742	        "num_predict": 4
+1790603696.742	    },
+1790603696.742	    "stream": false,
+1790603696.742	    "top_k": 1
+1790603696.742	}
+1790603696.742	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603702.694	[❌ ]  Prefill Cancelled!
+1790603702.694	ChatCompletionChunk: {"id":"chatcmpl-9c8537eaa977d2d25dfc0c93","object":"chat.completion.chunk","created":1790603696,"model":"gemma4-it:e4b","system_fingerprint":"fp_746bbbbf7fafea6e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":12015,"completion_tokens":0,"total_tokens":12015,"active_kv_tokens":0,"max_kv_token_capacity":32768,"kv_token_occupancy_rate_percentage":0.0,"load_duration":1.883e-06,"prefill_duration_ttft":6.20995072,"decoding_duration":0.0,"prefill_speed_tps":1934.7979624546845,"decoding_speed_tps":null}}
+1790603703.027	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603703.027	[FLM]  Start generating...
+1790603703.027	[FLM]  Total images: 0
+1790603703.027	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603704.253	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603704.255	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603704.287	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603704.573	
+1790603704.573	[FLM]  Model RAW Output: 
+1790603704.574	Hi! How can I
+1790603704.574	[🔵 ]  NPU Lock Released!
+1790603704.574	================================================
+1790603704.574	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40728
+1790603705.624	[🔗 ]  TCP connection established - Remote: 127.0.0.1:39530
+1790603705.624	[TCP]  Read 306 bytes from socket
+1790603705.624	================================================
+1790603705.624	[⬇️ ]  Incoming Request: POST
+1790603705.624	[LOG]  Time stamp: 16:55:05 09:28:2026
+1790603705.625	[LOG]  Target: /v1/completions
+1790603705.625	[LOG]  Version: 11
+1790603705.625	[LOG]  Keep-Alive: 1
+1790603705.625	[LOG]  Body: 
+1790603705.625	{
+1790603705.625	    "max_tokens": 512,
+1790603705.625	    "model": "gemma4-it:e4b",
+1790603705.625	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603705.625	    "stream": true,
+1790603705.625	    "top_k": 1
+1790603705.625	}
+1790603705.625	[FLM]  Start generating...
+1790603705.625	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603745.339	
+1790603745.339	[FLM]  Model RAW Output: 
+1790603745.339	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603745.339	
+1790603745.339	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603745.339	
+1790603745.339	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603745.339	
+1790603745.339	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603745.339	
+1790603745.339	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603745.339	
+1790603745.339	**A. Woodblock Printing (Xylography):**
+1790603745.339	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603745.339	
+1790603745.339	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603745.339	
+1790603745.339	**B. Movable Type in East Asia:**
+1790603745.339	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603745.339	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603745.341	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790603745.376	[🔗 ]  TCP connection established - Remote: 127.0.0.1:49906
+1790603745.376	[TCP]  Read 306 bytes from socket
+1790603745.376	================================================
+1790603745.376	[⬇️ ]  Incoming Request: POST
+1790603745.376	[LOG]  Time stamp: 16:55:45 09:28:2026
+1790603745.376	[LOG]  Target: /v1/completions
+1790603745.376	[LOG]  Version: 11
+1790603745.376	[LOG]  Keep-Alive: 1
+1790603745.376	[LOG]  Body: 
+1790603745.376	{
+1790603745.376	    "max_tokens": 512,
+1790603745.376	    "model": "gemma4-it:e4b",
+1790603745.376	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603745.376	    "stream": true,
+1790603745.376	    "top_k": 1
+1790603745.376	}
+1790603745.376	[FLM]  Start generating...
+1790603745.376	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603746.852	[🔴 ]  Client disconnected; cancelling active request
+1790603785.265	
+1790603785.265	[FLM]  Model RAW Output: 
+1790603785.265	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603785.265	
+1790603785.265	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603785.265	
+1790603785.265	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603785.265	
+1790603785.265	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603785.265	
+1790603785.265	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603785.265	
+1790603785.265	**A. Woodblock Printing (Xylography):**
+1790603785.265	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603785.265	
+1790603785.265	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603785.265	
+1790603785.265	**B. Movable Type in East Asia:**
+1790603785.265	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603785.265	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603785.929	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58364
+1790603785.929	[TCP]  Read 54250 bytes from socket
+1790603785.929	================================================
+1790603785.929	[⬇️ ]  Incoming Request: POST
+1790603785.929	[LOG]  Time stamp: 16:56:25 09:28:2026
+1790603785.929	[LOG]  Target: /v1/completions
+1790603785.929	[LOG]  Version: 11
+1790603785.929	[LOG]  Keep-Alive: 1
+1790603785.930	[LOG]  Body: 
+1790603785.930	{
+1790603785.930	    "max_tokens": 512,
+1790603785.930	    "model": "gemma4-it:e4b",
+1790603785.930	    "prompt": "The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. The quick brown fox jumps over the lazy dog. Summarise the text above.",
+1790603785.930	    "stream": true,
+1790603785.930	    "top_k": 1
+1790603785.930	}
+1790603785.930	[FLM]  Start generating...
+1790603785.938	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790603786.229	[🔴 ]  Client disconnected; cancelling active request
+1790603792.053	[FLM]  Prefill chunk 2/3 with 4096 tokens
+1790603798.876	[FLM]  Prefill chunk 3/3 with 3823 tokens
+1790603811.268	
+1790603811.268	[FLM]  Model RAW Output: 
+1790603811.268	The text provided is a repetition of the pangram: **"The quick brown fox jumps over the lazy dog."**
+1790603811.268	
+1790603811.268	In summary, the text consists of **many repetitions of the sentence "The quick brown fox jumps over the lazy dog."**
+1790603811.268	[31m[FLM]  Creating checkpoint at context length 12066[0m
+1790603811.306	[🔗 ]  TCP connection established - Remote: 127.0.0.1:56846
+1790603811.306	[TCP]  Read 326 bytes from socket
+1790603811.306	================================================
+1790603811.306	[⬇️ ]  Incoming Request: POST
+1790603811.306	[LOG]  Time stamp: 16:56:51 09:28:2026
+1790603811.306	[LOG]  Target: /api/generate
+1790603811.306	[LOG]  Version: 11
+1790603811.306	[LOG]  Keep-Alive: 1
+1790603811.306	[LOG]  Body: 
+1790603811.306	{
+1790603811.306	    "max_tokens": 512,
+1790603811.306	    "model": "gemma4-it:e4b",
+1790603811.306	    "options": {
+1790603811.306	        "num_predict": 512
+1790603811.306	    },
+1790603811.306	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603811.306	    "stream": false
+1790603811.306	}
+1790603811.306	[🟢 ]  NPU Locked!
+1790603811.306	[FLM]  Start generating...
+1790603811.306	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603850.914	
+1790603850.914	[FLM]  Model RAW Output: 
+1790603850.914	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603850.914	
+1790603850.914	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603850.914	
+1790603850.914	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603850.914	
+1790603850.914	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603850.914	
+1790603850.914	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603850.914	
+1790603850.914	**A. Woodblock Printing (Xylography):**
+1790603850.914	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603850.914	
+1790603850.914	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603850.914	
+1790603850.914	**B. Movable Type in East Asia:**
+1790603850.914	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603850.914	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603850.916	[🔵 ]  NPU Lock Released!
+1790603850.916	================================================
+1790603850.916	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:56846
+1790603850.957	[🔗 ]  TCP connection established - Remote: 127.0.0.1:36246
+1790603850.958	[TCP]  Read 326 bytes from socket
+1790603850.958	================================================
+1790603850.958	[⬇️ ]  Incoming Request: POST
+1790603850.958	[LOG]  Time stamp: 16:57:30 09:28:2026
+1790603850.958	[LOG]  Target: /api/generate
+1790603850.958	[LOG]  Version: 11
+1790603850.958	[LOG]  Keep-Alive: 1
+1790603850.958	[LOG]  Body: 
+1790603850.958	{
+1790603850.958	    "max_tokens": 512,
+1790603850.958	    "model": "gemma4-it:e4b",
+1790603850.958	    "options": {
+1790603850.958	        "num_predict": 512
+1790603850.958	    },
+1790603850.958	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603850.958	    "stream": false
+1790603850.958	}
+1790603850.958	[🟢 ]  NPU Locked!
+1790603850.958	[FLM]  Start generating...
+1790603850.958	[FLM]  Conversation context diverged from cache, clearing context...
+1790603851.001	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603852.958	[🔴 ]  Client disconnected; cancelling active request
+1790603852.958	[🔗 ]  TCP connection established - Remote: 127.0.0.1:51438
+1790603852.958	[TCP]  Read 270 bytes from socket
+1790603852.958	================================================
+1790603852.958	[⬇️ ]  Incoming Request: POST
+1790603852.958	[LOG]  Time stamp: 16:57:32 09:28:2026
+1790603852.958	[LOG]  Target: /api/chat
+1790603852.958	[LOG]  Version: 11
+1790603852.958	[LOG]  Keep-Alive: 1
+1790603852.958	[LOG]  Body: 
+1790603852.958	{
+1790603852.958	    "messages": [
+1790603852.958	        {
+1790603852.958	            "content": "Say hi.",
+1790603852.958	            "role": "user"
+1790603852.958	        }
+1790603852.958	    ],
+1790603852.958	    "model": "gemma4-it:e4b",
+1790603852.958	    "options": {
+1790603852.958	        "num_predict": 4
+1790603852.958	    },
+1790603852.958	    "stream": false,
+1790603852.958	    "top_k": 1
+1790603852.958	}
+1790603852.958	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790603891.702	
+1790603891.702	[FLM]  Model RAW Output: 
+1790603891.702	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603891.702	
+1790603891.702	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603891.702	
+1790603891.702	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603891.702	
+1790603891.702	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603891.702	
+1790603891.702	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603891.702	
+1790603891.702	**A. Woodblock Printing (Xylography):**
+1790603891.702	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603891.702	
+1790603891.702	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603891.702	
+1790603891.702	**B. Movable Type in East Asia:**
+1790603891.702	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603891.702	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603892.037	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790603892.037	================================================
+1790603892.037	[FLM]  Start generating...
+1790603892.037	[FLM]  Total images: 0
+1790603892.037	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790603892.038	[FLM]  Conversation context diverged from cache, clearing context...
+1790603892.077	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790603893.339	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790603893.341	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790603893.381	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790603893.694	
+1790603893.694	[FLM]  Model RAW Output: 
+1790603893.694	Hi! How can I
+1790603893.694	[🔵 ]  NPU Lock Released!
+1790603893.694	================================================
+1790603893.694	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51438
+1790603894.756	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53588
+1790603894.756	[TCP]  Read 307 bytes from socket
+1790603894.756	================================================
+1790603894.756	[⬇️ ]  Incoming Request: POST
+1790603894.756	[LOG]  Time stamp: 16:58:14 09:28:2026
+1790603894.756	[LOG]  Target: /v1/completions
+1790603894.756	[LOG]  Version: 11
+1790603894.756	[LOG]  Keep-Alive: 1
+1790603894.756	[LOG]  Body: 
+1790603894.756	{
+1790603894.756	    "max_tokens": 512,
+1790603894.756	    "model": "gemma4-it:e4b",
+1790603894.756	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603894.756	    "stream": false,
+1790603894.756	    "top_k": 1
+1790603894.756	}
+1790603894.756	[FLM]  Start generating...
+1790603894.756	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603934.243	
+1790603934.243	[FLM]  Model RAW Output: 
+1790603934.243	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603934.243	
+1790603934.243	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603934.243	
+1790603934.243	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603934.243	
+1790603934.243	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603934.243	
+1790603934.243	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603934.243	
+1790603934.243	**A. Woodblock Printing (Xylography):**
+1790603934.243	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603934.243	
+1790603934.243	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603934.243	
+1790603934.243	**B. Movable Type in East Asia:**
+1790603934.243	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603934.243	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603934.245	================================================
+1790603934.245	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53588
+1790603934.278	[🔗 ]  TCP connection established - Remote: 127.0.0.1:43920
+1790603934.279	[TCP]  Read 307 bytes from socket
+1790603934.279	================================================
+1790603934.279	[⬇️ ]  Incoming Request: POST
+1790603934.279	[LOG]  Time stamp: 16:58:54 09:28:2026
+1790603934.279	[LOG]  Target: /v1/completions
+1790603934.279	[LOG]  Version: 11
+1790603934.279	[LOG]  Keep-Alive: 1
+1790603934.279	[LOG]  Body: 
+1790603934.279	{
+1790603934.279	    "max_tokens": 512,
+1790603934.279	    "model": "gemma4-it:e4b",
+1790603934.279	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790603934.279	    "stream": false,
+1790603934.279	    "top_k": 1
+1790603934.279	}
+1790603934.279	[FLM]  Start generating...
+1790603934.279	[FLM]  Conversation context diverged from cache, clearing context...
+1790603934.313	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790603936.279	[🔴 ]  Client disconnected; cancelling active request
+1790603973.775	
+1790603973.775	[FLM]  Model RAW Output: 
+1790603973.775	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790603973.775	
+1790603973.775	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow churn of parchment and vellum dictated the pace of intellectual life, limiting revolutions in thought, science, and governance. Then came the printing press: a technological innovation so profound that it did not merely improve communication; it fundamentally rewired human society.
+1790603973.775	
+1790603973.775	The story of the printing press is not a single, monolithic event but rather a centuries-long evolution—a gradual convergence of metallurgy, mechanical engineering, chemical understanding, and societal demand. It is a narrative spanning from ancient woodblock techniques to Gutenberg’s movable type revolution in Mainz, and subsequently through the industrialization of print that defined the modern era. To trace this history is to chart the trajectory of modernity itself: from localized dogma to global discourse.
+1790603973.775	
+1790603973.775	### I. Precursors and Proto-Printing Technologies (Antiquity to Medieval Period)
+1790603973.775	
+1790603973.775	The desire to reproduce images and texts predates Gutenberg by millennia, driven by religious needs, administrative requirements, and artistic patronage. The earliest forms of mass communication were not "printing" in the modern sense but rather methods of stamping or carving for replication.
+1790603973.775	
+1790603973.775	**A. Woodblock Printing (Xylography):**
+1790603973.775	The most ancient form of mechanical reproduction is woodblock printing. In China, this technique flourished as early as the Tang Dynasty (7th–10th centuries CE). Artisans would carve an entire page—text and image combined—into a single block of wood. This block was then inked and pressed onto paper or fabric. Early examples, such as Buddhist texts from the 8th century, demonstrate sophisticated artistry within this medium.
+1790603973.775	
+1790603973.775	Woodblock printing was highly effective for religious iconography and popular literature in East Asia because it allowed for relatively rapid reproduction of standardized images. However, its limitations were significant: each page required a unique block carving, making customization difficult and production slow when compared to later methods. Furthermore, the process was inherently static; if an error needed correction, the entire block had to be recarved.
+1790603973.775	
+1790603973.775	**B. Movable Type in East Asia:**
+1790603973.775	While woodblock printing dominated early Asian textual reproduction, the concept of *movable type*—individual characters that could be arranged and reused
+1790603973.775	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790603973.777	================================================
+1790603973.777	[🔒 ]  TCP connection closed - Remote endpoint unavailable

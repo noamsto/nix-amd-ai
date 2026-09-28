@@ -1,0 +1,124 @@
+== llama (llama3.2:1b) ==
+chat full: {"status": 200, "content_chunks": 513, "wall_s": 8.273, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/chat/full
+chat decode: {"status": 200, "content_chunks": 5, "wall_s": 0.452, "t_close": 1790603986.4370117, "followup_status": 200, "followup_wall_s": 0.782, "followup_server_total_s": 0.434} {"npu_hold_s": 0.348, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS llama/chat/decode
+chat prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790603988.572978, "followup_status": 200, "followup_wall_s": 2.281, "followup_server_total_s": 0.451} {"npu_hold_s": 1.829, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/chat/prefill
+PASS llama/chat/server-alive
+generate full: {"status": 200, "content_chunks": 513, "wall_s": 8.241, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/generate/full
+generate decode: {"status": 200, "content_chunks": 5, "wall_s": 0.455, "t_close": 1790604000.6395397, "followup_status": 200, "followup_wall_s": 0.796, "followup_server_total_s": 0.448} {"npu_hold_s": 0.348, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/generate/decode
+generate prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604002.7878816, "followup_status": 200, "followup_wall_s": 2.289, "followup_server_total_s": 0.443} {"npu_hold_s": 1.845, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/generate/prefill
+PASS llama/generate/server-alive
+openai full: {"status": 200, "content_chunks": 513, "wall_s": 8.322, "finish_reason": "length", "completion_tokens": 512}
+PASS llama/openai/full
+openai decode: {"status": 200, "content_chunks": 5, "wall_s": 0.478, "t_close": 1790604014.9601073, "followup_status": 200, "followup_wall_s": 0.785, "followup_server_total_s": 0.436} {"npu_hold_s": 0.348, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS llama/openai/decode
+openai prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604017.1018035, "followup_status": 200, "followup_wall_s": 2.368, "followup_server_total_s": 0.466} {"npu_hold_s": 1.901, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/openai/prefill
+PASS llama/openai/server-alive
+completions full: {"status": 200, "content_chunks": 513, "wall_s": 8.329, "finish_reason": "length", "completion_tokens": 512}
+PASS llama/completions/full
+completions decode: {"status": 200, "content_chunks": 5, "wall_s": 0.446, "t_close": 1790604029.3296723} {"npu_hold_s": 0.015, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/completions/decode
+completions prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604030.681672} {"npu_hold_s": 1.573, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/completions/prefill
+PASS llama/completions/server-alive
+generate-ns full: {"status": 200, "content_chunks": 1, "wall_s": 8.315, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/generate-ns/full
+generate-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790604043.0910864, "followup_status": 200, "followup_wall_s": 0.789, "followup_server_total_s": 0.44} {"npu_hold_s": 0.348, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS llama/generate-ns/decode
+PASS llama/generate-ns/server-alive
+completions-ns full: {"status": 200, "content_chunks": 1, "wall_s": 8.21, "finish_reason": "length", "completion_tokens": 512}
+PASS llama/completions-ns/full
+completions-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790604055.1709085} {"npu_hold_s": 0.004, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS llama/completions-ns/decode
+PASS llama/completions-ns/server-alive
+== gemma4 (gemma4-it:e4b) ==
+chat full: {"status": 200, "content_chunks": 513, "wall_s": 39.54, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/chat/full
+chat decode: {"status": 200, "content_chunks": 5, "wall_s": 1.465, "t_close": 1790604103.2622707, "followup_status": 200, "followup_wall_s": 1.896, "followup_server_total_s": 1.488} {"npu_hold_s": 0.407, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/chat/decode
+chat prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604106.510679, "followup_status": 200, "followup_wall_s": 7.659, "followup_server_total_s": 1.528} {"npu_hold_s": 6.131, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/chat/prefill
+PASS gemma4/chat/server-alive
+generate full: {"status": 200, "content_chunks": 513, "wall_s": 39.499, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/generate/full
+generate decode: {"status": 200, "content_chunks": 5, "wall_s": 1.48, "t_close": 1790604156.2412758, "followup_status": 200, "followup_wall_s": 1.932, "followup_server_total_s": 1.525} {"npu_hold_s": 0.407, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/generate/decode
+generate prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604159.527298, "followup_status": 200, "followup_wall_s": 8.383, "followup_server_total_s": 2.07} {"npu_hold_s": 6.312, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/generate/prefill
+PASS gemma4/generate/server-alive
+openai full: {"status": 200, "content_chunks": 513, "wall_s": 41.484, "finish_reason": "length", "completion_tokens": 512}
+PASS gemma4/openai/full
+openai decode: {"status": 200, "content_chunks": 5, "wall_s": 1.56, "t_close": 1790604212.0562322, "followup_status": 200, "followup_wall_s": 1.994, "followup_server_total_s": 1.582} {"npu_hold_s": 0.412, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/openai/decode
+openai prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604215.4029725, "followup_status": 200, "followup_wall_s": 7.949, "followup_server_total_s": 1.579} {"npu_hold_s": 6.37, "disconnect_logged_s": 0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/openai/prefill
+PASS gemma4/openai/server-alive
+completions full: {"status": 200, "content_chunks": 513, "wall_s": 40.038, "finish_reason": "length", "completion_tokens": 512}
+PASS gemma4/completions/full
+completions decode: {"status": 200, "content_chunks": 5, "wall_s": 1.459, "t_close": 1790604265.93449} {"npu_hold_s": 0.072, "disconnect_logged_s": 0.001, "prefill_chunks_after_close": 0}
+PASS gemma4/completions/decode
+completions prefill: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790604267.285391} {"npu_hold_s": 5.744, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/completions/prefill
+PASS gemma4/completions/server-alive
+generate-ns full: {"status": 200, "content_chunks": 1, "wall_s": 39.267, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/generate-ns/full
+generate-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790604314.6382632, "followup_status": 200, "followup_wall_s": 1.913, "followup_server_total_s": 1.517} {"npu_hold_s": 0.396, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/generate-ns/decode
+PASS gemma4/generate-ns/server-alive
+completions-ns full: {"status": 200, "content_chunks": 1, "wall_s": 39.205, "finish_reason": "length", "completion_tokens": 512}
+PASS gemma4/completions-ns/full
+completions-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790604358.8373458} {"npu_hold_s": 0.073, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/completions-ns/decode
+PASS gemma4/completions-ns/server-alive
+== summary ==
+PASS llama/chat/full
+PASS llama/chat/decode
+PASS llama/chat/prefill
+PASS llama/chat/server-alive
+PASS llama/generate/full
+PASS llama/generate/decode
+PASS llama/generate/prefill
+PASS llama/generate/server-alive
+PASS llama/openai/full
+PASS llama/openai/decode
+PASS llama/openai/prefill
+PASS llama/openai/server-alive
+PASS llama/completions/full
+PASS llama/completions/decode
+PASS llama/completions/prefill
+PASS llama/completions/server-alive
+PASS llama/generate-ns/full
+PASS llama/generate-ns/decode
+PASS llama/generate-ns/server-alive
+PASS llama/completions-ns/full
+PASS llama/completions-ns/decode
+PASS llama/completions-ns/server-alive
+PASS gemma4/chat/full
+PASS gemma4/chat/decode
+PASS gemma4/chat/prefill
+PASS gemma4/chat/server-alive
+PASS gemma4/generate/full
+PASS gemma4/generate/decode
+PASS gemma4/generate/prefill
+PASS gemma4/generate/server-alive
+PASS gemma4/openai/full
+PASS gemma4/openai/decode
+PASS gemma4/openai/prefill
+PASS gemma4/openai/server-alive
+PASS gemma4/completions/full
+PASS gemma4/completions/decode
+PASS gemma4/completions/prefill
+PASS gemma4/completions/server-alive
+PASS gemma4/generate-ns/full
+PASS gemma4/generate-ns/decode
+PASS gemma4/generate-ns/server-alive
+PASS gemma4/completions-ns/full
+PASS gemma4/completions-ns/decode
+PASS gemma4/completions-ns/server-alive
+44 passed, 0 failed
