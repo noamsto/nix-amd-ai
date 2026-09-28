@@ -1,0 +1,154 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 2aed49d..6b9c42a 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -533,6 +533,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+ ///@return the rest handler
+ RestHandler::~RestHandler() = default;
+ 
++///@brief Publish the chat model tag that /api/ps lists
++///@param tag the serving tag, or empty when no chat model is serving
++void RestHandler::publish_serving_chat_tag(std::string tag) {
++    std::lock_guard<std::mutex> lock(loaded_model_mutex);
++    serving_chat_tag = std::move(tag);
++}
++
++///@brief Snapshot the chat model tag that /api/ps lists
++///@return the serving tag, or empty when no chat model is serving
++std::string RestHandler::serving_chat_tag_snapshot() const {
++    std::lock_guard<std::mutex> lock(loaded_model_mutex);
++    return serving_chat_tag;
++}
++
+ ///@brief Ensure the model is loaded
+ ///@param model_tag the model tag
+ ///@param model_field_present whether the request actually carried a "model" key
+@@ -592,6 +606,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         return ModelLoad::LoadFailed;
+     }
+ 
++    publish_serving_chat_tag("");
+     std::this_thread::sleep_for(std::chrono::milliseconds(500));
+     if (auto_chat_engine != nullptr) {
+         auto_chat_engine.reset();
+@@ -642,6 +657,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         return ModelLoad::LoadFailed;
+     }
+ 
++    publish_serving_chat_tag(ensure_tag);
+     current_model_tag = ensure_tag;
+     return ModelLoad::Ok;
+ }
+@@ -1337,14 +1353,16 @@ void RestHandler::handle_ps(const json& request,
+         std::string expires_at = expires_ss.str();
+         
+         json models = json::array();
+-        // The tag is the "model-faker" sentinel with no chat model loaded, and
+-        // still is while the first load runs (the engine is set before the
+-        // tag); rectify_model_tag() is only safe for a supported tag.
+-        if (auto_chat_engine && supported_models.is_model_supported(current_model_tag)) {
+-            auto [new_current_model_tag, model_info] = supported_models.get_model_info(current_model_tag);
++        // ensure_model_loaded publishes this snapshot under a lock. It is empty
++        // with no chat model and during a swap (from teardown of the old engine
++        // until the new one has loaded), so this handler -- not serialised by
++        // the NPU token -- never reads the engine or tag being swapped.
++        const std::string chat_tag = serving_chat_tag_snapshot();
++        if (!chat_tag.empty()) {
++            auto [new_chat_tag, model_info] = supported_models.get_model_info(chat_tag);
+             models.push_back({
+-                {"name", current_model_tag},
+-                {"model", current_model_tag},
++                {"name", chat_tag},
++                {"model", chat_tag},
+                 {"size", model_info["size"]},
+                 {"details", model_info["details"]},
+                 {"expires_at", expires_at},
+diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
+index b904bf8..fdc305b 100644
+--- a/src/server/rest_handler.hpp
++++ b/src/server/rest_handler.hpp
+@@ -22,6 +22,7 @@
+ #include <string>
+ #include <memory>
+ #include <functional>
++#include <mutex>
+ #include "prompt_cache.hpp"
+ 
+ using json = nlohmann::ordered_json;
+@@ -113,6 +114,8 @@ public:
+ 
+ private:
+     ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false);
++    void publish_serving_chat_tag(std::string tag);
++    std::string serving_chat_tag_snapshot() const;
+     void ensure_asr_model_loaded(const std::string& model_tag);
+     void ensure_embed_model_loaded(const std::string& model_tag);
+     void configure_chat_engine_parameters(const json& options, const json& request);
+@@ -128,6 +131,11 @@ private:
+     model_list& supported_models;
+     ModelDownloader& downloader;
+     std::string current_model_tag;
++    // What /api/ps lists: empty while no chat model is serving, including
++    // mid-swap. Guarded by the mutex because /api/ps is not serialised by the
++    // NPU token.
++    mutable std::mutex loaded_model_mutex;
++    std::string serving_chat_tag;
+     std::string default_model_tag;
+     bool modelscope;
+     bool asr;
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 1d903c5..31c3c1c 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -197,6 +197,8 @@ bool requires_npu_access(const std::string& method, const std::string& path) {
+         return path == "/api/generate" || 
+                path == "/api/chat" || 
+                path == "/v1/chat/completions" ||
++               path == "/v1/completions" ||
++               path == "/api/embeddings" ||
+                path == "/v1/audio/transcriptions" ||
+                path == "/v1/embeddings";
+     }
+@@ -788,7 +790,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+         register_active_request(request_id, cancellation_token);
+ 
+         // catch is_deferred
+-        auto send_response = [res_ptr, session, this, request_id, npu_guard, is_deferred, cancellation_token](const json& response_data) {
++        auto send_response = [res_ptr, session, this, request_id, is_deferred, cancellation_token](const json& response_data) {
+             auto& response_ref = *res_ptr;
+             http::status status = http::status::ok;
+ 
+@@ -818,14 +820,12 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             cancellation_token->complete();
+             unregister_active_request(request_id);
+ 
+-            npu_guard->release();
+-
+             if (is_deferred && session) {
+                 session->write_response_from_callback();
+             }
+         };
+ 
+-        auto send_streaming_response = [session, this, request_id, npu_guard, cancellation_token](const json& data, bool is_final) {
++        auto send_streaming_response = [session, this, request_id, cancellation_token](const json& data, bool is_final) {
+             if (is_final) {
+                 cancellation_token->complete();
+             }
+@@ -835,13 +835,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             }
+             if (is_final) {
+                 unregister_active_request(request_id);
+-
+-                npu_guard->release();
+             }
+         };
+ 
+         try {
+             it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
++            // Released only once the handler returns: handlers keep using the
++            // chat engine after sending (clear_context, prompt_cache.reset),
++            // and the next NPU request may swap it.
++            npu_guard->release();
+         }
+         catch (const json::parse_error& e) {
+             // A route handler's own redundant json::parse(req.body()) throws
