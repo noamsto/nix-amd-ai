@@ -82,6 +82,11 @@ in stdenv.mkDerivation {
   ];
 
   postPatch = ''
+    # Since 2026.x the version is derived from git state (tools/version.py); a
+    # tarball has no .git, so it would fall back to a date-stamped
+    # YYYY.WW.0~0.nogit dev version. .version is the script's own override.
+    echo -n "${version}" > .version
+
     # Two install(CODE ...) blocks in cli and the top-level CMakeLists try
     # to symlink binaries / units into /usr/bin and /usr/lib/systemd/system
     # via $ENV{DESTDIR} — designed for Debian's DESTDIR-staged build. In
@@ -166,19 +171,6 @@ in stdenv.mkDerivation {
         'bool will_install_therock(const std::string& os, const json& backend_versions) {' \
         'bool will_install_therock(const std::string& os, const json& backend_versions) {
     return false;  // nix-amd-ai#57: ship self-contained ROCm binaries, never fetch TheRock'
-
-    # ggml-org/gpt-oss-120b-GGUF gained EAGLE3 speculative-decoding drafts after
-    # upstream registered this model with a ":*" checkpoint glob, so the glob now
-    # resolves to eagle3-gpt-oss-120b-BF16.gguf (1.5 GB) instead of the 59 GiB
-    # weights. A draft head can't load standalone -- llama-server exits with
-    # "eagle3 requires ctx_other to be set" -- so `lemonade load` fails. Name the
-    # file, the form the other 227 entries use. The drafts stay unused: lemonade
-    # only emits --spec-type for dflash/mtp, and llama.cpp defaults it to none.
-    # See noamsto/nix-amd-ai#106; drop once upstream fixes the entry.
-    substituteInPlace src/cpp/resources/server_models.json \
-      --replace-fail \
-        '"checkpoint": "ggml-org/gpt-oss-120b-GGUF:*"' \
-        '"checkpoint": "ggml-org/gpt-oss-120b-GGUF:gpt-oss-120b-MXFP4.gguf"'
 
     # Pin backend_versions.json to whatever fastflowlm / llama-cpp /
     # whisper-cpp / sd-cpp builds we ship, so lemonade's "installed vs
