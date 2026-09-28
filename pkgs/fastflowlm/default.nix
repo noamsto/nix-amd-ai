@@ -144,6 +144,16 @@ stdenv.mkDerivation (finalAttrs: {
   #     The disconnect monitor needs no release of its own: it only cancels the
   #     token, and generation still reaches finalize() (or send_response() on
   #     the deferred path).
+  #   - accept-loop-rearm.patch (#202): a client that reset its connection
+  #     while it sat in the accept queue made the HttpSession constructor
+  #     throw: accept() still returns the socket, and remote_endpoint() on it
+  #     fails with ENOTCONN. The throw escaped do_accept's handler after the
+  #     slot was counted and before do_accept() re-armed, so the slot leaked,
+  #     that I/O thread ended, and flm serve never accepted another connection
+  #     until restart. The constructor now uses the error_code overloads (the
+  #     session then ends through read_request's error path, which releases
+  #     the slot), and do_accept catches a throw from session setup, gives the
+  #     slot back itself -- no session owns it yet -- and still re-arms.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -157,7 +167,8 @@ stdenv.mkDerivation (finalAttrs: {
   # releasing the NPU lock before a handler is done with the engine (the last
   # four still on main at 39ff855632), plus leaking a connection slot when a
   # streaming client disconnects (also still on main; see also
-  # ROCm/FastFlowLM#680). A bump that breaks any patch fails the build rather
+  # ROCm/FastFlowLM#680), and a pre-accept reset killing the accept loop (on
+  # main at 39ff855632). A bump that breaks any patch fails the build rather
   # than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -170,6 +181,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/stream-chat-generate.patch
     ./patches/ps-serving-snapshot.patch
     ./patches/connection-slot-release.patch
+    ./patches/accept-loop-rearm.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
