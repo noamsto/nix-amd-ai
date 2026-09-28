@@ -363,9 +363,8 @@ SUMMARY: ThreadSanitizer: data race in RestHandler::ensure_model_loaded(std::str
 """
 
 # A tz race where handle_ps and ensure_model_loaded both appear in the report
-# text, but ensure_model_loaded is only in a thread-creation stack, not in
-# either access stack. Under the old whole-report substring match this would
-# have been misclassified ps-pair; per-stack matching must call it libc-tz.
+# text, but ensure_model_loaded only in a thread-creation stack: libc-tz, not
+# ps-pair.
 TZ_WITH_HANDLE_PS_REPORT = """==================
 WARNING: ThreadSanitizer: data race (pid=12345)
   Write of size 4 at 0x7b0400000200 by thread T2:
