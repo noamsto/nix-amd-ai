@@ -2,7 +2,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 index d463e2a..8fa90ba 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1309,18 +1309,37 @@ void RestHandler::handle_ps(const json& request,
+@@ -1309,18 +1309,35 @@ void RestHandler::handle_ps(const json& request,
          
          std::string expires_at = expires_ss.str();
          
@@ -19,11 +19,9 @@ index d463e2a..8fa90ba 100644
 -            })}
 -        };
 +        json models = json::array();
-+        // List the chat model only when the engine is loaded AND the tag is a
-+        // real one. With no chat model the tag is the "model-faker" sentinel;
-+        // while a load is in progress the new engine is set before the tag,
-+        // so get_model_info() is only safe once current_model_tag names a
-+        // supported model.
++        // The tag is the "model-faker" sentinel with no chat model loaded, and
++        // still is while the first load runs (the engine is set before the
++        // tag); rectify_model_tag() is only safe for a supported tag.
 +        if (auto_chat_engine && supported_models.is_model_supported(current_model_tag)) {
 +            auto [new_current_model_tag, model_info] = supported_models.get_model_info(current_model_tag);
 +            models.push_back({

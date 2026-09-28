@@ -14,6 +14,8 @@ out path the after-174 run ended on.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/ps-loaded-models.patch`
 after `embed-task-prompt.patch`,
 `/nix/store/bnyjhnp4rk1fkdp44j7sk2y27jmrqssv-fastflowlm-1.0.6`.
+A later comment-only cleanup of the patch changed the out path to
+`/nix/store/812b5ni2kx5d3dp79rl1ddansrcia502-fastflowlm-1.0.6`; the code it compiles is unchanged.
 **Round-1 build:** the first version of the patch, before review,
 `/nix/store/hyfz6rf9453d7p322vczrkc7wv8qxaq4-fastflowlm-1.0.6` (see below).
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
