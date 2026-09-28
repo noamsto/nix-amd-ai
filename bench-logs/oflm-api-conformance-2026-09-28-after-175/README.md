@@ -10,11 +10,9 @@ models and ports. Only the `flm` build under test changed.
 **Old build (red):** the #173 tip (`d38bfd7`), which has no `no-exception-text.patch` —
 `/nix/store/zvg05givvmmlmp331fn9imjyfyrr6jyi-fastflowlm-1.0.6`, the same out path
 the after-173 run ended on.
-**New build (green):** this branch, adding `pkgs/fastflowlm/patches/no-exception-text.patch` —
-`/nix/store/1hk1j328srbnqyic0az0m08ffxzf1mms-fastflowlm-1.0.6`.
-Later comment-only changes to the patch moved the out path to
-`/nix/store/5gga3wag3iqndlk6hnlnvic2idl7vlm4-fastflowlm-1.0.6`. The code it
-compiles is the same.
+**New build (green):** this branch, adding `pkgs/fastflowlm/patches/no-exception-text.patch` on top of `main`
+(`8cf6f73`, whose `pkgs/fastflowlm` is identical to the #173 tip) —
+`/nix/store/5gga3wag3iqndlk6hnlnvic2idl7vlm4-fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
