@@ -7,7 +7,7 @@ FastFlowLM server. Refs #147, closes #164. Step 5 of the recommendation in
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver
 `amdxdna`).
 **`flm --version`:** `FLM v1.0.6`, resolved from
-`/nix/store/4kr2zknj1233z2amxlbf5jifb96zcz2n-fastflowlm-wrapped/bin/flm` — this
+`fastflowlm-wrapped/bin/flm` — this
 flake's build, carrying the `pkgs/fastflowlm/patches/http-error-status.patch`
 fix for #157.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`
@@ -59,12 +59,12 @@ was touched).
 
 ## Pass/fail table
 
-| Test file (traces) | PASS | FAIL | ERROR | SKIP | Log |
-| --- | --- | --- | --- | --- | --- |
-| `test_error_status.py` (SERVER-ERROR-STATUS, SERVER-MODEL-IDENTITY) | 1 | 5 | 2 | 0 | [log](test_error_status.log) |
-| `test_finish_reason.py` (SERVER-FINISH-REASON, SERVER-STREAM-PARITY) | 7 | 0 | 0 | 0 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (SERVER-REQUEST-VALIDATION) | 0 | 14 | 0 | 8 | [log](test_request_validation.log) |
-| `test_embed_task_prompt.py` (SERVER-EMBED-TASK-PROMPT, SERVER-MODEL-IDENTITY) | 0 | 3 | 0 | 8 | [log](test_embed_task_prompt.log) |
+| Test file (traces) | PASS | FAIL | ERROR | SKIP |
+| --- | --- | --- | --- | --- |
+| `test_error_status.py` (SERVER-ERROR-STATUS, SERVER-MODEL-IDENTITY) | 1 | 5 | 2 | 0 |
+| `test_finish_reason.py` (SERVER-FINISH-REASON, SERVER-STREAM-PARITY) | 7 | 0 | 0 | 0 |
+| `test_request_validation.py` (SERVER-REQUEST-VALIDATION) | 0 | 14 | 0 | 8 |
+| `test_embed_task_prompt.py` (SERVER-EMBED-TASK-PROMPT, SERVER-MODEL-IDENTITY) | 0 | 3 | 0 | 8 |
 
 **SERVER-FINISH-REASON and SERVER-STREAM-PARITY are fully compliant** on FLM
 1.0.6 — the only clean pass in this run.
@@ -78,7 +78,7 @@ status (`handle_openai_chat_completion`, `handle_openai_audio_transcriptions`,
 the server outright before any response was constructed — undefined behavior
 (`request["field"]` on a `const json&` for a missing key) fires before the
 `catch` mechanism gets a chance to run, so the very code path #157 fixed the
-*status of* is never reached in these cases. See `status-code-check.log` and
+*status of* is never reached in these cases. See the status-code check and
 "Server crashes" below.
 
 The one clean, reproducible, non-crashing case of an error body sent back
@@ -112,7 +112,7 @@ confirmed on:
 - `/api/generate` (probe 5)
 
 `/api/chat` and `/v1/completions` were **not independently isolated** — their
-FAILs in `test_request_validation.log` are cascading `ECONNREFUSED` from the
+FAILs in the `test_request_validation.py` run are cascading `ECONNREFUSED` from the
 `/api/show` crash earlier in the same parametrize sequence, not their own
 confirmed crash. Given the pattern above and the fact that all five endpoints
 share the same `request["field"]`-on-missing-key code shape

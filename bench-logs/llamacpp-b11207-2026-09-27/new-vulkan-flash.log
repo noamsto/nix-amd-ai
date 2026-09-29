@@ -1,30 +1,30 @@
 === new-vulkan-flash ===
 ggml_vulkan: Found 1 Vulkan devices:
 ggml_vulkan: 0 = AMD Radeon 8060S Graphics (RADV STRIX_HALO) (radv) | uma: 1 | fp16: dot2 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 65536 | int dot: 1 | matrix cores: KHR_coopmat
-load_backend: loaded Vulkan backend from /nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/bin/libggml-vulkan.so
-load_backend: loaded CPU backend from /nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/bin/libggml-cpu-zen4.so
+load_backend: loaded Vulkan backend from llama-cpp-11207/bin/libggml-vulkan.so
+load_backend: loaded CPU backend from llama-cpp-11207/bin/libggml-cpu-zen4.so
 radv/amdgpu: Not enough memory for command submission.
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libggml-base.so.0(+0x1b11a) [0x7095a921911a]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libggml-base.so.0(ggml_print_backtrace+0x204) [0x7095a92195e4]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libggml-base.so.0(+0x31339) [0x7095a922f339]
-/nix/store/604gsr59rj7dzd0nrhp143rpvf7gyiaz-gcc-15.3.0-lib/lib/libstdc++.so.6(+0xc533a) [0x7095a84c533a]
-/nix/store/604gsr59rj7dzd0nrhp143rpvf7gyiaz-gcc-15.3.0-lib/lib/libstdc++.so.6(_ZSt10unexpectedv+0x0) [0x7095a84b2830]
-/nix/store/604gsr59rj7dzd0nrhp143rpvf7gyiaz-gcc-15.3.0-lib/lib/libstdc++.so.6(+0xb2847) [0x7095a84b2847]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/bin/libggml-vulkan.so(+0x2ad01) [0x7095a482ad01]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/bin/libggml-vulkan.so(+0x80a2c) [0x7095a4880a2c]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/bin/libggml-vulkan.so(+0x8214e) [0x7095a488214e]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/bin/libggml-vulkan.so(+0x82dc8) [0x7095a4882dc8]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libggml-base.so.0(ggml_backend_sched_graph_compute_async+0x9b4) [0x7095a9239c74]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context13graph_computeEP11ggml_cgraphb+0xa1) [0x7095a8a060f1]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context14process_ubatchERK12llama_ubatch14llm_graph_typeP22llama_memory_context_iR11ggml_status+0x13c) [0x7095a8a09e0c]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context6decodeERK15llama_batch_ext+0x3dc) [0x7095a8a1272c]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context6decodeERK11llama_batch+0x38) [0x7095a8a13ea8]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama.so.0(llama_decode+0x11) [0x7095a8a13f01]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama-bench-impl.so(+0x18e9b) [0x7095a92fae9b]
-/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207/lib/libllama-bench-impl.so(_Z11llama_benchiPPc+0xf30) [0x7095a930ea70]
-/nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libc.so.6(+0x2b285) [0x7095a802b285]
-/nix/store/lm3pknxi0ipypy3lxh1wmm8wvvavdwrn-glibc-2.42-84/lib/libc.so.6(__libc_start_main+0x88) [0x7095a802b338]
-/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-160-bump-llama-cpp-to-b11185-drop-dead-host/00387785-9c41-4840-8636-069f4acac30c/scratchpad/new-vulkan/bin/llama-bench(+0x1085) [0x565d1f0ad085]
+llama-cpp-11207/lib/libggml-base.so.0(+0x1b11a) [0x7095a921911a]
+llama-cpp-11207/lib/libggml-base.so.0(ggml_print_backtrace+0x204) [0x7095a92195e4]
+llama-cpp-11207/lib/libggml-base.so.0(+0x31339) [0x7095a922f339]
+gcc-15.3.0-lib/lib/libstdc++.so.6(+0xc533a) [0x7095a84c533a]
+gcc-15.3.0-lib/lib/libstdc++.so.6(_ZSt10unexpectedv+0x0) [0x7095a84b2830]
+gcc-15.3.0-lib/lib/libstdc++.so.6(+0xb2847) [0x7095a84b2847]
+llama-cpp-11207/bin/libggml-vulkan.so(+0x2ad01) [0x7095a482ad01]
+llama-cpp-11207/bin/libggml-vulkan.so(+0x80a2c) [0x7095a4880a2c]
+llama-cpp-11207/bin/libggml-vulkan.so(+0x8214e) [0x7095a488214e]
+llama-cpp-11207/bin/libggml-vulkan.so(+0x82dc8) [0x7095a4882dc8]
+llama-cpp-11207/lib/libggml-base.so.0(ggml_backend_sched_graph_compute_async+0x9b4) [0x7095a9239c74]
+llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context13graph_computeEP11ggml_cgraphb+0xa1) [0x7095a8a060f1]
+llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context14process_ubatchERK12llama_ubatch14llm_graph_typeP22llama_memory_context_iR11ggml_status+0x13c) [0x7095a8a09e0c]
+llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context6decodeERK15llama_batch_ext+0x3dc) [0x7095a8a1272c]
+llama-cpp-11207/lib/libllama.so.0(_ZN13llama_context6decodeERK11llama_batch+0x38) [0x7095a8a13ea8]
+llama-cpp-11207/lib/libllama.so.0(llama_decode+0x11) [0x7095a8a13f01]
+llama-cpp-11207/lib/libllama-bench-impl.so(+0x18e9b) [0x7095a92fae9b]
+llama-cpp-11207/lib/libllama-bench-impl.so(_Z11llama_benchiPPc+0xf30) [0x7095a930ea70]
+glibc-2.42-84/lib/libc.so.6(+0x2b285) [0x7095a802b285]
+glibc-2.42-84/lib/libc.so.6(__libc_start_main+0x88) [0x7095a802b338]
+$SCRATCH/scratchpad/new-vulkan/bin/llama-bench(+0x1085) [0x565d1f0ad085]
 terminate called after throwing an instance of 'vk::DeviceLostError'
   what():  vk::Queue::submit: ErrorDeviceLost
 timeout: the monitored command dumped core

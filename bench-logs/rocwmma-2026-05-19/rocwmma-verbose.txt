@@ -1,6 +1,6 @@
 ggml_cuda_init: found 1 ROCm devices (Total VRAM: 27935 MiB):
   Device 0: AMD Radeon 890M Graphics, gfx1150 (0x1150), VMM: no, Wave Size: 32, VRAM: 27935 MiB
-llama_model_loader: loaded meta data with 60 key-value pairs and 658 tensors from /home/noams/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/8bacec5c8e829a25502cdfe3c3f5b6aabee3218c/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf (version GGUF V3 (latest))
+llama_model_loader: loaded meta data with 60 key-value pairs and 658 tensors from $HOME/.cache/huggingface/hub/models--unsloth--gemma-4-26B-A4B-it-GGUF/snapshots/8bacec5c8e829a25502cdfe3c3f5b6aabee3218c/gemma-4-26B-A4B-it-UD-Q4_K_M.gguf (version GGUF V3 (latest))
 llama_model_loader: Dumping metadata keys/values. Note: KV overrides do not apply in this output.
 llama_model_loader: - kv   0:                       general.architecture str              = gemma4
 llama_model_loader: - kv   1:                               general.type str              = model

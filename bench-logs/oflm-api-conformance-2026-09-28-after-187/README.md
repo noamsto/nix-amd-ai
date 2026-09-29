@@ -8,10 +8,10 @@ are the same. Only the `flm` build under test changed.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Base build (red):** the #181 tip, this branch's base (`feat/181-...`),
-`/nix/store/zwsp7lgi8klb4wd1fbvqmfya4gj8nn06-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **New build (green):** this branch, adding
 `pkgs/fastflowlm/patches/stream-chat-generate.patch`,
-`/nix/store/fqkyn7jv5mqvzc51fgq4vghv33slqar7-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (port 58601) and `gemma4-it:e4b` (port 58603).
 
@@ -64,10 +64,9 @@ requests in this order, all with the same prompt and `top_k: 1` (greedy):
 3. `stream-chat`: streaming `/api/chat`, the #187 path
 4. `nonstream-after`: `nonstream-chat` again
 
-The checks are the contract, and they are the same for every build. Red:
-[`before/probes.txt`](before/probes.txt), 4 passed, 8 failed. Green:
-[`probes.txt`](probes.txt), 12 passed, 0 failed. Each request's raw reply is in
-`<model>.<case>.{ndjson,sse}`, with every line stamped by its arrival time.
+The checks are the contract, and they are the same for every build. Red: 4 passed, 8 failed. Green: 12 passed, 0 failed. `probes.sh` also writes each
+request's raw reply to `<model>.<case>.{ndjson,sse}`, every line stamped by its
+arrival time. Those captures are not committed.
 
 | Check (per model) | Red build | Green build |
 | --- | --- | --- |
@@ -78,7 +77,7 @@ The checks are the contract, and they are the same for every build. Red:
 | `stream-chat/matches-nonstream`: streamed text == non-streamed text | **FAIL**: empty | PASS |
 | `nonstream-after`: same answer as `nonstream-chat` | **FAIL**: server gone | PASS |
 
-Green `stream-chat`, from the transcripts:
+Green `stream-chat`, from the captured streams:
 
 | Model | Chunks | First chunk | Total | `prompt_eval_count` | `eval_count` | `done_reason` | Prefill log lines |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -102,14 +101,14 @@ took 0.604 s before and 0.613 s after, and gemma4 took 2.271 s on both.
 They were run against the new build. OFLM-Next has no streaming `/api/chat`
 test, so no result was expected to change.
 
-| Test file | After #181 | After #187 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | After #181 | After #187 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 |
 
 For each file, the sorted per-test PASS/FAIL/SKIP lines are identical to the
 after-181 logs.

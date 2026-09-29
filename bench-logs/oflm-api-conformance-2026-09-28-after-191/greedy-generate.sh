@@ -12,7 +12,7 @@ set -u
 FLM=${1:?usage: greedy-generate.sh <flm-binary> <outdir>}
 outdir=${2:?usage: greedy-generate.sh <flm-binary> <outdir>}
 mkdir -p "$outdir" || exit 1
-libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+libpath=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 prompt="Write a detailed essay of at least 2000 words on the history of the printing press."
 pid=""
 

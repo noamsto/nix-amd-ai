@@ -23,12 +23,12 @@ run-to-run. That is the number this log re-tests.
 
 ## Method
 
-- **Old** = `/nix/store/kw9ym27nvxsdgnh238222yv1ngw37hw6-llama-cpp-0.4.1`
+- **Old** = `llama-cpp-0.4.1`
   (`llama-bench`, `libggml-vulkan.so`), upstream tag b10964, commit `b29c606`.
-- **New** = `/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207`,
+- **New** = `llama-cpp-11207`,
   upstream tag b11207, commit `7ac59a6`.
 - **Model** = `gpt-oss-120b-MXFP4.gguf` (63,387,346,208 bytes),
-  `/var/lib/models/hf/hub/models--ggml-org--gpt-oss-120b-GGUF/snapshots/238abdd290bb874b90a5da1b4549881b7d05c091/`.
+  `<hf-cache>/models--ggml-org--gpt-oss-120b-GGUF/snapshots/238abdd290bb874b90a5da1b4549881b7d05c091/`.
 - **Command per run** (tg only; pp512 not re-measured here, see *Not measured*):
   `llama-bench -m <model> -ngl 99 -p 0 -n 128 -r 5 -o json`
 - **Guard before every run**: the wrapper waits up to 90 s for
@@ -53,7 +53,7 @@ run-to-run. That is the number this log re-tests.
   All disk and CPU work (the build trees, the model sha256) was kept off the
   GPU and away from the runs.
 
-Raw per-run `llama-bench` JSON (stdout) and stderr logs are in each phase
+Raw per-run `llama-bench` JSON (stdout) is in each phase
 directory; `analyze.py` regenerates the table and statistics below. No build
 recipe is committed: the result uses the two nix-store Vulkan binaries above,
 and no bisect build tree was used.

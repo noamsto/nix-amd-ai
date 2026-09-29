@@ -13,7 +13,7 @@ port=${2:?port}
 count=${3:?count}
 out=${4:?outdir}
 label=${5:-run}
-LIB=${XRT_LIB_DIR:-/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib}
+LIB=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 pid=""
 rc=0
 

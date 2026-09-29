@@ -19,7 +19,7 @@ outdir=${2:?usage: npu-lock.sh <flm> <outdir> <label>}
 label=${3:?usage: npu-lock.sh <flm> <outdir> <label>}
 mkdir -p "$outdir"
 
-LIB=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+LIB=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 PORT=58605
 server_log="$outdir/server-npu-lock-$label.log"
 chat_code_file="$outdir/npu-lock-$label.chat-code.txt"

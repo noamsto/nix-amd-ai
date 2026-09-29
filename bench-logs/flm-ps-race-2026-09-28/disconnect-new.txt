@@ -1,8 +1,0 @@
-INFO disconnect={"status": 200, "chunks": 5, "elapsed_s": 0.452, "error": null} chat_code=200 chat_time_total=5.227974 completions_again_code=200 completions_again_done=true server_alive=true
-PASS chat-200
-PASS completions-again-done
-PASS server-alive
-PASS no-heap-corruption
-PASS no-runlist-error
-INFO npu-locked-count=2 request-queued-count=1
-INFO error: none

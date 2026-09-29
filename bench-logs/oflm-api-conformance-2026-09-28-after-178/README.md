@@ -9,15 +9,15 @@ the same `run_spec_tests.py` shim, OFLM-Next commit, models and ports. Only the
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Old build (red):** the #174 tip (`de32509`, no `ps-loaded-models.patch`; its
 tree is identical to `328ebd2`, #182's squash-merge that this branch sits on),
-`/nix/store/8gq9j6m68klpv79xs933s1m4xqvgxjg6-fastflowlm-1.0.6`. This is the same
+`fastflowlm-1.0.6`. This is the same
 out path the after-174 run ended on.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/ps-loaded-models.patch`
 after `embed-task-prompt.patch`,
-`/nix/store/bnyjhnp4rk1fkdp44j7sk2y27jmrqssv-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 A later comment-only cleanup of the patch changed the out path to
-`/nix/store/812b5ni2kx5d3dp79rl1ddansrcia502-fastflowlm-1.0.6`; the code it compiles is unchanged.
+`fastflowlm-1.0.6`; the code it compiles is unchanged.
 **Round-1 build:** the first version of the patch, before review,
-`/nix/store/hyfz6rf9453d7p322vczrkc7wv8qxaq4-fastflowlm-1.0.6` (see below).
+`fastflowlm-1.0.6` (see below).
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
@@ -30,8 +30,7 @@ running and never touched. Each `flm serve` was stopped by its PID.
 [`probes.sh`](probes.sh) `<flm> <outdir>` starts `flm serve` once per state on
 port 58601 (with `LD_LIBRARY_PATH` as in the #171 README, per #148). It reads
 `GET /api/ps` and checks the result against the oracle. Old build:
-[`before/probes.txt`](before/probes.txt). New build: [`probes.txt`](probes.txt).
-Server logs are the `server-<state>.log` files.
+New build: see the table below. The probe and server logs are not committed; rerun `probes.sh`.
 
 | State (`flm serve …`) | Expected | Old build | New build |
 | --- | --- | --- | --- |
@@ -75,7 +74,7 @@ The first version of the patch listed the chat model whenever
 new engine before it updates `current_model_tag`. `GET /api/ps` is not
 serialized by the NPU lock, so a `/api/ps` during the first load still saw the
 sentinel. The `ps-during-load` state reproduces that on the round-1 build:
-16 of 25 polls answered 400 ([`round1/probes.txt`](round1/probes.txt)). The
+16 of 25 polls answered 400. The
 patch now also requires `current_model_tag` to be a supported tag, which is
 the precondition `rectify_model_tag` needs. While one chat model replaces
 another, `/api/ps` still reports the outgoing model until the new tag is set,
@@ -85,15 +84,15 @@ as it did before this change.
 
 [`conformance.sh`](conformance.sh) `<flm> <outdir> <oflm-next>` runs the same
 servers and test files as the after-174 run: llama on 58601, gemma4 on 58603,
-and llama with `--embed 1` on 58602. Server logs are `server-conformance-*.log`.
+and llama with `--embed 1` on 58602.
 
-| Test file | After #174 | After #178 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | After #174 | After #178 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 |
 
 For each file, the sorted per-test PASS/FAIL/SKIP lines are identical to the after-174 logs.

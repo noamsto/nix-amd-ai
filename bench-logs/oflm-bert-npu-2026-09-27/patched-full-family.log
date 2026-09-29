@@ -35,12 +35,12 @@
   identity qkv@b128 vs ffn_down@b128  69 differing bytes in 8 runs, longest 30 B  OK
   toolchain  mlir_aie 1.4.2, peano 21.0.0.2026080301+c9c5ecb7, mlir-aie HEAD unavailable
 
-  wrote /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h384-bfp16/gemm_rtp -- ONE xclbin, 16 streams (4 shapes x 4 batch tiers)
+  wrote $SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h384-bfp16/gemm_rtp -- ONE xclbin, 16 streams (4 shapes x 4 batch tiers)
 ok       BERT-h384-bfp16
-MISSING  BERT-h384-bf16: not built (/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h384-bf16/gemm_rtp/design.json)
-MISSING  BERT-h768-bfp16: not built (/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h768-bfp16/gemm_rtp/design.json)
-MISSING  BERT-h768-gated-bfp16: not built (/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h768-gated-bfp16/gemm_rtp/design.json)
-MISSING  BERT-h1024-bfp16: not built (/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h1024-bfp16/gemm_rtp/design.json)
+MISSING  BERT-h384-bf16: not built ($SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h384-bf16/gemm_rtp/design.json)
+MISSING  BERT-h768-bfp16: not built ($SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h768-bfp16/gemm_rtp/design.json)
+MISSING  BERT-h768-gated-bfp16: not built ($SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h768-gated-bfp16/gemm_rtp/design.json)
+MISSING  BERT-h1024-bfp16: not built ($SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/out/full-family/BERT-h1024-bfp16/gemm_rtp/design.json)
 
 4 families disagree with families.json.
 Either the set is stale -- rebuild it with build.ps1 -Force -- or families.json is wrong, in which case fix it there and nowhere else: it is the only place these flags are written down.

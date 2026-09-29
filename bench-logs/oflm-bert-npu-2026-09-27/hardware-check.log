@@ -78,7 +78,7 @@ session's scratchpad, not preserved on disk beyond this run):
     <clone>/ironvenv/bin/python3 prepare2.py    # ffn_down_b4, qkv_b128
 
   # real hardware execution (python3.12 + pyxrt venv)
-  XILINX_XRT=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined \
+  XILINX_XRT=xrt-combined \
   PYTHONPATH=$XILINX_XRT/python \
   LD_LIBRARY_PATH=/run/current-system/sw/share/nix-ld/lib \
     timeout 90 pyxrt-venv/bin/python3 run_on_npu.py     # qkv_b4

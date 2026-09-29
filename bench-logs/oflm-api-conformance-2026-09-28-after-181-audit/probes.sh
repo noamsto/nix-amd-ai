@@ -23,7 +23,7 @@ mkdir -p "$outdir"
 
 port=58601
 base="http://127.0.0.1:$port"
-libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+libpath=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 health_url=http://127.0.0.1:13305/api/v1/health
 
 shipped_list="$(dirname "$FLM")/../share/flm/model_list.json"

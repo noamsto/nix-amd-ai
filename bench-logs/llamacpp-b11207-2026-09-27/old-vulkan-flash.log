@@ -1,8 +1,8 @@
 === old-vulkan-flash ===
 ggml_vulkan: Found 1 Vulkan devices:
 ggml_vulkan: 0 = AMD Radeon 8060S Graphics (RADV STRIX_HALO) (radv) | uma: 1 | fp16: dot2 | bf16: 0 | fp4: 0 | warp size: 64 | shared memory: 65536 | int dot: 1 | matrix cores: KHR_coopmat
-load_backend: loaded Vulkan backend from /nix/store/kw9ym27nvxsdgnh238222yv1ngw37hw6-llama-cpp-0.4.1/bin/libggml-vulkan.so
-load_backend: loaded CPU backend from /nix/store/kw9ym27nvxsdgnh238222yv1ngw37hw6-llama-cpp-0.4.1/bin/libggml-cpu-zen4.so
+load_backend: loaded Vulkan backend from llama-cpp-0.4.1/bin/libggml-vulkan.so
+load_backend: loaded CPU backend from llama-cpp-0.4.1/bin/libggml-cpu-zen4.so
 | model                          |       size |     params | backend    | ngl |            test |                  t/s |
 | ------------------------------ | ---------: | ---------: | ---------- | --: | --------------: | -------------------: |
 | qwen4exp A3B IQ4_XS - 4.25 bpw |  87.24 GiB |   176.94 B | Vulkan     |  99 |           pp512 |        365.81 ± 6.80 |

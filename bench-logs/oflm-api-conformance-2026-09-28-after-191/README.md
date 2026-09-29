@@ -11,10 +11,10 @@ that route behind the NPU lock.
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Base build (red):** `main` at ae40eed (#196); #193 (cfb936b) above it
 only bumps flake.lock/lemonade, so the fastflowlm derivation is unchanged.
-`/nix/store/hzqppl44zhfxpk0nl1wv6r8fd69g4w4p-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **New build (green):** this branch, rebased onto cfb936b, adding
 `pkgs/fastflowlm/patches/cancel-client-disconnect.patch`,
-`/nix/store/vrjxsjfalvp7169snygf1slcvph2xyp6-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (port 58601) and `gemma4-it:e4b` (port 58603).
 
@@ -82,8 +82,7 @@ stream leaks one of `flm serve`'s 10 connection slots (#194).
 The contract is the same for both builds. Mid-decode and after a dequeue, the
 hold must be under 2 s. Mid-prefill, no further prefill chunk may start (the
 chunk already on the NPU cannot be interrupted). Red:
-[`before/disconnect.txt`](before/disconnect.txt), 28 passed, 20 failed. Green:
-[`disconnect.txt`](disconnect.txt), 48 passed, 0 failed.
+28 passed, 20 failed. Green: 48 passed, 0 failed.
 
 | Case | llama red | llama green | gemma4 red | gemma4 green |
 | --- | --- | --- | --- | --- |
@@ -117,9 +116,9 @@ already closed its socket by the time the request is dequeued. The monitor
 then fires as soon as it is armed, before the handler starts work. A
 non-streaming reply writes nothing until the end, so nothing else notices the
 dead socket. The first version of this patch called `reset()` on the
-non-streaming branches too. [`reset-sensitivity/`](reset-sensitivity/) runs
+non-streaming branches too. A run of
 the `generate-ns` cases on that build,
-`/nix/store/jfwv0r1sfs1w9g5vlmws3gfzkv66qa5a-fastflowlm-1.0.6`. It decodes a
+`fastflowlm-1.0.6`. It decodes a
 queued request whose client has gone for 8.46 s on llama and 39.83 s on
 gemma4, as red does, while its mid-decode case passes (0.34 s, 0.40 s). The
 green build has no non-streaming `reset()` and stops it in 0.33 s.
@@ -145,8 +144,7 @@ server per model and first sends a one-token `/api/chat` with `top_k: 1`,
 which leaves the sampler greedy for `/api/generate`. It then records a
 streaming and a non-streaming `/api/generate` reply. On both builds all four
 end `length` at 512 tokens, and each is byte-identical between
-[`greedy-generate/before/`](greedy-generate/before/) and
-[`greedy-generate/after/`](greedy-generate/after/).
+the two builds (the reply files are not committed).
 
 ## Conformance rerun
 
@@ -155,14 +153,14 @@ end `length` at 512 tokens, and each is byte-identical between
 They were run against the new build. For each file, the sorted per-test
 PASS/FAIL/SKIP lines are identical to the after-187 logs.
 
-| Test file | After #187 | After #191 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | After #187 | After #191 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 |
 
 ## Not measured
 
