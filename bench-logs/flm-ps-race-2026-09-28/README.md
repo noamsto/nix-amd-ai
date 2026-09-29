@@ -264,7 +264,7 @@ sending the chat to its reply.
 `auto_chat_engine.reset()` and the new engine's assignment. After that it lists
 `llama3.2:1b` for the rest of the gemma4 load, because the new engine is set
 but the tag is not. With the fix, `[]` runs from the teardown until gemma4 is
-serving. Raw polls are in `ps-swap-*.tsv` (`epoch_ms`, code, `time_total`, names).
+serving. Raw polls are in `before/ps-swap-base.tsv` and `ps-swap-new.tsv` (`epoch_ms`, code, `time_total`, names).
 
 ## Conformance rerun
 
