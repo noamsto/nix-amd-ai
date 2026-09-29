@@ -38,11 +38,19 @@ check its `generate()` has. `handle_chat` passes the token, without calling
 `reset()`. A cancel surfaces the way non-streaming `/api/generate` shows one
 after #195:
 
-- Cancelled with nothing produced: `{}` and `Prefill Cancelled!`. This is not a
-  strict prefill/decode split, since a decode cancelled before any visible token
-  also gets `{}`.
+- `generate_with_prompt()` returned nothing and no token was generated: `{}`
+  and `Prefill Cancelled!`. This covers a cancelled prefill and a decode
+  cancelled before any visible token, so it is not a strict prefill/decode
+  split.
 - Otherwise: 200 with the partial reply, `done_reason: "cancel"`, and
-  `Generation Cancelled!`.
+  `Generation Cancelled!`. GPT-OSS always wraps its reply in
+  `<|start|>assistant…<|end|>`, so a cancelled GPT-OSS decode takes this
+  branch even with no token.
+
+`Qwen3_5_Omni::insert` records a prefill cancel but still returns true, so its
+`generate()` decodes one forced token before it checks the token. That is a
+pre-existing defect, filed as a follow-up. No `qwen3.5-omni` entry is in
+v1.0.6's `model_list.json`, so `flm serve` cannot load that class today.
 
 A cancel never throws, so #186's 400/500 classification is untouched.
 

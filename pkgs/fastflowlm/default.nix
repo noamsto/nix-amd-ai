@@ -181,10 +181,12 @@ stdenv.mkDerivation (finalAttrs: {
   #     forwarded to the insert()/generate() each already calls (Nanbeige's
   #     inlined decode loop gets the same check its generate() has);
   #     insert()+generate() was not an option (#180). A cancelled request
-  #     answers like non-streaming /api/generate: {} when it was cancelled
-  #     before producing anything (not a strict prefill/decode split: a
-  #     decode cancel before any visible token also answers {}), else 200
-  #     with the partial reply and done_reason "cancel". No reset(), and a
+  #     answers like non-streaming /api/generate: {} when
+  #     generate_with_prompt() returned nothing and no token was generated
+  #     (a cancelled prefill, or a decode cancelled before any visible
+  #     token), else 200 with the partial reply and done_reason "cancel".
+  #     GPT-OSS always wraps its reply in <|start|>assistant...<|end|>, so a
+  #     cancelled decode there gets the wrapper, not {}. No reset(), and a
   #     cancel never throws, so #180's 400/500 split is unaffected.
   #   - cancel-keep-early.patch (#201): the streaming handlers called
   #     cancellation_token->reset() before insert(), so a cancel that landed
