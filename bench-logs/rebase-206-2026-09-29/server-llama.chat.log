@@ -1,0 +1,189 @@
+1790661955.754	[FLM]  Using user-specified port: 58601
+1790661956.270	[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+1790661958.144	[FLM]  Starting server on port 58601...
+1790661958.144	[FLM]  WebServer started on port 58601 with 10 I/O threads
+1790661958.144	[FLM]  Press Ctrl+C to stop.
+1790661958.144	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58452
+1790661958.144	[TCP]  Read 90 bytes from socket
+1790661958.144	================================================
+1790661958.144	[⬇️ ]  Incoming Request: GET
+1790661958.144	[LOG]  Time stamp: 09:05:58 09:29:2026
+1790661958.144	[LOG]  Target: /api/version
+1790661958.144	[LOG]  Version: 11
+1790661958.144	[LOG]  Keep-Alive: 1
+1790661958.144	================================================
+1790661958.144	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58452
+1790661958.171	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58462
+1790661958.171	[TCP]  Read 345 bytes from socket
+1790661958.171	================================================
+1790661958.171	[⬇️ ]  Incoming Request: POST
+1790661958.171	[LOG]  Time stamp: 09:05:58 09:29:2026
+1790661958.171	[LOG]  Target: /api/chat
+1790661958.171	[LOG]  Version: 11
+1790661958.171	[LOG]  Keep-Alive: 1
+1790661958.171	[LOG]  Body: 
+1790661958.171	{
+1790661958.171	    "messages": [
+1790661958.171	        {
+1790661958.171	            "content": "Write a de...ing press.",
+1790661958.171	            "role": "user"
+1790661958.171	        }
+1790661958.171	    ],
+1790661958.171	    "model": "llama3.2:1b",
+1790661958.171	    "options": {
+1790661958.171	        "num_predict": 512
+1790661958.171	    },
+1790661958.171	    "stream": true,
+1790661958.171	    "top_k": 1
+1790661958.171	}
+1790661958.171	[🟢 ]  NPU Locked!
+1790661958.171	[FLM]  Start generating...
+1790661958.172	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790661966.371	
+1790661966.371	[FLM]  Model RAW Output: 
+1790661966.371	The History of the Printing Press: A Revolutionary Innovation
+1790661966.371	
+1790661966.371	The printing press, invented by Johannes Gutenberg in the 15th century, was a game-changing innovation that revolutionized the way people communicated, learned, and created. This remarkable device, which combined the principles of movable type and mechanical pressure, enabled mass production of printed materials, transforming the world in ways that were both profound and far-reaching. In this essay, we will delve into the fascinating history of the printing press, exploring its development, evolution, and impact on society.
+1790661966.371	
+1790661966.371	The Early Days of Printing
+1790661966.371	
+1790661966.371	The concept of printing dates back to ancient China, where paper was first invented in the 2nd century AD. The first known printed book was the "Bamboo Book," a collection of Buddhist scriptures that was printed on paper in the 8th century. However, it was not until the 10th century that the first movable-type printing press was invented in China. The press, known as the " movable-type printing press," was a wooden or bamboo frame that held a set of metal characters, which could be rearranged to form different words and phrases.
+1790661966.371	
+1790661966.371	The movable-type printing press was a significant innovation, as it allowed for the mass production of printed materials. The first movable-type printing press was invented by the Chinese in the 10th century, and it was used to print Buddhist scriptures. The press was so successful that it spread throughout China, and it was later introduced to Europe by the Arabs in the 9th century.
+1790661966.371	
+1790661966.371	Johannes Gutenberg and the Development of the Printing Press
+1790661966.371	
+1790661966.371	Johannes Gutenberg, a German goldsmith and printer, is credited with inventing the first movable-type printing press in the 1440s. Gutenberg's press was a wooden or metal frame that held a set of metal characters, which could be rearranged to form different words and phrases. The press was so successful that it was used to print the first books in Europe, including the Gutenberg Bible, which was printed in 1455.
+1790661966.371	
+1790661966.371	Gutenberg's printing press was a significant innovation, as it allowed for the mass production of printed materials. The press was so successful that it spread throughout Europe, and it was later introduced to Asia by the Chinese. The printing press was also used to print books, newspapers, and other written materials, revolutionizing the way people communicated and learned.
+1790661966.371	
+1790661966.371	The Evolution of the Printing Press
+1790661966.371	
+1790661966.371	The printing press underwent significant changes over the centuries, with innovations such as the development of the screw-based press, the introduction of the iron type, and the creation of the
+1790661966.371	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790661966.372	[🔵 ]  NPU Lock Released!
+1790661966.409	[🔗 ]  TCP connection established - Remote: 127.0.0.1:46830
+1790661966.409	[TCP]  Read 345 bytes from socket
+1790661966.409	================================================
+1790661966.409	[⬇️ ]  Incoming Request: POST
+1790661966.409	[LOG]  Time stamp: 09:06:06 09:29:2026
+1790661966.409	[LOG]  Target: /api/chat
+1790661966.409	[LOG]  Version: 11
+1790661966.409	[LOG]  Keep-Alive: 1
+1790661966.409	[LOG]  Body: 
+1790661966.409	{
+1790661966.409	    "messages": [
+1790661966.409	        {
+1790661966.409	            "content": "Write a de...ing press.",
+1790661966.409	            "role": "user"
+1790661966.409	        }
+1790661966.409	    ],
+1790661966.409	    "model": "llama3.2:1b",
+1790661966.409	    "options": {
+1790661966.409	        "num_predict": 512
+1790661966.409	    },
+1790661966.409	    "stream": true,
+1790661966.409	    "top_k": 1
+1790661966.409	}
+1790661966.409	[🟢 ]  NPU Locked!
+1790661966.409	[FLM]  Start generating...
+1790661966.410	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790661966.859	[🔴 ]  Client disconnected; cancelling active request
+1790661966.859	[🔗 ]  TCP connection established - Remote: 127.0.0.1:46846
+1790661966.860	[TCP]  Read 268 bytes from socket
+1790661966.860	================================================
+1790661966.860	[⬇️ ]  Incoming Request: POST
+1790661966.860	[LOG]  Time stamp: 09:06:06 09:29:2026
+1790661966.860	[LOG]  Target: /api/chat
+1790661966.860	[LOG]  Version: 11
+1790661966.860	[LOG]  Keep-Alive: 1
+1790661966.860	[LOG]  Body: 
+1790661966.860	{
+1790661966.860	    "messages": [
+1790661966.860	        {
+1790661966.860	            "content": "Say hi.",
+1790661966.860	            "role": "user"
+1790661966.860	        }
+1790661966.860	    ],
+1790661966.860	    "model": "llama3.2:1b",
+1790661966.860	    "options": {
+1790661966.860	        "num_predict": 4
+1790661966.860	    },
+1790661966.860	    "stream": false,
+1790661966.860	    "top_k": 1
+1790661966.860	}
+1790661966.860	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790661966.874	
+1790661966.874	[FLM]  Model RAW Output: 
+1790661966.874	The History of the Printing Press
+1790661966.874	[❌ ]  Generation Cancelled!
+1790661967.208	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790661967.208	[FLM]  Start generating...
+1790661967.209	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790661967.643	
+1790661967.643	[FLM]  Model RAW Output: 
+1790661967.643	Hi.
+1790661967.643	================================================
+1790661967.643	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:46846
+1790661967.645	[🔵 ]  NPU Lock Released!
+1790661968.713	[🔗 ]  TCP connection established - Remote: 127.0.0.1:46848
+1790661968.714	[TCP]  Read 54289 bytes from socket
+1790661968.714	================================================
+1790661968.714	[⬇️ ]  Incoming Request: POST
+1790661968.714	[LOG]  Time stamp: 09:06:08 09:29:2026
+1790661968.714	[LOG]  Target: /api/chat
+1790661968.714	[LOG]  Version: 11
+1790661968.714	[LOG]  Keep-Alive: 1
+1790661968.714	[LOG]  Body: 
+1790661968.714	{
+1790661968.714	    "messages": [
+1790661968.714	        {
+1790661968.714	            "content": "The quick ...ext above.",
+1790661968.714	            "role": "user"
+1790661968.714	        }
+1790661968.714	    ],
+1790661968.714	    "model": "llama3.2:1b",
+1790661968.714	    "options": {
+1790661968.714	        "num_predict": 512
+1790661968.714	    },
+1790661968.714	    "stream": true,
+1790661968.714	    "top_k": 1
+1790661968.714	}
+1790661968.714	[🟢 ]  NPU Locked!
+1790661968.715	[FLM]  Start generating...
+1790661968.726	[FLM]  Prefill chunk 1/3 with 4096 tokens
+1790661969.014	[🔴 ]  Client disconnected; cancelling active request
+1790661969.014	[🔗 ]  TCP connection established - Remote: 127.0.0.1:46862
+1790661969.015	[TCP]  Read 268 bytes from socket
+1790661969.015	================================================
+1790661969.015	[⬇️ ]  Incoming Request: POST
+1790661969.015	[LOG]  Time stamp: 09:06:09 09:29:2026
+1790661969.015	[LOG]  Target: /api/chat
+1790661969.015	[LOG]  Version: 11
+1790661969.015	[LOG]  Keep-Alive: 1
+1790661969.015	[LOG]  Body: 
+1790661969.015	{
+1790661969.015	    "messages": [
+1790661969.015	        {
+1790661969.015	            "content": "Say hi.",
+1790661969.015	            "role": "user"
+1790661969.015	        }
+1790661969.015	    ],
+1790661969.015	    "model": "llama3.2:1b",
+1790661969.015	    "options": {
+1790661969.015	        "num_predict": 4
+1790661969.015	    },
+1790661969.015	    "stream": false,
+1790661969.015	    "top_k": 1
+1790661969.015	}
+1790661969.015	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790661970.579	[❌ ]  Prefill Cancelled!
+1790661970.913	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790661970.913	[FLM]  Start generating...
+1790661970.913	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790661971.372	
+1790661971.372	[FLM]  Model RAW Output: 
+1790661971.372	Hi.
+1790661971.372	================================================
+1790661971.373	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:46862
+1790661971.374	[🔵 ]  NPU Lock Released!
