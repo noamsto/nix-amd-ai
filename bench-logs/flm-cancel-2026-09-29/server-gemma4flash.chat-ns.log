@@ -1,0 +1,243 @@
+1790668075.891	[FLM]  Using user-specified port: 58605
+1790668076.407	[FLM]  Loading model: ~/.config/flm/models/Gemma4-E4B-IT-NPU2
+1790668080.428	[FLM]  Starting server on port 58605...
+1790668080.428	[FLM]  WebServer started on port 58605 with 10 I/O threads
+1790668080.428	[FLM]  Press Ctrl+C to stop.
+1790668080.428	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55694
+1790668080.428	[TCP]  Read 90 bytes from socket
+1790668080.429	================================================
+1790668080.429	[⬇️ ]  Incoming Request: GET
+1790668080.429	[LOG]  Time stamp: 10:48:00 09:29:2026
+1790668080.429	[LOG]  Target: /api/version
+1790668080.429	[LOG]  Version: 11
+1790668080.429	[LOG]  Keep-Alive: 1
+1790668080.429	================================================
+1790668080.429	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55694
+1790668080.454	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55704
+1790668080.454	[TCP]  Read 352 bytes from socket
+1790668080.454	================================================
+1790668080.454	[⬇️ ]  Incoming Request: POST
+1790668080.454	[LOG]  Time stamp: 10:48:00 09:29:2026
+1790668080.454	[LOG]  Target: /api/chat
+1790668080.454	[LOG]  Version: 11
+1790668080.454	[LOG]  Keep-Alive: 1
+1790668080.454	[LOG]  Body: 
+1790668080.454	{
+1790668080.454	    "messages": [
+1790668080.454	        {
+1790668080.454	            "content": "Write a de...ing press.",
+1790668080.454	            "role": "user"
+1790668080.454	        }
+1790668080.454	    ],
+1790668080.454	    "model": "gemma4e-flash:e4b",
+1790668080.454	    "options": {
+1790668080.454	        "num_predict": 512
+1790668080.454	    },
+1790668080.454	    "stream": false,
+1790668080.454	    "top_k": 1
+1790668080.454	}
+1790668080.454	[🟢 ]  NPU Locked!
+1790668080.454	[FLM]  Start generating...
+1790668080.463	[FLM]  Total images: 0
+1790668080.464	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790668119.001	
+1790668119.001	[FLM]  Model RAW Output: 
+1790668119.001	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790668119.001	
+1790668119.001	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, shattered with the invention and refinement of the printing press.
+1790668119.001	
+1790668119.001	The printing press is not merely a technological innovation; it is arguably one of the most profound inflection points in human history. It acted as an accelerant for social change, democratizing knowledge, fueling religious upheaval, standardizing languages, enabling scientific revolutions, and ultimately laying the groundwork for modern mass communication and industrial society. To trace its history is to chart the trajectory of modernity itself—a journey from painstaking artisanal craft to mechanized global information flow.
+1790668119.001	
+1790668119.001	### I. The Precursors: Early Methods of Reproduction (Antiquity to Medieval Period)
+1790668119.001	
+1790668119.001	Before Gutenberg, various cultures experimented with methods designed to multiply texts, each representing a localized solution to the problem of scarcity and labor intensity. These early efforts established the fundamental concept that reproduction could be systematized, even if not yet mechanized in the modern sense.
+1790668119.001	
+1790668119.001	In ancient Mesopotamia and Egypt, rudimentary forms of stamping and carving were used for administrative records. However, true textual mass production remained elusive until more sophisticated techniques emerged in Asia. The development of woodblock printing (xylography) is perhaps the most significant early precursor to the European press. In China, as far back as the Tang Dynasty (7th-10th centuries CE), woodblocks were carved with text and images, inked, and pressed onto paper or silk. These blocks were then used repeatedly to print entire pages or books.
+1790668119.001	
+1790668119.001	Similarly, in Korea during the Goryeo Dynasty (10th-14th centuries), metal movable type was developed—a technological feat that predated Gutenberg’s system by centuries. While these early Asian presses utilized different scripts (Chinese characters and Korean Hangul), they proved the viability of reusable, standardized printing components.
+1790668119.001	
+1790668119.001	In Europe during the Middle Ages, scribal culture dominated. Monasteries served as vital centers of learning, painstakingly copying classical texts and religious doctrines onto vellum or parchment. This process was slow, prone to human error (leading to textual drift), and inherently exclusive due to the
+1790668119.011	[🔵 ]  NPU Lock Released!
+1790668119.011	================================================
+1790668119.011	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55704
+1790668119.051	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47924
+1790668119.051	[TCP]  Read 352 bytes from socket
+1790668119.051	================================================
+1790668119.051	[⬇️ ]  Incoming Request: POST
+1790668119.051	[LOG]  Time stamp: 10:48:39 09:29:2026
+1790668119.051	[LOG]  Target: /api/chat
+1790668119.051	[LOG]  Version: 11
+1790668119.051	[LOG]  Keep-Alive: 1
+1790668119.051	[LOG]  Body: 
+1790668119.051	{
+1790668119.051	    "messages": [
+1790668119.051	        {
+1790668119.051	            "content": "Write a de...ing press.",
+1790668119.051	            "role": "user"
+1790668119.051	        }
+1790668119.051	    ],
+1790668119.051	    "model": "gemma4e-flash:e4b",
+1790668119.051	    "options": {
+1790668119.051	        "num_predict": 512
+1790668119.051	    },
+1790668119.051	    "stream": false,
+1790668119.051	    "top_k": 1
+1790668119.051	}
+1790668119.051	[🟢 ]  NPU Locked!
+1790668119.051	[FLM]  Start generating...
+1790668119.061	[FLM]  Total images: 0
+1790668119.061	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790668121.051	[🔴 ]  Client disconnected; cancelling active request
+1790668121.052	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47926
+1790668121.052	[TCP]  Read 274 bytes from socket
+1790668121.052	================================================
+1790668121.052	[⬇️ ]  Incoming Request: POST
+1790668121.052	[LOG]  Time stamp: 10:48:41 09:29:2026
+1790668121.052	[LOG]  Target: /api/chat
+1790668121.052	[LOG]  Version: 11
+1790668121.052	[LOG]  Keep-Alive: 1
+1790668121.052	[LOG]  Body: 
+1790668121.052	{
+1790668121.052	    "messages": [
+1790668121.052	        {
+1790668121.052	            "content": "Say hi.",
+1790668121.052	            "role": "user"
+1790668121.052	        }
+1790668121.052	    ],
+1790668121.052	    "model": "gemma4e-flash:e4b",
+1790668121.052	    "options": {
+1790668121.052	        "num_predict": 4
+1790668121.052	    },
+1790668121.052	    "stream": false,
+1790668121.052	    "top_k": 1
+1790668121.052	}
+1790668121.052	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790668121.118	
+1790668121.118	[FLM]  Model RAW Output: 
+1790668121.118	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790668121.118	
+1790668121.118	The history of human civilization is
+1790668121.118	[❌ ]  Generation Cancelled!
+1790668121.460	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790668121.460	================================================
+1790668121.460	[FLM]  Start generating...
+1790668121.460	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790668121.472	[FLM]  Total images: 0
+1790668121.472	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790668122.075	
+1790668122.075	[FLM]  Model RAW Output: 
+1790668122.075	Hi! How can I
+1790668122.075	================================================
+1790668122.075	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:47926
+1790668122.084	[🔵 ]  NPU Lock Released!
+1790668123.147	[🔗 ]  TCP connection established - Remote: 127.0.0.1:37206
+1790668123.147	[TCP]  Read 352 bytes from socket
+1790668123.147	================================================
+1790668123.147	[⬇️ ]  Incoming Request: POST
+1790668123.147	[LOG]  Time stamp: 10:48:43 09:29:2026
+1790668123.147	[LOG]  Target: /api/chat
+1790668123.147	[LOG]  Version: 11
+1790668123.147	[LOG]  Keep-Alive: 1
+1790668123.147	[LOG]  Body: 
+1790668123.147	{
+1790668123.147	    "messages": [
+1790668123.147	        {
+1790668123.147	            "content": "Write a de...ing press.",
+1790668123.147	            "role": "user"
+1790668123.147	        }
+1790668123.147	    ],
+1790668123.147	    "model": "gemma4e-flash:e4b",
+1790668123.147	    "options": {
+1790668123.147	        "num_predict": 512
+1790668123.147	    },
+1790668123.147	    "stream": false,
+1790668123.147	    "top_k": 1
+1790668123.147	}
+1790668123.147	[🟢 ]  NPU Locked!
+1790668123.147	[FLM]  Start generating...
+1790668123.157	[FLM]  Total images: 0
+1790668123.157	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790668123.646	[🔗 ]  TCP connection established - Remote: 127.0.0.1:37214
+1790668123.646	[TCP]  Read 352 bytes from socket
+1790668123.646	================================================
+1790668123.646	[⬇️ ]  Incoming Request: POST
+1790668123.646	[LOG]  Time stamp: 10:48:43 09:29:2026
+1790668123.646	[LOG]  Target: /api/chat
+1790668123.646	[LOG]  Version: 11
+1790668123.646	[LOG]  Keep-Alive: 1
+1790668123.646	[LOG]  Body: 
+1790668123.646	{
+1790668123.646	    "messages": [
+1790668123.646	        {
+1790668123.646	            "content": "Write a de...ing press.",
+1790668123.646	            "role": "user"
+1790668123.646	        }
+1790668123.646	    ],
+1790668123.646	    "model": "gemma4e-flash:e4b",
+1790668123.646	    "options": {
+1790668123.646	        "num_predict": 512
+1790668123.646	    },
+1790668123.646	    "stream": false,
+1790668123.646	    "top_k": 1
+1790668123.646	}
+1790668123.646	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790668123.947	[🔗 ]  TCP connection established - Remote: 127.0.0.1:37216
+1790668123.947	[TCP]  Read 274 bytes from socket
+1790668123.947	================================================
+1790668123.947	[⬇️ ]  Incoming Request: POST
+1790668123.947	[LOG]  Time stamp: 10:48:43 09:29:2026
+1790668123.947	[LOG]  Target: /api/chat
+1790668123.947	[LOG]  Version: 11
+1790668123.947	[LOG]  Keep-Alive: 1
+1790668123.947	[LOG]  Body: 
+1790668123.947	{
+1790668123.947	    "messages": [
+1790668123.947	        {
+1790668123.947	            "content": "Say hi.",
+1790668123.947	            "role": "user"
+1790668123.947	        }
+1790668123.947	    ],
+1790668123.947	    "model": "gemma4e-flash:e4b",
+1790668123.947	    "options": {
+1790668123.947	        "num_predict": 4
+1790668123.947	    },
+1790668123.947	    "stream": false,
+1790668123.947	    "top_k": 1
+1790668123.947	}
+1790668123.947	[🕒 ]  NPU busy, request queued (2/10): POST /api/chat
+1790668161.686	
+1790668161.686	[FLM]  Model RAW Output: 
+1790668161.686	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790668161.686	
+1790668161.686	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite wisdom accessible only to the privileged few. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, shattered with the invention and refinement of the printing press.
+1790668161.686	
+1790668161.686	The printing press is not merely a technological innovation; it is arguably one of the most profound inflection points in human history. It acted as an accelerant for social change, democratizing knowledge, fueling religious upheaval, standardizing languages, enabling scientific revolutions, and ultimately laying the groundwork for modern mass communication and industrial society. To trace its history is to chart the trajectory of modernity itself—a journey from painstaking artisanal craft to mechanized global information flow.
+1790668161.686	
+1790668161.686	### I. The Precursors: Early Methods of Reproduction (Antiquity to Medieval Period)
+1790668161.686	
+1790668161.686	Before Gutenberg, various cultures experimented with methods designed to multiply texts, each representing a localized solution to the problem of scarcity and labor intensity. These early efforts established the fundamental concept that reproduction could be systematized, even if not yet mechanized in the modern sense.
+1790668161.686	
+1790668161.686	In ancient Mesopotamia and Egypt, rudimentary forms of stamping and carving were used for administrative records. However, true textual mass production remained elusive until more sophisticated techniques emerged in Asia. The development of woodblock printing (xylography) is perhaps the most significant early precursor to the European press. In China, as far back as the Tang Dynasty (7th-10th centuries CE), woodblocks were carved with text and images, inked, and pressed onto paper or silk. These blocks were then used repeatedly to print entire pages or books.
+1790668161.686	
+1790668161.686	Similarly, in Korea during the Goryeo Dynasty (10th-14th centuries), metal movable type was developed—a technological feat that predated Gutenberg’s system by centuries. While these early Asian presses utilized different scripts (Chinese characters and Korean Hangul), they proved the viability of reusable, standardized printing components.
+1790668161.686	
+1790668161.686	In Europe during the Middle Ages, scribal culture dominated. Monasteries served as vital centers of learning, painstakingly copying classical texts and religious doctrines onto vellum or parchment. This process was slow, prone to human error (leading to textual drift), and inherently exclusive due to the
+1790668162.027	[🟡 ]  Dequeuing NPU request (1 remaining)...
+1790668162.028	================================================
+1790668162.028	[🔴 ]  Client disconnected; cancelling active request
+1790668162.028	[FLM]  Start generating...
+1790668162.028	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:37206
+1790668162.038	[FLM]  Total images: 0
+1790668162.038	[❌ ]  Prefill Cancelled!
+1790668162.038	================================================
+1790668162.038	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790668162.380	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790668162.380	[FLM]  Start generating...
+1790668162.391	[FLM]  Total images: 0
+1790668162.391	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790668162.992	
+1790668162.992	[FLM]  Model RAW Output: 
+1790668162.992	Hi! How can I
+1790668162.992	================================================
+1790668162.992	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:37216
+1790668163.001	[🔵 ]  NPU Lock Released!

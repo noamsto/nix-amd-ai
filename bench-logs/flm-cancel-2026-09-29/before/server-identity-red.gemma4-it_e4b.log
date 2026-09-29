@@ -1,0 +1,126 @@
+1790667099.329	[FLM]  Using user-specified port: 58612
+1790667099.842	[FLM]  Loading model: ~/.config/flm/models/Gemma4-E4B-IT-NPU2
+1790667103.957	[FLM]  Starting server on port 58612...
+1790667103.957	[FLM]  WebServer started on port 58612 with 10 I/O threads
+1790667103.957	[FLM]  Press Ctrl+C to stop.
+1790667103.957	[🔗 ]  TCP connection established - Remote: 127.0.0.1:35656
+1790667103.957	[TCP]  Read 90 bytes from socket
+1790667103.957	================================================
+1790667103.957	[⬇️ ]  Incoming Request: GET
+1790667103.957	[LOG]  Time stamp: 10:31:43 09:29:2026
+1790667103.957	[LOG]  Target: /api/version
+1790667103.957	[LOG]  Version: 11
+1790667103.957	[LOG]  Keep-Alive: 1
+1790667103.957	================================================
+1790667103.957	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35656
+1790667103.965	[🔗 ]  TCP connection established - Remote: 127.0.0.1:51792
+1790667103.965	[TCP]  Read 323 bytes from socket
+1790667103.965	================================================
+1790667103.965	[⬇️ ]  Incoming Request: POST
+1790667103.965	[LOG]  Time stamp: 10:31:43 09:29:2026
+1790667103.965	[LOG]  Target: /api/chat
+1790667103.965	[LOG]  Version: 11
+1790667103.965	[LOG]  Keep-Alive: 1
+1790667103.965	[LOG]  Body: 
+1790667103.965	{
+1790667103.965	    "messages": [
+1790667103.965	        {
+1790667103.965	            "content": "Explain in...tem works.",
+1790667103.965	            "role": "user"
+1790667103.965	        }
+1790667103.965	    ],
+1790667103.965	    "model": "gemma4-it:e4b",
+1790667103.965	    "options": {
+1790667103.965	        "num_predict": 256
+1790667103.965	    },
+1790667103.965	    "stream": false,
+1790667103.965	    "top_k": 1
+1790667103.965	}
+1790667103.965	[🟢 ]  NPU Locked!
+1790667103.965	[FLM]  Start generating...
+1790667103.965	[FLM]  Total images: 0
+1790667103.965	[FLM]  Prefill chunk 1/1 with 21 tokens
+1790667105.161	[31m[FLM]  Creating checkpoint at context length 21[0m
+1790667105.162	[31m[FLM]  Restoring checkpoint at context length 21[0m
+1790667105.194	[31m[FLM]  Checkpoint before generation: 21, restore point: 21, user context length: 21[0m
+1790667123.987	
+1790667123.987	[FLM]  Model RAW Output: 
+1790667123.987	A bicycle gear system, often referred to as a drivetrain, is essentially a mechanical transmission that allows the rider to change the ratio between how fast they pedal and how fast the bike moves. At its core, it consists of several key components: the **crankset** (the pedals and attached chainrings at the front), the **chain**, and one or more sets of **gears** (cogs) on the rear wheel. The function is to allow a rider to select different gear combinations—some that provide high speed with less effort, and others that allow for climbing steep hills with more leverage.
+1790667123.987	
+1790667123.987	The magic happens when you shift gears. When the rider changes the front chainring or moves the derailleur (the mechanism holding the rear cogs), they are changing which teeth on the chain engage. A smaller front chainring paired with a small rear cog creates a "harder" gear, requiring more force to turn but allowing for higher speeds once momentum is built up. Conversely, using a larger front ring with a large rear cog creates an "easier" gear, demanding less effort per pedal stroke and making it ideal for climbing hills or starting from a stop.
+1790667123.987	
+1790667123.987	In essence, the gear system acts like multiple speed settings on a car. By changing the ratio
+1790667124.017	[🔵 ]  NPU Lock Released!
+1790667124.017	================================================
+1790667124.018	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:51792
+1790667124.027	[🔗 ]  TCP connection established - Remote: 127.0.0.1:50662
+1790667124.027	[TCP]  Read 414 bytes from socket
+1790667124.027	================================================
+1790667124.027	[⬇️ ]  Incoming Request: POST
+1790667124.027	[LOG]  Time stamp: 10:32:04 09:29:2026
+1790667124.027	[LOG]  Target: /api/chat
+1790667124.027	[LOG]  Version: 11
+1790667124.027	[LOG]  Keep-Alive: 1
+1790667124.027	[LOG]  Body: 
+1790667124.027	{
+1790667124.027	    "messages": [
+1790667124.027	        {
+1790667124.027	            "content": "My name is Ada.",
+1790667124.027	            "role": "user"
+1790667124.027	        },
+1790667124.027	        {
+1790667124.027	            "content": "Nice to me... you, Ada.",
+1790667124.027	            "role": "assistant"
+1790667124.027	        },
+1790667124.027	        {
+1790667124.027	            "content": "What is my...for a cat?",
+1790667124.027	            "role": "user"
+1790667124.027	        }
+1790667124.027	    ],
+1790667124.027	    "model": "gemma4-it:e4b",
+1790667124.027	    "options": {
+1790667124.027	        "num_predict": 256
+1790667124.027	    },
+1790667124.027	    "stream": false,
+1790667124.027	    "top_k": 1
+1790667124.027	}
+1790667124.027	[🟢 ]  NPU Locked!
+1790667124.027	[FLM]  Start generating...
+1790667124.027	[FLM]  Total images: 0
+1790667124.027	[FLM]  Prefill chunk 1/1 with 46 tokens
+1790667125.209	[31m[FLM]  Creating checkpoint at context length 46[0m
+1790667125.211	[31m[FLM]  Restoring checkpoint at context length 46[0m
+1790667125.243	[31m[FLM]  Checkpoint before generation: 46, restore point: 46, user context length: 46[0m
+1790667144.099	
+1790667144.099	[FLM]  Model RAW Output: 
+1790667144.099	Your name is **Ada**.
+1790667144.099	
+1790667144.099	As for a good name for a cat, that really depends on the *type* of cat you have (personality, appearance, etc.) and what kind of vibe you're going for! To give you the best suggestions, could you tell me anything about your cat? For example:
+1790667144.099	
+1790667144.099	* **Is it male or female?**
+1790667144.099	* **What color is it?** (Black, orange/ginger, gray/blue, white?)
+1790667144.099	* **What is its personality like?** (Playful, sleepy, mischievous, regal?)
+1790667144.099	
+1790667144.099	In the meantime, here are some suggestions broken down by style:
+1790667144.099	
+1790667144.099	### 🐾 Cute & Sweet Names
+1790667144.099	* Mochi (Great for small or fluffy cats)
+1790667144.099	* Pip / Pippin
+1790667144.099	* Luna (Classic and popular)
+1790667144.099	* Willow
+1790667144.099	* Patches
+1790667144.099	
+1790667144.099	### ✨ Elegant & Regal Names (Good for beautiful or aloof cats)
+1790667144.099	* Cleo (Short for Cleopatra)
+1790667144.099	* Jasper
+1790667144.099	* Oberon / Ophelia
+1790667144.099	* Athena
+1790667144.099	* Sterling
+1790667144.099	
+1790667144.099	### 😂 Funny & Quirky Names (For mischievous cats)
+1790667144.099	* Waffles / Biscuit
+1790667144.099	* Loki (If it's a little troublemaker!)
+1790667144.099	* Chairman Meow (A bit long, but fun
+1790667144.133	[🔵 ]  NPU Lock Released!
+1790667144.133	================================================
+1790667144.133	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:50662

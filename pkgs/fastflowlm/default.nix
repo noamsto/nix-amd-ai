@@ -196,12 +196,13 @@ stdenv.mkDerivation (finalAttrs: {
   #     /api/cancel or a failed chunk write could set it; the disconnect
   #     monitor came in April 2026 (4ffe631). On a fresh token it can only
   #     erase a real cancel, so the resets are dropped (moving them before
-  #     the monitor is armed would be the same no-op). One behaviour changes
-  #     deterministically instead of by race: a client that half-closes its
-  #     socket (shutdown(SHUT_WR)) after sending a streaming request is
-  #     cancelled, as every non-streaming branch already did -- read-side EOF
-  #     cannot tell a half-close from a close, and the monitor treats EOF as
-  #     a disconnect, as nginx does.
+  #     the monitor is armed would be the same no-op). The reset did mask one
+  #     monitor false positive, by thread race: a client that half-closes its
+  #     socket (shutdown(SHUT_WR)) after sending reads as EOF, and a streaming
+  #     request from one now is always cancelled (9 of 10 survived before),
+  #     as on every non-streaming branch already. Read-side EOF cannot tell a
+  #     half-close from a close; lemond (libcurl), curl, requests and httpx
+  #     were checked and do not half-close.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for

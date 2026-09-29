@@ -1,0 +1,757 @@
+1790668580.132	[FLM]  Using user-specified port: 58621
+1790668580.647	[FLM]  Loading model: ~/.config/flm/models/Llama-3.2-1B-NPU2
+1790668582.392	[FLM]  Starting server on port 58621...
+1790668582.392	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47436
+1790668582.392	[FLM]  WebServer started on port 58621 with 10 I/O threads
+1790668582.392	[FLM]  Press Ctrl+C to stop.
+1790668582.392	[TCP]  Read 90 bytes from socket
+1790668582.392	================================================
+1790668582.392	[⬇️ ]  Incoming Request: GET
+1790668582.392	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.392	[LOG]  Target: /api/version
+1790668582.392	[LOG]  Version: 11
+1790668582.392	[LOG]  Keep-Alive: 1
+1790668582.392	================================================
+1790668582.392	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:47436
+1790668582.422	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47638
+1790668582.422	[TCP]  Read 272 bytes from socket
+1790668582.422	================================================
+1790668582.422	[⬇️ ]  Incoming Request: POST
+1790668582.422	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.422	[LOG]  Target: /api/chat
+1790668582.422	[LOG]  Version: 11
+1790668582.422	[LOG]  Keep-Alive: 0
+1790668582.422	[LOG]  Body: 
+1790668582.422	{
+1790668582.422	    "messages": [
+1790668582.422	        {
+1790668582.422	            "content": "Count from 1 to 20.",
+1790668582.422	            "role": "user"
+1790668582.422	        }
+1790668582.422	    ],
+1790668582.422	    "model": "llama3.2:1b",
+1790668582.422	    "options": {
+1790668582.422	        "num_predict": 64
+1790668582.422	    },
+1790668582.422	    "stream": true,
+1790668582.422	    "top_k": 1
+1790668582.422	}
+1790668582.422	[🟢 ]  NPU Locked!
+1790668582.422	[FLM]  Start generating...
+1790668582.422	[🔴 ]  Client disconnected; cancelling active request
+1790668582.422	[❌ ]  Prefill Cancelled!
+1790668582.422	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668582.424	[🔵 ]  NPU Lock Released!
+1790668582.459	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47654
+1790668582.459	[TCP]  Read 272 bytes from socket
+1790668582.459	================================================
+1790668582.459	[⬇️ ]  Incoming Request: POST
+1790668582.459	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.459	[LOG]  Target: /api/chat
+1790668582.459	[LOG]  Version: 11
+1790668582.459	[LOG]  Keep-Alive: 0
+1790668582.459	[LOG]  Body: 
+1790668582.459	{
+1790668582.459	    "messages": [
+1790668582.459	        {
+1790668582.459	            "content": "Count from 1 to 20.",
+1790668582.459	            "role": "user"
+1790668582.459	        }
+1790668582.459	    ],
+1790668582.459	    "model": "llama3.2:1b",
+1790668582.459	    "options": {
+1790668582.459	        "num_predict": 64
+1790668582.459	    },
+1790668582.459	    "stream": true,
+1790668582.459	    "top_k": 1
+1790668582.459	}
+1790668582.459	[🟢 ]  NPU Locked!
+1790668582.459	[FLM]  Start generating...
+1790668582.459	[🔴 ]  Client disconnected; cancelling active request
+1790668582.459	[❌ ]  Prefill Cancelled!
+1790668582.459	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668582.461	[🔵 ]  NPU Lock Released!
+1790668582.497	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47660
+1790668582.497	[TCP]  Read 272 bytes from socket
+1790668582.497	================================================
+1790668582.497	[⬇️ ]  Incoming Request: POST
+1790668582.497	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.497	[LOG]  Target: /api/chat
+1790668582.497	[LOG]  Version: 11
+1790668582.497	[LOG]  Keep-Alive: 0
+1790668582.497	[LOG]  Body: 
+1790668582.497	{
+1790668582.497	    "messages": [
+1790668582.497	        {
+1790668582.497	            "content": "Count from 1 to 20.",
+1790668582.497	            "role": "user"
+1790668582.497	        }
+1790668582.497	    ],
+1790668582.497	    "model": "llama3.2:1b",
+1790668582.497	    "options": {
+1790668582.497	        "num_predict": 64
+1790668582.497	    },
+1790668582.497	    "stream": true,
+1790668582.497	    "top_k": 1
+1790668582.497	}
+1790668582.497	[🟢 ]  NPU Locked!
+1790668582.497	[🔴 ]  Client disconnected; cancelling active request
+1790668582.497	[FLM]  Start generating...
+1790668582.497	[❌ ]  Prefill Cancelled!
+1790668582.497	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668582.499	[🔵 ]  NPU Lock Released!
+1790668582.530	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47674
+1790668582.530	[TCP]  Read 272 bytes from socket
+1790668582.530	================================================
+1790668582.530	[⬇️ ]  Incoming Request: POST
+1790668582.530	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.530	[LOG]  Target: /api/chat
+1790668582.530	[LOG]  Version: 11
+1790668582.530	[LOG]  Keep-Alive: 0
+1790668582.530	[LOG]  Body: 
+1790668582.530	{
+1790668582.530	    "messages": [
+1790668582.530	        {
+1790668582.530	            "content": "Count from 1 to 20.",
+1790668582.530	            "role": "user"
+1790668582.530	        }
+1790668582.530	    ],
+1790668582.530	    "model": "llama3.2:1b",
+1790668582.530	    "options": {
+1790668582.530	        "num_predict": 64
+1790668582.530	    },
+1790668582.530	    "stream": true,
+1790668582.530	    "top_k": 1
+1790668582.530	}
+1790668582.530	[🟢 ]  NPU Locked!
+1790668582.530	[🔴 ]  Client disconnected; cancelling active request
+1790668582.530	[FLM]  Start generating...
+1790668582.530	[❌ ]  Prefill Cancelled!
+1790668582.530	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668582.532	[🔵 ]  NPU Lock Released!
+1790668582.565	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47684
+1790668582.565	[TCP]  Read 272 bytes from socket
+1790668582.565	================================================
+1790668582.565	[⬇️ ]  Incoming Request: POST
+1790668582.565	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.565	[LOG]  Target: /api/chat
+1790668582.565	[LOG]  Version: 11
+1790668582.565	[LOG]  Keep-Alive: 0
+1790668582.565	[LOG]  Body: 
+1790668582.565	{
+1790668582.565	    "messages": [
+1790668582.565	        {
+1790668582.565	            "content": "Count from 1 to 20.",
+1790668582.565	            "role": "user"
+1790668582.565	        }
+1790668582.565	    ],
+1790668582.565	    "model": "llama3.2:1b",
+1790668582.565	    "options": {
+1790668582.565	        "num_predict": 64
+1790668582.565	    },
+1790668582.565	    "stream": true,
+1790668582.565	    "top_k": 1
+1790668582.565	}
+1790668582.565	[🟢 ]  NPU Locked!
+1790668582.565	[🔴 ]  Client disconnected; cancelling active request
+1790668582.565	[FLM]  Start generating...
+1790668582.565	[❌ ]  Prefill Cancelled!
+1790668582.565	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668582.567	[🔵 ]  NPU Lock Released!
+1790668582.603	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47694
+1790668582.603	[TCP]  Read 272 bytes from socket
+1790668582.603	================================================
+1790668582.603	[⬇️ ]  Incoming Request: POST
+1790668582.603	[LOG]  Time stamp: 10:56:22 09:29:2026
+1790668582.603	[LOG]  Target: /api/chat
+1790668582.603	[LOG]  Version: 11
+1790668582.603	[LOG]  Keep-Alive: 0
+1790668582.603	[LOG]  Body: 
+1790668582.603	{
+1790668582.603	    "messages": [
+1790668582.603	        {
+1790668582.603	            "content": "Count from 1 to 20.",
+1790668582.603	            "role": "user"
+1790668582.603	        }
+1790668582.603	    ],
+1790668582.603	    "model": "llama3.2:1b",
+1790668582.603	    "options": {
+1790668582.603	        "num_predict": 64
+1790668582.603	    },
+1790668582.603	    "stream": true,
+1790668582.603	    "top_k": 1
+1790668582.603	}
+1790668582.603	[🟢 ]  NPU Locked!
+1790668582.603	[FLM]  Start generating...
+1790668582.603	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668584.038	
+1790668584.038	[FLM]  Model RAW Output: 
+1790668584.038	Here's counting from 1 to 20:
+1790668584.038	
+1790668584.038	1. 2
+1790668584.038	2. 3
+1790668584.038	3. 4
+1790668584.038	4. 5
+1790668584.038	5. 6
+1790668584.038	6. 7
+1790668584.038	7. 8
+1790668584.038	8. 9
+1790668584.038	9. 10
+1790668584.038	10. 11
+1790668584.038	11. 12
+1790668584.038	
+1790668584.038	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668584.039	[🔵 ]  NPU Lock Released!
+1790668584.074	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47708
+1790668584.074	[TCP]  Read 272 bytes from socket
+1790668584.074	================================================
+1790668584.074	[⬇️ ]  Incoming Request: POST
+1790668584.074	[LOG]  Time stamp: 10:56:24 09:29:2026
+1790668584.074	[LOG]  Target: /api/chat
+1790668584.074	[LOG]  Version: 11
+1790668584.074	[LOG]  Keep-Alive: 0
+1790668584.074	[LOG]  Body: 
+1790668584.074	{
+1790668584.074	    "messages": [
+1790668584.074	        {
+1790668584.074	            "content": "Count from 1 to 20.",
+1790668584.074	            "role": "user"
+1790668584.074	        }
+1790668584.074	    ],
+1790668584.074	    "model": "llama3.2:1b",
+1790668584.074	    "options": {
+1790668584.074	        "num_predict": 64
+1790668584.074	    },
+1790668584.074	    "stream": true,
+1790668584.074	    "top_k": 1
+1790668584.074	}
+1790668584.074	[🟢 ]  NPU Locked!
+1790668584.074	[FLM]  Start generating...
+1790668584.075	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668585.429	
+1790668585.429	[FLM]  Model RAW Output: 
+1790668585.429	Here's counting from 1 to 20:
+1790668585.429	
+1790668585.429	1. 2
+1790668585.429	2. 3
+1790668585.429	3. 4
+1790668585.429	4. 5
+1790668585.429	5. 6
+1790668585.429	6. 7
+1790668585.429	7. 8
+1790668585.429	8. 9
+1790668585.429	9. 10
+1790668585.429	10. 11
+1790668585.429	11. 12
+1790668585.429	
+1790668585.429	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668585.430	[🔵 ]  NPU Lock Released!
+1790668585.464	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47714
+1790668585.464	[TCP]  Read 272 bytes from socket
+1790668585.464	================================================
+1790668585.464	[⬇️ ]  Incoming Request: POST
+1790668585.464	[LOG]  Time stamp: 10:56:25 09:29:2026
+1790668585.464	[LOG]  Target: /api/chat
+1790668585.464	[LOG]  Version: 11
+1790668585.464	[LOG]  Keep-Alive: 0
+1790668585.464	[LOG]  Body: 
+1790668585.464	{
+1790668585.464	    "messages": [
+1790668585.464	        {
+1790668585.464	            "content": "Count from 1 to 20.",
+1790668585.464	            "role": "user"
+1790668585.464	        }
+1790668585.464	    ],
+1790668585.464	    "model": "llama3.2:1b",
+1790668585.464	    "options": {
+1790668585.464	        "num_predict": 64
+1790668585.464	    },
+1790668585.464	    "stream": true,
+1790668585.464	    "top_k": 1
+1790668585.464	}
+1790668585.464	[🟢 ]  NPU Locked!
+1790668585.464	[FLM]  Start generating...
+1790668585.465	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668586.817	
+1790668586.817	[FLM]  Model RAW Output: 
+1790668586.817	Here's counting from 1 to 20:
+1790668586.817	
+1790668586.817	1. 2
+1790668586.817	2. 3
+1790668586.817	3. 4
+1790668586.817	4. 5
+1790668586.817	5. 6
+1790668586.817	6. 7
+1790668586.817	7. 8
+1790668586.817	8. 9
+1790668586.817	9. 10
+1790668586.817	10. 11
+1790668586.817	11. 12
+1790668586.817	
+1790668586.817	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668586.818	[🔵 ]  NPU Lock Released!
+1790668586.852	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47720
+1790668586.853	[TCP]  Read 272 bytes from socket
+1790668586.853	================================================
+1790668586.853	[⬇️ ]  Incoming Request: POST
+1790668586.853	[LOG]  Time stamp: 10:56:26 09:29:2026
+1790668586.853	[LOG]  Target: /api/chat
+1790668586.853	[LOG]  Version: 11
+1790668586.853	[LOG]  Keep-Alive: 0
+1790668586.853	[LOG]  Body: 
+1790668586.853	{
+1790668586.853	    "messages": [
+1790668586.853	        {
+1790668586.853	            "content": "Count from 1 to 20.",
+1790668586.853	            "role": "user"
+1790668586.853	        }
+1790668586.853	    ],
+1790668586.853	    "model": "llama3.2:1b",
+1790668586.853	    "options": {
+1790668586.853	        "num_predict": 64
+1790668586.853	    },
+1790668586.853	    "stream": true,
+1790668586.853	    "top_k": 1
+1790668586.853	}
+1790668586.853	[🟢 ]  NPU Locked!
+1790668586.853	[FLM]  Start generating...
+1790668586.853	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668588.221	
+1790668588.221	[FLM]  Model RAW Output: 
+1790668588.221	Here's counting from 1 to 20:
+1790668588.221	
+1790668588.221	1. 2
+1790668588.221	2. 3
+1790668588.221	3. 4
+1790668588.221	4. 5
+1790668588.221	5. 6
+1790668588.221	6. 7
+1790668588.221	7. 8
+1790668588.221	8. 9
+1790668588.221	9. 10
+1790668588.221	10. 11
+1790668588.221	11. 12
+1790668588.221	
+1790668588.221	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668588.223	[🔵 ]  NPU Lock Released!
+1790668588.270	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47724
+1790668588.270	[TCP]  Read 272 bytes from socket
+1790668588.270	================================================
+1790668588.270	[⬇️ ]  Incoming Request: POST
+1790668588.270	[LOG]  Time stamp: 10:56:28 09:29:2026
+1790668588.271	[LOG]  Target: /api/chat
+1790668588.271	[LOG]  Version: 11
+1790668588.271	[LOG]  Keep-Alive: 0
+1790668588.271	[LOG]  Body: 
+1790668588.271	{
+1790668588.271	    "messages": [
+1790668588.271	        {
+1790668588.271	            "content": "Count from 1 to 20.",
+1790668588.271	            "role": "user"
+1790668588.271	        }
+1790668588.271	    ],
+1790668588.271	    "model": "llama3.2:1b",
+1790668588.271	    "options": {
+1790668588.271	        "num_predict": 64
+1790668588.271	    },
+1790668588.271	    "stream": true,
+1790668588.271	    "top_k": 1
+1790668588.271	}
+1790668588.271	[🟢 ]  NPU Locked!
+1790668588.271	[FLM]  Start generating...
+1790668588.271	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668589.642	
+1790668589.642	[FLM]  Model RAW Output: 
+1790668589.642	Here's counting from 1 to 20:
+1790668589.642	
+1790668589.642	1. 2
+1790668589.642	2. 3
+1790668589.642	3. 4
+1790668589.642	4. 5
+1790668589.642	5. 6
+1790668589.643	6. 7
+1790668589.643	7. 8
+1790668589.643	8. 9
+1790668589.643	9. 10
+1790668589.643	10. 11
+1790668589.643	11. 12
+1790668589.643	
+1790668589.643	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668589.644	[🔵 ]  NPU Lock Released!
+1790668589.691	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47736
+1790668589.691	[TCP]  Read 269 bytes from socket
+1790668589.691	================================================
+1790668589.691	[⬇️ ]  Incoming Request: POST
+1790668589.691	[LOG]  Time stamp: 10:56:29 09:29:2026
+1790668589.691	[LOG]  Target: /v1/chat/completions
+1790668589.691	[LOG]  Version: 11
+1790668589.691	[LOG]  Keep-Alive: 0
+1790668589.691	[LOG]  Body: 
+1790668589.691	{
+1790668589.691	    "max_tokens": 64,
+1790668589.691	    "messages": [
+1790668589.691	        {
+1790668589.691	            "content": "Count from 1 to 20.",
+1790668589.691	            "role": "user"
+1790668589.691	        }
+1790668589.691	    ],
+1790668589.691	    "model": "llama3.2:1b",
+1790668589.691	    "stream": true,
+1790668589.691	    "top_k": 1
+1790668589.691	}
+1790668589.691	[🟢 ]  NPU Locked!
+1790668589.691	[🔴 ]  Client disconnected; cancelling active request
+1790668589.691	[FLM]  Start prefill...
+1790668589.691	[❌ ]  Prefill Cancelled!
+1790668589.691	ChatCompletionChunk: {"id":"chatcmpl-725f0c056489cee48e6a469f","object":"chat.completion.chunk","created":1790668589,"model":"llama3.2:1b","system_fingerprint":"fp_44e7a188084e2268","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":43,"completion_tokens":0,"total_tokens":43,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":1.963e-06,"prefill_duration_ttft":1.393e-06,"decoding_duration":0.0,"prefill_speed_tps":30868628.858578607,"decoding_speed_tps":null}}
+1790668589.691	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668589.693	[🔵 ]  NPU Lock Released!
+1790668589.733	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47752
+1790668589.733	[TCP]  Read 269 bytes from socket
+1790668589.733	================================================
+1790668589.733	[⬇️ ]  Incoming Request: POST
+1790668589.733	[LOG]  Time stamp: 10:56:29 09:29:2026
+1790668589.733	[LOG]  Target: /v1/chat/completions
+1790668589.733	[LOG]  Version: 11
+1790668589.733	[LOG]  Keep-Alive: 0
+1790668589.733	[LOG]  Body: 
+1790668589.733	{
+1790668589.733	    "max_tokens": 64,
+1790668589.733	    "messages": [
+1790668589.733	        {
+1790668589.733	            "content": "Count from 1 to 20.",
+1790668589.733	            "role": "user"
+1790668589.733	        }
+1790668589.733	    ],
+1790668589.733	    "model": "llama3.2:1b",
+1790668589.733	    "stream": true,
+1790668589.733	    "top_k": 1
+1790668589.733	}
+1790668589.733	[🟢 ]  NPU Locked!
+1790668589.733	[🔴 ]  Client disconnected; cancelling active request
+1790668589.733	[FLM]  Prompt cache miss.
+1790668589.733	[FLM]  Clearing context...
+1790668589.735	[FLM]  Start prefill...
+1790668589.736	[❌ ]  Prefill Cancelled!
+1790668589.736	ChatCompletionChunk: {"id":"chatcmpl-947d148b6998fa1860b4d983","object":"chat.completion.chunk","created":1790668589,"model":"llama3.2:1b","system_fingerprint":"fp_e2c5e80e1465ea6a","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":43,"completion_tokens":0,"total_tokens":43,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":1.943e-06,"prefill_duration_ttft":9.82e-07,"decoding_duration":0.0,"prefill_speed_tps":43788187.37270876,"decoding_speed_tps":null}}
+1790668589.736	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668589.737	[🔵 ]  NPU Lock Released!
+1790668589.778	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47766
+1790668589.778	[TCP]  Read 269 bytes from socket
+1790668589.778	================================================
+1790668589.778	[⬇️ ]  Incoming Request: POST
+1790668589.778	[LOG]  Time stamp: 10:56:29 09:29:2026
+1790668589.778	[LOG]  Target: /v1/chat/completions
+1790668589.778	[LOG]  Version: 11
+1790668589.778	[LOG]  Keep-Alive: 0
+1790668589.778	[LOG]  Body: 
+1790668589.778	{
+1790668589.778	    "max_tokens": 64,
+1790668589.778	    "messages": [
+1790668589.778	        {
+1790668589.778	            "content": "Count from 1 to 20.",
+1790668589.778	            "role": "user"
+1790668589.778	        }
+1790668589.778	    ],
+1790668589.778	    "model": "llama3.2:1b",
+1790668589.778	    "stream": true,
+1790668589.778	    "top_k": 1
+1790668589.778	}
+1790668589.778	[🟢 ]  NPU Locked!
+1790668589.778	[🔴 ]  Client disconnected; cancelling active request
+1790668589.778	[FLM]  Prompt cache miss.
+1790668589.778	[FLM]  Clearing context...
+1790668589.780	[FLM]  Start prefill...
+1790668589.780	[❌ ]  Prefill Cancelled!
+1790668589.780	ChatCompletionChunk: {"id":"chatcmpl-deac4887e30e2703d51e685f","object":"chat.completion.chunk","created":1790668589,"model":"llama3.2:1b","system_fingerprint":"fp_aff8a2b6265d390e","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":43,"completion_tokens":0,"total_tokens":43,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":2.504e-06,"prefill_duration_ttft":9.62e-07,"decoding_duration":0.0,"prefill_speed_tps":44698544.6985447,"decoding_speed_tps":null}}
+1790668589.780	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668589.782	[🔵 ]  NPU Lock Released!
+1790668589.824	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47776
+1790668589.824	[TCP]  Read 269 bytes from socket
+1790668589.824	================================================
+1790668589.824	[⬇️ ]  Incoming Request: POST
+1790668589.824	[LOG]  Time stamp: 10:56:29 09:29:2026
+1790668589.824	[LOG]  Target: /v1/chat/completions
+1790668589.824	[LOG]  Version: 11
+1790668589.824	[LOG]  Keep-Alive: 0
+1790668589.824	[LOG]  Body: 
+1790668589.824	{
+1790668589.824	    "max_tokens": 64,
+1790668589.824	    "messages": [
+1790668589.824	        {
+1790668589.824	            "content": "Count from 1 to 20.",
+1790668589.824	            "role": "user"
+1790668589.824	        }
+1790668589.824	    ],
+1790668589.824	    "model": "llama3.2:1b",
+1790668589.824	    "stream": true,
+1790668589.824	    "top_k": 1
+1790668589.824	}
+1790668589.824	[🟢 ]  NPU Locked!
+1790668589.824	[FLM]  Prompt cache miss.
+1790668589.824	[FLM]  Clearing context...
+1790668589.824	[🔴 ]  Client disconnected; cancelling active request
+1790668589.826	[FLM]  Start prefill...
+1790668589.826	[❌ ]  Prefill Cancelled!
+1790668589.826	ChatCompletionChunk: {"id":"chatcmpl-f3a90479efc6cc5cdfdf077b","object":"chat.completion.chunk","created":1790668589,"model":"llama3.2:1b","system_fingerprint":"fp_8ffad2e1531c2694","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":43,"completion_tokens":0,"total_tokens":43,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":2.094e-06,"prefill_duration_ttft":1.132e-06,"decoding_duration":0.0,"prefill_speed_tps":37985865.724381626,"decoding_speed_tps":null}}
+1790668589.826	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668589.828	[🔵 ]  NPU Lock Released!
+1790668589.869	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47790
+1790668589.869	[TCP]  Read 269 bytes from socket
+1790668589.869	================================================
+1790668589.869	[⬇️ ]  Incoming Request: POST
+1790668589.869	[LOG]  Time stamp: 10:56:29 09:29:2026
+1790668589.869	[LOG]  Target: /v1/chat/completions
+1790668589.869	[LOG]  Version: 11
+1790668589.869	[LOG]  Keep-Alive: 0
+1790668589.869	[LOG]  Body: 
+1790668589.869	{
+1790668589.869	    "max_tokens": 64,
+1790668589.869	    "messages": [
+1790668589.870	        {
+1790668589.870	            "content": "Count from 1 to 20.",
+1790668589.870	            "role": "user"
+1790668589.870	        }
+1790668589.870	    ],
+1790668589.870	    "model": "llama3.2:1b",
+1790668589.870	    "stream": true,
+1790668589.870	    "top_k": 1
+1790668589.870	}
+1790668589.870	[🟢 ]  NPU Locked!
+1790668589.870	[🔴 ]  Client disconnected; cancelling active request
+1790668589.870	[FLM]  Prompt cache miss.
+1790668589.870	[FLM]  Clearing context...
+1790668589.872	[FLM]  Start prefill...
+1790668589.872	[❌ ]  Prefill Cancelled!
+1790668589.872	ChatCompletionChunk: {"id":"chatcmpl-6da7e9dba93adcf3785e8ad1","object":"chat.completion.chunk","created":1790668589,"model":"llama3.2:1b","system_fingerprint":"fp_ef20973a3eff672f","choices":[{"index":0,"delta":{"content":null},"finish_reason":"cancel"}],"usage":{"prompt_tokens":43,"completion_tokens":0,"total_tokens":43,"active_kv_tokens":0,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.0,"load_duration":1.694e-06,"prefill_duration_ttft":1.262e-06,"decoding_duration":0.0,"prefill_speed_tps":34072900.15847861,"decoding_speed_tps":null}}
+1790668589.872	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668589.873	[🔵 ]  NPU Lock Released!
+1790668589.914	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47804
+1790668589.914	[TCP]  Read 269 bytes from socket
+1790668589.914	================================================
+1790668589.914	[⬇️ ]  Incoming Request: POST
+1790668589.914	[LOG]  Time stamp: 10:56:29 09:29:2026
+1790668589.914	[LOG]  Target: /v1/chat/completions
+1790668589.914	[LOG]  Version: 11
+1790668589.914	[LOG]  Keep-Alive: 0
+1790668589.914	[LOG]  Body: 
+1790668589.914	{
+1790668589.914	    "max_tokens": 64,
+1790668589.914	    "messages": [
+1790668589.914	        {
+1790668589.914	            "content": "Count from 1 to 20.",
+1790668589.914	            "role": "user"
+1790668589.914	        }
+1790668589.914	    ],
+1790668589.914	    "model": "llama3.2:1b",
+1790668589.914	    "stream": true,
+1790668589.914	    "top_k": 1
+1790668589.914	}
+1790668589.914	[🟢 ]  NPU Locked!
+1790668589.914	[FLM]  Prompt cache miss.
+1790668589.914	[FLM]  Clearing context...
+1790668589.917	[FLM]  Start prefill...
+1790668589.917	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668590.307	[FLM]  Start generating...
+1790668591.275	
+1790668591.275	[FLM]  Model RAW Output: 
+1790668591.275	Here's counting from 1 to 20:
+1790668591.275	
+1790668591.275	1. 2
+1790668591.275	2. 3
+1790668591.275	3. 4
+1790668591.275	4. 5
+1790668591.275	5. 6
+1790668591.275	6. 7
+1790668591.275	7. 8
+1790668591.275	8. 9
+1790668591.275	9. 10
+1790668591.275	10. 11
+1790668591.275	11. 12
+1790668591.275	
+1790668591.275	ChatCompletionChunk: {"id":"chatcmpl-5784b691a6613b6f8fb95465","object":"chat.completion.chunk","created":1790668589,"model":"llama3.2:1b","system_fingerprint":"fp_cf8071304cc740c8","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":2.725e-06,"prefill_duration_ttft":0.39016064,"decoding_duration":0.956407,"prefill_speed_tps":110.21101462207977,"decoding_speed_tps":66.91711792155431}}
+1790668591.275	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668591.275	[🔵 ]  NPU Lock Released!
+1790668591.322	[🔗 ]  TCP connection established - Remote: 127.0.0.1:47812
+1790668591.322	[TCP]  Read 269 bytes from socket
+1790668591.322	================================================
+1790668591.322	[⬇️ ]  Incoming Request: POST
+1790668591.322	[LOG]  Time stamp: 10:56:31 09:29:2026
+1790668591.322	[LOG]  Target: /v1/chat/completions
+1790668591.322	[LOG]  Version: 11
+1790668591.322	[LOG]  Keep-Alive: 0
+1790668591.322	[LOG]  Body: 
+1790668591.322	{
+1790668591.322	    "max_tokens": 64,
+1790668591.322	    "messages": [
+1790668591.322	        {
+1790668591.322	            "content": "Count from 1 to 20.",
+1790668591.322	            "role": "user"
+1790668591.322	        }
+1790668591.322	    ],
+1790668591.322	    "model": "llama3.2:1b",
+1790668591.322	    "stream": true,
+1790668591.322	    "top_k": 1
+1790668591.322	}
+1790668591.322	[🟢 ]  NPU Locked!
+1790668591.322	[FLM]  Prompt cache miss.
+1790668591.322	[FLM]  Clearing context...
+1790668591.324	[FLM]  Start prefill...
+1790668591.324	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668591.720	[FLM]  Start generating...
+1790668592.692	
+1790668592.692	[FLM]  Model RAW Output: 
+1790668592.692	Here's the count from 1 to 20:
+1790668592.692	
+1790668592.692	1. 2
+1790668592.692	2. 3
+1790668592.692	3. 4
+1790668592.692	4. 5
+1790668592.692	5. 6
+1790668592.692	6. 7
+1790668592.692	7. 8
+1790668592.692	8. 9
+1790668592.692	9. 10
+1790668592.692	10. 11
+1790668592.692	11. 12
+1790668592.692	ChatCompletionChunk: {"id":"chatcmpl-5d61a22c765d63a563b8dcdd","object":"chat.completion.chunk","created":1790668591,"model":"llama3.2:1b","system_fingerprint":"fp_90428d7caa7974d9","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":2.585e-06,"prefill_duration_ttft":0.395208928,"decoding_duration":0.959882,"prefill_speed_tps":108.80321003274501,"decoding_speed_tps":66.67486211846872}}
+1790668592.692	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668592.692	[🔵 ]  NPU Lock Released!
+1790668592.740	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53070
+1790668592.740	[TCP]  Read 269 bytes from socket
+1790668592.740	================================================
+1790668592.740	[⬇️ ]  Incoming Request: POST
+1790668592.740	[LOG]  Time stamp: 10:56:32 09:29:2026
+1790668592.740	[LOG]  Target: /v1/chat/completions
+1790668592.740	[LOG]  Version: 11
+1790668592.740	[LOG]  Keep-Alive: 0
+1790668592.740	[LOG]  Body: 
+1790668592.740	{
+1790668592.740	    "max_tokens": 64,
+1790668592.740	    "messages": [
+1790668592.740	        {
+1790668592.740	            "content": "Count from 1 to 20.",
+1790668592.740	            "role": "user"
+1790668592.740	        }
+1790668592.740	    ],
+1790668592.740	    "model": "llama3.2:1b",
+1790668592.740	    "stream": true,
+1790668592.740	    "top_k": 1
+1790668592.740	}
+1790668592.740	[🟢 ]  NPU Locked!
+1790668592.740	[FLM]  Prompt cache miss.
+1790668592.740	[FLM]  Clearing context...
+1790668592.742	[FLM]  Start prefill...
+1790668592.743	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668593.138	[FLM]  Start generating...
+1790668594.104	
+1790668594.104	[FLM]  Model RAW Output: 
+1790668594.104	Here's counting from 1 to 20:
+1790668594.104	
+1790668594.104	1. 2
+1790668594.104	2. 3
+1790668594.104	3. 4
+1790668594.104	4. 5
+1790668594.104	5. 6
+1790668594.104	6. 7
+1790668594.104	7. 8
+1790668594.104	8. 9
+1790668594.104	9. 10
+1790668594.104	10. 11
+1790668594.104	11. 12
+1790668594.104	
+1790668594.104	ChatCompletionChunk: {"id":"chatcmpl-462dfb1c4ae623bbd0eb5a85","object":"chat.completion.chunk","created":1790668592,"model":"llama3.2:1b","system_fingerprint":"fp_c2407aa30204fd89","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":2.895e-06,"prefill_duration_ttft":0.395536128,"decoding_duration":0.953657,"prefill_speed_tps":108.71320457482963,"decoding_speed_tps":67.11008255588749}}
+1790668594.104	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668594.104	[🔵 ]  NPU Lock Released!
+1790668594.149	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53086
+1790668594.149	[TCP]  Read 269 bytes from socket
+1790668594.149	================================================
+1790668594.149	[⬇️ ]  Incoming Request: POST
+1790668594.149	[LOG]  Time stamp: 10:56:34 09:29:2026
+1790668594.149	[LOG]  Target: /v1/chat/completions
+1790668594.149	[LOG]  Version: 11
+1790668594.149	[LOG]  Keep-Alive: 0
+1790668594.149	[LOG]  Body: 
+1790668594.149	{
+1790668594.149	    "max_tokens": 64,
+1790668594.149	    "messages": [
+1790668594.149	        {
+1790668594.149	            "content": "Count from 1 to 20.",
+1790668594.149	            "role": "user"
+1790668594.149	        }
+1790668594.149	    ],
+1790668594.149	    "model": "llama3.2:1b",
+1790668594.149	    "stream": true,
+1790668594.149	    "top_k": 1
+1790668594.149	}
+1790668594.149	[🟢 ]  NPU Locked!
+1790668594.149	[FLM]  Prompt cache miss.
+1790668594.149	[FLM]  Clearing context...
+1790668594.151	[FLM]  Start prefill...
+1790668594.152	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668594.545	[FLM]  Start generating...
+1790668595.518	
+1790668595.518	[FLM]  Model RAW Output: 
+1790668595.518	Here's counting from 1 to 20:
+1790668595.518	
+1790668595.518	1. 2
+1790668595.518	2. 3
+1790668595.518	3. 4
+1790668595.518	4. 5
+1790668595.518	5. 6
+1790668595.518	6. 7
+1790668595.518	7. 8
+1790668595.518	8. 9
+1790668595.518	9. 10
+1790668595.518	10. 11
+1790668595.518	11. 12
+1790668595.518	
+1790668595.518	ChatCompletionChunk: {"id":"chatcmpl-6c5a26335183d9047824424f","object":"chat.completion.chunk","created":1790668594,"model":"llama3.2:1b","system_fingerprint":"fp_25a4bd3d275a65fa","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":3.216e-06,"prefill_duration_ttft":0.393189824,"decoding_duration":0.959354,"prefill_speed_tps":109.3619350637111,"decoding_speed_tps":66.71155798589467}}
+1790668595.518	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668595.518	[🔵 ]  NPU Lock Released!
+1790668595.563	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53096
+1790668595.563	[TCP]  Read 269 bytes from socket
+1790668595.563	================================================
+1790668595.563	[⬇️ ]  Incoming Request: POST
+1790668595.563	[LOG]  Time stamp: 10:56:35 09:29:2026
+1790668595.563	[LOG]  Target: /v1/chat/completions
+1790668595.563	[LOG]  Version: 11
+1790668595.563	[LOG]  Keep-Alive: 0
+1790668595.563	[LOG]  Body: 
+1790668595.563	{
+1790668595.563	    "max_tokens": 64,
+1790668595.563	    "messages": [
+1790668595.563	        {
+1790668595.563	            "content": "Count from 1 to 20.",
+1790668595.563	            "role": "user"
+1790668595.563	        }
+1790668595.563	    ],
+1790668595.563	    "model": "llama3.2:1b",
+1790668595.563	    "stream": true,
+1790668595.563	    "top_k": 1
+1790668595.563	}
+1790668595.563	[🟢 ]  NPU Locked!
+1790668595.563	[FLM]  Prompt cache miss.
+1790668595.563	[FLM]  Clearing context...
+1790668595.566	[FLM]  Start prefill...
+1790668595.566	[FLM]  Prefill chunk 1/1 with 43 tokens
+1790668595.954	[FLM]  Start generating...
+1790668596.921	
+1790668596.921	[FLM]  Model RAW Output: 
+1790668596.921	Here's counting from 1 to 20:
+1790668596.921	
+1790668596.921	1. 2
+1790668596.921	2. 3
+1790668596.921	3. 4
+1790668596.921	4. 5
+1790668596.921	5. 6
+1790668596.921	6. 7
+1790668596.921	7. 8
+1790668596.921	8. 9
+1790668596.921	9. 10
+1790668596.921	10. 11
+1790668596.921	11. 12
+1790668596.921	
+1790668596.921	ChatCompletionChunk: {"id":"chatcmpl-0d6400f11d21e0697550b5a4","object":"chat.completion.chunk","created":1790668595,"model":"llama3.2:1b","system_fingerprint":"fp_634e9c393bf30aee","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":4.268e-06,"prefill_duration_ttft":0.387739232,"decoding_duration":0.955207,"prefill_speed_tps":110.89927572766224,"decoding_speed_tps":67.00118403654915}}
+1790668596.921	[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+1790668596.921	[🔵 ]  NPU Lock Released!

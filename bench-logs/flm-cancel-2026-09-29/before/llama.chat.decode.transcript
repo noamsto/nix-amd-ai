@@ -1,0 +1,5 @@
+   0.645	{"model":"llama3.2:1b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   0.667	{"model":"llama3.2:1b","message":{"role":"assistant","content":" History","thinking":""},"done":false}
+   0.691	{"model":"llama3.2:1b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   0.714	{"model":"llama3.2:1b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   0.737	{"model":"llama3.2:1b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}

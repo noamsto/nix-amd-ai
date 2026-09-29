@@ -1,0 +1,5 @@
+   3.799	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"#","thinking":""},"done":false}
+   3.856	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   3.914	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Mechanical","thinking":""},"done":false}
+   3.971	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Muse","thinking":""},"done":false}
+   4.028	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":":","thinking":""},"done":false}

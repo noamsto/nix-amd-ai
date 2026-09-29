@@ -1,0 +1,380 @@
+1790666625.792	[FLM]  Using user-specified port: 58607
+1790666626.307	[31m[FLM]  Qwen3.6 pre-resize image height to 720 pixels if larger than that[0m
+1790666626.307	[FLM]  Loading model: ~/.config/flm/models/Qwen3.6-35B-A3B-NPU2
+1790666642.670	[FLM]  Starting server on port 58607...
+1790666642.670	[🔗 ]  TCP connection established - Remote: 127.0.0.1:32800
+1790666642.670	[FLM]  WebServer started on port 58607 with 10 I/O threads
+1790666642.670	[FLM]  Press Ctrl+C to stop.
+1790666642.670	[TCP]  Read 90 bytes from socket
+1790666642.670	================================================
+1790666642.670	[⬇️ ]  Incoming Request: GET
+1790666642.670	[LOG]  Time stamp: 10:24:02 09:29:2026
+1790666642.670	[LOG]  Target: /api/version
+1790666642.670	[LOG]  Version: 11
+1790666642.670	[LOG]  Keep-Alive: 1
+1790666642.670	================================================
+1790666642.670	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:32800
+1790666642.694	[🔗 ]  TCP connection established - Remote: 127.0.0.1:46590
+1790666642.695	[TCP]  Read 354 bytes from socket
+1790666642.695	================================================
+1790666642.695	[⬇️ ]  Incoming Request: POST
+1790666642.695	[LOG]  Time stamp: 10:24:02 09:29:2026
+1790666642.695	[LOG]  Target: /api/chat
+1790666642.695	[LOG]  Version: 11
+1790666642.695	[LOG]  Keep-Alive: 1
+1790666642.695	[LOG]  Body: 
+1790666642.695	{
+1790666642.695	    "messages": [
+1790666642.695	        {
+1790666642.695	            "content": "Write a de...ing press.",
+1790666642.695	            "role": "user"
+1790666642.695	        }
+1790666642.695	    ],
+1790666642.695	    "model": "qwen3.6-moe:35b-a3b",
+1790666642.695	    "options": {
+1790666642.695	        "num_predict": 512
+1790666642.695	    },
+1790666642.695	    "stream": false,
+1790666642.695	    "top_k": 1
+1790666642.695	}
+1790666642.695	[🟢 ]  NPU Locked!
+1790666642.695	[FLM]  Start generating...
+1790666642.695	[FLM]  Total images: 0
+1790666642.695	[FLM]  Prefill chunk 1/1 with 29 tokens
+1790666645.655	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666645.660	[FLM]  Prompt inserted, starting generation...
+1790666645.660	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666645.665	[31m[FLM]  Restoring checkpoint at context length 29[0m
+1790666645.735	[31m[FLM]  Checkpoint before generation: 29, restore point: 29, user context length: 29[0m
+1790666675.316	
+1790666675.316	[FLM]  Model RAW Output: 
+1790666675.316	<think>
+1790666675.316	Here's a thinking process:
+1790666675.316	
+1790666675.316	1.  **Analyze User Request:**
+1790666675.316	   - **Topic:** History of the printing press
+1790666675.316	   - **Format:** Detailed essay
+1790666675.316	   - **Length:** At least 2000 words
+1790666675.316	   - **Key Requirements:** Comprehensive coverage, historical accuracy, logical structure, academic tone, sufficient depth and detail to meet the word count.
+1790666675.316	
+1790666675.316	2.  **Deconstruct the Topic & Brainstorming:**
+1790666675.316	   - What is the printing press? A mechanical device for transferring text/images onto paper/cloth using ink.
+1790666675.316	   - Key milestones: Pre-Gutenberg printing (woodblock, movable type in Asia), Gutenberg's innovation (15th century Europe), spread across Europe, impact on society/science/religion/politics, evolution of technology (steam-powered, rotary, offset, digital), modern legacy.
+1790666675.316	   - Structure:
+1790666675.316	     I. Introduction (hook, thesis, overview)
+1790666675.316	     II. Pre-Gutenberg Printing Technologies (Asia & Medieval Europe)
+1790666675.316	     III. Gutenberg's Innovation & the Birth of Movable Type Printing
+1790666675.316	     IV. The Spread of Printing Across Europe & Early Impacts
+1790666675.316	     V. Religious, Political, & Intellectual Transformations (Reformation, Scientific Revolution, Enlightenment)
+1790666675.316	     VI. Technological Evolution (18th-20th Century: Steam, Rotary, Offset, Digital)
+1790666675.316	     VII. Socio-Cultural & Economic Impact of Printing
+1790666675.316	     VIII. The Digital Age & Legacy of the Printing Press
+1790666675.316	     IX. Conclusion (synthesis, final thoughts)
+1790666675.316	   - Need to ensure depth in each section to reach 2000+ words naturally without padding.
+1790666675.316	
+1790666675.316	3.  **Draft - Section by Section (Mental Refinement & Expansion):**
+1790666675.316	
+1790666675.316	   *I. Introduction*
+1790666675.316	   - Hook: The printing press is often called the most influential invention of the second millennium.
+1790666675.316	   - Context: Before it, knowledge was scarce, controlled by elites/church. After it, information democratized.
+1790666675.316	   - Thesis: The history of the printing press spans centuries of technological innovation, cultural transformation, and intellectual revolution, evolving from medieval manuscript culture to a global information network that fundamentally reshaped human civilization.
+1790666675.316	   - Outline roadmap: Trace origins in Asia, Gutenberg's breakthrough, European diffusion, socio-political impacts, technological evolution, and digital legacy.
+1790666675.316	
+1790666675.316	   *II. Pre-Gutenberg Printing Technologies*
+1790666675.316	   - Woodblock printing in China (Tang dynasty, 7th
+1790666675.386	[🔵 ]  NPU Lock Released!
+1790666675.386	================================================
+1790666675.386	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:46590
+1790666675.430	[🔗 ]  TCP connection established - Remote: 127.0.0.1:50608
+1790666675.430	[TCP]  Read 354 bytes from socket
+1790666675.430	================================================
+1790666675.430	[⬇️ ]  Incoming Request: POST
+1790666675.430	[LOG]  Time stamp: 10:24:35 09:29:2026
+1790666675.430	[LOG]  Target: /api/chat
+1790666675.430	[LOG]  Version: 11
+1790666675.430	[LOG]  Keep-Alive: 1
+1790666675.430	[LOG]  Body: 
+1790666675.430	{
+1790666675.430	    "messages": [
+1790666675.430	        {
+1790666675.430	            "content": "Write a de...ing press.",
+1790666675.430	            "role": "user"
+1790666675.430	        }
+1790666675.430	    ],
+1790666675.430	    "model": "qwen3.6-moe:35b-a3b",
+1790666675.430	    "options": {
+1790666675.430	        "num_predict": 512
+1790666675.430	    },
+1790666675.430	    "stream": false,
+1790666675.430	    "top_k": 1
+1790666675.430	}
+1790666675.430	[🟢 ]  NPU Locked!
+1790666675.430	[FLM]  Start generating...
+1790666675.430	[FLM]  Total images: 0
+1790666675.430	[FLM]  Prefill chunk 1/1 with 29 tokens
+1790666677.430	[🔴 ]  Client disconnected; cancelling active request
+1790666677.430	[🔗 ]  TCP connection established - Remote: 127.0.0.1:50614
+1790666677.430	[TCP]  Read 276 bytes from socket
+1790666677.430	================================================
+1790666677.430	[⬇️ ]  Incoming Request: POST
+1790666677.430	[LOG]  Time stamp: 10:24:37 09:29:2026
+1790666677.430	[LOG]  Target: /api/chat
+1790666677.430	[LOG]  Version: 11
+1790666677.430	[LOG]  Keep-Alive: 1
+1790666677.430	[LOG]  Body: 
+1790666677.430	{
+1790666677.430	    "messages": [
+1790666677.430	        {
+1790666677.430	            "content": "Say hi.",
+1790666677.430	            "role": "user"
+1790666677.430	        }
+1790666677.430	    ],
+1790666677.430	    "model": "qwen3.6-moe:35b-a3b",
+1790666677.430	    "options": {
+1790666677.430	        "num_predict": 4
+1790666677.430	    },
+1790666677.430	    "stream": false,
+1790666677.430	    "top_k": 1
+1790666677.430	}
+1790666677.430	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790666678.451	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666678.456	[FLM]  Prompt inserted, starting generation...
+1790666678.456	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666678.462	[31m[FLM]  Restoring checkpoint at context length 29[0m
+1790666678.533	[31m[FLM]  Checkpoint before generation: 29, restore point: 29, user context length: 29[0m
+1790666708.045	
+1790666708.045	[FLM]  Model RAW Output: 
+1790666708.045	<think>
+1790666708.045	Here's a thinking process:
+1790666708.045	
+1790666708.045	1.  **Analyze User Request:**
+1790666708.045	   - **Topic:** History of the printing press
+1790666708.045	   - **Format:** Detailed essay
+1790666708.045	   - **Length:** At least 2000 words
+1790666708.045	   - **Key Requirements:** Comprehensive coverage, historical accuracy, logical structure, academic tone, sufficient depth and detail to meet the word count.
+1790666708.045	
+1790666708.045	2.  **Deconstruct the Topic & Brainstorming:**
+1790666708.045	   - What is the printing press? A mechanical device for transferring text/images onto paper/cloth using ink.
+1790666708.045	   - Key milestones: Pre-Gutenberg printing (woodblock, movable type in Asia), Gutenberg's innovation (15th century Europe), spread across Europe, impact on society/science/religion/politics, evolution of technology (steam-powered, rotary, offset, digital), modern legacy.
+1790666708.045	   - Structure:
+1790666708.045	     I. Introduction (hook, thesis, overview)
+1790666708.045	     II. Pre-Gutenberg Printing Technologies (Asia & Medieval Europe)
+1790666708.045	     III. Gutenberg's Innovation & the Birth of Movable Type Printing
+1790666708.045	     IV. The Spread of Printing Across Europe & Early Impacts
+1790666708.045	     V. Religious, Political, & Intellectual Transformations (Reformation, Scientific Revolution, Enlightenment)
+1790666708.045	     VI. Technological Evolution (18th-20th Century: Steam, Rotary, Offset, Digital)
+1790666708.045	     VII. Socio-Cultural & Economic Impact of Printing
+1790666708.045	     VIII. The Digital Age & Legacy of the Printing Press
+1790666708.045	     IX. Conclusion (synthesis, final thoughts)
+1790666708.045	   - Need to ensure depth in each section to reach 2000+ words naturally without padding.
+1790666708.045	
+1790666708.045	3.  **Draft - Section by Section (Mental Refinement & Expansion):**
+1790666708.045	
+1790666708.045	   *I. Introduction*
+1790666708.045	   - Hook: The printing press is often called the most influential invention of the second millennium.
+1790666708.045	   - Context: Before it, knowledge was scarce, controlled by elites/church. After it, information democratized.
+1790666708.045	   - Thesis: The history of the printing press spans centuries of technological innovation, cultural transformation, and intellectual revolution, evolving from medieval manuscript culture to a global information network that fundamentally reshaped human civilization.
+1790666708.045	   - Outline roadmap: Trace origins in Asia, Gutenberg's breakthrough, European diffusion, socio-political impacts, technological evolution, and digital legacy.
+1790666708.045	
+1790666708.045	   *II. Pre-Gutenberg Printing Technologies*
+1790666708.045	   - Woodblock printing in China (Tang dynasty, 7th
+1790666708.449	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790666708.449	================================================
+1790666708.449	[FLM]  Start generating...
+1790666708.449	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790666708.449	[FLM]  Total images: 0
+1790666708.449	[FLM]  Prefill chunk 1/1 with 11 tokens
+1790666710.545	[31m[FLM]  Creating checkpoint at context length 11[0m
+1790666710.550	[FLM]  Prompt inserted, starting generation...
+1790666710.550	[31m[FLM]  Creating checkpoint at context length 11[0m
+1790666710.556	[31m[FLM]  Restoring checkpoint at context length 11[0m
+1790666710.626	[31m[FLM]  Checkpoint before generation: 11, restore point: 11, user context length: 11[0m
+1790666710.856	
+1790666710.857	[FLM]  Model RAW Output: 
+1790666710.857	<think>
+1790666710.857	Here's a
+1790666710.857	================================================
+1790666710.857	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:50614
+1790666710.927	[🔵 ]  NPU Lock Released!
+1790666711.926	[🔗 ]  TCP connection established - Remote: 127.0.0.1:46468
+1790666711.926	[TCP]  Read 354 bytes from socket
+1790666711.926	================================================
+1790666711.926	[⬇️ ]  Incoming Request: POST
+1790666711.926	[LOG]  Time stamp: 10:25:11 09:29:2026
+1790666711.926	[LOG]  Target: /api/chat
+1790666711.926	[LOG]  Version: 11
+1790666711.926	[LOG]  Keep-Alive: 1
+1790666711.926	[LOG]  Body: 
+1790666711.926	{
+1790666711.926	    "messages": [
+1790666711.926	        {
+1790666711.926	            "content": "Write a de...ing press.",
+1790666711.926	            "role": "user"
+1790666711.926	        }
+1790666711.926	    ],
+1790666711.926	    "model": "qwen3.6-moe:35b-a3b",
+1790666711.926	    "options": {
+1790666711.926	        "num_predict": 512
+1790666711.926	    },
+1790666711.926	    "stream": false,
+1790666711.926	    "top_k": 1
+1790666711.926	}
+1790666711.926	[🟢 ]  NPU Locked!
+1790666711.926	[FLM]  Start generating...
+1790666711.926	[FLM]  Total images: 0
+1790666711.926	[FLM]  Prefill chunk 1/1 with 29 tokens
+1790666712.425	[🔗 ]  TCP connection established - Remote: 127.0.0.1:39366
+1790666712.425	[TCP]  Read 354 bytes from socket
+1790666712.425	================================================
+1790666712.425	[⬇️ ]  Incoming Request: POST
+1790666712.425	[LOG]  Time stamp: 10:25:12 09:29:2026
+1790666712.425	[LOG]  Target: /api/chat
+1790666712.425	[LOG]  Version: 11
+1790666712.425	[LOG]  Keep-Alive: 1
+1790666712.425	[LOG]  Body: 
+1790666712.425	{
+1790666712.425	    "messages": [
+1790666712.425	        {
+1790666712.425	            "content": "Write a de...ing press.",
+1790666712.425	            "role": "user"
+1790666712.425	        }
+1790666712.425	    ],
+1790666712.425	    "model": "qwen3.6-moe:35b-a3b",
+1790666712.425	    "options": {
+1790666712.425	        "num_predict": 512
+1790666712.425	    },
+1790666712.425	    "stream": false,
+1790666712.425	    "top_k": 1
+1790666712.425	}
+1790666712.425	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790666712.725	[🔗 ]  TCP connection established - Remote: 127.0.0.1:39368
+1790666712.725	[TCP]  Read 276 bytes from socket
+1790666712.725	================================================
+1790666712.725	[⬇️ ]  Incoming Request: POST
+1790666712.725	[LOG]  Time stamp: 10:25:12 09:29:2026
+1790666712.725	[LOG]  Target: /api/chat
+1790666712.725	[LOG]  Version: 11
+1790666712.725	[LOG]  Keep-Alive: 1
+1790666712.725	[LOG]  Body: 
+1790666712.725	{
+1790666712.725	    "messages": [
+1790666712.725	        {
+1790666712.725	            "content": "Say hi.",
+1790666712.725	            "role": "user"
+1790666712.725	        }
+1790666712.725	    ],
+1790666712.725	    "model": "qwen3.6-moe:35b-a3b",
+1790666712.725	    "options": {
+1790666712.725	        "num_predict": 4
+1790666712.725	    },
+1790666712.725	    "stream": false,
+1790666712.725	    "top_k": 1
+1790666712.725	}
+1790666712.725	[🕒 ]  NPU busy, request queued (2/10): POST /api/chat
+1790666714.964	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666714.969	[FLM]  Prompt inserted, starting generation...
+1790666714.970	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666714.975	[31m[FLM]  Restoring checkpoint at context length 29[0m
+1790666715.045	[31m[FLM]  Checkpoint before generation: 29, restore point: 29, user context length: 29[0m
+1790666744.748	
+1790666744.748	[FLM]  Model RAW Output: 
+1790666744.748	<think>
+1790666744.748	Here's a thinking process:
+1790666744.748	
+1790666744.748	1.  **Analyze User Request:**
+1790666744.748	   - **Topic:** History of the printing press
+1790666744.748	   - **Format:** Detailed essay
+1790666744.748	   - **Length:** At least 2000 words
+1790666744.748	   - **Key Requirements:** Comprehensive coverage, historical accuracy, logical structure, academic tone, sufficient depth and detail to meet the word count.
+1790666744.748	
+1790666744.748	2.  **Deconstruct the Topic & Brainstorming:**
+1790666744.748	   - What is the printing press? A mechanical device for transferring text/images onto paper/cloth using ink.
+1790666744.748	   - Key milestones: Pre-Gutenberg printing (woodblock, movable type in Asia), Gutenberg's innovation (15th century Europe), spread across Europe, impact on society/science/religion/politics, evolution of technology (steam-powered, rotary, offset, digital), modern legacy.
+1790666744.748	   - Structure:
+1790666744.748	     I. Introduction (hook, thesis, overview)
+1790666744.748	     II. Pre-Gutenberg Printing Technologies (Asia & Medieval Europe)
+1790666744.748	     III. Gutenberg's Innovation & the Birth of Movable Type Printing
+1790666744.748	     IV. The Spread of Printing Across Europe & Early Impacts
+1790666744.748	     V. Religious, Political, & Intellectual Transformations (Reformation, Scientific Revolution, Enlightenment)
+1790666744.748	     VI. Technological Evolution (18th-20th Century: Steam, Rotary, Offset, Digital)
+1790666744.748	     VII. Socio-Cultural & Economic Impact of Printing
+1790666744.748	     VIII. The Digital Age & Legacy of the Printing Press
+1790666744.748	     IX. Conclusion (synthesis, final thoughts)
+1790666744.748	   - Need to ensure depth in each section to reach 2000+ words naturally without padding.
+1790666744.748	
+1790666744.748	3.  **Draft - Section by Section (Mental Refinement & Expansion):**
+1790666744.749	
+1790666744.749	   *I. Introduction*
+1790666744.749	   - Hook: The printing press is often called the most influential invention of the second millennium.
+1790666744.749	   - Context: Before it, knowledge was scarce, controlled by elites/church. After it, information democratized.
+1790666744.749	   - Thesis: The history of the printing press spans centuries of technological innovation, cultural transformation, and intellectual revolution, evolving from medieval manuscript culture to a global information network that fundamentally reshaped human civilization.
+1790666744.749	   - Outline roadmap: Trace origins in Asia, Gutenberg's breakthrough, European diffusion, socio-political impacts, technological evolution, and digital legacy.
+1790666744.749	
+1790666744.749	   *II. Pre-Gutenberg Printing Technologies*
+1790666744.749	   - Woodblock printing in China (Tang dynasty, 7th
+1790666745.152	[🟡 ]  Dequeuing NPU request (1 remaining)...
+1790666745.152	================================================
+1790666745.152	[[🔴 ]  Client disconnected; cancelling active request
+1790666745.152	FLM]  Start generating...
+1790666745.152	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:46468
+1790666745.152	[FLM]  Total images: 0
+1790666745.153	[FLM]  Prefill chunk 1/1 with 29 tokens
+1790666748.378	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666748.384	[FLM]  Prompt inserted, starting generation...
+1790666748.384	[31m[FLM]  Creating checkpoint at context length 29[0m
+1790666748.389	[31m[FLM]  Restoring checkpoint at context length 29[0m
+1790666748.462	[31m[FLM]  Checkpoint before generation: 29, restore point: 29, user context length: 29[0m
+1790666778.052	
+1790666778.052	[FLM]  Model RAW Output: 
+1790666778.052	<think>
+1790666778.052	Here's a thinking process:
+1790666778.052	
+1790666778.052	1.  **Analyze User Request:**
+1790666778.052	   - **Topic:** History of the printing press
+1790666778.052	   - **Format:** Detailed essay
+1790666778.052	   - **Length:** At least 2000 words
+1790666778.052	   - **Key Requirements:** Comprehensive coverage, historical accuracy, logical structure, academic tone, sufficient depth and detail to meet the word count.
+1790666778.052	
+1790666778.052	2.  **Deconstruct the Topic & Brainstorming:**
+1790666778.052	   - What is the printing press? A mechanical device for transferring text/images onto paper/cloth using ink.
+1790666778.052	   - Key milestones: Pre-Gutenberg printing (woodblock, movable type in Asia), Gutenberg's innovation (15th century Europe), spread across Europe, impact on society/science/religion/politics, evolution of technology (steam-powered, rotary, offset, digital), modern legacy.
+1790666778.052	   - Structure:
+1790666778.052	     I. Introduction (hook, thesis, overview)
+1790666778.052	     II. Pre-Gutenberg Printing Technologies (Asia & Medieval Europe)
+1790666778.052	     III. Gutenberg's Innovation & the Birth of Movable Type Printing
+1790666778.052	     IV. The Spread of Printing Across Europe & Early Impacts
+1790666778.052	     V. Religious, Political, & Intellectual Transformations (Reformation, Scientific Revolution, Enlightenment)
+1790666778.052	     VI. Technological Evolution (18th-20th Century: Steam, Rotary, Offset, Digital)
+1790666778.052	     VII. Socio-Cultural & Economic Impact of Printing
+1790666778.052	     VIII. The Digital Age & Legacy of the Printing Press
+1790666778.052	     IX. Conclusion (synthesis, final thoughts)
+1790666778.052	   - Need to ensure depth in each section to reach 2000+ words naturally without padding.
+1790666778.052	
+1790666778.052	3.  **Draft - Section by Section (Mental Refinement & Expansion):**
+1790666778.052	
+1790666778.052	   *I. Introduction*
+1790666778.052	   - Hook: The printing press is often called the most influential invention of the second millennium.
+1790666778.052	   - Context: Before it, knowledge was scarce, controlled by elites/church. After it, information democratized.
+1790666778.052	   - Thesis: The history of the printing press spans centuries of technological innovation, cultural transformation, and intellectual revolution, evolving from medieval manuscript culture to a global information network that fundamentally reshaped human civilization.
+1790666778.052	   - Outline roadmap: Trace origins in Asia, Gutenberg's breakthrough, European diffusion, socio-political impacts, technological evolution, and digital legacy.
+1790666778.052	
+1790666778.052	   *II. Pre-Gutenberg Printing Technologies*
+1790666778.052	   - Woodblock printing in China (Tang dynasty, 7th
+1790666778.052	================================================
+1790666778.052	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790666778.457	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790666778.457	[FLM]  Start generating...
+1790666778.457	[FLM]  Total images: 0
+1790666778.457	[FLM]  Prefill chunk 1/1 with 11 tokens
+1790666780.667	[31m[FLM]  Creating checkpoint at context length 11[0m
+1790666780.672	[FLM]  Prompt inserted, starting generation...
+1790666780.672	[31m[FLM]  Creating checkpoint at context length 11[0m
+1790666780.677	[31m[FLM]  Restoring checkpoint at context length 11[0m
+1790666780.748	[31m[FLM]  Checkpoint before generation: 11, restore point: 11, user context length: 11[0m
+1790666780.979	
+1790666780.979	[FLM]  Model RAW Output: 
+1790666780.979	<think>
+1790666780.979	Here's a
+1790666780.979	================================================
+1790666780.979	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39368
+1790666781.048	[🔵 ]  NPU Lock Released!

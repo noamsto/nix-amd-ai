@@ -1,0 +1,513 @@
+   3.205	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"#","thinking":""},"done":false}
+   3.262	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   3.320	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Mechanical","thinking":""},"done":false}
+   3.377	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Muse","thinking":""},"done":false}
+   3.435	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":":","thinking":""},"done":false}
+   3.492	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" How","thinking":""},"done":false}
+   3.549	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   3.608	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
+   3.666	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Press","thinking":""},"done":false}
+   3.723	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Res","thinking":""},"done":false}
+   3.781	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"h","thinking":""},"done":false}
+   3.839	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"aped","thinking":""},"done":false}
+   3.896	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Human","thinking":""},"done":false}
+   3.954	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Civilization","thinking":""},"done":false}
+   4.013	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+   4.070	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"The","thinking":""},"done":false}
+   4.127	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
+   4.185	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   4.242	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" human","thinking":""},"done":false}
+   4.300	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" communication","thinking":""},"done":false}
+   4.358	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" is","thinking":""},"done":false}
+   4.415	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   4.473	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" narrative","thinking":""},"done":false}
+   4.531	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   4.588	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" increasing","thinking":""},"done":false}
+   4.647	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" accessibility","thinking":""},"done":false}
+   4.704	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   4.761	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" For","thinking":""},"done":false}
+   4.819	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" millennia","thinking":""},"done":false}
+   4.877	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   4.934	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" knowledge","thinking":""},"done":false}
+   4.992	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   5.050	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   5.107	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" exclusive","thinking":""},"done":false}
+   5.165	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" province","thinking":""},"done":false}
+   5.223	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   5.280	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   5.337	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" elite","thinking":""},"done":false}
+   5.395	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   5.452	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" guarded","thinking":""},"done":false}
+   5.510	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+   5.567	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" s","thinking":""},"done":false}
+   5.624	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"cribes","thinking":""},"done":false}
+   5.683	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   5.740	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" monks","thinking":""},"done":false}
+   5.798	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   5.856	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   5.913	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" scholars","thinking":""},"done":false}
+   5.970	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" who","thinking":""},"done":false}
+   6.028	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" controlled","thinking":""},"done":false}
+   6.085	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.143	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" means","thinking":""},"done":false}
+   6.201	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   6.259	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" production","thinking":""},"done":false}
+   6.317	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   6.374	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Information","thinking":""},"done":false}
+   6.433	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" moved","thinking":""},"done":false}
+   6.490	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" at","thinking":""},"done":false}
+   6.549	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   6.607	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" speed","thinking":""},"done":false}
+   6.664	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   6.723	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.780	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" horse","thinking":""},"done":false}
+   6.837	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" or","thinking":""},"done":false}
+   6.895	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   6.953	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ship","thinking":""},"done":false}
+   7.010	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   7.068	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+   7.125	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" its","thinking":""},"done":false}
+   7.183	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" replication","thinking":""},"done":false}
+   7.241	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+   7.298	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" an","thinking":""},"done":false}
+   7.355	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" act","thinking":""},"done":false}
+   7.413	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   7.470	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" labor","thinking":""},"done":false}
+   7.528	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ious","thinking":""},"done":false}
+   7.585	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" devotion","thinking":""},"done":false}
+   7.644	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" rather","thinking":""},"done":false}
+   7.701	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" than","thinking":""},"done":false}
+   7.759	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" industrial","thinking":""},"done":false}
+   7.816	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" efficiency","thinking":""},"done":false}
+   7.873	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   7.931	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Then","thinking":""},"done":false}
+   7.988	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   8.046	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   8.103	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   8.160	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" mid","thinking":""},"done":false}
+   8.218	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"-","thinking":""},"done":false}
+   8.276	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+   8.334	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"5","thinking":""},"done":false}
+   8.392	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+   8.450	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+   8.508	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   8.566	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+   8.624	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" quiet","thinking":""},"done":false}
+   8.683	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" revolution","thinking":""},"done":false}
+   8.741	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" occurred","thinking":""},"done":false}
+   8.799	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+   8.857	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Mainz","thinking":""},"done":false}
+   8.916	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   8.974	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Germany","thinking":""},"done":false}
+   9.031	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+   9.089	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+   9.146	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" would","thinking":""},"done":false}
+   9.204	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ir","thinking":""},"done":false}
+   9.262	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"rev","thinking":""},"done":false}
+   9.319	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"oc","thinking":""},"done":false}
+   9.377	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ably","thinking":""},"done":false}
+   9.434	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" alter","thinking":""},"done":false}
+   9.492	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+   9.549	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" trajectory","thinking":""},"done":false}
+   9.607	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+   9.664	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" human","thinking":""},"done":false}
+   9.721	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
+   9.779	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+   9.837	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+   9.895	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" invention","thinking":""},"done":false}
+   9.952	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  10.009	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  10.067	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
+  10.125	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+  10.183	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+  10.241	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+  10.298	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+  10.357	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Johannes","thinking":""},"done":false}
+  10.415	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+  10.472	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" did","thinking":""},"done":false}
+  10.530	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" not","thinking":""},"done":false}
+  10.587	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" merely","thinking":""},"done":false}
+  10.646	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" change","thinking":""},"done":false}
+  10.705	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" how","thinking":""},"done":false}
+  10.762	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" books","thinking":""},"done":false}
+  10.820	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+  10.879	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" made","thinking":""},"done":false}
+  10.936	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":";","thinking":""},"done":false}
+  10.993	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
+  11.051	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" changed","thinking":""},"done":false}
+  11.108	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" how","thinking":""},"done":false}
+  11.166	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" humans","thinking":""},"done":false}
+  11.224	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" thought","thinking":""},"done":false}
+  11.282	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  11.340	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" worsh","thinking":""},"done":false}
+  11.397	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ipped","thinking":""},"done":false}
+  11.455	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  11.513	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" governed","thinking":""},"done":false}
+  11.571	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  11.628	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  11.686	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" understood","thinking":""},"done":false}
+  11.743	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" their","thinking":""},"done":false}
+  11.800	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" place","thinking":""},"done":false}
+  11.858	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+  11.916	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  11.974	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" universe","thinking":""},"done":false}
+  12.031	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  12.089	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" This","thinking":""},"done":false}
+  12.146	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" essay","thinking":""},"done":false}
+  12.204	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" explores","thinking":""},"done":false}
+  12.261	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  12.320	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" intricate","thinking":""},"done":false}
+  12.379	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" history","thinking":""},"done":false}
+  12.437	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  12.495	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  12.553	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+  12.611	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" press","thinking":""},"done":false}
+  12.669	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  12.727	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" tracing","thinking":""},"done":false}
+  12.786	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" its","thinking":""},"done":false}
+  12.844	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" technological","thinking":""},"done":false}
+  12.902	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" origins","thinking":""},"done":false}
+  12.960	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  13.018	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" its","thinking":""},"done":false}
+  13.075	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" immediate","thinking":""},"done":false}
+  13.133	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" socio","thinking":""},"done":false}
+  13.190	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"-pol","thinking":""},"done":false}
+  13.248	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"itical","thinking":""},"done":false}
+  13.305	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" impacts","thinking":""},"done":false}
+  13.362	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  13.420	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  13.477	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" its","thinking":""},"done":false}
+  13.535	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" enduring","thinking":""},"done":false}
+  13.592	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" legacy","thinking":""},"done":false}
+  13.650	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" as","thinking":""},"done":false}
+  13.707	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  13.764	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" catalyst","thinking":""},"done":false}
+  13.821	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" for","thinking":""},"done":false}
+  13.879	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  13.936	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" modern","thinking":""},"done":false}
+  13.994	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" world","thinking":""},"done":false}
+  14.052	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  14.109	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+  14.168	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"###","thinking":""},"done":false}
+  14.225	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Pre","thinking":""},"done":false}
+  14.283	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"-G","thinking":""},"done":false}
+  14.341	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"utenberg","thinking":""},"done":false}
+  14.398	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Prec","thinking":""},"done":false}
+  14.456	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ursors","thinking":""},"done":false}
+  14.514	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":":","thinking":""},"done":false}
+  14.572	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+  14.630	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Road","thinking":""},"done":false}
+  14.688	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+  14.746	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" M","thinking":""},"done":false}
+  14.803	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ovable","thinking":""},"done":false}
+  14.861	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Type","thinking":""},"done":false}
+  14.918	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+  14.976	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"To","thinking":""},"done":false}
+  15.033	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" understand","thinking":""},"done":false}
+  15.090	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  15.148	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" magnitude","thinking":""},"done":false}
+  15.205	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  15.263	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+  15.320	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"’s","thinking":""},"done":false}
+  15.378	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" achievement","thinking":""},"done":false}
+  15.435	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  15.493	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" one","thinking":""},"done":false}
+  15.551	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" must","thinking":""},"done":false}
+  15.608	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" first","thinking":""},"done":false}
+  15.668	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" appreciate","thinking":""},"done":false}
+  15.726	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  15.783	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" landscape","thinking":""},"done":false}
+  15.840	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+  15.898	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" preceded","thinking":""},"done":false}
+  15.955	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" it","thinking":""},"done":false}
+  16.012	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  16.070	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Printing","thinking":""},"done":false}
+  16.127	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+  16.185	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" not","thinking":""},"done":false}
+  16.242	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" entirely","thinking":""},"done":false}
+  16.300	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" unknown","thinking":""},"done":false}
+  16.357	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+  16.415	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
+  16.473	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" when","thinking":""},"done":false}
+  16.530	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+  16.588	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" began","thinking":""},"done":false}
+  16.645	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" his","thinking":""},"done":false}
+  16.703	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" experiments","thinking":""},"done":false}
+  16.761	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" around","thinking":""},"done":false}
+  16.818	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+  16.876	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+  16.934	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"4","thinking":""},"done":false}
+  16.991	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"4","thinking":""},"done":false}
+  17.049	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"0","thinking":""},"done":false}
+  17.107	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  17.164	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" In","thinking":""},"done":false}
+  17.222	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" East","thinking":""},"done":false}
+  17.279	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Asia","thinking":""},"done":false}
+  17.337	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  17.394	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" particularly","thinking":""},"done":false}
+  17.451	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+  17.509	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" China","thinking":""},"done":false}
+  17.567	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  17.624	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Korea","thinking":""},"done":false}
+  17.682	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  17.740	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" wood","thinking":""},"done":false}
+  17.797	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"block","thinking":""},"done":false}
+  17.855	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" printing","thinking":""},"done":false}
+  17.913	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" had","thinking":""},"done":false}
+  17.970	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" been","thinking":""},"done":false}
+  18.028	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" utilized","thinking":""},"done":false}
+  18.086	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" for","thinking":""},"done":false}
+  18.143	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" centuries","thinking":""},"done":false}
+  18.201	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  18.259	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" By","thinking":""},"done":false}
+  18.317	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  18.374	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+  18.432	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+  18.490	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+  18.548	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+  18.605	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+  18.663	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  18.721	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Chinese","thinking":""},"done":false}
+  18.778	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" inventor","thinking":""},"done":false}
+  18.836	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Bi","thinking":""},"done":false}
+  18.894	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Sh","thinking":""},"done":false}
+  18.951	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"eng","thinking":""},"done":false}
+  19.009	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" had","thinking":""},"done":false}
+  19.067	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" developed","thinking":""},"done":false}
+  19.124	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ceramic","thinking":""},"done":false}
+  19.183	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
+  19.240	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+  19.298	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  19.356	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  19.413	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+  19.472	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  19.530	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+  19.587	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"1","thinking":""},"done":false}
+  19.650	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"3","thinking":""},"done":false}
+  19.719	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"th","thinking":""},"done":false}
+  19.784	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" century","thinking":""},"done":false}
+  19.847	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  19.906	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Korean","thinking":""},"done":false}
+  19.964	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" artisans","thinking":""},"done":false}
+  20.023	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+  20.084	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" experimenting","thinking":""},"done":false}
+  20.146	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
+  20.211	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" metal","thinking":""},"done":false}
+  20.276	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
+  20.346	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+  20.419	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  20.491	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" However","thinking":""},"done":false}
+  20.563	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  20.632	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" these","thinking":""},"done":false}
+  20.692	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" technologies","thinking":""},"done":false}
+  20.754	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" did","thinking":""},"done":false}
+  20.822	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" not","thinking":""},"done":false}
+  20.905	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" spread","thinking":""},"done":false}
+  20.994	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+  21.059	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
+  21.129	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" due","thinking":""},"done":false}
+  21.205	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+  21.279	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" fundamental","thinking":""},"done":false}
+  21.352	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" differences","thinking":""},"done":false}
+  21.423	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+  21.495	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" script","thinking":""},"done":false}
+  21.568	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" systems","thinking":""},"done":false}
+  21.643	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  21.716	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+  21.800	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" log","thinking":""},"done":false}
+  21.868	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ographic","thinking":""},"done":false}
+  21.942	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" nature","thinking":""},"done":false}
+  22.015	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  22.091	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Chinese","thinking":""},"done":false}
+  22.163	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
+  22.235	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" required","thinking":""},"done":false}
+  22.303	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" thousands","thinking":""},"done":false}
+  22.375	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  22.445	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" unique","thinking":""},"done":false}
+  22.518	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" blocks","thinking":""},"done":false}
+  22.592	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" or","thinking":""},"done":false}
+  22.664	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" types","thinking":""},"done":false}
+  22.734	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  22.799	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" making","thinking":""},"done":false}
+  22.864	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  22.927	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" logistics","thinking":""},"done":false}
+  22.989	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  23.055	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" storage","thinking":""},"done":false}
+  23.120	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  23.185	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" selection","thinking":""},"done":false}
+  23.252	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" cumbersome","thinking":""},"done":false}
+  23.322	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  23.392	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" In","thinking":""},"done":false}
+  23.457	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" contrast","thinking":""},"done":false}
+  23.529	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  23.599	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  23.668	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" alph","thinking":""},"done":false}
+  23.735	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"abetic","thinking":""},"done":false}
+  23.809	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" scripts","thinking":""},"done":false}
+  23.883	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  23.953	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
+  24.021	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  24.088	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" requiring","thinking":""},"done":false}
+  24.155	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" only","thinking":""},"done":false}
+  24.226	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ","thinking":""},"done":false}
+  24.298	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"2","thinking":""},"done":false}
+  24.365	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"6","thinking":""},"done":false}
+  24.435	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" distinct","thinking":""},"done":false}
+  24.503	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" characters","thinking":""},"done":false}
+  24.571	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  24.639	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+  24.705	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" ideally","thinking":""},"done":false}
+  24.775	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" suited","thinking":""},"done":false}
+  24.842	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" for","thinking":""},"done":false}
+  24.910	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" movable","thinking":""},"done":false}
+  24.980	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" type","thinking":""},"done":false}
+  25.046	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  25.115	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+  25.186	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"In","thinking":""},"done":false}
+  25.257	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" medieval","thinking":""},"done":false}
+  25.328	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Europe","thinking":""},"done":false}
+  25.399	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  25.467	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" books","thinking":""},"done":false}
+  25.537	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+  25.605	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" produced","thinking":""},"done":false}
+  25.674	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+  25.744	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" hand","thinking":""},"done":false}
+  25.815	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+  25.888	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" mon","thinking":""},"done":false}
+  25.961	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"astic","thinking":""},"done":false}
+  26.028	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" script","thinking":""},"done":false}
+  26.096	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"oria","thinking":""},"done":false}
+  26.163	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  26.230	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" A","thinking":""},"done":false}
+  26.301	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" single","thinking":""},"done":false}
+  26.370	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" copy","thinking":""},"done":false}
+  26.438	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  26.507	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+  26.576	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Bible","thinking":""},"done":false}
+  26.645	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" could","thinking":""},"done":false}
+  26.714	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" take","thinking":""},"done":false}
+  26.782	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+  26.850	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" year","thinking":""},"done":false}
+  26.919	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" or","thinking":""},"done":false}
+  26.988	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" more","thinking":""},"done":false}
+  27.057	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+  27.124	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" complete","thinking":""},"done":false}
+  27.193	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  27.263	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" costing","thinking":""},"done":false}
+  27.333	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" as","thinking":""},"done":false}
+  27.402	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" much","thinking":""},"done":false}
+  27.469	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" as","thinking":""},"done":false}
+  27.542	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+  27.602	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" vine","thinking":""},"done":false}
+  27.669	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"yard","thinking":""},"done":false}
+  27.734	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  27.801	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" These","thinking":""},"done":false}
+  27.872	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" manuscripts","thinking":""},"done":false}
+  27.943	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+  28.014	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" illuminated","thinking":""},"done":false}
+  28.081	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" with","thinking":""},"done":false}
+  28.146	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" gold","thinking":""},"done":false}
+  28.215	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  28.282	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" precious","thinking":""},"done":false}
+  28.353	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" pig","thinking":""},"done":false}
+  28.419	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ments","thinking":""},"done":false}
+  28.485	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  28.552	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" serving","thinking":""},"done":false}
+  28.621	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" as","thinking":""},"done":false}
+  28.682	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" objects","thinking":""},"done":false}
+  28.749	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  28.818	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" devotion","thinking":""},"done":false}
+  28.885	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  28.949	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" status","thinking":""},"done":false}
+  29.015	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" rather","thinking":""},"done":false}
+  29.081	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" than","thinking":""},"done":false}
+  29.148	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" vehicles","thinking":""},"done":false}
+  29.214	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" for","thinking":""},"done":false}
+  29.280	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" mass","thinking":""},"done":false}
+  29.346	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" information","thinking":""},"done":false}
+  29.413	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" dissemination","thinking":""},"done":false}
+  29.482	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  29.548	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+  29.615	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" demand","thinking":""},"done":false}
+  29.684	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" for","thinking":""},"done":false}
+  29.752	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" texts","thinking":""},"done":false}
+  29.819	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+  29.890	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" growing","thinking":""},"done":false}
+  29.961	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"—","thinking":""},"done":false}
+  30.035	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"univers","thinking":""},"done":false}
+  30.097	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ities","thinking":""},"done":false}
+  30.161	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" were","thinking":""},"done":false}
+  30.223	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" emerging","thinking":""},"done":false}
+  30.290	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" in","thinking":""},"done":false}
+  30.360	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Paris","thinking":""},"done":false}
+  30.426	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  30.494	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Oxford","thinking":""},"done":false}
+  30.561	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  30.627	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  30.694	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Bologna","thinking":""},"done":false}
+  30.761	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  30.827	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" creating","thinking":""},"done":false}
+  30.893	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+  30.959	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" need","thinking":""},"done":false}
+  31.026	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" for","thinking":""},"done":false}
+  31.094	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" textbooks","thinking":""},"done":false}
+  31.162	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  31.234	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" legal","thinking":""},"done":false}
+  31.300	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" documents","thinking":""},"done":false}
+  31.368	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"—but","thinking":""},"done":false}
+  31.436	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  31.506	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" supply","thinking":""},"done":false}
+  31.574	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+  31.644	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" constrained","thinking":""},"done":false}
+  31.712	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" by","thinking":""},"done":false}
+  31.780	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  31.847	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" physical","thinking":""},"done":false}
+  31.914	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" limitations","thinking":""},"done":false}
+  31.987	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  32.054	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" human","thinking":""},"done":false}
+  32.124	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" labor","thinking":""},"done":false}
+  32.191	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  32.258	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" It","thinking":""},"done":false}
+  32.324	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" was","thinking":""},"done":false}
+  32.391	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" within","thinking":""},"done":false}
+  32.458	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" this","thinking":""},"done":false}
+  32.524	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" context","thinking":""},"done":false}
+  32.590	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  32.656	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" scarcity","thinking":""},"done":false}
+  32.722	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" and","thinking":""},"done":false}
+  32.788	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" high","thinking":""},"done":false}
+  32.855	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" cost","thinking":""},"done":false}
+  32.924	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" that","thinking":""},"done":false}
+  32.991	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Johannes","thinking":""},"done":false}
+  33.059	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+  33.126	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  33.191	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" a","thinking":""},"done":false}
+  33.259	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" gold","thinking":""},"done":false}
+  33.325	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"smith","thinking":""},"done":false}
+  33.392	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" from","thinking":""},"done":false}
+  33.459	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Mainz","thinking":""},"done":false}
+  33.526	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":",","thinking":""},"done":false}
+  33.598	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" sought","thinking":""},"done":false}
+  33.665	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" to","thinking":""},"done":false}
+  33.734	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" mechan","thinking":""},"done":false}
+  33.800	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"ize","thinking":""},"done":false}
+  33.867	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" the","thinking":""},"done":false}
+  33.933	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" process","thinking":""},"done":false}
+  34.002	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":".","thinking":""},"done":false}
+  34.073	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+  34.141	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"###","thinking":""},"done":false}
+  34.204	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" The","thinking":""},"done":false}
+  34.263	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+  34.324	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Innovation","thinking":""},"done":false}
+  34.385	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":":","thinking":""},"done":false}
+  34.447	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" A","thinking":""},"done":false}
+  34.514	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Con","thinking":""},"done":false}
+  34.574	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"vergence","thinking":""},"done":false}
+  34.633	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" of","thinking":""},"done":false}
+  34.692	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Technologies","thinking":""},"done":false}
+  34.751	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"\n\n","thinking":""},"done":false}
+  34.814	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"J","thinking":""},"done":false}
+  34.879	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"oh","thinking":""},"done":false}
+  34.939	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":"annes","thinking":""},"done":false}
+  34.999	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":" Gutenberg","thinking":""},"done":false}
+  34.999	{"model":"qwen3.6-moe:35b-a3b","message":{"role":"assistant","content":""},"done":true,"done_reason":"length","prompt_eval_count":29,"eval_count":512,"total_duration":34997805056,"load_duration":2395,"prompt_eval_duration":2957462272,"eval_duration":31766950000}

@@ -1,0 +1,105 @@
+1790668427.240	[FLM]  Using user-specified port: 58611
+1790668427.756	[FLM]  Loading model: ~/.config/flm/models/Llama-3.2-1B-NPU2
+1790668429.320	[FLM]  Starting server on port 58611...
+1790668429.320	[FLM]  WebServer started on port 58611 with 10 I/O threads
+1790668429.320	[FLM]  Press Ctrl+C to stop.
+1790668429.320	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55320
+1790668429.320	[TCP]  Read 90 bytes from socket
+1790668429.320	================================================
+1790668429.320	[⬇️ ]  Incoming Request: GET
+1790668429.320	[LOG]  Time stamp: 10:53:49 09:29:2026
+1790668429.320	[LOG]  Target: /api/version
+1790668429.320	[LOG]  Version: 11
+1790668429.320	[LOG]  Keep-Alive: 1
+1790668429.320	================================================
+1790668429.321	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55320
+1790668429.329	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55334
+1790668429.330	[TCP]  Read 321 bytes from socket
+1790668429.330	================================================
+1790668429.330	[⬇️ ]  Incoming Request: POST
+1790668429.330	[LOG]  Time stamp: 10:53:49 09:29:2026
+1790668429.330	[LOG]  Target: /api/chat
+1790668429.330	[LOG]  Version: 11
+1790668429.330	[LOG]  Keep-Alive: 1
+1790668429.330	[LOG]  Body: 
+1790668429.330	{
+1790668429.330	    "messages": [
+1790668429.330	        {
+1790668429.330	            "content": "Explain in...tem works.",
+1790668429.330	            "role": "user"
+1790668429.330	        }
+1790668429.330	    ],
+1790668429.330	    "model": "llama3.2:1b",
+1790668429.330	    "options": {
+1790668429.330	        "num_predict": 256
+1790668429.330	    },
+1790668429.330	    "stream": false,
+1790668429.330	    "top_k": 1
+1790668429.330	}
+1790668429.330	[🟢 ]  NPU Locked!
+1790668429.330	[FLM]  Start generating...
+1790668429.330	[FLM]  Prefill chunk 1/1 with 48 tokens
+1790668433.620	
+1790668433.620	[FLM]  Model RAW Output: 
+1790668433.620	A bicycle gear system is a complex mechanism that allows riders to adjust the difficulty of pedaling and shifting gears to suit their needs. The system typically consists of a groupset, which is the main assembly of gears and derailleurs that connects to the front and rear derailleurs of the bike. The front derailleur is responsible for shifting the chain to the front wheel, while the rear derailleur is responsible for shifting the chain to the rear wheel.
+1790668433.620	
+1790668433.620	The gear system also includes a chainring, which is the group of gears that the rider's hands are attached to, and a cassette, which is the set of gears that the rear derailleur is attached to. The cassette is typically made up of multiple gears, with the smallest gear at the front and the largest gear at the back. The chainring and cassette work together to provide the rider with a range of gears to choose from, allowing them to adjust the difficulty of pedaling and shifting gears to suit their needs.
+1790668433.620	
+1790668433.620	When the rider wants to shift to a lower gear, they need to move the front derailleur to the left, which increases the chainring's pitch and allows the chain to wrap around the larger gears in the cassette. This is known as a "bigger cog" or "b
+1790668433.622	[🔵 ]  NPU Lock Released!
+1790668433.622	================================================
+1790668433.622	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55334
+1790668433.633	[🔗 ]  TCP connection established - Remote: 127.0.0.1:44086
+1790668433.633	[TCP]  Read 412 bytes from socket
+1790668433.633	================================================
+1790668433.633	[⬇️ ]  Incoming Request: POST
+1790668433.633	[LOG]  Time stamp: 10:53:53 09:29:2026
+1790668433.633	[LOG]  Target: /api/chat
+1790668433.633	[LOG]  Version: 11
+1790668433.633	[LOG]  Keep-Alive: 1
+1790668433.633	[LOG]  Body: 
+1790668433.633	{
+1790668433.633	    "messages": [
+1790668433.633	        {
+1790668433.633	            "content": "My name is Ada.",
+1790668433.633	            "role": "user"
+1790668433.633	        },
+1790668433.633	        {
+1790668433.633	            "content": "Nice to me... you, Ada.",
+1790668433.633	            "role": "assistant"
+1790668433.633	        },
+1790668433.633	        {
+1790668433.633	            "content": "What is my...for a cat?",
+1790668433.633	            "role": "user"
+1790668433.633	        }
+1790668433.633	    ],
+1790668433.633	    "model": "llama3.2:1b",
+1790668433.633	    "options": {
+1790668433.633	        "num_predict": 256
+1790668433.633	    },
+1790668433.633	    "stream": false,
+1790668433.633	    "top_k": 1
+1790668433.633	}
+1790668433.633	[🟢 ]  NPU Locked!
+1790668433.633	[FLM]  Start generating...
+1790668433.633	[FLM]  Prefill chunk 1/1 with 72 tokens
+1790668437.218	
+1790668437.218	[FLM]  Model RAW Output: 
+1790668437.218	I'm happy to help you with your question, Ada.
+1790668437.218	
+1790668437.218	As for your name, I don't actually know it, since we just started talking. But I'm glad you asked!
+1790668437.218	
+1790668437.218	As for a good name for a cat, here are a few ideas:
+1790668437.218	
+1790668437.218	1. Luna (a popular name for cats, inspired by the moon)
+1790668437.218	2. Felix (a Latin name that means "happy" or "lucky")
+1790668437.218	3. Cleo (a short and sweet name that means "glory")
+1790668437.218	4. Gatsby (a literary name that evokes the idea of elegance and sophistication)
+1790668437.218	5. Mochi (a Japanese name that means "rice cake," which is a fun and quirky option)
+1790668437.218	
+1790668437.218	Ultimately, the right name for your cat is one that you and your cat both love. You might also consider names that reflect your cat's personality, appearance, or any unique quirks they may have.
+1790668437.218	
+1790668437.218	What do you think, Ada? Do any of these names stand out to you, or do you have a different name in mind?
+1790668437.220	[🔵 ]  NPU Lock Released!
+1790668437.220	================================================
+1790668437.220	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:44086

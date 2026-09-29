@@ -1,0 +1,99 @@
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "lemond",
+  "endpoint": "/v1/chat/completions",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "lemond",
+  "endpoint": "/v1/chat/completions",
+  "stream": true,
+  "run": 2
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "lemond",
+  "endpoint": "/v1/chat/completions",
+  "stream": true,
+  "run": 3
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": null,
+  "via": "lemond",
+  "endpoint": "/v1/chat/completions",
+  "stream": false,
+  "run": 1
+}
+{
+  "status": 200,
+  "reason": "stop",
+  "chunks": 65,
+  "via": "lemond",
+  "endpoint": "/api/chat",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": "200",
+  "reason": "length",
+  "chunks": 65,
+  "via": "curl",
+  "endpoint": "/api/chat",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "requests",
+  "endpoint": "/api/chat",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "httpx",
+  "endpoint": "/api/chat",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": "200",
+  "reason": "length",
+  "chunks": 65,
+  "via": "curl",
+  "endpoint": "/v1/chat/completions",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "requests",
+  "endpoint": "/v1/chat/completions",
+  "stream": true,
+  "run": 1
+}
+{
+  "status": 200,
+  "reason": "length",
+  "chunks": 65,
+  "via": "httpx",
+  "endpoint": "/v1/chat/completions",
+  "stream": true,
+  "run": 1
+}

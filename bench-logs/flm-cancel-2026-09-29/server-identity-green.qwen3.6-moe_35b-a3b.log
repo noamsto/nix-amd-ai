@@ -1,0 +1,141 @@
+1790668528.366	[FLM]  Using user-specified port: 58614
+1790668528.881	[31m[FLM]  Qwen3.6 pre-resize image height to 720 pixels if larger than that[0m
+1790668528.882	[FLM]  Loading model: ~/.config/flm/models/Qwen3.6-35B-A3B-NPU2
+1790668541.900	[FLM]  Starting server on port 58614...
+1790668541.900	[FLM]  WebServer started on port 58614 with 10 I/O threads
+1790668541.900	[FLM]  Press Ctrl+C to stop.
+1790668541.900	[🔗 ]  TCP connection established - Remote: 127.0.0.1:40930
+1790668541.900	[TCP]  Read 90 bytes from socket
+1790668541.900	================================================
+1790668541.900	[⬇️ ]  Incoming Request: GET
+1790668541.900	[LOG]  Time stamp: 10:55:41 09:29:2026
+1790668541.900	[LOG]  Target: /api/version
+1790668541.900	[LOG]  Version: 11
+1790668541.900	[LOG]  Keep-Alive: 1
+1790668541.900	================================================
+1790668541.900	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:40930
+1790668541.910	[🔗 ]  TCP connection established - Remote: 127.0.0.1:59612
+1790668541.911	[TCP]  Read 329 bytes from socket
+1790668541.911	================================================
+1790668541.911	[⬇️ ]  Incoming Request: POST
+1790668541.911	[LOG]  Time stamp: 10:55:41 09:29:2026
+1790668541.911	[LOG]  Target: /api/chat
+1790668541.911	[LOG]  Version: 11
+1790668541.911	[LOG]  Keep-Alive: 1
+1790668541.911	[LOG]  Body: 
+1790668541.911	{
+1790668541.911	    "messages": [
+1790668541.911	        {
+1790668541.911	            "content": "Explain in...tem works.",
+1790668541.911	            "role": "user"
+1790668541.911	        }
+1790668541.911	    ],
+1790668541.911	    "model": "qwen3.6-moe:35b-a3b",
+1790668541.911	    "options": {
+1790668541.911	        "num_predict": 256
+1790668541.911	    },
+1790668541.911	    "stream": false,
+1790668541.911	    "top_k": 1
+1790668541.911	}
+1790668541.911	[🟢 ]  NPU Locked!
+1790668541.911	[FLM]  Start generating...
+1790668541.911	[FLM]  Total images: 0
+1790668541.911	[FLM]  Prefill chunk 1/1 with 21 tokens
+1790668544.692	[31m[FLM]  Creating checkpoint at context length 21[0m
+1790668544.698	[FLM]  Prompt inserted, starting generation...
+1790668544.698	[31m[FLM]  Creating checkpoint at context length 21[0m
+1790668544.703	[31m[FLM]  Restoring checkpoint at context length 21[0m
+1790668544.773	[31m[FLM]  Checkpoint before generation: 21, restore point: 21, user context length: 21[0m
+1790668559.608	
+1790668559.608	[FLM]  Model RAW Output: 
+1790668559.608	<think>
+1790668559.608	Here's a thinking process:
+1790668559.608	
+1790668559.608	1.  **Analyze User Request:**
+1790668559.608	   - **Topic:** Bicycle gear system
+1790668559.608	   - **Format:** A few paragraphs
+1790668559.608	   - **Goal:** Explain how it works clearly and concisely
+1790668559.608	
+1790668559.608	2.  **Identify Key Concepts:**
+1790668559.608	   - What is a bicycle gear system? (Mechanism to change mechanical advantage)
+1790668559.608	   - Main components: Chainrings (front), cassette/freewheel (rear), chain, derailleurs, shifters
+1790668559.608	   - How it works: Changing the ratio between front and rear sprockets alters torque vs. speed
+1790668559.608	   - Mechanical principle: Gear ratios, leverage, conservation of energy/work
+1790668559.608	   - User interaction: Shifters control cable/electronic signals to move derailleurs
+1790668559.608	   - Practical effect: Easier pedaling on hills vs. higher speed on flats
+1790668559.608	
+1790668559.608	3.  **Structure the Explanation (Paragraph by Paragraph):**
+1790668559.608	   - *Paragraph 1:* Introduction & core principle (gear ratios, mechanical advantage, trade-off between force and speed)
+1790668559.608	   - *Paragraph 2:* Key components & how they interact (chainrings, cassette, chain, derailleurs, shifters)
+1790668559.608	   - *Paragraph 3:* Practical operation
+1790668559.678	[🔵 ]  NPU Lock Released!
+1790668559.678	================================================
+1790668559.678	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:59612
+1790668559.690	[🔗 ]  TCP connection established - Remote: 127.0.0.1:38882
+1790668559.690	[TCP]  Read 420 bytes from socket
+1790668559.690	================================================
+1790668559.690	[⬇️ ]  Incoming Request: POST
+1790668559.690	[LOG]  Time stamp: 10:55:59 09:29:2026
+1790668559.690	[LOG]  Target: /api/chat
+1790668559.690	[LOG]  Version: 11
+1790668559.690	[LOG]  Keep-Alive: 1
+1790668559.690	[LOG]  Body: 
+1790668559.690	{
+1790668559.690	    "messages": [
+1790668559.690	        {
+1790668559.690	            "content": "My name is Ada.",
+1790668559.690	            "role": "user"
+1790668559.690	        },
+1790668559.690	        {
+1790668559.690	            "content": "Nice to me... you, Ada.",
+1790668559.690	            "role": "assistant"
+1790668559.690	        },
+1790668559.690	        {
+1790668559.690	            "content": "What is my...for a cat?",
+1790668559.690	            "role": "user"
+1790668559.690	        }
+1790668559.690	    ],
+1790668559.690	    "model": "qwen3.6-moe:35b-a3b",
+1790668559.690	    "options": {
+1790668559.690	        "num_predict": 256
+1790668559.690	    },
+1790668559.690	    "stream": false,
+1790668559.691	    "top_k": 1
+1790668559.691	}
+1790668559.691	[🟢 ]  NPU Locked!
+1790668559.691	[FLM]  Start generating...
+1790668559.691	[FLM]  Total images: 0
+1790668559.691	[FLM]  Prefill chunk 1/1 with 45 tokens
+1790668563.061	[31m[FLM]  Creating checkpoint at context length 45[0m
+1790668563.066	[FLM]  Prompt inserted, starting generation...
+1790668563.066	[31m[FLM]  Creating checkpoint at context length 45[0m
+1790668563.071	[31m[FLM]  Restoring checkpoint at context length 45[0m
+1790668563.141	[31m[FLM]  Checkpoint before generation: 45, restore point: 45, user context length: 45[0m
+1790668577.922	
+1790668577.922	[FLM]  Model RAW Output: 
+1790668577.922	<think>
+1790668577.922	Here's a thinking process:
+1790668577.922	
+1790668577.922	1.  **Analyze User Input:**
+1790668577.922	   - User says: "What is my name, and what is a good name for a cat?"
+1790668577.922	   - Previous context: User said "My name is Ada."
+1790668577.923	   - I need to answer two parts:
+1790668577.923	     a) What is the user's name? (Based on context: Ada)
+1790668577.923	     b) Suggest a good name for a cat.
+1790668577.923	
+1790668577.923	2.  **Part 1: User's Name**
+1790668577.923	   - Directly reference the previous statement: "Your name is Ada."
+1790668577.923	   - Keep it clear and concise.
+1790668577.923	
+1790668577.923	3.  **Part 2: Cat Name Suggestions**
+1790668577.923	   - Need to provide a few good options, possibly with brief reasoning or categories.
+1790668577.923	   - Consider different styles: classic, unique, personality-based, food-inspired, mythological, etc.
+1790668577.923	   - Give a few examples across categories to be helpful.
+1790668577.923	   - Keep it concise but informative.
+1790668577.923	
+1790668577.923	4.  **Draft Response (Mental):**
+1790668577.923	   Your name is Ada! As for a cat name, it really depends on their personality or appearance, but here are a few popular and meaningful options:
+1790668577.923	   - Classic & elegant
+1790668577.993	[🔵 ]  NPU Lock Released!
+1790668577.993	================================================
+1790668577.993	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:38882

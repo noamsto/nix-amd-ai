@@ -1,0 +1,18 @@
+lemond e2e log: Client disconnected on POST=0 (any request: 1), Client socket wait failed=0, Start generating=5
+warning: Nix search path entry '/nix/var/nix/profiles/per-user/root/channels' does not exist, ignoring
+this derivation will be built:
+  /nix/store/zszhsjxaadavfplpsr3kx4nvklgfhx44-python3-3.14.7-env.drv
+building '/nix/store/zszhsjxaadavfplpsr3kx4nvklgfhx44-python3-3.14.7-env.drv'...
+direct server log: Client disconnected=0
+=== per via/endpoint reasons ===
+curl /api/chat: length
+curl /v1/chat/completions: length
+httpx /api/chat: length
+httpx /v1/chat/completions: length
+lemond /api/chat: stop
+lemond /v1/chat/completions: length,length,length,length
+requests /api/chat: length
+requests /v1/chat/completions: length
+Client disconnected on a POST (lemond e2e): 0 (any request: 1)
+Client disconnected (direct clients): 0
+results with an unexpected reason: 0

@@ -1,0 +1,198 @@
+[FLM]  Using user-specified port: 8001
+[FLM]  Loading model: <scratch>/lemond-e2e/home/.config/flm/models/Llama-3.2-1B-NPU2
+[FLM]  Starting server on port 8001...
+[FLM]  WebServer started on port 8001 with 10 I/O threads
+[FLM]  Press Ctrl+C to stop.
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:33954
+[TCP]  Read 88 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 10:58:36 09:29:2026
+[LOG]  Target: /api/tags
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[🔴 ]  Client disconnected; cancelling active request
+================================================
+[🔒 ]  TCP connection closed - Remote endpoint unavailable
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:33966
+[TCP]  Read 88 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: GET
+[LOG]  Time stamp: 10:58:37 09:29:2026
+[LOG]  Target: /api/tags
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:33966
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:33970
+[TCP]  Read 283 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 10:58:37 09:29:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 64,
+    "messages": [
+        {
+            "content": "Count from 1 to 40.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true,
+    "temperature": 0
+}
+[🟢 ]  NPU Locked!
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 43 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Here's counting from 1 to 40:
+
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+ChatCompletionChunk: {"id":"chatcmpl-125b6afaef5729b0a77abb7d","object":"chat.completion.chunk","created":1790668717,"model":"llama3.2:1b","system_fingerprint":"fp_ef8a03ad19aa0d88","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":1.483e-06,"prefill_duration_ttft":0.387566112,"decoding_duration":0.959562,"prefill_speed_tps":110.94881277958585,"decoding_speed_tps":66.69709721727205}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:33980
+[TCP]  Read 283 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 10:58:38 09:29:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 64,
+    "messages": [
+        {
+            "content": "Count from 1 to 40.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true,
+    "temperature": 0
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 43 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Here's counting from 1 to 40:
+
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+ChatCompletionChunk: {"id":"chatcmpl-ca41397d6a1775052a89c683","object":"chat.completion.chunk","created":1790668718,"model":"llama3.2:1b","system_fingerprint":"fp_4f9698d168fb94e0","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":1.973e-06,"prefill_duration_ttft":0.39422528,"decoding_duration":0.959994,"prefill_speed_tps":109.07468947704217,"decoding_speed_tps":66.66708333593752}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:33986
+[TCP]  Read 283 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 10:58:40 09:29:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 64,
+    "messages": [
+        {
+            "content": "Count from 1 to 40.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true,
+    "temperature": 0
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 43 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Here's the count from 1 to 40:
+
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 
+ChatCompletionChunk: {"id":"chatcmpl-cd736263b2d22ae09e58984d","object":"chat.completion.chunk","created":1790668720,"model":"llama3.2:1b","system_fingerprint":"fp_88f7530024e04cf9","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":1.804e-06,"prefill_duration_ttft":0.392319392,"decoding_duration":0.954546,"prefill_speed_tps":109.60457442797016,"decoding_speed_tps":67.04758073471578}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:33996
+[TCP]  Read 284 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 10:58:41 09:29:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 64,
+    "messages": [
+        {
+            "content": "Count from 1 to 40.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": false,
+    "temperature": 0
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 43 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Here's counting from 1 to 40:
+
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+[🔵 ]  NPU Lock Released!
+================================================
+[🔒 ]  TCP connection closed - Remote: 127.0.0.1:33996
+[🔗 ]  TCP connection established - Remote: 127.0.0.1:35944
+[TCP]  Read 267 bytes from socket
+================================================
+[⬇️ ]  Incoming Request: POST
+[LOG]  Time stamp: 10:58:42 09:29:2026
+[LOG]  Target: /v1/chat/completions
+[LOG]  Version: 11
+[LOG]  Keep-Alive: 1
+[LOG]  Body: 
+{
+    "max_tokens": 64,
+    "messages": [
+        {
+            "content": "Count from 1 to 40.",
+            "role": "user"
+        }
+    ],
+    "model": "llama3.2:1b",
+    "stream": true
+}
+[🟢 ]  NPU Locked!
+[FLM]  Prompt cache miss.
+[FLM]  Clearing context...
+[FLM]  Start prefill...
+[FLM]  Prefill chunk 1/1 with 43 tokens
+[FLM]  Start generating...
+
+[FLM]  Model RAW Output: 
+Here's counting from 1 to 40:
+
+1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+ChatCompletionChunk: {"id":"chatcmpl-84b3f8243492a1c835a46d84","object":"chat.completion.chunk","created":1790668722,"model":"llama3.2:1b","system_fingerprint":"fp_8385d4ea1dc774ae","choices":[{"index":0,"delta":{"content":null},"finish_reason":"length"}],"usage":{"prompt_tokens":43,"completion_tokens":64,"total_tokens":107,"active_kv_tokens":107,"max_kv_token_capacity":131072,"kv_token_occupancy_rate_percentage":0.081634521484375,"load_duration":1.924e-06,"prefill_duration_ttft":0.396848288,"decoding_duration":0.957844,"prefill_speed_tps":108.35374953160941,"decoding_speed_tps":66.81672589691014}}
+[🔒 ]  Closing TCP connection (streaming, non-keep-alive)
+[🔵 ]  NPU Lock Released!

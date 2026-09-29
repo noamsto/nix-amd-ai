@@ -1,0 +1,84 @@
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main) Starting Lemonade Server...
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Version: 11.9.0
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Cache dir: /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/cache
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Config dir: /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/config
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Port: 13399
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Host: localhost
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Log level: info
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Log file mode: disabled
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Log max file size: 10 MB
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Log max files: 5
+1790668713.081	2026-09-29 10:58:33.072 [Info] (main)   Telemetry: disabled
+1790668713.081	2026-09-29 10:58:33.073 [Info] (ModelManager) Building models cache...
+1790668713.681	2026-09-29 10:58:33.680 [Info] (ModelManager) FLM binary found at: /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/flm-wrap
+1790668713.713	2026-09-29 10:58:33.712 [Info] (ModelManager) Backend availability:
+1790668713.713	2026-09-29 10:58:33.712 [Info] (ModelManager)   - NPU hardware: Yes
+1790668713.713	2026-09-29 10:58:33.712 [Info] (ModelManager)   - System RAM: 123.5 GB (max model size: 98.8 GB)
+1790668713.713	2026-09-29 10:58:33.712 [Info] (ModelManager)   - Largest memory pool: 2.0
+1790668713.713	2026-09-29 10:58:33.712 [Info] (ModelManager)   - NVIDIA GPU: detection error: No NVIDIA discrete GPU found
+1790668713.735	2026-09-29 10:58:33.734 [Info] (ModelManager) Cache built: 191 total, 6 downloaded
+1790668713.736	2026-09-29 10:58:33.735 [Info] (WebSocket) Configured port: 9001
+1790668713.736	2026-09-29 10:58:33.735 [Info] (Server) Starting HTTP server on localhost:13399
+1790668713.738	2026-09-29 10:58:33.737 [Info] (Server) Host resolution: IPv4=127.0.0.1, IPv6=::1
+1790668713.748	[2026/09/29 10:58:33:7484] W: [null wsi]: lws_socket_bind: setsockopt bind to device 127.0.0.1 error fd 6 (19)
+1790668713.749	2026-09-29 10:58:33.748 [Info] (WebSocket) Server started on port 9001
+1790668713.749	2026-09-29 10:58:33.748 [Info] (Server) WebSocket server started on port 9001
+1790668713.749	2026-09-29 10:58:33.748 [Info] (Server) Binding IPv4 HTTP server to 127.0.0.1:13399...
+1790668713.749	2026-09-29 10:58:33.748 [Info] (Server) IPv4 HTTP server listening on 127.0.0.1:13399
+1790668713.749	2026-09-29 10:58:33.748 [Info] (Server) IPv6 HTTP server listening on [::1]:13399
+1790668713.759	2026-09-29 10:58:33.758 [Info] (Server) Broadcasting disabled by configuration or CLI option
+1790668714.115	2026-09-29 10:58:34.115 [Info] (Server) Auto-loading model: llama3.2-1b-FLM
+1790668714.116	2026-09-29 10:58:34.116 [Info] (Router) Auto-tune ctx_size resolved to 131072
+1790668714.116	2026-09-29 10:58:34.116 [Info] (FastFlowLM) Loading model: llama3.2-1b-FLM
+1790668714.116	[FastFlowLM] Options: ctx_size=131072
+1790668714.116	2026-09-29 10:58:34.116 [Info] (FastFlowLM) Found flm at: /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/flm-wrap
+1790668714.152	2026-09-29 10:58:34.152 [Info] (FastFlowLM) Pulling model with FLM: llama3.2:1b
+1790668714.152	2026-09-29 10:58:34.152 [Info] (FastFlowLM) Found flm at: /tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/flm-wrap
+1790668714.152	2026-09-29 10:58:34.152 [Info] (ProcessManager) Starting process: "/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/flm-wrap" "pull" "llama3.2:1b"
+1790668714.154	2026-09-29 10:58:34.153 [Info] (FastFlowLM) Waiting for model download to complete...
+1790668714.254	2026-09-29 10:58:34.253 [Info] (FastFlowLM) Model pull completed successfully
+1790668714.254	2026-09-29 10:58:34.254 [Info] (FastFlowLM) Starting flm-server...
+1790668714.254	2026-09-29 10:58:34.254 [Info] (ProcessManager) Starting process: "/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-200-flm-serve-cancel-non-streaming-api-chat/9f7e2db5-1d9b-46d8-b3de-f6b689a0568b/scratchpad/lemond-e2e/flm-wrap" "serve" "llama3.2:1b" "--ctx-len" "131072" "--port" "8001" "--host" "127.0.0.1" "--quiet"
+1790668714.256	2026-09-29 10:58:34.255 [Info] (ProcessManager) Process started successfully
+1790668714.256	2026-09-29 10:58:34.255 [Info] (FastFlowLM) Waiting for FastFlowLM to be ready...
+1790668717.260	2026-09-29 10:58:37.259 [Info] (FastFlowLM) FastFlowLM is ready!
+1790668717.260	2026-09-29 10:58:37.259 [Info] (BackendWatchdog) Started watchdog for FastFlowLM using http://127.0.0.1:8001/api/tags (streaming=on, non_streaming=on)
+1790668717.260	2026-09-29 10:58:37.259 [Info] (FastFlowLM) Model loaded on port 8001
+1790668717.260	2026-09-29 10:58:37.259 [Info] (Router) Model loaded successfully. Total loaded: 1
+1790668717.260	2026-09-29 10:58:37.259 [Info] (Server) Model loaded successfully: llama3.2-1b-FLM
+1790668717.260	2026-09-29 10:58:37.259 [Info] (Server) POST /api/v1/chat/completions - Streaming
+1790668718.634	2026-09-29 10:58:38.633 [Info] (Server) Streaming completed - 200 OK
+1790668718.634	2026-09-29 10:58:38.633 [Info] (Telemetry) Inference completed: model=llama3.2:1b, tokens=107 (in=43, out=64), ttft=0.388s, tps=66.70
+1790668718.676	2026-09-29 10:58:38.676 [Info] (Server) POST /api/v1/chat/completions - Streaming
+1790668720.053	2026-09-29 10:58:40.052 [Info] (Server) Streaming completed - 200 OK
+1790668720.053	2026-09-29 10:58:40.052 [Info] (Telemetry) Inference completed: model=llama3.2:1b, tokens=107 (in=43, out=64), ttft=0.394s, tps=66.67
+1790668720.095	2026-09-29 10:58:40.094 [Info] (Server) POST /api/v1/chat/completions - Streaming
+1790668721.465	2026-09-29 10:58:41.464 [Info] (Server) Streaming completed - 200 OK
+1790668721.465	2026-09-29 10:58:41.464 [Info] (Telemetry) Inference completed: model=llama3.2:1b, tokens=107 (in=43, out=64), ttft=0.392s, tps=67.05
+1790668721.505	2026-09-29 10:58:41.505 [Info] (Server) POST /api/v1/chat/completions - 200 OK
+1790668722.885	2026-09-29 10:58:42.885 [Info] (Telemetry) Inference completed: model=llama3.2-1b-FLM, tokens=107 (in=43, out=64), ttft=0.40s, tps=66.51
+1790668722.927	2026-09-29 10:58:42.927 [Info] (OllamaApi) POST /api/chat - Streaming (model: llama3.2-1b-FLM)
+1790668724.309	2026-09-29 10:58:44.308 [Info] (Server) Streaming completed - 200 OK
+1790668724.309	2026-09-29 10:58:44.308 [Info] (Telemetry) Inference completed: model=llama3.2:1b, tokens=107 (in=43, out=64), ttft=0.397s, tps=66.82
+1790668724.324	2026-09-29 10:58:44.323 [Info] (Server) Unload request received
+1790668724.324	2026-09-29 10:58:44.323 [Info] (Router) Unload model called: llama3.2-1b-FLM
+1790668724.324	2026-09-29 10:58:44.323 [Info] (Router) Evicting model: llama3.2-1b-FLM
+1790668724.324	2026-09-29 10:58:44.323 [Info] (FastFlowLM) Unloading model...
+1790668724.724	2026-09-29 10:58:44.724 [Info] (ProcessManager) Process terminated, waiting for GPU driver cleanup...
+1790668726.724	2026-09-29 10:58:46.724 [Info] (FastFlowLM) Unloading model...
+1790668726.724	2026-09-29 10:58:46.724 [Info] (Router) Evicted model: llama3.2-1b-FLM
+1790668726.724	2026-09-29 10:58:46.724 [Info] (Server) Model 'llama3.2-1b-FLM' unloaded successfully
+1790668726.726	Shutdown signal received, exiting...
+1790668726.777	 2026-09-29 10:58:46.776 [Info] (Server) Shutdown requested, stopping server...
+1790668726.777	2026-09-29 10:58:46.776 [Info] (Server) Stopping HTTP server...
+1790668726.777	2026-09-29 10:58:46.776 [Info] (Server) Stopping WebSocket server...
+1790668726.779	2026-09-29 10:58:46.778 [Info] (WebSocket) Server stopped
+1790668726.779	2026-09-29 10:58:46.779 [Info] (Server) Unloading models and stopping backend servers...
+1790668726.779	2026-09-29 10:58:46.779 [Info] (Router) Unload all models called
+1790668726.779	2026-09-29 10:58:46.779 [Info] (Router) Evicting all models (0 total)
+1790668726.779	2026-09-29 10:58:46.779 [Info] (Router) Evict all completed. Remaining tombstoned models: 0
+1790668726.779	2026-09-29 10:58:46.779 [Info] (Server) Shutting down telemetry queue...
+1790668726.781	2026-09-29 10:58:46.780 [Info] (Server) Cleanup complete
+1790668729.187	2026-09-29 10:58:49.187 [Info] (Router) Unload all models called
+1790668729.187	2026-09-29 10:58:49.187 [Info] (Router) Evicting all models (0 total)
+1790668729.187	2026-09-29 10:58:49.187 [Info] (Router) Evict all completed. Remaining tombstoned models: 0
