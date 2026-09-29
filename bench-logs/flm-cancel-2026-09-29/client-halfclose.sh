@@ -43,7 +43,28 @@ summary="$outdir/client-halfclose.txt"
 
 server_pid=""
 # shellcheck disable=SC2329 # invoked indirectly via `trap cleanup EXIT` below
-cleanup() { [[ -n "$server_pid" ]] && stop_proc "$server_pid"; return 0; }
+cleanup() {
+  [[ -n "$server_pid" ]] && stop_proc "$server_pid"
+  reap_lemond_flm
+  return 0
+}
+
+# reap_lemond_flm -- give lemond's flm child 30s to exit after lemond stops,
+# then TERM any flm still running our binary, so no exit path leaves one
+# holding the NPU.
+reap_lemond_flm() {
+  local waited=0 pid
+  while pgrep -x flm >/dev/null && (( waited < 30 )); do
+    sleep 1
+    (( waited++ ))
+  done
+  for pid in $(pgrep -x flm); do
+    if grep -q -- "$FLM" "/proc/$pid/cmdline" 2>/dev/null; then
+      echo "WARN: killing stray flm pid $pid" >&2
+      kill -TERM "$pid" 2>/dev/null
+    fi
+  done
+}
 trap cleanup EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
@@ -341,19 +362,7 @@ curl -s -X POST "http://127.0.0.1:$port_lemond/api/v1/unload" \
 stop_proc "$server_pid"
 server_pid=""
 
-flm_waited=0
-while pgrep -x flm >/dev/null && (( flm_waited < 30 )); do
-  sleep 1
-  (( flm_waited++ ))
-done
-if pgrep -x flm >/dev/null; then
-  for pid in $(pgrep -x flm); do
-    if grep -q -- "$FLM" "/proc/$pid/cmdline" 2>/dev/null; then
-      echo "WARN: killing stray flm pid $pid launched via wrapper" >&2
-      kill -TERM "$pid" 2>/dev/null
-    fi
-  done
-fi
+reap_lemond_flm
 
 # Only POSTs (the chat requests) gate: lemond's readiness poll is a GET
 # /api/tags that it may abandon while flm is still starting.
