@@ -1,14 +1,14 @@
 Traceback (most recent call last):
-  File "/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/npu_offload/gemm_rtp/export_gemm_rtp.py", line 599, in <module>
+  File "$SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/npu_offload/gemm_rtp/export_gemm_rtp.py", line 599, in <module>
     sys.exit(main())
              ~~~~^^
-  File "/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/npu_offload/gemm_rtp/export_gemm_rtp.py", line 455, in main
+  File "$SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/npu_offload/gemm_rtp/export_gemm_rtp.py", line 455, in main
     purge(mk, args.cols, f"{name}@b{b}")
     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/OpenFlowLM-Next/npu_offload/gemm_rtp/export_gemm_rtp.py", line 223, in purge
+  File "$SCRATCH/scratchpad/oflm-work/OpenFlowLM-Next/npu_offload/gemm_rtp/export_gemm_rtp.py", line 223, in purge
     for d in list(CACHE.iterdir()):
                   ~~~~~~~~~~~~~^^
   File "/run/current-system/sw/lib/python3.13/pathlib/_local.py", line 575, in iterdir
     with os.scandir(root_dir) as scandir_it:
          ~~~~~~~~~~^^^^^^^^^^
-FileNotFoundError: [Errno 2] No such file or directory: '/tmp/claude-1000/-home-noams-Data-git--worktrees-git-nix-amd-ai-feat-166-upstream-device-free-bert-export-patch-t/8a399993-68e3-41f7-9a8f-b003ee979593/scratchpad/oflm-work/oflm-home/baseline/.npu/cache'
+FileNotFoundError: [Errno 2] No such file or directory: '$SCRATCH/scratchpad/oflm-work/oflm-home/baseline/.npu/cache'

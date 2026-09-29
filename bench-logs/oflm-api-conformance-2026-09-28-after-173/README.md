@@ -7,11 +7,11 @@ Only the `flm` build under test changed.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Old build (red):** `main` at `c9d378c`, meaning the #171 patches without #173 —
-`/nix/store/8pgdcx429na9a9wxiqiwwa0faz8rm3dl-fastflowlm-1.0.6`. Its logs are in [`before/`](before/).
+`fastflowlm-1.0.6`.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/model-identity.patch` —
-`/nix/store/lp2xwjayy36j0byma058nrfdvili4b0r-fastflowlm-1.0.6`. Its logs are in this directory.
+`fastflowlm-1.0.6`.
 A later comment-only cleanup of the patch changed the out path to
-`/nix/store/zvg05givvmmlmp331fn9imjyfyrr6jyi-fastflowlm-1.0.6`; the code it compiles is unchanged.
+`fastflowlm-1.0.6`; the code it compiles is unchanged.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding). All were already pulled.
 
@@ -19,19 +19,19 @@ Commands were run identically against both builds (`$FLM` = the build's `bin/flm
 `LD_LIBRARY_PATH` as in the #171 README, per #148):
 
 ```
-LD_LIBRARY_PATH=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib $FLM serve llama3.2:1b --port 58601
+LD_LIBRARY_PATH=$XRT_LIB_DIR $FLM serve llama3.2:1b --port 58601
 OFLM_TEST_BASE_URL=http://127.0.0.1:58601 OFLM_TEST_MODEL=llama3.2:1b \
   python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/{test_error_status,test_finish_reason,test_request_validation}.py
 
 LD_LIBRARY_PATH=... $FLM serve gemma4-it:e4b --port 58603
 OFLM_TEST_BASE_URL=http://127.0.0.1:58603 OFLM_TEST_MODEL=gemma4-it:e4b \
-  python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_error_status.py   # -> test_error_status.gemma4.log
+  python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_error_status.py   # -> writes test_error_status.gemma4.log
 
 LD_LIBRARY_PATH=... $FLM serve llama3.2:1b --embed 1 --port 58602
 OFLM_TEST_BASE_URL=http://127.0.0.1:58602 OFLM_TEST_EMBED_MODEL=embed-gemma:300m \
   python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_embed_task_prompt.py
 OFLM_TEST_BASE_URL=http://127.0.0.1:58602 OFLM_TEST_MODEL=llama3.2:1b OFLM_TEST_EMBED_MODEL=embed-gemma:300m \
-  python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_request_validation.py   # -> test_request_validation.embed.log
+  python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_request_validation.py   # -> writes test_request_validation.embed.log
 ```
 
 Each server was stopped by PID after its tests. `pgrep -a flm` was empty before the first run
@@ -49,14 +49,14 @@ cascade from that first eviction; they are not separate bugs.
 
 ## Before/after
 
-| Test file | Old build | New build | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 2, FAIL 5, ERROR 1 | **PASS 8** | [before](before/test_error_status.log) / [after](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 2, FAIL 5, ERROR 1 | **PASS 8** | [before](before/test_error_status.gemma4.log) / [after](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 (#171 run) | PASS 7 | [after](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 14, SKIP 8 | **PASS 15**, SKIP 7 | [before](before/test_request_validation.log) / [after](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [before](before/test_request_validation.embed.log) / [after](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | FAIL 3, SKIP 8 | FAIL 2, **PASS 1**, SKIP 8 | [before](before/test_embed_task_prompt.log) / [after](test_embed_task_prompt.log) |
+| Test file | Old build | New build |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 2, FAIL 5, ERROR 1 | **PASS 8** |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 2, FAIL 5, ERROR 1 | **PASS 8** |
+| `test_finish_reason.py` | PASS 7 (#171 run) | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 14, SKIP 8 | **PASS 15**, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | FAIL 3, SKIP 8 | FAIL 2, **PASS 1**, SKIP 8 |
 
 - All six unknown-model tests in `test_error_status.py` go from red to green, and so does
   `test_error_code_is_a_string`: unknown tag, `""`, `"model-faker"`, streaming, and
@@ -72,7 +72,7 @@ cascade from that first eviction; they are not separate bugs.
 
 ## No-eviction evidence (AC3)
 
-[`before/AC3.txt`](before/AC3.txt) / [`AC3.txt`](AC3.txt): a server serving `gemma4-it:e4b`,
+AC3: a server serving `gemma4-it:e4b`,
 then `/api/ps`, a bogus-tag chat request, and `/api/ps` again, with the server log lines that
 request produced.
 
@@ -83,7 +83,7 @@ request produced.
   only `unknown model '...' -- refusing; 'gemma4-it:e4b' stays loaded`, with no load. Across the
   whole new-build gemma suite, the server log has exactly one `Loading model` line (startup).
 
-[`probes.txt`](probes.txt) runs the other endpoints on the new build against a `llama3.2:1b`
+`probes.sh` runs the other endpoints on the new build against a `llama3.2:1b`
 server, with `/api/ps` checked after each request:
 
 | Request | Result |
@@ -96,7 +96,7 @@ server, with `/api/ps` checked after each request:
 
 The server log shows one `Loading model` line in total.
 
-[`embed-probes.txt`](embed-probes.txt) covers `/v1/embeddings`:
+The embeddings probes cover `/v1/embeddings`:
 
 | Request | Result |
 | --- | --- |
@@ -104,7 +104,7 @@ The server log shows one `Loading model` line in total.
 | an unknown tag or `""` | 400, naming the loaded model |
 | omitted `model` | 400 `missing_required_parameter` (unchanged, #171 AC4) |
 
-[`startup-nonchat.txt`](startup-nonchat.txt) is `flm serve embed-gemma:300m`, a known tag that
+The startup probe is `flm serve embed-gemma:300m`, a known tag that
 is not a chat model. The old build loaded llama3.2:1b in its place. The new build starts with no
 chat model:
 

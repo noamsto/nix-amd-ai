@@ -29,7 +29,7 @@ rm -f "$outdir/tsan-$label".*
 rm -f "$outdir/chat-$label.txt" "$outdir/completions-$label.txt" \
       "$outdir/queue-$label.txt" "$outdir/race-$label.txt"
 
-LIB=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+LIB=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 PORT=58604
 POLLERS=${POLLERS:-4}
 SWAPS=${SWAPS:-6}

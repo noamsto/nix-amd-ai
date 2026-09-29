@@ -10,7 +10,7 @@ FLM=${1:?usage: normal-path.sh <flm-binary> <outfile-prefix>}
 prefix=${2:?usage: normal-path.sh <flm-binary> <outfile-prefix>}
 mkdir -p "$(dirname "$prefix")"
 
-libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+libpath=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 health_url=http://127.0.0.1:13305/api/v1/health
 
 server_pid=""

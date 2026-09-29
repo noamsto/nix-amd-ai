@@ -1,8 +1,0 @@
-INFO disconnect={"status": 200, "chunks": 5, "elapsed_s": 0.456, "error": null} chat_code=000 chat_time_total=2.905910 completions_again_code=000 completions_again_done=false server_alive=false
-FAIL chat-200
-FAIL completions-again-done
-FAIL server-alive
-PASS no-heap-corruption
-FAIL no-runlist-error
-INFO npu-locked-count=1 request-queued-count=0
-INFO error: 61:1790608374.233	[ERROR]  handle_chat: The runlist is submitted for execution and cannot be reset. Please use wait() to ensure that all commands have completed before calling reset().: Invalid argument

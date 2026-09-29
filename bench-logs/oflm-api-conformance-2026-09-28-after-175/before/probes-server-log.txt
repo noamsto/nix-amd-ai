@@ -1,2 +1,0 @@
-# grep -c json.exception on the RED build's server log (exception text was not logged, only returned):
-0

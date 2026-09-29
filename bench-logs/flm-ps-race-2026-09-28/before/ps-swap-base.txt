@@ -1,7 +1,0 @@
-INFO total_polls=131
-INFO code_histogram: 200=131
-INFO load_window_polls=103 max_time_total=0.0006 p50_time_total=0.0004
-INFO name_sequence: llama3.2:1b x21 -> [] x6 -> llama3.2:1b x68 -> gemma4-it:e4b x36
-PASS all-200
-PASS max-latency<0.1s
-FAIL no-stale

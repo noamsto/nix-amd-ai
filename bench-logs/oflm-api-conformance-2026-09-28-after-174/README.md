@@ -7,10 +7,10 @@ models and ports. Only the `flm` build under test changed.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Old build (red):** the #175 tip (`9397a50`, no `embed-task-prompt.patch`),
-`/nix/store/5gga3wag3iqndlk6hnlnvic2idl7vlm4-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/embed-task-prompt.patch`
 after `no-exception-text.patch`,
-`/nix/store/3zwn4w4pk26rqsp9mmmyz0npkxqgxm8h-fastflowlm-1.0.6` (the branch head,
+`fastflowlm-1.0.6` (the branch head,
 which after the #178/#183 squash also carries `ps-loaded-models.patch`; that
 patch touches `/api/ps` only and not the embedding path). This is the #182 review
 fix pass: the patch's task helpers and the `handle_embeddings` resolution block
@@ -28,7 +28,7 @@ Commands (run from this directory; `$FLM` = the build's `bin/flm`,
 `LD_LIBRARY_PATH` as in the #171 README, per #148):
 
 ```
-LD_LIBRARY_PATH=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib \
+LD_LIBRARY_PATH=$XRT_LIB_DIR \
   $FLM serve llama3.2:1b --embed 1 --port 58602
 OFLM_TEST_BASE_URL=http://127.0.0.1:58602 OFLM_TEST_EMBED_MODEL=embed-gemma:300m \
   python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_embed_task_prompt.py
@@ -40,8 +40,8 @@ Each server was stopped by PID after its tests. `pgrep -a flm` and `pgrep -a
 oflm` were empty before every server run and after the last; `lemond` kept
 running with no model loaded (`all_models_loaded: []`). The NPU is
 single-tenant, so a probe run made while another process held it produced
-non-reproducible document vectors; the logs here are from runs with the NPU
-quiet (`npu-quiet.txt`).
+non-reproducible document vectors; the runs reported here had the NPU
+quiet (checked before each run).
 
 ## Red/green: `test_embed_task_prompt`
 
@@ -52,8 +52,8 @@ quiet (`npu-quiet.txt`).
 | `test_an_embedding_request_naming_another_model_is_refused` | PASS | PASS |
 | the other 8 | SKIP (need nomic/bge, not shipped) | SKIP |
 
-Old: `FAIL 2, PASS 1, SKIP 8` ([`before/test_embed_task_prompt.log`](before/test_embed_task_prompt.log)).
-New: `FAIL 0, PASS 3, SKIP 8` ([`test_embed_task_prompt.log`](test_embed_task_prompt.log)).
+Old: `FAIL 2, PASS 1, SKIP 8`.
+New: `FAIL 0, PASS 3, SKIP 8`.
 `embed-gemma:300m` declares no prompt names, so the "a model that declares
 prompts requires one" half of the requirement stays SKIP — the same
 suite-assumption gap as the #171/#175 runs.
@@ -64,8 +64,8 @@ suite-assumption gap as the #171/#175 runs.
 behaviour and the refusals. The alias rows compare against the **non-default**
 `document` task (and assert the result is not the query vector), so a server that
 ignores `task_type` fails them instead of passing by comparing against the
-default. Old build `10 FAIL` ([`before/embed-task-probes.log`](before/embed-task-probes.log));
-new build all PASS ([`embed-task-probes.log`](embed-task-probes.log)).
+default. Old build `10 FAIL`;
+new build all PASS.
 
 | Probe | Old | New |
 | --- | --- | --- |
@@ -86,14 +86,14 @@ only pulls in when embedding models are built. They are now under the same
 `#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS` as the embed loop they feed, so a
 LIMITED build stops failing on the undeclared enum. Scratch compile of the
 patched `rest_handler.cpp` with `-DFASTFLOWLM_LINUX_LIMITED_MODELS=1` (cmake +
-ninja, full dependency include path; raw log [`limited-compile.txt`](limited-compile.txt)):
+ninja, full dependency include path):
 
 - pre-guard patch: fails with `'embedding_task_type_t' was not declared in this scope` (`rest_handler.cpp:84`).
 - post-guard patch (this branch): compiles clean.
 
 ### Manual prefix check
 
-[`manual-prefix.txt`](manual-prefix.txt). `embed-gemma`'s prefixes are known
+`embed-gemma`'s prefixes are known
 from `_get_task_prefix()`: `query` -> `"task: search result | query: "`,
 `document` -> `"title: none | text: "`. The old build applies the query prefix
 unconditionally, so its no-prompt vector **is** the query prefix applied by
@@ -112,12 +112,12 @@ compatible.
 
 ## No regressions
 
-| Test file | After #175 | After #174 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
+| Test file | After #175 | After #174 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
 
 Each file's sorted PASS/FAIL/SKIP lines diff empty against after-175.

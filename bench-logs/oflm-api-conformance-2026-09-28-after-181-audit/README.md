@@ -9,10 +9,10 @@ the same models and ports. Only the `flm` build under test changed.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Base build (red):** `main` at 95ae7a6,
-`/nix/store/1z0mbcmhl9jfrn9pbphvqy7a76jwpjzm-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **New build (green):** this branch, adding
 `pkgs/fastflowlm/patches/model-list-download-check.patch`,
-`/nix/store/gy6j3l3wk2k3qhlzs0dinrivn5h8db9i-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (the model left loaded) and `gemma4-it:e4b` (the
 malformed entry the request names; its files were already on disk, which the
@@ -57,8 +57,7 @@ alone.
 `model_list.json`, removes one field from the `gemma4-it:e4b` entry, points
 `flm serve` at it with `FLM_CONFIG_PATH`, serves `llama3.2:1b` on port 58601, and
 sends one `/v1/chat/completions` request naming `gemma4-it:e4b`, checking
-`GET /api/ps` before and after. Red: [`before/probes.txt`](before/probes.txt).
-Green: [`probes.txt`](probes.txt). Server logs are the `server-<case>.log` files.
+`GET /api/ps` before and after. The probe and server logs are not committed; rerun `probes.sh`.
 
 | Case | Expected | Red build | Green build | `llama3.2:1b` listed after |
 | --- | --- | --- | --- | --- |
@@ -84,14 +83,14 @@ real model directory.
 [`conformance.sh`](conformance.sh) `<flm> <outdir> <oflm-next>` is unchanged
 from after-194. It was run against the new build.
 
-| Test file | After #194 | This build | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15 | PASS 15 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14 | PASS 14 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3 | PASS 3 | [log](test_embed_task_prompt.log) |
+| Test file | After #194 | This build |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15 | PASS 15 |
+| `test_request_validation.py` (embed server) | PASS 14 | PASS 14 |
+| `test_embed_task_prompt.py` | PASS 3 | PASS 3 |
 
 For each file, the sorted per-test PASS/FAIL/SKIP lines differ from the
 after-194 logs by nothing.

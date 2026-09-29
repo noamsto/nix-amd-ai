@@ -1,9 +1,0 @@
-INFO total_polls=180118
-INFO poll_code_histogram:  180118 200;
-INFO chat_completions_queue_code_histogram:      17 200;
-INFO BUCKETS ps-pair=0 model-state=0 incomplete=0 failed-restore=0 libc-tz=78 other=0 skipped=0
-PASS no-ps-pair
-PASS no-model-state
-PASS no-incomplete
-PASS all-poll-200
-PASS all-chat-completions-queue-200

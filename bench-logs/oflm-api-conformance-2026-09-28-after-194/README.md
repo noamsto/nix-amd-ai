@@ -16,14 +16,14 @@ hashes changed — so the relocation is mechanical.
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver
 `amdxdna`; kernel 7.2.8).
 **Old build (red):** `origin/main` @ `ae40eed` —
-`/nix/store/hzqppl44zhfxpk0nl1wv6r8fd69g4w4p-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **New build (green):** this branch, adding
 `pkgs/fastflowlm/patches/connection-slot-release.patch` after
 `ps-serving-snapshot.patch` on top of `ae40eed` —
-`/nix/store/1z0mbcmhl9jfrn9pbphvqy7a76jwpjzm-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **Scratch debug build (counter logs):** green plus temporary `header_print("DBG", …)`
 instrumentation, never committed —
-`/nix/store/b3qqswvly3a0af90rh6zymip8kzv30qs-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` (chat).
 
@@ -72,10 +72,10 @@ Can a session whose streaming write failed reach `read_request`'s error path or
 requests mid-stream (read one chunk, then RST via `SO_LINGER`), then opens a final
 connection. On a leaking build the cap fills after ten aborts.
 
-| Run | Build | Aborts | Final connection | `Connection limit reached` lines | Log |
-| --- | --- | --- | --- | --- | --- |
-| red | `ae40eed` | 12 | **REFUSED** (`Connection reset by peer`) | 3 | [`before/server-red.log`](before/server-red.log), [`before/client-red.log`](before/client-red.log) |
-| green | this branch | 12 | **ACCEPTED** (`HTTP/1.1 200 OK`) | 0 | [`server-green.log`](server-green.log), [`client-green.log`](client-green.log) |
+| Run | Build | Aborts | Final connection | `Connection limit reached` lines |
+| --- | --- | --- | --- | --- |
+| red | `ae40eed` | 12 | **REFUSED** (`Connection reset by peer`) | 3 |
+| green | this branch | 12 | **ACCEPTED** (`HTTP/1.1 200 OK`) | 0 |
 
 ## No double-decrement / counter never below the real value
 
@@ -96,7 +96,7 @@ prints `active_connections_` on every accept and every release and prints each
 Every accept moved the counter to 1 and every release moved it to 0, so it never
 underflowed and was never driven below the real value; the 36 write-failure lines
 against 27 releases are the re-entries the guard collapses into one. Raw log:
-[`debug-slots.log`](debug-slots.log), summary [`debug-slots.summary`](debug-slots.summary).
+summary in [`debug-slots.summary`](debug-slots.summary).
 
 One abort's lines, as an example of the re-entry:
 
@@ -114,7 +114,7 @@ One abort's lines, as an example of the re-entry:
 keep-alive-shaped `/api/version` requests and 12 non-streaming
 `/v1/chat/completions` requests all answered `200`, and a new connection was still
 accepted after 12 further streaming aborts. Log:
-[`keepalive-nonstream.log`](keepalive-nonstream.log).
+(the log is not committed; rerun `keepalive-nonstream.sh`).
 
 ## Consumer map — every decrement site
 
@@ -136,14 +136,14 @@ accepted after 12 further streaming aborts. Log:
 Same method and models as after-187. Each file's sorted `PASS`/`FAIL`/`SKIP` lines
 diff **empty** against after-187; no regressions.
 
-| Test file | after-187 | after-194 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | after-187 | after-194 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 |
 
 ## Reproduce
 
@@ -154,7 +154,7 @@ bash bench-logs/oflm-api-conformance-2026-09-28-after-194/disconnect.sh \
 bash bench-logs/oflm-api-conformance-2026-09-28-after-194/keepalive-nonstream.sh \
   /nix/store/<flm>/bin/flm 58704 bench-logs/oflm-api-conformance-2026-09-28-after-194
 bash bench-logs/oflm-api-conformance-2026-09-28-after-194/conformance.sh \
-  /nix/store/<flm>/bin/flm bench-logs/oflm-api-conformance-2026-09-28-after-194 /home/noams/oflm
+  /nix/store/<flm>/bin/flm bench-logs/oflm-api-conformance-2026-09-28-after-194 <oflm-next checkout>
 ```
 
 The debug build is not reproducible from the committed tree: it was built by adding

@@ -1,6 +1,0 @@
-INFO total_polls=171699
-INFO poll_code_histogram:       6 000; 171693 200;
-INFO chat_completions_queue_code_histogram:      17 200;
-INFO BUCKETS ps-pair=8 model-state=35 incomplete=1 failed-restore=0 libc-tz=83 other=57 skipped=0
-PASS ps-pair-reproduced (ps-pair=8)
-PASS tail-race-reproduced (model-state=35)

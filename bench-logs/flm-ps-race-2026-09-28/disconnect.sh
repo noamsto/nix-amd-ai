@@ -20,7 +20,7 @@ outdir=${2:?usage: disconnect.sh <flm> <outdir> <label>}
 label=${3:?usage: disconnect.sh <flm> <outdir> <label>}
 mkdir -p "$outdir"
 
-LIB=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+LIB=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 PORT=58607
 server_log="$outdir/server-disconnect-$label.log"
 step1_file="$outdir/disconnect-$label.step1.txt"

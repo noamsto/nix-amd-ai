@@ -2,7 +2,7 @@
 # conformance.sh <flm> <outdir> <oflm-next>
 set -u
 FLM=$1; out=$2; T=$3/specs/server-api/tests
-LIB=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+LIB=${XRT_LIB_DIR:?set XRT_LIB_DIR to the xrt-combined lib dir}
 pid=""
 rc=0
 

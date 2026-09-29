@@ -1,8 +1,0 @@
-green 0 /api/chat A 200 29.029249
-green 0 /api/chat B 200 30.207342
-green 1 /v1/chat/completions A 200 1.968253
-green 1 /v1/chat/completions B 200 3.656704
-green 2 /api/chat A 200 1.907427
-green 2 /api/chat B 200 3.034501
-green 3 /v1/chat/completions A 200 1.932992
-green 3 /v1/chat/completions B 200 3.547688

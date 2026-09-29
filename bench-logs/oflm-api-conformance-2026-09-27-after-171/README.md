@@ -12,10 +12,10 @@ patched package under test changed.
 **`flm --version`:** `FLM v1.0.6`, built by this branch's
 `pkgs/fastflowlm/patches/server-error-handling.patch` +
 `pkgs/fastflowlm/patches/request-validation.patch` (suite run against out
-path `/nix/store/vnxymf3lf06g6n8pgq2cflh6xxvn2fn0-fastflowlm-1.0.6`; a later
+path `fastflowlm-1.0.6`; a later
 review round extended `safe_dump()` coverage to two more serialization sites
-that none of these probes exercise — `AC2.txt` reflects the final out path
-`/nix/store/522madyflb7h52fsmsnj30j126qbg253-fastflowlm-1.0.6`, re-verified
+that none of these probes exercise — the AC2 probes below were rerun on the final out path
+`fastflowlm-1.0.6`, re-verified
 after that change).
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890` (same as
 PR #169).
@@ -29,7 +29,7 @@ per #148; the module-wrapped `fastflowlm-wrapped` binary needs no such
 override):
 
 ```
-LD_LIBRARY_PATH=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib \
+LD_LIBRARY_PATH=$XRT_LIB_DIR \
   flm serve llama3.2:1b --port 58601
 OFLM_TEST_BASE_URL=http://127.0.0.1:58601 OFLM_TEST_MODEL=llama3.2:1b \
   python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_error_status.py
@@ -38,7 +38,7 @@ OFLM_TEST_BASE_URL=http://127.0.0.1:58601 OFLM_TEST_MODEL=llama3.2:1b \
 OFLM_TEST_BASE_URL=http://127.0.0.1:58601 OFLM_TEST_MODEL=llama3.2:1b \
   python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_request_validation.py
 
-LD_LIBRARY_PATH=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib \
+LD_LIBRARY_PATH=$XRT_LIB_DIR \
   flm serve llama3.2:1b --embed 1 --port 58602
 OFLM_TEST_BASE_URL=http://127.0.0.1:58602 OFLM_TEST_EMBED_MODEL=embed-gemma:300m \
   python3 run_spec_tests.py <oflm-next>/specs/server-api/tests/test_embed_task_prompt.py
@@ -52,12 +52,12 @@ itself, pid unchanged across the whole run, was left running throughout).
 
 ## Before/after pass/fail comparison
 
-| Test file | Before (PR #169) | After (#171) | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` | PASS 1, FAIL 5, ERROR 2 | PASS 2, FAIL 5, ERROR 1 | [log](test_error_status.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 (unchanged) | [log](test_finish_reason.log) |
-| `test_request_validation.py` | PASS 0, FAIL 14, SKIP 8 | **PASS 14**, FAIL 0, SKIP 8 | [log](test_request_validation.log) |
-| `test_embed_task_prompt.py` | FAIL 3, SKIP 8 | FAIL 3, SKIP 8 (unchanged) | [log](test_embed_task_prompt.log) |
+| Test file | Before (PR #169) | After (#171) |
+| --- | --- | --- |
+| `test_error_status.py` | PASS 1, FAIL 5, ERROR 2 | PASS 2, FAIL 5, ERROR 1 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 (unchanged) |
+| `test_request_validation.py` | PASS 0, FAIL 14, SKIP 8 | **PASS 14**, FAIL 0, SKIP 8 |
+| `test_embed_task_prompt.py` | FAIL 3, SKIP 8 | FAIL 3, SKIP 8 (unchanged) |
 
 **`test_request_validation.py` went from 0 passes to all 14** — every
 `POST {}` / wrong-type / non-string-`request_id` case that used to crash or
@@ -70,17 +70,16 @@ hardware.
 **`test_error_status.py`'s `test_a_body_that_is_not_json_is_refused_and_the_server_keeps_serving`
 moved from ERROR (60s alarm, NPU lock leaked) to PASS** — this is bug 2 (the
 invalid-UTF-8 double-throw that used to leak the NPU lock permanently),
-confirmed on hardware; see also [`AC3.txt`](AC3.txt) for the raw
-request/response and the server log's `NPU Locked!`/`NPU Lock Released!`
-lines.
+confirmed on hardware; see also the AC3 probe below, whose server log brackets the request with
+`NPU Locked!`/`NPU Lock Released!` lines.
 
-## AC2-AC4 raw evidence
+## AC2-AC4 manual probes
 
 Manual probes from #171's own acceptance criteria, run against the same
-patched build: [`AC2.txt`](AC2.txt) (5 missing-required-field probes, each
-4xx, server answers a normal chat request afterward), [`AC3.txt`](AC3.txt)
+patched build: AC2 (5 missing-required-field probes, each
+4xx, server answers a normal chat request afterward), AC3
 (invalid-UTF-8 body, 4xx, `NPU Locked!`/`NPU Lock Released!` bracket it, a
-normal request afterward completes), [`AC4.txt`](AC4.txt) (`/v1/embeddings`
+normal request afterward completes), AC4 (`/v1/embeddings`
 with no `model`, 4xx not 200).
 
 ## Remaining failures — all out of scope for #171

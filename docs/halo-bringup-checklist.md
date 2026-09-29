@@ -209,7 +209,7 @@ checked**, not beat ROCm master on prefill.
       answered on gfx1150 and is not the regime that motivates Halo.
 - [ ] Capture GPU utilisation evidence alongside, same as the gfx1150 eval did,
       to rule out CPU fallback (`-min-decode-tps` guards the gross case).
-- [ ] Log raw output under `bench-logs/` — that's the repo convention.
+- [ ] Record the run under `bench-logs/`: a README with the decisive numbers plus the scripts that reproduce it (raw logs are not committed) — that's the repo convention.
 - [ ] First `sd-cpp` ROCm-vs-Vulkan look on gfx1151 (image-gen), lower priority.
 
 ### Decision gate

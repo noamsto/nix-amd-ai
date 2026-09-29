@@ -8,18 +8,18 @@ conformance suite using the same method as
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Base build (red):** the #187 tip, this branch's base,
-`/nix/store/fqkyn7jv5mqvzc51fgq4vghv33slqar7-fastflowlm-1.0.6` (the same out
+`fastflowlm-1.0.6` (the same out
 path as the after-187 green build).
 **New build (green):** this branch, adding
 `pkgs/fastflowlm/patches/ps-serving-snapshot.patch`,
-`/nix/store/hzqppl44zhfxpk0nl1wv6r8fd69g4w4p-fastflowlm-1.0.6`. The
+`fastflowlm-1.0.6`. The
 production probes below ran on
-`/nix/store/6y3hc05zlx0vy4vzbzyplv3q0w2i90lc-fastflowlm-1.0.6`, an earlier
+`fastflowlm-1.0.6`, an earlier
 revision of the patch. Review changed only a comment in it after that run, so
 the compiled code is the same.
 **TSan builds:** [`tsan.nix`](tsan.nix), scratch only, not wired into the flake.
-The base patch set is `/nix/store/71kaddldrwvfwkvk380dgz5g0s18781k-fastflowlm-tsan-1.0.6`
-(`--arg fixed false`). All 9 patches is `/nix/store/d2yh66m27ji5c8mzp6rqms3qbqg4gf24-fastflowlm-tsan-1.0.6`.
+The base patch set is `fastflowlm-tsan-1.0.6`
+(`--arg fixed false`). All 9 patches is `fastflowlm-tsan-1.0.6`.
 Both builds compile everything with `-fsanitize=thread -g` (followed by the
 forced Release `-O3`). `nm -D bin/flm` lists undefined `__tsan_func_entry` and
 `__tsan_read8`.
@@ -127,13 +127,13 @@ A log the classifier cannot read fails the run.
 | `other` | 57 | 0 |
 | `incomplete` / `failed-restore` / skipped logs | 1 / 0 / 0 | 0 / 0 / 0 |
 | `libc-tz` (not gating) | 83 | 78 |
-| verdict | [`before/race-red.txt`](before/race-red.txt): PASS 2/2 (both races reproduced) | [`race-green.txt`](race-green.txt): PASS 5/5 |
+| verdict | PASS 2/2 (both races reproduced) | PASS 5/5 |
 
-The `other == 0` green gate was added after review; the committed green run
-([`race-green.txt`](race-green.txt)) predates it and reported `other=0` under
+The `other == 0` green gate was added after review; the green run
+reported here predates it and reported `other=0` under
 the original gate.
 
-The eight red reports ([`before/tsan-red.ps-pair.txt`](before/tsan-red.ps-pair.txt))
+The eight red reports
 are exactly the race in the issue:
 
 | Write (`ensure_model_loaded`) | Read (`handle_ps`) | Reports |
@@ -145,15 +145,14 @@ are exactly the race in the issue:
 The writers came from both `handle_chat` and `handle_openai_completion`. Every
 racing address is inside the RestHandler object: the 248-byte heap block that
 `create_lm_server` allocates. Line numbers are in the base-build source. The
-excerpt cuts access stacks at frame #16. The full
-classification, one line per report, is in
-[`before/tsan-red.summary.txt`](before/tsan-red.summary.txt) and
-[`tsan-green.summary.txt`](tsan-green.summary.txt). The raw TSan logs (3 MB), the
+excerpt cuts access stacks at frame #16. `tsan-classify.py` writes the full
+classification, one line per report. That summary (0.4 MB red, 0.1 MB green), the
+raw TSan logs (3 MB), the
 server logs (~65 MB each, one request banner per poll) and the raw per-poll
 status files are not committed.
 
 **The tail race** shows up only in the queue phase. All 35 red `model-state`
-reports ([`before/tsan-red.model-state.txt`](before/tsan-red.model-state.txt))
+reports
 have `handle_chat`'s post-send `clear_context()` (`rest_handler.cpp:1091`,
 right after `send_response`) on one side. 6 of them race the queued request
 B's prefill (`AutoModel::_shared_insert` via `rest_handler.cpp:1061`,
@@ -193,7 +192,7 @@ is still decoding, it sends `/v1/completions` (`llama3.2:1b`, `max_tokens: 4`)
 and `/api/embeddings` (`embed-gemma:300m`). The oracle is the server log's
 `NPU busy, request queued (...): POST <route>` line.
 
-| Check | Base ([`before/npu-lock-base.txt`](before/npu-lock-base.txt)) | New ([`npu-lock-new.txt`](npu-lock-new.txt)) |
+| Check | Base | New |
 | --- | --- | --- |
 | `/v1/completions` queued | **FAIL**: ran immediately | PASS |
 | `/api/embeddings` queued | **FAIL**: ran immediately | PASS |
@@ -202,8 +201,7 @@ and `/api/embeddings` (`embed-gemma:300m`). The oracle is the server log's
 
 On the base build, the unlocked `/v1/completions` launched on the NPU while the
 chat was decoding. The chat died with
-`[ERROR] handle_chat: bad command state, can't launch`
-([`before/server-npu-lock-base.log`](before/server-npu-lock-base.log)), an XRT
+`[ERROR] handle_chat: bad command state, can't launch`, an XRT
 fault, and answered 500.
 
 ### #192's disconnect sequence
@@ -220,10 +218,10 @@ was run three times, because what the overlap breaks varies from run to run.
 
 | Run | Step 2 `/api/chat` | Step 3 `/v1/completions` | Server afterwards |
 | --- | --- | --- | --- |
-| base 1 ([txt](before/disconnect-base.txt)) | **500** in 6 ms: `The runlist is submitted for execution and cannot be reset` | 200, but logs `handle_openai_completion: bad command state, can't launch` | alive |
-| base 2 ([txt](before/disconnect-base-run2.txt)) | same runlist error logged, then **SIGSEGV**: no reply (`000`) | server gone | **dead** |
-| base 3 ([txt](before/disconnect-base-run3.txt)) | **500** in 2 ms, runlist error | **500**, runlist error | alive |
-| new ([txt](disconnect-new.txt)) | **queued** (`NPU busy, request queued (1/10): POST /api/chat`), 200 after 5.2 s | 200, `[DONE]` | alive, no `ERROR` lines |
+| base 1 | **500** in 6 ms: `The runlist is submitted for execution and cannot be reset` | 200, but logs `handle_openai_completion: bad command state, can't launch` | alive |
+| base 2 | same runlist error logged, then **SIGSEGV**: no reply (`000`) | server gone | **dead** |
+| base 3 | **500** in 2 ms, runlist error | **500**, runlist error | alive |
+| new | **queued** (`NPU busy, request queued (1/10): POST /api/chat`), 200 after 5.2 s | 200, `[DONE]` | alive, no `ERROR` lines |
 
 On base, the step-1 `/v1/completions` never logs `NPU Locked!`, so the step-2
 chat takes the lock at once while the orphaned decode is still using the NPU.
@@ -253,7 +251,7 @@ cancellation, not a lock problem.
 model, and keeps polling for 1 s after the reply. The load window runs from
 sending the chat to its reply.
 
-| | Base ([`before/ps-swap-base.txt`](before/ps-swap-base.txt)) | New ([`ps-swap-new.txt`](ps-swap-new.txt)) |
+| | Base | New |
 | --- | --- | --- |
 | polls, all 200 | 131 | 127 |
 | load window | 7.70 s, 103 polls | 7.00 s, 97 polls |
@@ -275,14 +273,14 @@ are copied unchanged from after-187 and were run against the new build. For each
 file, the sorted per-test PASS/FAIL/SKIP lines are identical to the after-187
 logs.
 
-| Test file | After #187 | After #184 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | After #187 | After #184 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 |
 
 ## Not measured
 

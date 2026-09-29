@@ -1,5 +1,0 @@
-cycles_requested=15
-cycles_answered_200=15
-io_thread_errors=0
-remote_endpoint_unavailable=15
-connection_limit_reached=0

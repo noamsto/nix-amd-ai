@@ -1,1 +1,0 @@
-   2.236	{"model":"gemma4-it:e4b","message":{"role":"assistant","content":"1, 2, 3, 4, 5","images":null},"done":true,"prompt_eval_count":21,"eval_count":13,"total_duration":2196486656,"load_duration":2033,"prompt_eval_duration":1156094848,"eval_duration":930233000,"done_reason":"stop"}

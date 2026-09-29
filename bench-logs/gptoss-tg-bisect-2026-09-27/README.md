@@ -23,9 +23,9 @@ run-to-run. That is the number this log re-tests.
 
 ## Method
 
-- **Old** = `/nix/store/kw9ym27nvxsdgnh238222yv1ngw37hw6-llama-cpp-0.4.1`
+- **Old** = `llama-cpp-0.4.1`
   (`llama-bench`, `libggml-vulkan.so`), upstream tag b10964, commit `b29c606`.
-- **New** = `/nix/store/rngpfzz5mgh3lrx6v0rhv9ycmbapp9qr-llama-cpp-11207`,
+- **New** = `llama-cpp-11207`,
   upstream tag b11207, commit `7ac59a6`.
 - **Model** = `gpt-oss-120b-MXFP4.gguf` (63,387,346,208 bytes),
   `/var/lib/models/hf/hub/models--ggml-org--gpt-oss-120b-GGUF/snapshots/238abdd290bb874b90a5da1b4549881b7d05c091/`.

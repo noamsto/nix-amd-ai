@@ -9,21 +9,21 @@ Only the `flm` build under test changed.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Base build:** the #178 tip, without `chat-decode-fault.patch`,
-`/nix/store/812b5ni2kx5d3dp79rl1ddansrcia502-fastflowlm-1.0.6`. This is the
+`fastflowlm-1.0.6`. This is the
 out path the after-178 run ended on.
 **New build:** this branch, which adds `pkgs/fastflowlm/patches/chat-decode-fault.patch`
 after `ps-loaded-models.patch`,
-`/nix/store/8rrlfd0fxh9d8nfbxkq9ikzmf2zbx9x7-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **Fault-injection builds:** these add [`inject-faults.patch`](inject-faults.patch),
 a scratch patch that is not in `default.nix`. It throws `std::runtime_error`
 from `AutoModel::_shared_generate` when `FLM_INJECT_DECODE_FAULT` is set, and
 from `AutoModel::_chunked_insert` when `FLM_INJECT_PREFILL_FAULT` is set.
-Red (base + injection): `/nix/store/m1vqq017hbfnqfzkbm5n6cl62viw7a2y-fastflowlm-1.0.6`.
-Green (new + injection): `/nix/store/vn94z3p5br2glvygyrv5jy7hg0wkhvc4-fastflowlm-1.0.6`.
+Red (base + injection): `fastflowlm-1.0.6`.
+Green (new + injection): `fastflowlm-1.0.6`.
 **Rebase:** the runs below were made before this branch was rebased onto
 `74dec24`, which changes only `embed-task-prompt.patch` (`handle_embeddings`).
 The patch applies unchanged there. The final build is
-`/nix/store/s8rilbz0bmz9miyaspx15f99a4d7wlka-fastflowlm-1.0.6`: the rebased
+`fastflowlm-1.0.6`: the rebased
 tree plus a comment-only rewording in the patch, so the code it compiles is
 unchanged.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
@@ -69,8 +69,7 @@ contain.
 
 [`probes.sh`](probes.sh) `<flm> <outdir>` starts `flm serve llama3.2:1b --port
 58601` once per mode, with `LD_LIBRARY_PATH` set as in the #171 README (#148).
-It checks each probe against the oracle. Red: [`before/probes.txt`](before/probes.txt).
-Green: [`probes.txt`](probes.txt). Server logs are `server-<mode>.log`.
+It checks each probe against the oracle. The probe and server logs are not committed; rerun `probes.sh`.
 
 | Mode | Probe | Expected | Red build | Green build |
 | --- | --- | --- | --- | --- |
@@ -97,21 +96,20 @@ request returned 200 on both builds.
 `llama3.2:1b` and then to `gemma4-it:e4b`. Timing fields (`total_duration`,
 `load_duration`, `prompt_eval_duration`, `eval_duration`) are removed. The
 two runs within each build are identical. The base and new builds produce
-identical responses for both models ([`normal/diff.txt`](normal/diff.txt),
-[`normal/before/`](normal/before/), [`normal/after/`](normal/after/)).
+identical responses for both models (compared by `normal-path.sh`; the per-run files are not committed).
 
 ## Conformance rerun
 
 [`conformance.sh`](conformance.sh) `<flm> <outdir> <oflm-next>` is unchanged
 from after-178. It was run against the new build.
 
-| Test file | After #178 | After #180 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | After #178 | After #180 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | PASS 3, SKIP 8 | PASS 3, SKIP 8 |
 
 For each file, the sorted per-test PASS/FAIL/SKIP lines are identical to the after-178 logs.

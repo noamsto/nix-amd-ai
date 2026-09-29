@@ -8,11 +8,11 @@ models and ports. Only the `flm` build under test changed.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver `amdxdna`).
 **Old build (red):** the #173 tip (`d38bfd7`), which has no `no-exception-text.patch` —
-`/nix/store/zvg05givvmmlmp331fn9imjyfyrr6jyi-fastflowlm-1.0.6`, the same out path
+`fastflowlm-1.0.6`, the same out path
 the after-173 run ended on.
 **New build (green):** this branch, adding `pkgs/fastflowlm/patches/no-exception-text.patch` on top of `main`
 (`8cf6f73`, whose `pkgs/fastflowlm` is identical to the #173 tip) —
-`/nix/store/5gga3wag3iqndlk6hnlnvic2idl7vlm4-fastflowlm-1.0.6`.
+`fastflowlm-1.0.6`.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models:** `llama3.2:1b` and `gemma4-it:e4b` (chat), `embed-gemma:300m` (embedding).
 
@@ -28,7 +28,7 @@ A fourth, normal request confirms the server still answers. It was run
 against `$FLM serve llama3.2:1b --port 58601`, with `LD_LIBRARY_PATH` set as
 in the #171 README (#148).
 
-| Probe | Old build ([`before/probes.txt`](before/probes.txt)) | New build ([`probes.txt`](probes.txt)) |
+| Probe | Old build | New build |
 | --- | --- | --- |
 | `/v1/chat/completions`, `"stream":"yes"` | 500 `{"message":"[json.exception.type_error.302] type must be boolean, but is string","type":"server_error","code":500}` | 400 `{"message":"Invalid request","type":"invalid_request_error","code":"invalid_value"}` |
 | `/api/chat`, `"options":"x"` | 400 `{"error":"[json.exception.type_error.306] cannot use value() with string"}` | 400, same generic body |
@@ -36,9 +36,9 @@ in the #171 README (#148).
 | normal chat request | 200 | 200 |
 
 On the new build the detail goes to the server log only
-([`probes-server-log.txt`](probes-server-log.txt)). There is one `[ERROR]` line
+(server log). There is one `[ERROR]` line
 per probe, naming the handler and quoting the nlohmann text. The old build
-did not log it at all ([`before/probes-server-log.txt`](before/probes-server-log.txt)).
+did not log it at all (old build's server log).
 
 The first probe's status moves from 500 to 400. A `json::exception` means the
 request had a field of the wrong shape, so it is a client error. Handlers that
@@ -54,20 +54,20 @@ turn, an image part, a lone `tool` message) made its template raise.
 
 ## Source grep
 
-[`what-grep.txt`](what-grep.txt): `rg -n 'what\(\)' src/server` over v1.0.6
+The result of `rg -n 'what\(\)' src/server` over v1.0.6
 with all four patches applied in `default.nix` order. Every hit is a
 `header_print` log call or a comment. None of them builds a response body.
 
 ## Conformance rerun
 
-| Test file | After #173 | After #175 | Log |
-| --- | --- | --- | --- |
-| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 | [log](test_error_status.log) |
-| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 | [log](test_error_status.gemma4.log) |
-| `test_finish_reason.py` | PASS 7 | PASS 7 | [log](test_finish_reason.log) |
-| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 | [log](test_request_validation.log) |
-| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 | [log](test_request_validation.embed.log) |
-| `test_embed_task_prompt.py` | FAIL 2, PASS 1, SKIP 8 | FAIL 2, PASS 1, SKIP 8 | [log](test_embed_task_prompt.log) |
+| Test file | After #173 | After #175 |
+| --- | --- | --- |
+| `test_error_status.py` (llama3.2:1b) | PASS 8 | PASS 8 |
+| `test_error_status.py` (gemma4-it:e4b) | PASS 8 | PASS 8 |
+| `test_finish_reason.py` | PASS 7 | PASS 7 |
+| `test_request_validation.py` (chat server) | PASS 15, SKIP 7 | PASS 15, SKIP 7 |
+| `test_request_validation.py` (embed server) | PASS 14, SKIP 8 | PASS 14, SKIP 8 |
+| `test_embed_task_prompt.py` | FAIL 2, PASS 1, SKIP 8 | FAIL 2, PASS 1, SKIP 8 |
 
 Every test has the same outcome as in the after-173 logs; each file's sorted
 PASS/FAIL/SKIP lines diff empty. The two `test_embed_task_prompt.py` failures
