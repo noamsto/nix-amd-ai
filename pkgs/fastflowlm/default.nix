@@ -159,10 +159,11 @@ stdenv.mkDerivation (finalAttrs: {
   #     cancellation predicate to insert()/generate(), so a client that
   #     disconnected left flm serve decoding to its token limit. They now
   #     pass the predicate, as /v1/chat/completions does, and like it reset
-  #     the token only on the streaming branches: on a non-streaming one a
-  #     reset erases the cancel of a client that left while queued, and
-  #     nothing else would notice. Non-streaming /api/chat still ignores a
-  #     disconnect: generate_with_prompt() takes no predicate.
+  #     the token only on the streaming branches (cancel-keep-early.patch
+  #     drops those resets again): on a non-streaming one a reset erases the
+  #     cancel of a client that left while queued, and nothing else would
+  #     notice. Non-streaming /api/chat was left out, as generate_with_prompt()
+  #     took no predicate; cancel-chat-nonstream.patch covers it.
   #   - model-list-download-check.patch (#181): ensure_model_loaded's pre-evict
   #     download check, downloader.is_model_downloaded(), reads the
   #     model_list.json entry's `name` and `flm_min_version` (and parses the
@@ -172,6 +173,38 @@ stdenv.mkDerivation (finalAttrs: {
   #     no-exception-text.patch meant to fail the load for, since this check
   #     runs before that one. The check now fails the load as 500
   #     model_load_failed, still before anything is unloaded.
+  #   - cancel-chat-nonstream.patch (#200): non-streaming /api/chat runs
+  #     generate_with_prompt(), which took no cancellation predicate in any
+  #     model class, so a client that left kept it decoding to num_predict
+  #     with the NPU held. The predicate is now a defaulted trailing
+  #     parameter of generate_with_prompt in AutoModel and every override,
+  #     forwarded to the insert()/generate() each already calls (Nanbeige's
+  #     inlined decode loop gets the same check its generate() has);
+  #     insert()+generate() was not an option (#180). A cancelled request
+  #     answers like non-streaming /api/generate: {} when
+  #     generate_with_prompt() returned nothing and no token was generated
+  #     (a cancelled prefill, or a decode cancelled before any visible
+  #     token), else 200 with the partial reply and done_reason "cancel".
+  #     GPT-OSS always wraps its reply in <|start|>assistant...<|end|>, so a
+  #     cancelled decode there gets the wrapper, not {}. No reset(), and a
+  #     cancel never throws, so #180's 400/500 split is unaffected.
+  #   - cancel-keep-early.patch (#201): the streaming handlers called
+  #     cancellation_token->reset() before insert(), so a cancel that landed
+  #     before the handler -- a client that left while queued behind a busy
+  #     NPU (the disconnect monitor fires as soon as the request is
+  #     dequeued), during a model load, or a POST /api/cancel -- was erased
+  #     and the whole prefill ran. Upstream added reset() in v0.9.24/v0.9.25,
+  #     when the token was already created fresh per request and only
+  #     /api/cancel or a failed chunk write could set it; the disconnect
+  #     monitor came in April 2026 (4ffe631). On a fresh token it can only
+  #     erase a real cancel, so the resets are dropped (moving them before
+  #     the monitor is armed would be the same no-op). The reset did mask one
+  #     monitor false positive, by thread race: a client that half-closes its
+  #     socket (shutdown(SHUT_WR)) after sending reads as EOF, and a streaming
+  #     request from one now is always cancelled (9 of 10 survived before),
+  #     as on every non-streaming branch already. Read-side EOF cannot tell a
+  #     half-close from a close; lemond (libcurl), curl, requests and httpx
+  #     were checked and do not half-close.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -187,9 +220,11 @@ stdenv.mkDerivation (finalAttrs: {
   # streaming client disconnects (also still on main; see also
   # ROCm/FastFlowLM#680), a pre-accept reset killing the accept loop (on main
   # at 39ff855632), ignoring a client disconnect outside
-  # /v1/chat/completions, and answering a malformed model_list.json entry as
-  # a client error. A bump that breaks any patch fails the build rather than
-  # silently losing it.
+  # /v1/chat/completions, answering a malformed model_list.json entry as a
+  # client error, ignoring a disconnect on non-streaming /api/chat, and
+  # erasing a cancel that lands before a streaming handler starts (the last
+  # two on main at ef60a5f, the latter in /v1/chat/completions). A bump that
+  # breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
@@ -204,6 +239,8 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/accept-loop-rearm.patch
     ./patches/cancel-client-disconnect.patch
     ./patches/model-list-download-check.patch
+    ./patches/cancel-chat-nonstream.patch
+    ./patches/cancel-keep-early.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
