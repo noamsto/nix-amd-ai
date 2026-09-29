@@ -1,0 +1,24 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index a03414f..78cf1cd 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -600,7 +600,18 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         return ModelLoad::NotChatModel;
+     }
+ 
+-    if (downloader.is_model_downloaded(ensure_tag) == ModelDownloader::ModelStatus::Incompatible) {
++    // is_model_downloaded() reads the entry's name and flm_min_version and
++    // parses the model's config.json; a malformed one is the same server-side
++    // config fault, refused here before anything is unloaded.
++    ModelDownloader::ModelStatus download_status;
++    try {
++        download_status = downloader.is_model_downloaded(ensure_tag);
++    }
++    catch (const std::exception& e) {
++        header_print("ERROR", "model '" + ensure_tag + "' could not be checked: " + std::string(e.what()));
++        return ModelLoad::LoadFailed;
++    }
++    if (download_status == ModelDownloader::ModelStatus::Incompatible) {
+         header_print("ERROR", "model '" + ensure_tag + "' is not compatible with this version of FastFlowLM -- refusing; '" +
+                               current_model_tag + "' stays loaded");
+         return ModelLoad::LoadFailed;
