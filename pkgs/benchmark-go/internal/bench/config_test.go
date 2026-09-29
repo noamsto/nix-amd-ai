@@ -11,7 +11,7 @@ import (
 // readConfig decodes the JSON file at path into a map.
 func readConfig(t *testing.T, path string) map[string]any {
 	t.Helper()
-	data, err := os.ReadFile(path) //nolint:gosec // test helper reading a path built by the test
+	data, err := os.ReadFile(path)
 	if err != nil {
 		t.Fatalf("readConfig: %v", err)
 	}
@@ -73,7 +73,7 @@ func TestSetLlamacppBackend_OverExistingVulkan(t *testing.T) {
 	}
 
 	// file uses indent (contains newlines)
-	raw, _ := os.ReadFile(cfgPath) //nolint:gosec // test-created temp file
+	raw, _ := os.ReadFile(cfgPath)
 	if !strings.Contains(string(raw), "\n") {
 		t.Fatal("expected indented JSON (newlines present)")
 	}

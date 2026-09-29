@@ -782,7 +782,7 @@ func equalInts(a, b []int) bool {
 		return false
 	}
 	for i := range a {
-		if a[i] != b[i] { //nolint:gosec // len(a) == len(b) is checked before the loop
+		if a[i] != b[i] {
 			return false
 		}
 	}
