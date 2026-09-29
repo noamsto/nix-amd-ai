@@ -1,2 +1,0 @@
-disconnect probe (slots): count=12 final_connection=ACCEPTED
-server 'Connection limit reached' lines: 0

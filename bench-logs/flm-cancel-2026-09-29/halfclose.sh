@@ -15,7 +15,7 @@ label=${3:?usage: halfclose.sh <flm-binary> <outdir> <label>}
 mkdir -p "$outdir" || exit 1
 outdir=$(cd "$outdir" && pwd) || exit 1
 
-libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+libpath=${XRT_LIB:?set XRT_LIB to the xrt-combined lib dir}
 [[ -d "$libpath" ]] || { echo "libpath not found: $libpath" >&2; exit 1; }
 health_url=http://127.0.0.1:13305/api/v1/health
 model=llama3.2:1b

@@ -10,11 +10,13 @@ reset-before-accept probe and OFLM-Next's server-api conformance suite.
 
 **Host:** halo (Ryzen AI MAX+ 395, XDNA2 NPU at `/dev/accel/accel0`, driver
 `amdxdna`; kernel 7.2.8).
-**Old build (red):** `main` at cf4e7cd —
-`/nix/store/xxr38aa48rivwjk9vn2ds0h1463anc75-fastflowlm-1.0.6`.
+**Old build (red):** `main` at cf4e7cd, package `fastflowlm` 1.0.6.
 **New build (green):** this branch, adding `cancel-chat-nonstream.patch` and
-`cancel-keep-early.patch` after `model-list-download-check.patch` —
-`/nix/store/2v6yb1wpn4qpqygnwljwz3n85hna7qy1-fastflowlm-1.0.6`.
+`cancel-keep-early.patch` after `model-list-download-check.patch`, package
+`fastflowlm` 1.0.6.
+
+Raw per-request logs are not committed; this README carries the decisive
+numbers and log lines, and the scripts here reproduce the run.
 **OFLM-Next commit:** `eb656007856579c38bafaaa7f86f2f08cc980890`.
 **Models** (`flm list` on halo: every downloaded chat model):
 `llama3.2:1b` (Llama3), `gemma4-it:e4b` (Gemma4e), `gemma4e-flash:e4b`
@@ -85,7 +87,7 @@ the half-close as a control):
 | green | 5 × `cancel` | 5 × `cancel` | 10 × `length` |
 
 On red the monitor logged `Client disconnected` for all 10 half-closed requests
-([log](before/server-halfclose-red.log)). The streaming handler's `reset()`,
+(the red server log has exactly 10 such lines). The streaming handler's `reset()`,
 running on another I/O thread, erased 9 of those cancels. With the resets
 dropped, a half-closing streaming client is always cancelled, as every
 non-streaming branch already did on `main`.
@@ -97,8 +99,7 @@ way. The four resets were dropped after the dispatcher agreed, on the condition
 that real clients were shown not to half-close.
 
 **Real clients do not half-close.** [`client-halfclose.sh`](client-halfclose.sh)
-against the green build ([results](client-halfclose.txt),
-[run](client-halfclose-run.txt)):
+against the green build:
 
 - **Through an isolated `lemond`** 11.9.0 (temp HOME, cache and config, port
   13399, `flm.npu_bin` set to the green `flm` through an exec wrapper that logs
@@ -106,14 +107,18 @@ against the green build ([results](client-halfclose.txt),
   1 × non-streaming (`length`) and 1 × streaming Ollama `/api/chat` (`stop`),
   all complete. The flm log has 0 `Client disconnected` during a POST. There is
   one on lemond's startup readiness poll (`GET /api/tags`, abandoned while flm
-  was still starting; that route never had a `reset()`).
-  [flm log](server-lemond-e2e.log).
+  was still starting; that route never had a `reset()`). The whole flm log has
+  exactly one such line:
+
+  ```
+  [🔴 ]  Client disconnected; cancelling active request
+  ```
 - **lemonade source:** it proxies to flm through libcurl
   (`HttpClient::post_stream`). The only socket `shutdown()` in its tree is
   `SHUT_RDWR` in `tcp_jsonl_client.cpp`, which is not on the flm path.
 - **Direct:** `curl -N`, python `requests` (stream) and `httpx` (stream), each
   on streaming `/api/chat` and `/v1/chat/completions`: all `length`, 0
-  `Client disconnected` ([log](server-client-direct.log)).
+  `Client disconnected` (0 lines in the flm log).
 
 ## Red/green: `disconnect.sh`
 
@@ -134,9 +139,18 @@ against the green build ([results](client-halfclose.txt),
   prefill rows could never go red. qwen3.6-moe:35b-a3b runs `chat-ns` and
   `chat`.
 
-**Red: 60 passed, 17 failed** ([before/disconnect.txt](before/disconnect.txt));
-**green: 77 passed, 0 failed** ([disconnect.txt](disconnect.txt)). The 17
-failures are exactly the new rows. Every other row passes on both builds.
+**Red: 60 passed, 17 failed**; **green: 77 passed, 0 failed** (the last line of
+each run's output). The 17 failures are exactly the new rows, for example on red:
+
+```
+FAIL llama/chat/queued-prefill: 2 more prefill chunk(s) after dequeue, or hold 7.651s >= bound 2s
+FAIL llama/chat-ns/decode: work continued 6.524s after the client closed (bound 2s)
+FAIL llama/chat-ns/queued: work continued 8.533s after the client closed (bound 2s)
+FAIL gemma4/chat-ns/decode: work continued 37.794s after the client closed (bound 2s)
+FAIL qwen36/chat/queued-prefill: 2 more prefill chunk(s) after dequeue, or hold 43.649s >= bound 2s
+```
+
+The same rows are `PASS` on green. Every other row passes on both builds.
 
 "NPU hold" is the time from the close (`decode`) or from the request's dequeue
 (`queued`, `queued-prefill`) until the NPU is free.
@@ -158,11 +172,18 @@ failures are exactly the new rows. Every other row passes on both builds.
 - **Red, streaming `queued-prefill`:** the server logs `Client disconnected` on
   dequeue, then `Prefill chunk 1/3`, `2/3` and `3/3`. Green logs
   `Prefill Cancelled!` with no chunk at all: `_chunked_insert` checks the token
-  before chunk 1.
+  before chunk 1. llama `/api/chat`, server log:
+
+  ```
+  red:   [FLM]  Prefill chunk 2/3 with 4096 tokens
+         [FLM]  Prefill chunk 3/3 with 3850 tokens
+         [🔴 ]  Client disconnected; cancelling active request
+  green: [🔴 ]  Client disconnected; cancelling active request
+         [❌ ]  Prefill Cancelled!
+  ```
 - **qwen36 `chat-ns decode`, green 1.57 s:** the close landed during that
   request's one 29-token prefill chunk (about 3 s on qwen36 here), which cannot
-  be interrupted. Decode then stopped at its first step
-  ([log](server-qwen36.chat-ns.log)).
+  be interrupted. Decode then stopped at its first step.
 
 ## Normal answers are byte-identical
 
@@ -175,10 +196,20 @@ The second request is a 3-turn conversation, except on gemma4e-flash:
 - gemma4e-flash:e4b: two single prompts. It is single-turn (its `insert()`
   resets the turn), so it has no multi-turn state to exercise.
 
-`diff -r identity/red identity/green` over the JSON bodies, with
+Comparing the red and green JSON bodies (`jq -S`, both builds), with
 `total_duration`, `load_duration`, `prompt_eval_duration` and `eval_duration`
-removed, is empty for all four families. That covers content, `eval_count`,
-`prompt_eval_count` and `done_reason`. qwen3.6-moe's thinking output was
+removed, is empty for all 8 response pairs (4 families × 2 requests). That covers
+content, `eval_count`, `prompt_eval_count` and `done_reason`. Both builds
+returned:
+
+| model | request 1 (`eval_count`, `prompt_eval_count`, `done_reason`) | request 2 |
+| --- | --- | --- |
+| llama3.2:1b | 256, 48, `length` | 209, 72, `stop` |
+| gemma4-it:e4b | 256, 21, `length` | 256, 46, `length` |
+| gemma4e-flash:e4b | 256, 21, `length` | 256, 17, `length` |
+| qwen3.6-moe:35b-a3b | 256, 21, `length` | 256, 45, `length` |
+
+ qwen3.6-moe's thinking output was
 deterministic across the two builds.
 
 These are the four `generate_with_prompt` families that have a model downloaded
@@ -193,10 +224,10 @@ is the same mechanical forwarding, except Nanbeige's added in-loop check.
 | probe | result |
 | --- | --- |
 | `disconnect.sh`, all 60 pre-existing rows | pass on red and green |
-| #198 slot release ([after-194 `disconnect.sh`](../oflm-api-conformance-2026-09-28-after-194/disconnect.sh), 12 aborts) | 12 aborts, final connection accepted, 0 `Connection limit reached` ([slots.txt](slots.txt)) |
-| #198 keep-alive / non-streaming ([`keepalive-nonstream.sh`](../oflm-api-conformance-2026-09-28-after-194/keepalive-nonstream.sh)) | 12 × `/api/version` and 12 × non-streaming `/v1/chat/completions` all 200; `/api/version` 200 after 12 streaming aborts ([log](keepalive-nonstream.log)) |
-| #206 [`reset-before-accept.sh`](../flm-accept-reset-2026-09-28/reset-before-accept.sh), 15 cycles | 15/15 answered 200, 0 I/O-thread errors, 0 `Connection limit reached` ([accept-reset.txt](accept-reset.txt)) |
-| OFLM-Next conformance ([`conformance.sh`](../oflm-api-conformance-2026-09-28-after-191/conformance.sh)) | every test file's sorted PASS/FAIL/SKIP identical to [flm-accept-reset-2026-09-28](../flm-accept-reset-2026-09-28/) |
+| #198 slot release ([after-194 `disconnect.sh`](../oflm-api-conformance-2026-09-28-after-194/disconnect.sh), 12 aborts) | 12 aborts, final connection accepted, 0 `Connection limit reached` ((`count=12 final_connection=ACCEPTED`, `server 'Connection limit reached' lines: 0`)) |
+| #198 keep-alive / non-streaming ([`keepalive-nonstream.sh`](../oflm-api-conformance-2026-09-28-after-194/keepalive-nonstream.sh)) | 12 × `/api/version` and 12 × non-streaming `/v1/chat/completions` all 200; `/api/version` 200 after 12 streaming aborts (`final /api/version after 12 aborts: 200`) |
+| #206 [`reset-before-accept.sh`](../flm-accept-reset-2026-09-28/reset-before-accept.sh), 15 cycles | 15/15 answered 200, 0 I/O-thread errors, 0 `Connection limit reached` (`cycles_requested=15 cycles_answered_200=15 io_thread_errors=0 connection_limit_reached=0`) |
+| OFLM-Next conformance ([`conformance.sh`](../oflm-api-conformance-2026-09-28-after-191/conformance.sh)) | every test file's sorted PASS/FAIL/SKIP identical to [flm-accept-reset-2026-09-28](../flm-accept-reset-2026-09-28/) (no diff between the two sorted result sets) |
 
 The counter-level `debug-slots.sh` needs a scratch build with temporary `DBG`
 prints and was not rerun. This change does not touch the slot-counter code, and
@@ -207,15 +238,17 @@ its behavioural probes above pass.
 ```
 nix build .#fastflowlm --no-link --print-out-paths   # red on cf4e7cd, green here
 D=bench-logs/flm-cancel-2026-09-29
-bash $D/disconnect.sh /nix/store/<flm>/bin/flm $D            # red: $D/before
-bash $D/chat-identity.sh /nix/store/<flm>/bin/flm $D <red|green>
-bash $D/halfclose.sh /nix/store/<flm>/bin/flm $D <label>
-bash $D/client-halfclose.sh /nix/store/<flm>/bin/flm $D <scratch dir>
-bash bench-logs/oflm-api-conformance-2026-09-28-after-194/disconnect.sh /nix/store/<flm>/bin/flm 58701 12 $D slots
-bash bench-logs/oflm-api-conformance-2026-09-28-after-194/keepalive-nonstream.sh /nix/store/<flm>/bin/flm 58704 $D
-bash bench-logs/flm-accept-reset-2026-09-28/reset-before-accept.sh /nix/store/<flm>/bin/flm 58712 15 $D green
-bash bench-logs/oflm-api-conformance-2026-09-28-after-191/conformance.sh /nix/store/<flm>/bin/flm $D <oflm-next checkout>
+FLM=<fastflowlm out path>/bin/flm
+export XRT_LIB=<xrt-combined out path>/lib
+bash $D/disconnect.sh $FLM <out dir>
+bash $D/chat-identity.sh $FLM <out dir> <red|green>
+bash $D/halfclose.sh $FLM <out dir> <label>
+LEMOND=<lemond binary> LEMONADE_DEFAULTS_SRC=<lemonade-defaults.json> \
+  bash $D/client-halfclose.sh $FLM <out dir> <scratch dir>
+bash bench-logs/oflm-api-conformance-2026-09-28-after-194/disconnect.sh $FLM 58701 12 $D slots
+bash bench-logs/oflm-api-conformance-2026-09-28-after-194/keepalive-nonstream.sh $FLM 58704 $D
+bash bench-logs/flm-accept-reset-2026-09-28/reset-before-accept.sh $FLM 58712 15 $D green
+bash bench-logs/oflm-api-conformance-2026-09-28-after-191/conformance.sh $FLM $D <oflm-next checkout>
 ```
 
-Local scratch, worktree and home paths in the committed logs are replaced with
-`<scratch>`, `<repo>` and `~`.
+Run the red column by building `main` and pointing `FLM` at it.

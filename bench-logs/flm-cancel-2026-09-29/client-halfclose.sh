@@ -23,14 +23,14 @@ mkdir -p "$outdir" "$scratch" || exit 1
 outdir=$(cd "$outdir" && pwd) || exit 1
 scratch=$(cd "$scratch" && pwd) || exit 1
 
-libpath=/nix/store/cvn4bqwv1y6iyk412jzc06bhl01c5kb9-xrt-combined/lib
+libpath=${XRT_LIB:?set XRT_LIB to the xrt-combined lib dir}
 [[ -d "$libpath" ]] || { echo "libpath not found: $libpath" >&2; exit 1; }
 
 # Host lemond's NPU gate -- read-only health check, never started/stopped/touched here.
 health_url=http://127.0.0.1:13305/api/v1/health
 
-LEMOND=${LEMOND:-/nix/store/ivbbcmadaqqn8gv7500q31rifl2gnla0-lemonade-11.9.0/bin/lemond}
-LEMONADE_DEFAULTS_SRC=${LEMONADE_DEFAULTS_SRC:-/nix/store/f0bk2bmdfbich6n2zjfzgs41zpgby8yj-lemonade-defaults.json}
+LEMOND=${LEMOND:?set LEMOND to the lemond binary}
+LEMONADE_DEFAULTS_SRC=${LEMONADE_DEFAULTS_SRC:?set LEMONADE_DEFAULTS_SRC to lemonade-defaults.json}
 
 real_home=$HOME
 model_lemond="llama3.2-1b-FLM"
