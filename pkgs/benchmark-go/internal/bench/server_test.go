@@ -107,6 +107,27 @@ func TestStartStop_WaitCalledOnce(t *testing.T) {
 	}
 }
 
+// TestStart_StderrRace drives the timeout branch of waitReadyWithEarlyExit, the
+// only path that reads the child's stderr while it is still alive and os/exec's
+// copy goroutine is still writing it. With an unguarded bytes.Buffer that read
+// races (the race detector catches it on darwin); syncBuffer must keep it clean.
+func TestStart_StderrRace(t *testing.T) {
+	port, err := FindFreePort()
+	if err != nil {
+		t.Fatalf("FindFreePort: %v", err)
+	}
+	// No health server on this port, so Start() must burn ReadyTimeout. The
+	// child writes stderr in a tight loop so the copy goroutine and the poller's
+	// String() call overlap.
+	srv := NewLlamaServer([]string{"/bin/sh", "-c", "while true; do echo x 1>&2; done"}, port)
+	srv.ReadyTimeout = 300 * time.Millisecond
+	srv.TermTimeout = 500 * time.Millisecond
+
+	if err := srv.Start(); err == nil {
+		t.Fatal("Start should fail when nothing answers /health")
+	}
+}
+
 func addrForPort(port int) string {
 	return "127.0.0.1:" + strconv.Itoa(port)
 }
