@@ -7,8 +7,8 @@
 # active request" -- if that line ever appears while talking to a real
 # client, the client is doing something flm mistakes for a disconnect.
 #
-# Part A drives flm through an isolated lemond (the real-world client most
-# people hit flm through). Part B drives a standalone `flm serve` directly
+# Part A drives flm through an isolated lemond (flm serve's main client in
+# this flake). Part B drives a standalone `flm serve` directly
 # with three different HTTP client stacks (curl, python requests, httpx).
 #
 # Pass = every streamed answer completes with finish/done reason "length" or
@@ -109,7 +109,7 @@ for line in sys.stdin:
 '
 }
 
-# --- shared python helpers written into scratch (argv-driven, no secrets) ---
+# --- python helpers, written into the scratch dir ---
 
 cat >"$scratch/reqlib.py" <<'PY'
 import json
