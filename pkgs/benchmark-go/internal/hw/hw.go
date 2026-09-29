@@ -69,8 +69,8 @@ func parseMemTotalGiB(data []byte) float64 {
 func parseAmdgpuTop(data []byte) (grbmBusyPct float64, arch string) {
 	// Use only the first newline-delimited record.
 	line := data
-	if idx := bytes.IndexByte(data, '\n'); idx >= 0 {
-		line = data[:idx]
+	if before, _, ok := bytes.Cut(data, []byte{'\n'}); ok {
+		line = before
 	}
 	line = bytes.TrimSpace(line)
 	if len(line) == 0 {
@@ -152,8 +152,8 @@ func parseDmidecodeMemory(data []byte) (ramType string, speedMTs int) {
 		}
 
 		// "Configured Memory Speed:" is authoritative; "Speed:" is a fallback.
-		if strings.HasPrefix(trimmed, "Configured Memory Speed:") {
-			val := strings.TrimSpace(strings.TrimPrefix(trimmed, "Configured Memory Speed:"))
+		if after, ok := strings.CutPrefix(trimmed, "Configured Memory Speed:"); ok {
+			val := strings.TrimSpace(after)
 			if v := parseSpeedMTs(val); v != 0 {
 				speedMTs = v
 			}
@@ -196,7 +196,7 @@ func findAMDGPUCard() (string, error) {
 }
 
 func readFile(path string) []byte {
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // callers pass fixed sysfs/testdata paths, not untrusted input
 	if err != nil {
 		return nil
 	}
@@ -218,7 +218,7 @@ func runAmdgpuTop() (grbmBusyPct float64, arch string) {
 	if err != nil {
 		return 0, ""
 	}
-	defer stdout.Close()
+	defer func() { _ = stdout.Close() }()
 	if err := cmd.Start(); err != nil {
 		return 0, ""
 	}

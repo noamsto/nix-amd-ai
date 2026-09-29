@@ -137,11 +137,11 @@ func TestFormatModelRow_Alignment(t *testing.T) {
 	// Find the display offset of the size string "4.5 GiB" in each row.
 	findSizeOffset := func(row string) int {
 		target := "4.5 GiB"
-		idx := strings.Index(row, target)
-		if idx < 0 {
+		before, _, ok := strings.Cut(row, target)
+		if !ok {
 			return -1
 		}
-		return lipgloss.Width(row[:idx])
+		return lipgloss.Width(before)
 	}
 
 	shortOff := findSizeOffset(short)

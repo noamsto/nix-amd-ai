@@ -444,11 +444,11 @@ func runBackendABLive(ctx context.Context, req runRequest, progress chan<- tea.M
 	// mask the benchmark error/result, so we only log to stderr.
 	defer func() {
 		if rErr := bench.RestoreLlamacppBackend(req.configPath, origBackend); rErr != nil {
-			fmt.Fprintf(stderrSink, "WARNING: failed to restore lemonade config: %v\n", rErr)
+			_, _ = fmt.Fprintf(stderrSink, "WARNING: failed to restore lemonade config: %v\n", rErr)
 		}
 		// TUI always restarts lemond on cleanup.
 		if rErr := bench.RestartLemond(req.lemondService); rErr != nil {
-			fmt.Fprintf(stderrSink, "WARNING: failed to restart lemond during cleanup: %v\n", rErr)
+			_, _ = fmt.Fprintf(stderrSink, "WARNING: failed to restart lemond during cleanup: %v\n", rErr)
 		}
 	}()
 
@@ -587,6 +587,9 @@ func renderRunScreen(s runState, st styles) string {
 
 	for _, key := range s.order {
 		u := s.units[key]
+		if u == nil {
+			continue
+		}
 		done := u.total > 0 && u.iter >= u.total
 		measuring := u.total > 0 && (u.iter > 0 || len(u.samples) > 0)
 
@@ -608,7 +611,7 @@ func renderRunScreen(s runState, st styles) string {
 			if frac > 1 {
 				frac = 1
 			}
-			b.WriteString(fmt.Sprintf("    %s  %s\n", s.progress.ViewAs(frac), st.label.Render(fmt.Sprintf("%d/%d", u.iter, u.total))))
+			_, _ = fmt.Fprintf(&b, "    %s  %s\n", s.progress.ViewAs(frac), st.label.Render(fmt.Sprintf("%d/%d", u.iter, u.total)))
 			b.WriteString("    " + st.accent.Render(renderRunningStat(u.samples)) + st.hint.Render(" tok/s") + "\n")
 		}
 		b.WriteString("\n")

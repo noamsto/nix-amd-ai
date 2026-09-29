@@ -205,6 +205,8 @@ func updateParamsForm(f *paramsForm, key string) (consumed bool) {
 			f.repeat = deleteLastChar(f.repeat)
 		case fieldWarmup:
 			f.warmup = deleteLastChar(f.warmup)
+		case fieldBackends:
+			// backends are toggled, not text-edited; nothing to delete
 		}
 		return true
 	default:
@@ -236,6 +238,8 @@ func (f *paramsForm) moveHorizontal(dir int) bool {
 			f.backendCursor = 0
 		}
 		return true
+	case fieldRepeat, fieldWarmup:
+		// not horizontally navigable
 	}
 	return false
 }
@@ -279,6 +283,8 @@ func (f *paramsForm) typeChar(key string) bool {
 			f.warmup += key
 			return true
 		}
+	case fieldBackends:
+		// backends are selected, not typed
 	}
 	return false
 }

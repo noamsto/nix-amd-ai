@@ -109,7 +109,7 @@ func runOneCompletion(ctx context.Context, baseURL, path string, opts Completion
 	if err != nil {
 		return completionResult{}
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	// Parse SSE stream while recording per-token wall-clock times. Uses scanSSE
 	// directly (rather than ParseSSE) to capture per-token timestamps.
@@ -209,7 +209,7 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 		o.OnPhase("warming up")
 	}
 	if o.PhaseLog {
-		fmt.Fprintf(lw, "  Warming up (%d iteration(s))...\n", o.Warmup)
+		_, _ = fmt.Fprintf(lw, "  Warming up (%d iteration(s))...\n", o.Warmup)
 	}
 	for range o.Warmup {
 		if ctx.Err() != nil {
@@ -222,7 +222,7 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 		o.OnPhase("measuring")
 	}
 	if o.PhaseLog {
-		fmt.Fprintf(lw, "  Measuring (%d iteration(s))...\n", o.Repeat)
+		_, _ = fmt.Fprintf(lw, "  Measuring (%d iteration(s))...\n", o.Repeat)
 	}
 	var result MeasureResult
 	for i := range o.Repeat {
@@ -231,7 +231,7 @@ func MeasureSpec(ctx context.Context, baseURL, path, model string, o MeasureOpts
 		}
 		cr := runOneCompletion(ctx, baseURL, path, opts)
 		if !cr.ok {
-			fmt.Fprintf(lw, "  WARNING: iteration %d produced no tokens\n", i+1)
+			_, _ = fmt.Fprintf(lw, "  WARNING: iteration %d produced no tokens\n", i+1)
 			continue
 		}
 		result.TTFT = append(result.TTFT, cr.ttft)
@@ -267,7 +267,7 @@ type BenchmarkModelResult struct {
 // BenchmarkModel loads a model into lemonade then warms up and measures.
 // ctx cancellation interrupts the in-flight measurement; LoadModel has its own timeout.
 func BenchmarkModel(ctx context.Context, o BenchmarkModelOpts) (BenchmarkModelResult, error) {
-	fmt.Fprintf(logWriter(o.LogW), "  Loading %q...\n", o.ModelID)
+	_, _ = fmt.Fprintf(logWriter(o.LogW), "  Loading %q...\n", o.ModelID)
 	if err := LoadModel(o.BaseURL, o.ModelID); err != nil {
 		return BenchmarkModelResult{}, err
 	}
@@ -366,9 +366,9 @@ func ensureGPUMem(modelBytes uint64, memFree func() (uint64, bool), evacuate fun
 		if onEvacuate != nil {
 			onEvacuate()
 		}
-		fmt.Fprintf(lw, "  GPU low on free memory (%.1f GiB); evacuating loaded model…\n", giB(free))
+		_, _ = fmt.Fprintf(lw, "  GPU low on free memory (%.1f GiB); evacuating loaded model…\n", giB(free))
 		if err := evacuate(); err != nil {
-			fmt.Fprintf(lw, "  WARNING: evacuate failed: %v\n", err)
+			_, _ = fmt.Fprintf(lw, "  WARNING: evacuate failed: %v\n", err)
 		} else {
 			for range gpuDrainPolls {
 				time.Sleep(gpuDrainPollInterval)
@@ -483,7 +483,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 	// Model file size + the GPU-memory probe drive the pre-spawn guardrail below.
 	var modelBytes uint64
 	if fi, statErr := os.Stat(gguf); statErr == nil && fi.Size() > 0 {
-		modelBytes = uint64(fi.Size())
+		modelBytes = uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above; a file size is never negative here
 	}
 	memFree := o.GPUMemFree
 	if memFree == nil {
@@ -496,7 +496,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 	}
 
 	lw := logWriter(o.LogW)
-	fmt.Fprintf(lw,
+	_, _ = fmt.Fprintf(lw,
 		"\nMTP A/B sweep: model=%s\n  gguf=%s\n  backends=%v\n"+
 			"  protocol: prompt=%d tokens, gen=%d tokens,"+
 			" %d warmup + %d measured\n\n",
@@ -533,7 +533,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			return nil, fmt.Errorf("[%s] no matching device found (devices=%v)", backend, devices)
 		}
 
-		fmt.Fprintf(lw, "\n[%s] bin=%s device=%s\n", backend, binPath, device)
+		_, _ = fmt.Fprintf(lw, "\n[%s] bin=%s device=%s\n", backend, binPath, device)
 
 		specTPS := map[string]*float64{}
 		specTypes := []string{"none", "draft-mtp"}
@@ -548,7 +548,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			// runs — on normal return, on the error path, or on a panic —
 			// before the loop moves to the next spec or returns.
 			tps, err := func() (*float64, error) {
-				fmt.Fprintf(lw, "\n[%s] --spec-type %s\n", backend, specType)
+				_, _ = fmt.Fprintf(lw, "\n[%s] --spec-type %s\n", backend, specType)
 				emit := func(status string) {
 					if o.OnStatus != nil {
 						o.OnStatus(backend, specType, status)

@@ -11,8 +11,6 @@ import (
 // RenderMarkdownTable
 // ---------------------------------------------------------------------------
 
-func ptr(v float64) *float64 { return &v }
-
 func TestRenderMarkdownTable_withResult(t *testing.T) {
 	mean := 42.3
 	stdev := 1.2

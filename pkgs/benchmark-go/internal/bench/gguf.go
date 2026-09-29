@@ -96,7 +96,10 @@ func ResolveGGUFByCheckpoint(checkpoint, cacheRoot string) string {
 	// Collect all .gguf files, excluding mmproj-*.gguf
 	var ggufs []string
 	_ = filepath.WalkDir(matchedDir, func(path string, d fs.DirEntry, err error) error {
-		if err != nil || d.IsDir() {
+		if err != nil {
+			return nil //nolint:nilerr // best-effort scan: skip unreadable entries rather than aborting resolution
+		}
+		if d.IsDir() {
 			return nil
 		}
 		base := d.Name()
@@ -179,7 +182,10 @@ func ResolveLemonadeGGUF(modelID, cacheRoot string) string {
 		matchedDir := filepath.Join(cacheRoot, name)
 		var ggufs []string
 		_ = filepath.WalkDir(matchedDir, func(path string, d fs.DirEntry, err error) error {
-			if err != nil || d.IsDir() {
+			if err != nil {
+				return nil //nolint:nilerr // best-effort scan: skip unreadable entries rather than aborting resolution
+			}
+			if d.IsDir() {
 				return nil
 			}
 			if strings.HasSuffix(d.Name(), ".gguf") {

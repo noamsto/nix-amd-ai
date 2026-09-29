@@ -181,8 +181,8 @@ func parseSSOutput(output string) []Listener {
 		rest := strings.Join(fields[5:], " ")
 		if idx := strings.Index(rest, `users:((`); idx >= 0 {
 			after := rest[idx+len(`users:(("`):]
-			if end := strings.IndexByte(after, '"'); end >= 0 {
-				procName = after[:end]
+			if before, _, ok := strings.Cut(after, "\""); ok {
+				procName = before
 			}
 		}
 
@@ -198,7 +198,7 @@ func parseSSOutput(output string) []Listener {
 // ---------------------------------------------------------------------------
 
 func lemondActiveState(service string) string {
-	out, _ := exec.Command("systemctl", "is-active", service).Output()
+	out, _ := exec.Command("systemctl", "is-active", service).Output() //nolint:gosec // service is an internal config value, not user input
 	return strings.TrimSpace(string(out))
 }
 

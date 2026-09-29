@@ -56,8 +56,8 @@ type opts struct {
 func parseFlags(args []string) (opts, error) {
 	fs := flag.NewFlagSet("benchmark", flag.ContinueOnError)
 	fs.Usage = func() {
-		fmt.Fprintf(fs.Output(), "Usage: benchmark [flags] [MODEL_ID ...]\n\n")
-		fmt.Fprintf(fs.Output(), "Benchmark lemonade backends via HTTP API.\n\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Usage: benchmark [flags] [MODEL_ID ...]\n\n")
+		_, _ = fmt.Fprintf(fs.Output(), "Benchmark lemonade backends via HTTP API.\n\n")
 		fs.PrintDefaults()
 	}
 

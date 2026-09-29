@@ -1,0 +1,26 @@
+version: "2"
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - staticcheck
+    - unused
+    - ineffassign
+    - exhaustive
+    - errorlint
+    - nilerr
+    - bodyclose
+    - gosec
+    - modernize
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+  exclusions:
+    rules:
+      # Test scaffolding writes to t.TempDir()/testdata; gosec's file-inclusion,
+      # permission and slice-bounds checks are noise there (owner decision).
+      - path: '_test\.go'
+        linters:
+          - gosec

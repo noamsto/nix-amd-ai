@@ -81,13 +81,14 @@ func TestStartStop_WaitCalledOnce(t *testing.T) {
 		t.Fatalf("FindFreePort: %v", err)
 	}
 	health := &http.Server{
-		Addr: addrForPort(port),
+		Addr:              addrForPort(port),
+		ReadHeaderTimeout: 5 * time.Second,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}),
 	}
 	go func() { _ = health.ListenAndServe() }()
-	defer health.Close()
+	defer func() { _ = health.Close() }()
 
 	// Long-lived child process (sleep) — Stop must SIGTERM/SIGKILL it.
 	srv := NewLlamaServer([]string{"/bin/sh", "-c", "sleep 60"}, port)
@@ -103,6 +104,27 @@ func TestStartStop_WaitCalledOnce(t *testing.T) {
 	// Second Stop must be a safe no-op (cmd is nil'd out).
 	if err := srv.Stop(); err != nil {
 		t.Fatalf("second Stop returned error: %v", err)
+	}
+}
+
+// TestStart_StderrRace drives the timeout branch of waitReadyWithEarlyExit, the
+// only path that reads the child's stderr while it is still alive and os/exec's
+// copy goroutine is still writing it. With an unguarded bytes.Buffer that read
+// races (the race detector catches it on darwin); syncBuffer must keep it clean.
+func TestStart_StderrRace(t *testing.T) {
+	port, err := FindFreePort()
+	if err != nil {
+		t.Fatalf("FindFreePort: %v", err)
+	}
+	// No health server on this port, so Start() must burn ReadyTimeout. The
+	// child writes stderr in a tight loop so the copy goroutine and the poller's
+	// String() call overlap.
+	srv := NewLlamaServer([]string{"/bin/sh", "-c", "while true; do echo x 1>&2; done"}, port)
+	srv.ReadyTimeout = 300 * time.Millisecond
+	srv.TermTimeout = 500 * time.Millisecond
+
+	if err := srv.Start(); err == nil {
+		t.Fatal("Start should fail when nothing answers /health")
 	}
 }
 

@@ -213,6 +213,41 @@
 
         isLinux = inputs.nixpkgs.lib.hasSuffix "linux" system;
 
+        # Go correctness gate for the repo's one Go module (pkgs/benchmark-go):
+        # golangci-lint + nilaway + `go test -race`, run by `nix flake check`.
+        # Same vendorHash as the `benchmark` package, so deps are fetched once.
+        benchmarkGate = pkgs.buildGoModule {
+          pname = "benchmark-go-gate";
+          version = "0.1.0";
+          src = ./pkgs/benchmark-go;
+          vendorHash = "sha256-CBmwAVno6OqFdKcUk66MuP5+nI4Z3aQI4kcmT+YbqYY=";
+          subPackages = ["cmd/benchmark"];
+          nativeCheckInputs = with pkgs; [golangci-lint nilaway];
+          checkPhase = ''
+            runHook preCheck
+
+            # -race needs cgo; the stdenv provides the C toolchain.
+            export CGO_ENABLED=1
+            export GOLANGCI_LINT_CACHE=$TMPDIR/golangci-lint-cache
+
+            echo "==> golangci-lint"
+            golangci-lint run ./...
+
+            echo "==> nilaway"
+            nilaway -include-pkgs=github.com/noamsto/nix-amd-ai/pkgs/benchmark-go ./...
+
+            echo "==> go test -race"
+            # Drop -trimpath for the same reason buildGoModule's own
+            # checkPhase does: tests may reference on-disk assets.
+            export GOFLAGS=''${GOFLAGS//-trimpath/}
+            # -short skips TestDetect_Smoke, which asserts on the real host's
+            # AMD GPU (absent in the build sandbox); the test documents this.
+            go test -race -short ./...
+
+            runHook postCheck
+          '';
+        };
+
         # AMD NPU/XRT/ROCm/Vulkan stack — Linux + AMD-hardware only.
         linuxPackages = let
           xrt = pkgs.callPackage ./pkgs/xrt {};
@@ -361,6 +396,7 @@
         checks =
           if isLinux
           then {
+            benchmark-go-gate = benchmarkGate;
             # Smoke checks for the IRON toolchain packages: prove the CLI tools
             # run, the Python module imports with the package on PYTHONPATH, and
             # the Peano clang still carries the AIE targets. No NPU needed.
@@ -1334,6 +1370,7 @@
               '';
           }
           else {
+            benchmark-go-gate = benchmarkGate;
             # Force the nix-darwin module to evaluate and assert the launchd
             # agent wires lemond with the configured port.
             module-eval-darwin = let

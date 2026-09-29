@@ -58,7 +58,7 @@ func renderAlignedTable(headers []string, aligns []colAlign, rows [][]string) st
 	var sb strings.Builder
 	writeRow := func(cells []string) {
 		sb.WriteByte('|')
-		for i := 0; i < n; i++ {
+		for i := range n {
 			c := ""
 			if i < len(cells) {
 				c = cells[i]
@@ -72,7 +72,7 @@ func renderAlignedTable(headers []string, aligns []colAlign, rows [][]string) st
 
 	writeRow(headers)
 	sb.WriteByte('|')
-	for i := 0; i < n; i++ {
+	for i := range n {
 		sb.WriteByte(' ')
 		if aligns[i] == alignRight {
 			sb.WriteString(strings.Repeat("-", width[i]-1) + ":")

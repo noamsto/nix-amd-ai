@@ -7,6 +7,7 @@ import (
 	"net"
 	"net/http"
 	"os/exec"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -39,10 +40,7 @@ func waitReady(baseURL string, timeout time.Duration) error {
 	var lastErr error
 	for time.Now().Before(deadline) {
 		remaining := time.Until(deadline)
-		perAttempt := 2 * time.Second
-		if remaining < perAttempt {
-			perAttempt = remaining
-		}
+		perAttempt := min(remaining, 2*time.Second)
 		client := &http.Client{Timeout: perAttempt}
 		resp, err := client.Get(url) //nolint:noctx
 		if err == nil {
@@ -59,7 +57,7 @@ func waitReady(baseURL string, timeout time.Duration) error {
 		}
 	}
 	return fmt.Errorf(
-		"llama-server at %s did not become ready within %s (last error: %v)",
+		"llama-server at %s did not become ready within %s (last error: %w)",
 		baseURL, timeout, lastErr,
 	)
 }
@@ -75,12 +73,35 @@ type LlamaServer struct {
 	LogW io.Writer
 
 	cmd    *exec.Cmd
-	stderr *bytes.Buffer
+	stderr *syncBuffer
 	// waitDone receives the single cmd.Wait() result. The goroutine started
 	// in Start() is the sole owner of cmd.Wait(); both waitReadyWithEarlyExit
 	// and Stop() drain this channel rather than calling Wait() again, so
 	// cmd.Wait() runs exactly once over the server's lifetime.
 	waitDone chan error
+	// waitFinished is closed once cmd.Wait() has returned. Stop() selects on it
+	// instead of reading cmd.ProcessState, which Wait() writes concurrently.
+	waitFinished chan struct{}
+}
+
+// syncBuffer is a bytes.Buffer that outlives the Wait() goroutine's writes:
+// os/exec copies the child's stderr into it from its own goroutine while
+// waitReadyWithEarlyExit may read it from the polling goroutine.
+type syncBuffer struct {
+	mu  sync.Mutex
+	buf bytes.Buffer
+}
+
+func (b *syncBuffer) Write(p []byte) (int, error) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.Write(p)
+}
+
+func (b *syncBuffer) String() string {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.buf.String()
 }
 
 func NewLlamaServer(argv []string, port int) *LlamaServer {
@@ -96,7 +117,7 @@ func NewLlamaServer(argv []string, port int) *LlamaServer {
 // Start spawns the server and waits for it to become ready.
 // On failure it calls Stop to clean up.
 func (s *LlamaServer) Start() error {
-	s.stderr = new(bytes.Buffer)
+	s.stderr = new(syncBuffer)
 	s.cmd = exec.Command(s.Argv[0], s.Argv[1:]...) //nolint:gosec
 	s.cmd.Stdout = nil                             // DEVNULL
 	s.cmd.Stderr = s.stderr
@@ -105,10 +126,16 @@ func (s *LlamaServer) Start() error {
 		return fmt.Errorf("spawn llama-server: %w", err)
 	}
 
-	// Single owner of cmd.Wait(): this goroutine. ProcessState is guaranteed
-	// set once a value lands on waitDone, so the early-exit check can read it.
+	// Single owner of cmd.Wait(): this goroutine. It closes waitFinished before
+	// publishing the result, so Stop() can tell that Wait() returned without
+	// reading cmd.ProcessState while Wait() is still writing it.
 	s.waitDone = make(chan error, 1)
-	go func() { s.waitDone <- s.cmd.Wait() }()
+	s.waitFinished = make(chan struct{})
+	go func() {
+		err := s.cmd.Wait()
+		close(s.waitFinished)
+		s.waitDone <- err
+	}()
 
 	if err := s.waitReadyWithEarlyExit(); err != nil {
 		_ = s.Stop()
@@ -138,10 +165,7 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 		}
 
 		remaining := time.Until(deadline)
-		perAttempt := 2 * time.Second
-		if remaining < perAttempt {
-			perAttempt = remaining
-		}
+		perAttempt := min(remaining, 2*time.Second)
 		client := &http.Client{Timeout: perAttempt}
 		resp, err := client.Get(url) //nolint:noctx
 		if err == nil {
@@ -161,7 +185,7 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 	// process, stuck fitting params). Include its stderr tail so the failure is
 	// diagnosable instead of a bare "HTTP 503".
 	return fmt.Errorf(
-		"llama-server at %s did not become ready within %s (last error: %v). stderr:\n%s",
+		"llama-server at %s did not become ready within %s (last error: %w). stderr:\n%s",
 		s.BaseURL, s.ReadyTimeout, lastErr, lastN(s.stderr.String(), 2000),
 	)
 }
@@ -174,10 +198,14 @@ func (s *LlamaServer) Stop() error {
 	}
 	defer func() { s.cmd = nil }()
 
-	// If cmd.Wait() already returned (ProcessState set), the process is gone
-	// and waitDone has already been drained — nothing to signal or wait on.
-	if s.cmd.ProcessState != nil {
+	// If cmd.Wait() already returned, the process is gone and waitDone has
+	// already been drained — nothing to signal or wait on. Selecting on the
+	// closed waitFinished channel is the race-free equivalent of reading
+	// cmd.ProcessState, which Wait() may be writing concurrently.
+	select {
+	case <-s.waitFinished:
 		return nil
+	default:
 	}
 
 	_ = s.cmd.Process.Signal(syscall.SIGTERM)
@@ -186,7 +214,7 @@ func (s *LlamaServer) Stop() error {
 	case <-s.waitDone:
 		// Exited cleanly after SIGTERM.
 	case <-time.After(s.TermTimeout):
-		fmt.Fprintln(logWriter(s.LogW), "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
+		_, _ = fmt.Fprintln(logWriter(s.LogW), "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
 		_ = s.cmd.Process.Kill()
 		<-s.waitDone
 	}
