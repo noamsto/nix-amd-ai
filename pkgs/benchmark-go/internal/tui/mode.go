@@ -45,7 +45,7 @@ func renderModeScreen(p modePicker, st styles) string {
 			label = st.label.Render(label)
 		}
 		b.WriteString(st.focusBullet(focused) + label + "\n")
-		b.WriteString(fmt.Sprintf("    %s\n", st.hint.Render(item.desc)))
+		_, _ = fmt.Fprintf(&b, "    %s\n", st.hint.Render(item.desc))
 	}
 
 	b.WriteString("\n" + keybar(st,

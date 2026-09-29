@@ -81,13 +81,14 @@ func TestStartStop_WaitCalledOnce(t *testing.T) {
 		t.Fatalf("FindFreePort: %v", err)
 	}
 	health := &http.Server{
-		Addr: addrForPort(port),
+		Addr:              addrForPort(port),
+		ReadHeaderTimeout: 5 * time.Second,
 		Handler: http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
 		}),
 	}
 	go func() { _ = health.ListenAndServe() }()
-	defer health.Close()
+	defer func() { _ = health.Close() }()
 
 	// Long-lived child process (sleep) — Stop must SIGTERM/SIGKILL it.
 	srv := NewLlamaServer([]string{"/bin/sh", "-c", "sleep 60"}, port)

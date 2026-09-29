@@ -25,7 +25,7 @@ func ParseLlamaDevices(output string) ([]string, error) {
 	}
 
 	var devices []string
-	for _, line := range strings.Split(output, "\n") {
+	for line := range strings.SplitSeq(output, "\n") {
 		m := deviceRe.FindStringSubmatch(line)
 		if m == nil {
 			continue

@@ -97,7 +97,7 @@ func titledPanel(st styles, title, body string, width int) string {
 // panelRuleWidth picks a separator-rule width: the widest content line, capped.
 func panelRuleWidth(title, body string, width int) int {
 	w := lipgloss.Width(title)
-	for _, line := range strings.Split(body, "\n") {
+	for line := range strings.SplitSeq(body, "\n") {
 		if lw := lipgloss.Width(line); lw > w {
 			w = lw
 		}

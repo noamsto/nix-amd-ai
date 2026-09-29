@@ -39,10 +39,7 @@ func waitReady(baseURL string, timeout time.Duration) error {
 	var lastErr error
 	for time.Now().Before(deadline) {
 		remaining := time.Until(deadline)
-		perAttempt := 2 * time.Second
-		if remaining < perAttempt {
-			perAttempt = remaining
-		}
+		perAttempt := min(remaining, 2*time.Second)
 		client := &http.Client{Timeout: perAttempt}
 		resp, err := client.Get(url) //nolint:noctx
 		if err == nil {
@@ -59,7 +56,7 @@ func waitReady(baseURL string, timeout time.Duration) error {
 		}
 	}
 	return fmt.Errorf(
-		"llama-server at %s did not become ready within %s (last error: %v)",
+		"llama-server at %s did not become ready within %s (last error: %w)",
 		baseURL, timeout, lastErr,
 	)
 }
@@ -138,10 +135,7 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 		}
 
 		remaining := time.Until(deadline)
-		perAttempt := 2 * time.Second
-		if remaining < perAttempt {
-			perAttempt = remaining
-		}
+		perAttempt := min(remaining, 2*time.Second)
 		client := &http.Client{Timeout: perAttempt}
 		resp, err := client.Get(url) //nolint:noctx
 		if err == nil {
@@ -161,7 +155,7 @@ func (s *LlamaServer) waitReadyWithEarlyExit() error {
 	// process, stuck fitting params). Include its stderr tail so the failure is
 	// diagnosable instead of a bare "HTTP 503".
 	return fmt.Errorf(
-		"llama-server at %s did not become ready within %s (last error: %v). stderr:\n%s",
+		"llama-server at %s did not become ready within %s (last error: %w). stderr:\n%s",
 		s.BaseURL, s.ReadyTimeout, lastErr, lastN(s.stderr.String(), 2000),
 	)
 }
@@ -186,7 +180,7 @@ func (s *LlamaServer) Stop() error {
 	case <-s.waitDone:
 		// Exited cleanly after SIGTERM.
 	case <-time.After(s.TermTimeout):
-		fmt.Fprintln(logWriter(s.LogW), "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
+		_, _ = fmt.Fprintln(logWriter(s.LogW), "WARNING: llama-server did not exit on SIGTERM; sending SIGKILL")
 		_ = s.cmd.Process.Kill()
 		<-s.waitDone
 	}

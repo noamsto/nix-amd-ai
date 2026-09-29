@@ -1,6 +1,7 @@
 package models
 
 import (
+	"slices"
 	"testing"
 )
 
@@ -150,12 +151,7 @@ func TestParseModels_sizeSuggestedLabels(t *testing.T) {
 		t.Errorf("ms[0].Suggested = false, want true")
 	}
 	hasLabel := func(labels []string, want string) bool {
-		for _, l := range labels {
-			if l == want {
-				return true
-			}
-		}
-		return false
+		return slices.Contains(labels, want)
 	}
 	if !hasLabel(m0.Labels, "mtp") {
 		t.Errorf("ms[0].Labels = %v, want to contain \"mtp\"", m0.Labels)

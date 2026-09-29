@@ -60,7 +60,7 @@ func UnloadLemonadeModel(baseURL string) error {
 	if err != nil {
 		return fmt.Errorf("unload lemonade model: %w", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("unload lemonade model: HTTP %d: %s", resp.StatusCode, body)
@@ -85,7 +85,7 @@ func LoadModel(baseURL, modelID string) error {
 	if err != nil {
 		return fmt.Errorf("load model %q: %w", modelID, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("load model %q: HTTP %d: %s", modelID, resp.StatusCode, body)

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"slices"
 	"strings"
 	"time"
 
@@ -90,13 +91,8 @@ func visibleRange(n, cursor, maxRows int) (start, end int) {
 	if maxRows <= 0 || n <= maxRows {
 		return 0, n
 	}
-	start = cursor - maxRows/2
-	if start < 0 {
-		start = 0
-	}
-	if start > n-maxRows {
-		start = n - maxRows
-	}
+	start = max(cursor-maxRows/2, 0)
+	start = min(start, n-maxRows)
 	return start, start + maxRows
 }
 
@@ -268,7 +264,7 @@ func pullPromptText(pending []modelRow) string {
 func enterModelScreen(p *modelPicker, baseURL string) tea.Cmd {
 	p.loading = true
 	p.err = nil
-	p.rows = nil
+	p.rows = []modelRow{}
 	p.cursor = 0
 	p.filter = ""
 	p.filtering = false
@@ -464,12 +460,7 @@ func formatModelRow(id string, totalGiB float64, sizeKnown bool, fit advise.FitS
 
 // hasLabel reports whether the labels slice contains target.
 func hasLabel(labels []string, target string) bool {
-	for _, l := range labels {
-		if l == target {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(labels, target)
 }
 
 // buildModelRows builds display rows from the lemonade model list.
@@ -480,7 +471,8 @@ func buildModelRows(mList []models.Model, info hw.Info, mode BenchMode) []modelR
 	budgetGiB := advise.BudgetGiB(info.GTTBytes)
 	bwGBs, bwEstimated := advise.BandwidthGBs(info.RAMType, info.RAMSpeedMTs)
 
-	var downloaded, notDownloaded []modelRow
+	downloaded := make([]modelRow, 0, len(mList))
+	notDownloaded := make([]modelRow, 0, len(mList))
 	for _, m := range mList {
 		// Only llamacpp models can be benchmarked by this tool.
 		if m.Recipe != "llamacpp" {

@@ -13,16 +13,19 @@ func SetLlamacppBackend(path, backend string) (prev string, err error) {
 	var config map[string]any
 	if _, statErr := os.Stat(path); os.IsNotExist(statErr) {
 		config = map[string]any{}
-		if mkErr := os.MkdirAll(filepath.Dir(path), 0o755); mkErr != nil {
+		if mkErr := os.MkdirAll(filepath.Dir(path), 0o750); mkErr != nil {
 			return "", mkErr
 		}
 	} else {
-		data, readErr := os.ReadFile(path)
+		data, readErr := os.ReadFile(path) //nolint:gosec // local lemonade config path chosen by the operator, not attacker-controlled
 		if readErr != nil {
 			return "", readErr
 		}
 		if unmarshalErr := json.Unmarshal(data, &config); unmarshalErr != nil {
 			return "", unmarshalErr
+		}
+		if config == nil { // a JSON `null` document unmarshals to a nil map
+			config = map[string]any{}
 		}
 	}
 
@@ -39,13 +42,16 @@ func RestoreLlamacppBackend(path, prev string) error {
 	if _, err := os.Stat(path); os.IsNotExist(err) {
 		return nil
 	}
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec // local lemonade config path chosen by the operator, not attacker-controlled
 	if err != nil {
 		return err
 	}
 	var config map[string]any
 	if err := json.Unmarshal(data, &config); err != nil {
 		return err
+	}
+	if config == nil { // a JSON `null` document unmarshals to a nil map
+		config = map[string]any{}
 	}
 
 	llamacpp := configSection(config, "llamacpp")
@@ -75,5 +81,5 @@ func writeJSON(path string, v any) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path, data, 0o644)
+	return os.WriteFile(path, data, 0o600)
 }

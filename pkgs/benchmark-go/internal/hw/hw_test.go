@@ -7,7 +7,7 @@ import (
 
 func readFixture(t *testing.T, name string) []byte {
 	t.Helper()
-	data, err := os.ReadFile("testdata/" + name)
+	data, err := os.ReadFile("testdata/" + name) //nolint:gosec // fixed testdata directory, not untrusted input
 	if err != nil {
 		t.Fatalf("read fixture %s: %v", name, err)
 	}

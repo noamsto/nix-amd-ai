@@ -132,11 +132,11 @@ func writeLogCmd(content, baseDir, topic string, now func() time.Time) tea.Cmd {
 		date := t.Format("2006-01-02")
 		hms := t.Format("150405")
 		dir := filepath.Join(baseDir, fmt.Sprintf("bench-logs-%s-%s", topic, date))
-		if err := os.MkdirAll(dir, 0o755); err != nil {
+		if err := os.MkdirAll(dir, 0o750); err != nil {
 			return logWrittenMsg{err: fmt.Errorf("mkdir: %w", err)}
 		}
 		path := filepath.Join(dir, fmt.Sprintf("benchmark-%s.md", hms))
-		if err := os.WriteFile(path, []byte(content), 0o644); err != nil {
+		if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
 			return logWrittenMsg{err: fmt.Errorf("write: %w", err)}
 		}
 		return logWrittenMsg{path: path}
@@ -363,26 +363,29 @@ func renderMTPTable(b *strings.Builder, rows []resultRow, st styles) {
 	type pair struct{ off, on *resultRow }
 	pairs := map[key]*pair{}
 	var order []key
-	seen := map[key]bool{}
 
 	for i := range rows {
 		r := &rows[i]
 		k := key{r.Model, r.Backend}
-		if !seen[k] {
-			seen[k] = true
+		p, ok := pairs[k]
+		if !ok {
+			p = &pair{}
+			pairs[k] = p
 			order = append(order, k)
-			pairs[k] = &pair{}
 		}
 		switch r.Spec {
 		case "off":
-			pairs[k].off = r
+			p.off = r
 		case "on":
-			pairs[k].on = r
+			p.on = r
 		}
 	}
 
 	for _, k := range order {
 		p := pairs[k]
+		if p == nil {
+			continue
+		}
 		label := k.model
 		if k.backend != "" {
 			label = fmt.Sprintf("%s [%s]", k.model, k.backend)
