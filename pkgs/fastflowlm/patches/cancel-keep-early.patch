@@ -1,0 +1,36 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 4bf0f20..5bf1621 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -928,7 +928,6 @@ void RestHandler::handle_generate(const json& request,
+         header_print("FLM", "Start generating...");
+         
+         if (stream) {
+-            cancellation_token->reset();
+             // Streaming response using streaming_ostream
+             auto total_start_time = time_utils::now();
+             streaming_ostream ostream(model, send_streaming_response, false);
+@@ -1064,7 +1063,6 @@ void RestHandler::handle_chat(const json& request,
+         meta_info.max_prefill_len = this->prefill_chunk_len;
+         header_print("FLM", "Start generating...");
+         if (stream) {
+-            cancellation_token->reset();
+             // Streaming response using streaming_ostream
+             auto total_start_time = time_utils::now();
+             streaming_ostream ostream(model, send_streaming_response, true);  // true for chat format
+@@ -1604,7 +1602,6 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+         meta_info.tool_choice = tool_choice_mode;
+         if (stream){
+             // Create a wrapper callback that passes the pre-formatted SSE string directly
+-            cancellation_token->reset();
+             auto_chat_engine->reset_parser();
+             auto openai_stream_callback = [&send_streaming_response](const std::string& data, bool is_final) {
+                 json data_json = data;
+@@ -1826,7 +1823,6 @@ void RestHandler::handle_openai_completion(const json& request,
+         header_print("FLM", "Start generating...");
+ 
+         if (stream) {
+-            cancellation_token->reset();
+             // Create a wrapper callback that passes the pre-formatted SSE string directly
+             auto openai_stream_callback = [&send_streaming_response](const std::string& data, bool is_final) {
+                 json data_json = data;
