@@ -1,0 +1,26 @@
+== llama (llama3.2:1b) ==
+generate-ns full: {"status": 200, "content_chunks": 1, "wall_s": 8.187, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 54}
+PASS llama/generate-ns/full
+generate-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790607731.1642792, "followup_status": 200, "followup_wall_s": 0.768, "followup_server_total_s": 0.429} {"npu_hold_s": 0.34, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS llama/generate-ns/decode
+generate-ns queued: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790607733.7846665, "followup_status": 200, "followup_wall_s": 16.543, "followup_server_total_s": 0.43} {"npu_hold_s": 8.455, "disconnect_logged_s": 7.657, "prefill_chunks_after_close": 0}
+FAIL llama/generate-ns/queued: work continued 8.455s after the client closed (bound 2s)
+PASS llama/generate-ns/server-alive
+== gemma4 (gemma4-it:e4b) ==
+generate-ns full: {"status": 200, "content_chunks": 1, "wall_s": 39.232, "done": true, "done_reason": "length", "eval_count": 512, "prompt_eval_count": 30}
+PASS gemma4/generate-ns/full
+generate-ns decode: {"status": null, "content_chunks": 0, "wall_s": 2.001, "t_close": 1790607798.3701375, "followup_status": 200, "followup_wall_s": 1.92, "followup_server_total_s": 1.519} {"npu_hold_s": 0.401, "disconnect_logged_s": -0.0, "prefill_chunks_after_close": 0}
+PASS gemma4/generate-ns/decode
+generate-ns queued: {"status": null, "content_chunks": 0, "wall_s": 0.301, "t_close": 1790607802.1546447, "followup_status": 200, "followup_wall_s": 80.948, "followup_server_total_s": 1.528} {"npu_hold_s": 39.827, "disconnect_logged_s": 39.592, "prefill_chunks_after_close": 0}
+FAIL gemma4/generate-ns/queued: work continued 39.827s after the client closed (bound 2s)
+PASS gemma4/generate-ns/server-alive
+== summary ==
+PASS llama/generate-ns/full
+PASS llama/generate-ns/decode
+FAIL llama/generate-ns/queued: work continued 8.455s after the client closed (bound 2s)
+PASS llama/generate-ns/server-alive
+PASS gemma4/generate-ns/full
+PASS gemma4/generate-ns/decode
+FAIL gemma4/generate-ns/queued: work continued 39.827s after the client closed (bound 2s)
+PASS gemma4/generate-ns/server-alive
+6 passed, 2 failed

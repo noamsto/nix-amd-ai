@@ -1,0 +1,224 @@
+1790617447.458	[FLM]  Using user-specified port: 58601
+1790617447.970	[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+1790617449.659	[FLM]  Starting server on port 58601...
+1790617449.659	[🔗 ]  TCP connection established - Remote: 127.0.0.1:33214
+1790617449.659	[FLM]  WebServer started on port 58601 with 10 I/O threads
+1790617449.659	[FLM]  Press Ctrl+C to stop.
+1790617449.659	[TCP]  Read 90 bytes from socket
+1790617449.659	================================================
+1790617449.659	[⬇️ ]  Incoming Request: GET
+1790617449.659	[LOG]  Time stamp: 20:44:09 09:28:2026
+1790617449.659	[LOG]  Target: /api/version
+1790617449.659	[LOG]  Version: 11
+1790617449.659	[LOG]  Keep-Alive: 1
+1790617449.659	================================================
+1790617449.659	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:33214
+1790617449.684	[🔗 ]  TCP connection established - Remote: 127.0.0.1:33228
+1790617449.685	[TCP]  Read 324 bytes from socket
+1790617449.685	================================================
+1790617449.685	[⬇️ ]  Incoming Request: POST
+1790617449.685	[LOG]  Time stamp: 20:44:09 09:28:2026
+1790617449.685	[LOG]  Target: /api/generate
+1790617449.685	[LOG]  Version: 11
+1790617449.685	[LOG]  Keep-Alive: 1
+1790617449.685	[LOG]  Body: 
+1790617449.685	{
+1790617449.685	    "max_tokens": 512,
+1790617449.685	    "model": "llama3.2:1b",
+1790617449.685	    "options": {
+1790617449.685	        "num_predict": 512
+1790617449.685	    },
+1790617449.685	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790617449.685	    "stream": false
+1790617449.685	}
+1790617449.685	[🟢 ]  NPU Locked!
+1790617449.685	[FLM]  Start generating...
+1790617449.685	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790617457.850	
+1790617457.851	[FLM]  Model RAW Output: 
+1790617457.851	The History of the Printing Press
+1790617457.851	
+1790617457.851	The printing press is one of the most significant inventions in human history, revolutionizing the way people received, read, and disseminated information. Its development marked a significant turning point in the history of literature, communication, and knowledge. The printing press was invented by Johannes Gutenberg in the 15th century, and it played a crucial role in shaping the course of human history.
+1790617457.851	
+1790617457.851	Before the invention of the printing press, books were copied by hand, a laborious and time-consuming process that was often done by monks, scribes, or scholars. These individuals would painstakingly copy the text, often using quills, papyrus, or parchment, to create a copy of the original manuscript. The process of copying was slow, labor-intensive, and expensive, making books scarce and expensive for the general population.
+1790617457.851	
+1790617457.851	The invention of the printing press was a response to the growing demand for books and the need for a more efficient way to produce them. In the 15th century, Europe was experiencing a cultural and intellectual renaissance, marked by an increase in literacy rates, a growing demand for books, and a need for a more efficient way to produce them. The printing press provided a solution to this problem, enabling the mass production of books, which was previously difficult and expensive.
+1790617457.851	
+1790617457.851	Johannes Gutenberg, a German goldsmith and printer, is credited with inventing the printing press. Born around 1390 in Mainz, Germany, Gutenberg was a member of a family of craftsmen and was known for his skill in metalworking. In the 1440s, Gutenberg moved to Cologne, where he became involved in the production of coins. However, it was not until the 1450s that he began to work on his most famous project, the printing press.
+1790617457.851	
+1790617457.851	Gutenberg's printing press was made of wood, with movable metal type and a screw-based press. The metal type consisted of wooden blocks with raised letters that were locked into place in a specific order. Each block had a unique character, which was used to print different letters. The screw-based press was used to apply pressure on the inked metal type, allowing it to be transferred to the paper.
+1790617457.851	
+1790617457.851	The printing press was a game-changer in the history of printing. Before the invention of the printing press, books were copied by hand, a laborious and time-consuming process that was often done by monks, scribes, or scholars. These individuals would painstakingly copy the text, often using quills, papyrus, or parchment, to create a
+1790617457.851	[🔵 ]  NPU Lock Released!
+1790617457.851	================================================
+1790617457.851	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:33228
+1790617457.887	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55448
+1790617457.887	[TCP]  Read 324 bytes from socket
+1790617457.887	================================================
+1790617457.887	[⬇️ ]  Incoming Request: POST
+1790617457.887	[LOG]  Time stamp: 20:44:17 09:28:2026
+1790617457.887	[LOG]  Target: /api/generate
+1790617457.887	[LOG]  Version: 11
+1790617457.887	[LOG]  Keep-Alive: 1
+1790617457.887	[LOG]  Body: 
+1790617457.887	{
+1790617457.887	    "max_tokens": 512,
+1790617457.887	    "model": "llama3.2:1b",
+1790617457.887	    "options": {
+1790617457.887	        "num_predict": 512
+1790617457.887	    },
+1790617457.887	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790617457.887	    "stream": false
+1790617457.887	}
+1790617457.887	[🟢 ]  NPU Locked!
+1790617457.887	[FLM]  Start generating...
+1790617457.887	[FLM]  Conversation context diverged from cache, clearing context...
+1790617457.889	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790617459.887	[🔴 ]  Client disconnected; cancelling active request
+1790617459.887	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55460
+1790617459.887	[TCP]  Read 268 bytes from socket
+1790617459.887	================================================
+1790617459.887	[⬇️ ]  Incoming Request: POST
+1790617459.887	[LOG]  Time stamp: 20:44:19 09:28:2026
+1790617459.887	[LOG]  Target: /api/chat
+1790617459.887	[LOG]  Version: 11
+1790617459.887	[LOG]  Keep-Alive: 1
+1790617459.887	[LOG]  Body: 
+1790617459.887	{
+1790617459.887	    "messages": [
+1790617459.887	        {
+1790617459.887	            "content": "Say hi.",
+1790617459.887	            "role": "user"
+1790617459.887	        }
+1790617459.887	    ],
+1790617459.887	    "model": "llama3.2:1b",
+1790617459.887	    "options": {
+1790617459.887	        "num_predict": 4
+1790617459.887	    },
+1790617459.887	    "stream": false,
+1790617459.887	    "top_k": 1
+1790617459.887	}
+1790617459.887	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790617459.896	
+1790617459.896	[FLM]  Model RAW Output: 
+1790617459.896	The history of the printing press is a fascinating story that spans over 150 years, from the late 15th century to the late 18th century. The printing press, a machine that revolutionized the spread of knowledge, played a pivotal role in shaping the course of human history. In this essay, we will delve into the origins, evolution, and impact of the printing press on society.
+1790617459.896	
+1790617459.896	The earliest known precursor to the printing press was the waterwheel, which was used to power a printing press in ancient China during the Han dynasty (
+1790617459.896	[❌ ]  Generation Cancelled!
+1790617460.230	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790617460.230	================================================
+1790617460.230	[FLM]  Start generating...
+1790617460.230	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790617460.230	[FLM]  Conversation context diverged from cache, clearing context...
+1790617460.232	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790617460.658	
+1790617460.658	[FLM]  Model RAW Output: 
+1790617460.658	Hi.
+1790617460.658	================================================
+1790617460.659	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55460
+1790617460.660	[🔵 ]  NPU Lock Released!
+1790617461.717	[🔗 ]  TCP connection established - Remote: 127.0.0.1:55466
+1790617461.717	[TCP]  Read 346 bytes from socket
+1790617461.717	================================================
+1790617461.717	[⬇️ ]  Incoming Request: POST
+1790617461.717	[LOG]  Time stamp: 20:44:21 09:28:2026
+1790617461.717	[LOG]  Target: /api/chat
+1790617461.717	[LOG]  Version: 11
+1790617461.717	[LOG]  Keep-Alive: 1
+1790617461.717	[LOG]  Body: 
+1790617461.717	{
+1790617461.717	    "messages": [
+1790617461.717	        {
+1790617461.717	            "content": "Write a de...ing press.",
+1790617461.717	            "role": "user"
+1790617461.717	        }
+1790617461.717	    ],
+1790617461.717	    "model": "llama3.2:1b",
+1790617461.717	    "options": {
+1790617461.717	        "num_predict": 512
+1790617461.717	    },
+1790617461.717	    "stream": false,
+1790617461.717	    "top_k": 1
+1790617461.717	}
+1790617461.717	[🟢 ]  NPU Locked!
+1790617461.717	[FLM]  Start generating...
+1790617461.717	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790617462.216	[🔗 ]  TCP connection established - Remote: 127.0.0.1:39840
+1790617462.216	[TCP]  Read 324 bytes from socket
+1790617462.216	================================================
+1790617462.216	[⬇️ ]  Incoming Request: POST
+1790617462.216	[LOG]  Time stamp: 20:44:22 09:28:2026
+1790617462.216	[LOG]  Target: /api/generate
+1790617462.216	[LOG]  Version: 11
+1790617462.216	[LOG]  Keep-Alive: 1
+1790617462.216	[LOG]  Body: 
+1790617462.216	{
+1790617462.216	    "max_tokens": 512,
+1790617462.216	    "model": "llama3.2:1b",
+1790617462.216	    "options": {
+1790617462.216	        "num_predict": 512
+1790617462.216	    },
+1790617462.216	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790617462.216	    "stream": false
+1790617462.216	}
+1790617462.216	[🕒 ]  NPU busy, request queued (1/10): POST /api/generate
+1790617462.517	[🔗 ]  TCP connection established - Remote: 127.0.0.1:39854
+1790617462.517	[TCP]  Read 268 bytes from socket
+1790617462.517	================================================
+1790617462.517	[⬇️ ]  Incoming Request: POST
+1790617462.517	[LOG]  Time stamp: 20:44:22 09:28:2026
+1790617462.517	[LOG]  Target: /api/chat
+1790617462.517	[LOG]  Version: 11
+1790617462.517	[LOG]  Keep-Alive: 1
+1790617462.517	[LOG]  Body: 
+1790617462.517	{
+1790617462.517	    "messages": [
+1790617462.517	        {
+1790617462.517	            "content": "Say hi.",
+1790617462.517	            "role": "user"
+1790617462.517	        }
+1790617462.517	    ],
+1790617462.517	    "model": "llama3.2:1b",
+1790617462.517	    "options": {
+1790617462.517	        "num_predict": 4
+1790617462.517	    },
+1790617462.517	    "stream": false,
+1790617462.517	    "top_k": 1
+1790617462.517	}
+1790617462.517	[🕒 ]  NPU busy, request queued (2/10): POST /api/chat
+1790617469.840	
+1790617469.840	[FLM]  Model RAW Output: 
+1790617469.840	The History of the Printing Press: A Revolutionary Innovation
+1790617469.840	
+1790617469.840	The printing press, invented by Johannes Gutenberg in the 15th century, was a game-changing innovation that revolutionized the way people communicated, learned, and created. This remarkable device, which combined the principles of movable type and mechanical pressure, enabled mass production of printed materials, transforming the world in ways that were both profound and far-reaching. In this essay, we will delve into the fascinating history of the printing press, exploring its development, evolution, and impact on society.
+1790617469.840	
+1790617469.840	The Early Days of Printing
+1790617469.840	
+1790617469.840	The concept of printing dates back to ancient China, where paper was first invented in the 2nd century AD. The first known printed book was the "Bamboo Book," a collection of Buddhist scriptures that was printed on paper in the 8th century. However, it was not until the 10th century that the first movable-type printing press was invented in China. The press, known as the " movable-type printing press," was a wooden or bamboo frame that held a set of metal characters, which could be rearranged to form different words and phrases.
+1790617469.840	
+1790617469.840	The movable-type printing press was a significant innovation, as it allowed for the mass production of printed materials. The first movable-type printing press was invented by the Chinese monk, Wuzheng, in the 10th century. Wuzheng's press was a wooden frame that held a set of metal characters, which could be rearranged to form different words and phrases. The characters were made of wood, metal, and paper, and were designed to be easily removable.
+1790617469.840	
+1790617469.840	The movable-type printing press was a major breakthrough in the history of printing. It allowed for the mass production of printed materials, making books and other written works more widely available. The press was also used to print other materials, such as calendars, maps, and charts.
+1790617469.840	
+1790617469.840	The Spread of Printing
+1790617469.840	
+1790617469.840	The movable-type printing press was first introduced to Europe in the 15th century. The first printing press in Europe was established in 1450 in Basel, Switzerland, by Johannes Gutenberg. Gutenberg's press was a wooden frame that held a set of metal characters, which could be rearranged to form different words and phrases. The press was a significant innovation, as it allowed for the mass production of printed materials.
+1790617469.840	
+1790617469.840	The spread of printing in Europe was rapid and widespread. The first printing press in England was established in 1476 by William Caxton, who was a British merchant and printer. Caxton's press was a wooden frame that held a
+1790617470.174	[🟡 ]  Dequeuing NPU request (1 remaining)...
+1790617470.174	================================================
+1790617470.174	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:55466
+1790617470.174	[[🔴 ]  Client disconnected; cancelling active request
+1790617470.174	FLM]  Start generating...
+1790617470.174	[❌ ]  Prefill Cancelled!
+1790617470.174	================================================
+1790617470.174	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790617470.509	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790617470.509	[FLM]  Start generating...
+1790617470.510	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790617470.934	
+1790617470.934	[FLM]  Model RAW Output: 
+1790617470.934	Hi.
+1790617470.934	================================================
+1790617470.935	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:39854
+1790617470.936	[🔵 ]  NPU Lock Released!

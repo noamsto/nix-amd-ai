@@ -1,0 +1,262 @@
+1790618698.525	[FLM]  Using user-specified port: 58603
+1790618699.039	[FLM]  Loading model: /home/noams/.config/flm/models/Gemma4-E4B-IT-NPU2
+1790618703.207	[FLM]  Starting server on port 58603...
+1790618703.207	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58076
+1790618703.207	[FLM]  WebServer started on port 58603 with 10 I/O threads
+1790618703.207	[FLM]  Press Ctrl+C to stop.
+1790618703.207	[TCP]  Read 90 bytes from socket
+1790618703.207	================================================
+1790618703.207	[⬇️ ]  Incoming Request: GET
+1790618703.207	[LOG]  Time stamp: 21:05:03 09:28:2026
+1790618703.207	[LOG]  Target: /api/version
+1790618703.207	[LOG]  Version: 11
+1790618703.207	[LOG]  Keep-Alive: 1
+1790618703.207	================================================
+1790618703.207	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58076
+1790618703.232	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58324
+1790618703.233	[TCP]  Read 307 bytes from socket
+1790618703.233	================================================
+1790618703.233	[⬇️ ]  Incoming Request: POST
+1790618703.233	[LOG]  Time stamp: 21:05:03 09:28:2026
+1790618703.233	[LOG]  Target: /v1/completions
+1790618703.233	[LOG]  Version: 11
+1790618703.233	[LOG]  Keep-Alive: 1
+1790618703.233	[LOG]  Body: 
+1790618703.233	{
+1790618703.233	    "max_tokens": 512,
+1790618703.233	    "model": "gemma4-it:e4b",
+1790618703.233	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790618703.233	    "stream": false,
+1790618703.233	    "top_k": 1
+1790618703.233	}
+1790618703.233	[🟢 ]  NPU Locked!
+1790618703.233	[FLM]  Start generating...
+1790618703.233	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790618742.408	
+1790618742.408	[FLM]  Model RAW Output: 
+1790618742.408	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790618742.408	
+1790618742.408	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790618742.408	
+1790618742.408	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790618742.408	
+1790618742.408	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790618742.408	
+1790618742.408	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790618742.408	
+1790618742.408	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790618742.408	
+1790618742.408	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790618742.408	
+1790618742.408	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790618742.412	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790618742.413	[🔵 ]  NPU Lock Released!
+1790618742.413	================================================
+1790618742.413	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58324
+1790618742.445	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58854
+1790618742.445	[TCP]  Read 307 bytes from socket
+1790618742.445	================================================
+1790618742.445	[⬇️ ]  Incoming Request: POST
+1790618742.445	[LOG]  Time stamp: 21:05:42 09:28:2026
+1790618742.445	[LOG]  Target: /v1/completions
+1790618742.445	[LOG]  Version: 11
+1790618742.445	[LOG]  Keep-Alive: 1
+1790618742.445	[LOG]  Body: 
+1790618742.445	{
+1790618742.445	    "max_tokens": 512,
+1790618742.445	    "model": "gemma4-it:e4b",
+1790618742.445	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790618742.445	    "stream": false,
+1790618742.445	    "top_k": 1
+1790618742.445	}
+1790618742.445	[🟢 ]  NPU Locked!
+1790618742.445	[FLM]  Start generating...
+1790618742.446	[FLM]  Conversation context diverged from cache, clearing context...
+1790618742.478	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790618744.445	[🔴 ]  Client disconnected; cancelling active request
+1790618744.446	[🔗 ]  TCP connection established - Remote: 127.0.0.1:58860
+1790618744.446	[TCP]  Read 270 bytes from socket
+1790618744.446	================================================
+1790618744.446	[⬇️ ]  Incoming Request: POST
+1790618744.446	[LOG]  Time stamp: 21:05:44 09:28:2026
+1790618744.446	[LOG]  Target: /api/chat
+1790618744.446	[LOG]  Version: 11
+1790618744.446	[LOG]  Keep-Alive: 1
+1790618744.446	[LOG]  Body: 
+1790618744.446	{
+1790618744.446	    "messages": [
+1790618744.446	        {
+1790618744.446	            "content": "Say hi.",
+1790618744.446	            "role": "user"
+1790618744.446	        }
+1790618744.446	    ],
+1790618744.446	    "model": "gemma4-it:e4b",
+1790618744.446	    "options": {
+1790618744.446	        "num_predict": 4
+1790618744.446	    },
+1790618744.446	    "stream": false,
+1790618744.446	    "top_k": 1
+1790618744.446	}
+1790618744.446	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790618781.622	
+1790618781.622	[FLM]  Model RAW Output: 
+1790618781.622	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790618781.622	
+1790618781.622	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790618781.622	
+1790618781.622	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790618781.622	
+1790618781.622	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790618781.622	
+1790618781.622	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790618781.622	
+1790618781.622	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790618781.622	
+1790618781.622	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790618781.622	
+1790618781.622	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790618781.622	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790618781.957	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790618781.957	================================================
+1790618781.957	[FLM]  Start generating...
+1790618781.957	[FLM]  Total images: 0
+1790618781.957	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790618781.958	[FLM]  Conversation context diverged from cache, clearing context...
+1790618781.993	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790618783.165	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790618783.167	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790618783.199	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790618783.485	
+1790618783.485	[FLM]  Model RAW Output: 
+1790618783.485	Hi! How can I
+1790618783.485	================================================
+1790618783.485	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:58860
+1790618783.517	[🔵 ]  NPU Lock Released!
+1790618784.538	[🔗 ]  TCP connection established - Remote: 127.0.0.1:35130
+1790618784.538	[TCP]  Read 348 bytes from socket
+1790618784.538	================================================
+1790618784.538	[⬇️ ]  Incoming Request: POST
+1790618784.538	[LOG]  Time stamp: 21:06:24 09:28:2026
+1790618784.538	[LOG]  Target: /api/chat
+1790618784.538	[LOG]  Version: 11
+1790618784.538	[LOG]  Keep-Alive: 1
+1790618784.538	[LOG]  Body: 
+1790618784.538	{
+1790618784.538	    "messages": [
+1790618784.538	        {
+1790618784.538	            "content": "Write a de...ing press.",
+1790618784.538	            "role": "user"
+1790618784.538	        }
+1790618784.538	    ],
+1790618784.538	    "model": "gemma4-it:e4b",
+1790618784.538	    "options": {
+1790618784.538	        "num_predict": 512
+1790618784.538	    },
+1790618784.538	    "stream": false,
+1790618784.538	    "top_k": 1
+1790618784.538	}
+1790618784.538	[🟢 ]  NPU Locked!
+1790618784.538	[FLM]  Start generating...
+1790618784.538	[FLM]  Total images: 0
+1790618784.539	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790618785.038	[🔗 ]  TCP connection established - Remote: 127.0.0.1:35138
+1790618785.038	[TCP]  Read 307 bytes from socket
+1790618785.038	================================================
+1790618785.038	[⬇️ ]  Incoming Request: POST
+1790618785.038	[LOG]  Time stamp: 21:06:25 09:28:2026
+1790618785.038	[LOG]  Target: /v1/completions
+1790618785.038	[LOG]  Version: 11
+1790618785.038	[LOG]  Keep-Alive: 1
+1790618785.038	[LOG]  Body: 
+1790618785.038	{
+1790618785.038	    "max_tokens": 512,
+1790618785.038	    "model": "gemma4-it:e4b",
+1790618785.038	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790618785.038	    "stream": false,
+1790618785.038	    "top_k": 1
+1790618785.038	}
+1790618785.038	[🕒 ]  NPU busy, request queued (1/10): POST /v1/completions
+1790618785.339	[🔗 ]  TCP connection established - Remote: 127.0.0.1:35142
+1790618785.339	[TCP]  Read 270 bytes from socket
+1790618785.339	================================================
+1790618785.339	[⬇️ ]  Incoming Request: POST
+1790618785.339	[LOG]  Time stamp: 21:06:25 09:28:2026
+1790618785.339	[LOG]  Target: /api/chat
+1790618785.339	[LOG]  Version: 11
+1790618785.339	[LOG]  Keep-Alive: 1
+1790618785.339	[LOG]  Body: 
+1790618785.339	{
+1790618785.339	    "messages": [
+1790618785.339	        {
+1790618785.339	            "content": "Say hi.",
+1790618785.339	            "role": "user"
+1790618785.339	        }
+1790618785.339	    ],
+1790618785.339	    "model": "gemma4-it:e4b",
+1790618785.339	    "options": {
+1790618785.339	        "num_predict": 4
+1790618785.339	    },
+1790618785.339	    "stream": false,
+1790618785.339	    "top_k": 1
+1790618785.339	}
+1790618785.339	[🕒 ]  NPU busy, request queued (2/10): POST /api/chat
+1790618785.703	[31m[FLM]  Creating checkpoint at context length 30[0m
+1790618785.704	[31m[FLM]  Restoring checkpoint at context length 30[0m
+1790618785.736	[31m[FLM]  Checkpoint before generation: 30, restore point: 30, user context length: 30[0m
+1790618823.726	
+1790618823.726	[FLM]  Model RAW Output: 
+1790618823.726	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790618823.726	
+1790618823.726	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790618823.726	
+1790618823.726	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790618823.726	
+1790618823.726	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790618823.726	
+1790618823.726	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790618823.726	
+1790618823.726	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790618823.726	
+1790618823.726	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790618823.726	
+1790618823.726	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790618824.090	[🟡 ]  Dequeuing NPU request (1 remaining)...
+1790618824.090	================================================
+1790618824.090	[🔴 ]  Client disconnected; cancelling active request
+1790618824.090	[FLM]  Start generating...
+1790618824.090	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35130
+1790618824.090	[FLM]  Prefill chunk 1/1 with 30 tokens
+1790618863.237	
+1790618863.237	[FLM]  Model RAW Output: 
+1790618863.237	## The Unfolding Page: A History of the Printing Press and the Transformation of Human Civilization
+1790618863.237	
+1790618863.237	The history of human civilization is inextricably linked to the ability to store, disseminate, and share knowledge. Before the advent of mechanical reproduction, information was a painstakingly crafted artifact—a manuscript laboriously copied by scribes in monasteries or scriptoriums. Books were luxuries, repositories of elite learning, accessible only to the wealthy and the powerful. The slow drip-feed of human thought across generations was governed by the speed and endurance of the human hand. This paradigm, however, was destined for a seismic shift.
+1790618863.237	
+1790618863.237	The invention and subsequent evolution of the printing press did not merely improve efficiency; it fundamentally rewired the cognitive, social, political, and economic structures of human society. It democratized knowledge, fueled revolutions in science and religion, standardized languages, accelerated globalization (in its nascent form), and laid the groundwork for modern mass media. The story of the printing press is not just a technological narrative; it is a grand epic about the acceleration of consciousness itself—the moment humanity gained an unprecedented tool for self-education and collective transformation.
+1790618863.237	
+1790618863.237	To trace this history is to chart a course from ancient, rudimentary methods to Gutenberg’s revolutionary innovation, through the industrialization of print, and into the digital age that has ultimately superseded it while remaining indebted to its legacy. This essay will explore this trajectory in detail, examining the pre-print technologies, the pivotal moment of movable type in Europe, its subsequent global adaptations and industrial scaling, and finally, its enduring philosophical impact on modernity.
+1790618863.237	
+1790618863.237	### I. The Dawn of Reproduction: Precursors to Print (Antiquity to Medieval Period)
+1790618863.237	
+1790618863.237	Before Johannes Gutenberg perfected his system around 1450, the concept of mass textual reproduction existed in various forms across different cultures. These early methods were characterized by manual labor or rudimentary mechanical aids, but they established the fundamental human desire for reproducible text.
+1790618863.237	
+1790618863.237	In ancient Mesopotamia and Egypt, scribes employed papyrus and clay tablets. While these were not "printing" in the modern sense—they involved inscription rather than mass duplication—they represented the earliest attempts to standardize record-keeping and knowledge preservation outside of oral tradition. The development of cuneiform and hieroglyphs established complex systems of symbolic representation that demanded efficient methods for their transmission.
+1790618863.237	
+1790618863.237	The most significant early technological leap, however, came from East Asia. China developed woodblock printing centuries before Europe conceived of movable type. During the Tang Dynasty (7th–10th centuries CE), artisans began carving entire pages onto
+1790618863.237	[31m[FLM]  Creating checkpoint at context length 542[0m
+1790618863.239	================================================
+1790618863.239	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790618863.572	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790618863.572	[FLM]  Start generating...
+1790618863.572	[FLM]  Total images: 0
+1790618863.572	[FLM]  Conversation context diverged from cache, clearing context...
+1790618863.604	[FLM]  Prefill chunk 1/1 with 12 tokens
+1790618864.766	[31m[FLM]  Creating checkpoint at context length 12[0m
+1790618864.767	[31m[FLM]  Restoring checkpoint at context length 12[0m
+1790618864.799	[31m[FLM]  Checkpoint before generation: 12, restore point: 12, user context length: 12[0m
+1790618865.085	
+1790618865.085	[FLM]  Model RAW Output: 
+1790618865.085	Hi! How can I
+1790618865.085	================================================
+1790618865.085	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:35142
+1790618865.117	[🔵 ]  NPU Lock Released!

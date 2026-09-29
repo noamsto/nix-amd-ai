@@ -1,0 +1,250 @@
+1790607718.705	[FLM]  Using user-specified port: 58601
+1790607719.221	[FLM]  Loading model: /home/noams/.config/flm/models/Llama-3.2-1B-NPU2
+1790607720.916	[FLM]  Starting server on port 58601...
+1790607720.920	[FLM]  WebServer started on port 58601 with 10 I/O threads
+1790607720.920	[FLM]  Press Ctrl+C to stop.
+1790607720.920	[🔗 ]  TCP connection established - Remote: 127.0.0.1:36858
+1790607720.921	[TCP]  Read 90 bytes from socket
+1790607720.921	================================================
+1790607720.921	[⬇️ ]  Incoming Request: GET
+1790607720.921	[LOG]  Time stamp: 18:02:00 09:28:2026
+1790607720.921	[LOG]  Target: /api/version
+1790607720.921	[LOG]  Version: 11
+1790607720.921	[LOG]  Keep-Alive: 1
+1790607720.921	================================================
+1790607720.921	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:36858
+1790607720.946	[🔗 ]  TCP connection established - Remote: 127.0.0.1:36868
+1790607720.946	[TCP]  Read 324 bytes from socket
+1790607720.946	================================================
+1790607720.946	[⬇️ ]  Incoming Request: POST
+1790607720.946	[LOG]  Time stamp: 18:02:00 09:28:2026
+1790607720.946	[LOG]  Target: /api/generate
+1790607720.946	[LOG]  Version: 11
+1790607720.946	[LOG]  Keep-Alive: 1
+1790607720.946	[LOG]  Body: 
+1790607720.946	{
+1790607720.946	    "max_tokens": 512,
+1790607720.946	    "model": "llama3.2:1b",
+1790607720.946	    "options": {
+1790607720.946	        "num_predict": 512
+1790607720.946	    },
+1790607720.946	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790607720.946	    "stream": false
+1790607720.946	}
+1790607720.946	[🟢 ]  NPU Locked!
+1790607720.946	[FLM]  Start generating...
+1790607720.946	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790607729.131	
+1790607729.131	[FLM]  Model RAW Output: 
+1790607729.131	The Printing Press, a revolutionary invention in the field of printing, has had a profound impact on human history. From its invention in the 15th century to the present day, the printing press has played a crucial role in disseminating information, shaping culture, and shaping the course of human history. In this essay, we will delve into the history of the printing press, exploring its development, evolution, and impact on society.
+1790607729.131	
+1790607729.131	The origins of the printing press date back to the 10th century, when the Arabs introduced movable type to China. The movable type, a combination of metal characters and wooden blocks, allowed for the mass production of printed materials. However, it was not until the 15th century that the printing press was invented in Europe. In 1450, Johannes Gutenberg, a German goldsmith and printer, created the first movable-type printing press. This invention was a major breakthrough in the development of printing technology, as it allowed for the mass production of printed materials, including books, newspapers, and other written works.
+1790607729.131	
+1790607729.131	The first book printed using the Gutenberg press was the 1455 "Sapientia", a book of sermons by Peter Waldo. The book was printed on 120 pages of paper, each block of which was made up of two metal characters and two wooden blocks. The Gutenberg press was a significant improvement over earlier printing technologies, such as the wooden blocks used by monks in the monastery of St. Gall. The Gutenberg press allowed for the mass production of printed materials, making it possible for people to read and write widely.
+1790607729.131	
+1790607729.131	In the early 15th century, the printing press became a sensation in Europe, with books and pamphlets being printed in large quantities. The first book to be printed on the Gutenberg press was the 1455 "Sapientia", which was printed in the monastery of St. Gall. Other books, such as the 1456 "Epistola de nobilitate", were also printed using the Gutenberg press. The Gutenberg press was so successful that it became a major factor in the spread of literacy and education in Europe.
+1790607729.131	
+1790607729.131	The development of the printing press also had a significant impact on the spread of knowledge and ideas. With the printing press, people could access information and literature from all over Europe, leading to a significant increase in the dissemination of knowledge and ideas. The printing press also played a major role in the spread of the Protestant Reformation, which was a major turning point in the history of Christianity. The printing press allowed for the mass production of Protestant literature and
+1790607729.131	[🔵 ]  NPU Lock Released!
+1790607729.131	================================================
+1790607729.131	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:36868
+1790607729.164	[🔗 ]  TCP connection established - Remote: 127.0.0.1:43512
+1790607729.164	[TCP]  Read 324 bytes from socket
+1790607729.164	================================================
+1790607729.164	[⬇️ ]  Incoming Request: POST
+1790607729.164	[LOG]  Time stamp: 18:02:09 09:28:2026
+1790607729.164	[LOG]  Target: /api/generate
+1790607729.164	[LOG]  Version: 11
+1790607729.164	[LOG]  Keep-Alive: 1
+1790607729.164	[LOG]  Body: 
+1790607729.164	{
+1790607729.164	    "max_tokens": 512,
+1790607729.164	    "model": "llama3.2:1b",
+1790607729.164	    "options": {
+1790607729.164	        "num_predict": 512
+1790607729.164	    },
+1790607729.164	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790607729.164	    "stream": false
+1790607729.164	}
+1790607729.164	[🟢 ]  NPU Locked!
+1790607729.164	[FLM]  Start generating...
+1790607729.165	[FLM]  Conversation context diverged from cache, clearing context...
+1790607729.166	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790607731.164	[🔴 ]  Client disconnected; cancelling active request
+1790607731.165	[🔗 ]  TCP connection established - Remote: 127.0.0.1:43518
+1790607731.165	[TCP]  Read 268 bytes from socket
+1790607731.165	================================================
+1790607731.165	[⬇️ ]  Incoming Request: POST
+1790607731.165	[LOG]  Time stamp: 18:02:11 09:28:2026
+1790607731.165	[LOG]  Target: /api/chat
+1790607731.165	[LOG]  Version: 11
+1790607731.165	[LOG]  Keep-Alive: 1
+1790607731.165	[LOG]  Body: 
+1790607731.165	{
+1790607731.165	    "messages": [
+1790607731.165	        {
+1790607731.165	            "content": "Say hi.",
+1790607731.165	            "role": "user"
+1790607731.165	        }
+1790607731.165	    ],
+1790607731.165	    "model": "llama3.2:1b",
+1790607731.165	    "options": {
+1790607731.165	        "num_predict": 4
+1790607731.165	    },
+1790607731.165	    "stream": false,
+1790607731.165	    "top_k": 1
+1790607731.165	}
+1790607731.165	[🕒 ]  NPU busy, request queued (1/10): POST /api/chat
+1790607731.170	
+1790607731.170	[FLM]  Model RAW Output: 
+1790607731.170	The History of the Printing Press: A Revolutionary Innovation in Communication
+1790607731.170	
+1790607731.170	The printing press, invented by Johannes Gutenberg in the 15th century, is one of the most significant innovations in human history. Prior to the printing press, the process of disseminating information and ideas was laborious, time-consuming, and limited. The invention of the printing press revolutionized the way people communicated, read, and understood the world around them. In this essay, we will explore the history of the printing press, from its early beginnings to its widespread use in the
+1790607731.170	[❌ ]  Generation Cancelled!
+1790607731.504	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790607731.504	================================================
+1790607731.504	[FLM]  Start generating...
+1790607731.504	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790607731.504	[FLM]  Conversation context diverged from cache, clearing context...
+1790607731.506	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790607731.932	
+1790607731.932	[FLM]  Model RAW Output: 
+1790607731.932	Hi.
+1790607731.932	[🔵 ]  NPU Lock Released!
+1790607731.932	================================================
+1790607731.932	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:43518
+1790607732.985	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53170
+1790607732.985	[TCP]  Read 346 bytes from socket
+1790607732.985	================================================
+1790607732.985	[⬇️ ]  Incoming Request: POST
+1790607732.985	[LOG]  Time stamp: 18:02:12 09:28:2026
+1790607732.985	[LOG]  Target: /api/chat
+1790607732.985	[LOG]  Version: 11
+1790607732.985	[LOG]  Keep-Alive: 1
+1790607732.985	[LOG]  Body: 
+1790607732.985	{
+1790607732.985	    "messages": [
+1790607732.985	        {
+1790607732.985	            "content": "Write a de...ing press.",
+1790607732.985	            "role": "user"
+1790607732.985	        }
+1790607732.985	    ],
+1790607732.985	    "model": "llama3.2:1b",
+1790607732.985	    "options": {
+1790607732.985	        "num_predict": 512
+1790607732.985	    },
+1790607732.985	    "stream": false,
+1790607732.985	    "top_k": 1
+1790607732.985	}
+1790607732.985	[🟢 ]  NPU Locked!
+1790607732.985	[FLM]  Start generating...
+1790607732.986	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790607733.485	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53176
+1790607733.485	[TCP]  Read 324 bytes from socket
+1790607733.485	================================================
+1790607733.485	[⬇️ ]  Incoming Request: POST
+1790607733.485	[LOG]  Time stamp: 18:02:13 09:28:2026
+1790607733.485	[LOG]  Target: /api/generate
+1790607733.485	[LOG]  Version: 11
+1790607733.485	[LOG]  Keep-Alive: 1
+1790607733.485	[LOG]  Body: 
+1790607733.485	{
+1790607733.485	    "max_tokens": 512,
+1790607733.485	    "model": "llama3.2:1b",
+1790607733.485	    "options": {
+1790607733.485	        "num_predict": 512
+1790607733.485	    },
+1790607733.485	    "prompt": "Write a detailed essay of at least 2000 words on the history of the printing press.",
+1790607733.485	    "stream": false
+1790607733.485	}
+1790607733.485	[🕒 ]  NPU busy, request queued (1/10): POST /api/generate
+1790607733.785	[🔗 ]  TCP connection established - Remote: 127.0.0.1:53180
+1790607733.785	[TCP]  Read 268 bytes from socket
+1790607733.785	================================================
+1790607733.785	[⬇️ ]  Incoming Request: POST
+1790607733.785	[LOG]  Time stamp: 18:02:13 09:28:2026
+1790607733.785	[LOG]  Target: /api/chat
+1790607733.785	[LOG]  Version: 11
+1790607733.785	[LOG]  Keep-Alive: 1
+1790607733.785	[LOG]  Body: 
+1790607733.785	{
+1790607733.785	    "messages": [
+1790607733.785	        {
+1790607733.785	            "content": "Say hi.",
+1790607733.785	            "role": "user"
+1790607733.785	        }
+1790607733.785	    ],
+1790607733.785	    "model": "llama3.2:1b",
+1790607733.785	    "options": {
+1790607733.785	        "num_predict": 4
+1790607733.785	    },
+1790607733.785	    "stream": false,
+1790607733.785	    "top_k": 1
+1790607733.785	}
+1790607733.785	[🕒 ]  NPU busy, request queued (2/10): POST /api/chat
+1790607741.109	
+1790607741.109	[FLM]  Model RAW Output: 
+1790607741.109	The History of the Printing Press: A Revolutionary Innovation
+1790607741.109	
+1790607741.109	The printing press, invented by Johannes Gutenberg in the 15th century, was a game-changing innovation that revolutionized the way people accessed and disseminated information. This invention had a profound impact on the development of human civilization, shaping the course of history in ways that are still felt today. In this essay, we will explore the history of the printing press, from its humble beginnings to its widespread adoption in the 16th century.
+1790607741.109	
+1790607741.109	The Early Days of Printing
+1790607741.109	
+1790607741.109	The earliest known printing press was the Antwerp Press, invented by Johannes Gutenberg in the 1440s. This press was a wooden frame with movable type, which allowed the printer to set individual characters on each page. The Antwerp Press was used to print books, pamphlets, and other small publications. Gutenberg's innovation was the use of movable type, which allowed for mass production of printed materials.
+1790607741.109	
+1790607741.109	Gutenberg's Printing Press
+1790607741.109	
+1790607741.109	Gutenberg's printing press was a significant improvement over earlier forms of printing. The Antwerp Press was a wooden frame with movable type, which allowed the printer to set individual characters on each page. This design allowed for the mass production of printed materials, making it possible to print books and other publications on a large scale.
+1790607741.109	
+1790607741.109	The first book printed by Gutenberg was the "Gutenberg Bible," which was a copy of the Bible in Latin. The book was printed in 1455 and was a significant innovation in the history of printing. The Gutenberg Bible was the first book to use movable type, and it marked the beginning of the printing revolution.
+1790607741.109	
+1790607741.109	The Spread of Printing
+1790607741.109	
+1790607741.109	The spread of printing was a gradual process that took place over several centuries. In the 1450s, the Antwerp Press was used to print books and other publications in Europe. The press was widely used in the Netherlands, Germany, and Italy, and it played a significant role in the development of the printing industry.
+1790607741.109	
+1790607741.109	In the 1470s, the printing press was introduced to England by John Poyson, a German printer. Poyson's press was a wooden frame with movable type, and it was used to print books and other publications. The press was widely used in England, and it played a significant role in the development of the English language.
+1790607741.109	
+1790607741.109	The Printing Press in the 16th Century
+1790607741.109	
+1790607741.109	In the 16th century, the printing press was at the height of its power. The press was used to print books, pamphlets, and other small publications on a massive scale. The printing press was a major
+1790607741.442	[🟡 ]  Dequeuing NPU request (1 remaining)...
+1790607741.442	[[🔴 ]  FLMClient disconnected; cancelling active request]  
+1790607741.442	Start generating...
+1790607741.442	[FLM]  Prefill chunk 1/1 with 54 tokens
+1790607741.443	================================================
+1790607741.444	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53170
+1790607749.564	
+1790607749.564	[FLM]  Model RAW Output: 
+1790607749.564	The History of the Printing Press: A Revolutionary Innovation
+1790607749.564	
+1790607749.564	The printing press, invented by Johannes Gutenberg in the 15th century, was a game-changing innovation that revolutionized the way people communicated, learned, and created. This remarkable device, which would go on to shape the course of human history, has a rich and fascinating history that spans over four centuries. In this essay, we will delve into the origins, development, and impact of the printing press, highlighting its key milestones, technological advancements, and the people who made it possible.
+1790607749.564	
+1790607749.564	Origins: The Early Days of Printing
+1790607749.564	
+1790607749.564	The story of the printing press begins in the 9th century, when the Arabs introduced the concept of movable type to Europe. The Arabs had developed a system of metal type, which allowed for the mass production of books and other written materials. This innovation was later adopted by the Christians in Europe, who used it to create a wide range of books, including the Bible.
+1790607749.564	
+1790607749.564	In the 12th century, the monks of the monastery of St. Gall in Switzerland, where the Bible was first printed, developed a system of movable type that would become the foundation of the printing press. The monks created a set of metal type, which was designed to be interchangeable, allowing for the mass production of books.
+1790607749.564	
+1790607749.564	The first printed book was the "Gutenberg Bible," which was printed in 1455 by Johannes Gutenberg, a German goldsmith and printer. The Gutenberg Bible was a large, 1,286-page book that contained the complete Bible in Latin. It was a groundbreaking achievement, as it was the first book to be printed using movable type.
+1790607749.564	
+1790607749.564	Development: The Printing Press Takes Shape
+1790607749.564	
+1790607749.564	Over the next few decades, the printing press continued to evolve and improve. The first printing press in Europe was established in Mainz, Germany, in 1450. The press was built by Johannes Gutenberg, who had previously worked as a goldsmith and printer in Mainz.
+1790607749.564	
+1790607749.564	The printing press was a mechanical device that used a combination of metal type, ink, and paper to print books. The device consisted of a frame that held the type, a screw that turned the type into the paper, and a press that applied pressure to the paper to transfer the ink.
+1790607749.564	
+1790607749.564	The printing press was a significant innovation, as it allowed for the mass production of books, making them more widely available and affordable for the general population. The press also enabled the creation of books on a large scale, which helped to spread knowledge and ideas across the continent.
+1790607749.564	
+1790607749.564	The printing press was not without its challenges, however
+1790607749.897	[🟡 ]  Dequeuing NPU request (0 remaining)...
+1790607749.898	================================================
+1790607749.898	[FLM]  Start generating...
+1790607749.898	[🔒 ]  TCP connection closed - Remote endpoint unavailable
+1790607749.898	[FLM]  Conversation context diverged from cache, clearing context...
+1790607749.900	[FLM]  Prefill chunk 1/1 with 38 tokens
+1790607750.327	
+1790607750.327	[FLM]  Model RAW Output: 
+1790607750.327	Hi.
+1790607750.327	[🔵 ]  NPU Lock Released!
+1790607750.327	================================================
+1790607750.328	[🔒 ]  TCP connection closed - Remote: 127.0.0.1:53180

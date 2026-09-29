@@ -154,6 +154,15 @@ stdenv.mkDerivation (finalAttrs: {
   #     session then ends through read_request's error path, which releases
   #     the slot), and do_accept catches a throw from session setup, gives the
   #     slot back itself -- no session owns it yet -- and still re-arms.
+  #   - cancel-client-disconnect.patch (#191): /api/generate, streaming
+  #     /api/chat and /v1/completions never passed the request's
+  #     cancellation predicate to insert()/generate(), so a client that
+  #     disconnected left flm serve decoding to its token limit. They now
+  #     pass the predicate, as /v1/chat/completions does, and like it reset
+  #     the token only on the streaming branches: on a non-streaming one a
+  #     reset erases the cancel of a client that left while queued, and
+  #     nothing else would notice. Non-streaming /api/chat still ignores a
+  #     disconnect: generate_with_prompt() takes no predicate.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -165,10 +174,11 @@ stdenv.mkDerivation (finalAttrs: {
   # client errors, streaming /api/chat's double insert, the unsynchronised
   # /api/ps reads, the unlocked /v1/completions and /api/embeddings, and
   # releasing the NPU lock before a handler is done with the engine (the last
-  # four still on main at 39ff855632), plus leaking a connection slot when a
+  # four still on main at 39ff855632), leaking a connection slot when a
   # streaming client disconnects (also still on main; see also
-  # ROCm/FastFlowLM#680), and a pre-accept reset killing the accept loop (on
-  # main at 39ff855632). A bump that breaks any patch fails the build rather
+  # ROCm/FastFlowLM#680), a pre-accept reset killing the accept loop (on main
+  # at 39ff855632), and ignoring a client disconnect outside
+  # /v1/chat/completions. A bump that breaks any patch fails the build rather
   # than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -182,6 +192,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/ps-serving-snapshot.patch
     ./patches/connection-slot-release.patch
     ./patches/accept-loop-rearm.patch
+    ./patches/cancel-client-disconnect.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {

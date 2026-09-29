@@ -1,0 +1,514 @@
+   1.195	{"model":"gemma4-it:e4b","response":"##","thinking":"","done":false}
+   1.266	{"model":"gemma4-it:e4b","response":" The","thinking":"","done":false}
+   1.338	{"model":"gemma4-it:e4b","response":" Dawn","thinking":"","done":false}
+   1.410	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   1.482	{"model":"gemma4-it:e4b","response":" Mass","thinking":"","done":false}
+   1.554	{"model":"gemma4-it:e4b","response":" Communication","thinking":"","done":false}
+   1.627	{"model":"gemma4-it:e4b","response":":","thinking":"","done":false}
+   1.698	{"model":"gemma4-it:e4b","response":" A","thinking":"","done":false}
+   1.770	{"model":"gemma4-it:e4b","response":" Comprehensive","thinking":"","done":false}
+   1.842	{"model":"gemma4-it:e4b","response":" History","thinking":"","done":false}
+   1.914	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   1.987	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   2.059	{"model":"gemma4-it:e4b","response":" Printing","thinking":"","done":false}
+   2.131	{"model":"gemma4-it:e4b","response":" Press","thinking":"","done":false}
+   2.203	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+   2.275	{"model":"gemma4-it:e4b","response":"The","thinking":"","done":false}
+   2.346	{"model":"gemma4-it:e4b","response":" printing","thinking":"","done":false}
+   2.418	{"model":"gemma4-it:e4b","response":" press","thinking":"","done":false}
+   2.490	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   2.563	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+   2.635	{"model":"gemma4-it:e4b","response":" its","thinking":"","done":false}
+   2.707	{"model":"gemma4-it:e4b","response":" myriad","thinking":"","done":false}
+   2.780	{"model":"gemma4-it:e4b","response":" forms","thinking":"","done":false}
+   2.852	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   2.924	{"model":"gemma4-it:e4b","response":" stands","thinking":"","done":false}
+   2.996	{"model":"gemma4-it:e4b","response":" as","thinking":"","done":false}
+   3.068	{"model":"gemma4-it:e4b","response":" one","thinking":"","done":false}
+   3.140	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   3.213	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   3.285	{"model":"gemma4-it:e4b","response":" most","thinking":"","done":false}
+   3.357	{"model":"gemma4-it:e4b","response":" transformative","thinking":"","done":false}
+   3.429	{"model":"gemma4-it:e4b","response":" inventions","thinking":"","done":false}
+   3.501	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+   3.573	{"model":"gemma4-it:e4b","response":" human","thinking":"","done":false}
+   3.645	{"model":"gemma4-it:e4b","response":" history","thinking":"","done":false}
+   3.718	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+   3.790	{"model":"gemma4-it:e4b","response":" It","thinking":"","done":false}
+   3.862	{"model":"gemma4-it:e4b","response":" is","thinking":"","done":false}
+   3.935	{"model":"gemma4-it:e4b","response":" not","thinking":"","done":false}
+   4.007	{"model":"gemma4-it:e4b","response":" merely","thinking":"","done":false}
+   4.079	{"model":"gemma4-it:e4b","response":" a","thinking":"","done":false}
+   4.151	{"model":"gemma4-it:e4b","response":" machine","thinking":"","done":false}
+   4.224	{"model":"gemma4-it:e4b","response":" for","thinking":"","done":false}
+   4.296	{"model":"gemma4-it:e4b","response":" reproducing","thinking":"","done":false}
+   4.368	{"model":"gemma4-it:e4b","response":" text","thinking":"","done":false}
+   4.441	{"model":"gemma4-it:e4b","response":";","thinking":"","done":false}
+   4.513	{"model":"gemma4-it:e4b","response":" it","thinking":"","done":false}
+   4.586	{"model":"gemma4-it:e4b","response":" is","thinking":"","done":false}
+   4.658	{"model":"gemma4-it:e4b","response":" an","thinking":"","done":false}
+   4.731	{"model":"gemma4-it:e4b","response":" engine","thinking":"","done":false}
+   4.804	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   4.876	{"model":"gemma4-it:e4b","response":" social","thinking":"","done":false}
+   4.948	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   5.021	{"model":"gemma4-it:e4b","response":" religious","thinking":"","done":false}
+   5.093	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   5.166	{"model":"gemma4-it:e4b","response":" scientific","thinking":"","done":false}
+   5.238	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   5.311	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+   5.383	{"model":"gemma4-it:e4b","response":" political","thinking":"","done":false}
+   5.456	{"model":"gemma4-it:e4b","response":" revolution","thinking":"","done":false}
+   5.528	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+   5.600	{"model":"gemma4-it:e4b","response":" By","thinking":"","done":false}
+   5.673	{"model":"gemma4-it:e4b","response":" democrat","thinking":"","done":false}
+   5.745	{"model":"gemma4-it:e4b","response":"izing","thinking":"","done":false}
+   5.818	{"model":"gemma4-it:e4b","response":" knowledge","thinking":"","done":false}
+   5.890	{"model":"gemma4-it:e4b","response":"—","thinking":"","done":false}
+   5.963	{"model":"gemma4-it:e4b","response":"by","thinking":"","done":false}
+   6.035	{"model":"gemma4-it:e4b","response":" allowing","thinking":"","done":false}
+   6.108	{"model":"gemma4-it:e4b","response":" ideas","thinking":"","done":false}
+   6.181	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+   6.255	{"model":"gemma4-it:e4b","response":" travel","thinking":"","done":false}
+   6.327	{"model":"gemma4-it:e4b","response":" faster","thinking":"","done":false}
+   6.400	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   6.473	{"model":"gemma4-it:e4b","response":" farther","thinking":"","done":false}
+   6.545	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   6.618	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+   6.690	{"model":"gemma4-it:e4b","response":" cheaper","thinking":"","done":false}
+   6.763	{"model":"gemma4-it:e4b","response":" than","thinking":"","done":false}
+   6.836	{"model":"gemma4-it:e4b","response":" ever","thinking":"","done":false}
+   6.908	{"model":"gemma4-it:e4b","response":" before","thinking":"","done":false}
+   6.981	{"model":"gemma4-it:e4b","response":"—","thinking":"","done":false}
+   7.053	{"model":"gemma4-it:e4b","response":"it","thinking":"","done":false}
+   7.126	{"model":"gemma4-it:e4b","response":" irrevoc","thinking":"","done":false}
+   7.199	{"model":"gemma4-it:e4b","response":"ably","thinking":"","done":false}
+   7.271	{"model":"gemma4-it:e4b","response":" altered","thinking":"","done":false}
+   7.344	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   7.417	{"model":"gemma4-it:e4b","response":" trajectory","thinking":"","done":false}
+   7.489	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   7.562	{"model":"gemma4-it:e4b","response":" civilization","thinking":"","done":false}
+   7.635	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+   7.708	{"model":"gemma4-it:e4b","response":" moving","thinking":"","done":false}
+   7.780	{"model":"gemma4-it:e4b","response":" humanity","thinking":"","done":false}
+   7.853	{"model":"gemma4-it:e4b","response":" from","thinking":"","done":false}
+   7.926	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   7.999	{"model":"gemma4-it:e4b","response":" painstakingly","thinking":"","done":false}
+   8.071	{"model":"gemma4-it:e4b","response":" slow","thinking":"","done":false}
+   8.144	{"model":"gemma4-it:e4b","response":" transmission","thinking":"","done":false}
+   8.217	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   8.290	{"model":"gemma4-it:e4b","response":" manuscripts","thinking":"","done":false}
+   8.363	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+   8.436	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   8.508	{"model":"gemma4-it:e4b","response":" explosive","thinking":"","done":false}
+   8.581	{"model":"gemma4-it:e4b","response":" velocity","thinking":"","done":false}
+   8.654	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   8.727	{"model":"gemma4-it:e4b","response":" mass","thinking":"","done":false}
+   8.800	{"model":"gemma4-it:e4b","response":" information","thinking":"","done":false}
+   8.873	{"model":"gemma4-it:e4b","response":" dissemination","thinking":"","done":false}
+   8.946	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+   9.019	{"model":"gemma4-it:e4b","response":" To","thinking":"","done":false}
+   9.091	{"model":"gemma4-it:e4b","response":" chart","thinking":"","done":false}
+   9.164	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   9.237	{"model":"gemma4-it:e4b","response":" history","thinking":"","done":false}
+   9.310	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+   9.383	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+   9.456	{"model":"gemma4-it:e4b","response":" printing","thinking":"","done":false}
+   9.529	{"model":"gemma4-it:e4b","response":" press","thinking":"","done":false}
+   9.602	{"model":"gemma4-it:e4b","response":" is","thinking":"","done":false}
+   9.675	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+   9.748	{"model":"gemma4-it:e4b","response":" trace","thinking":"","done":false}
+   9.821	{"model":"gemma4-it:e4b","response":" a","thinking":"","done":false}
+   9.894	{"model":"gemma4-it:e4b","response":" narrative","thinking":"","done":false}
+   9.967	{"model":"gemma4-it:e4b","response":" arc","thinking":"","done":false}
+  10.040	{"model":"gemma4-it:e4b","response":" mirroring","thinking":"","done":false}
+  10.113	{"model":"gemma4-it:e4b","response":" that","thinking":"","done":false}
+  10.186	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  10.259	{"model":"gemma4-it:e4b","response":" modernity","thinking":"","done":false}
+  10.332	{"model":"gemma4-it:e4b","response":" itself","thinking":"","done":false}
+  10.405	{"model":"gemma4-it:e4b","response":":","thinking":"","done":false}
+  10.478	{"model":"gemma4-it:e4b","response":" from","thinking":"","done":false}
+  10.551	{"model":"gemma4-it:e4b","response":" laborious","thinking":"","done":false}
+  10.624	{"model":"gemma4-it:e4b","response":" craft","thinking":"","done":false}
+  10.697	{"model":"gemma4-it:e4b","response":" production","thinking":"","done":false}
+  10.770	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+  10.844	{"model":"gemma4-it:e4b","response":" mechanized","thinking":"","done":false}
+  10.917	{"model":"gemma4-it:e4b","response":" industrial","thinking":"","done":false}
+  10.990	{"model":"gemma4-it:e4b","response":" power","thinking":"","done":false}
+  11.063	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  11.136	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  11.209	{"model":"gemma4-it:e4b","response":" ultimately","thinking":"","done":false}
+  11.282	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  11.356	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+  11.429	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  11.502	{"model":"gemma4-it:e4b","response":" omnip","thinking":"","done":false}
+  11.575	{"model":"gemma4-it:e4b","response":"resent","thinking":"","done":false}
+  11.648	{"model":"gemma4-it:e4b","response":" digital","thinking":"","done":false}
+  11.721	{"model":"gemma4-it:e4b","response":" ubiqu","thinking":"","done":false}
+  11.795	{"model":"gemma4-it:e4b","response":"ity","thinking":"","done":false}
+  11.868	{"model":"gemma4-it:e4b","response":" we","thinking":"","done":false}
+  11.941	{"model":"gemma4-it:e4b","response":" experience","thinking":"","done":false}
+  12.015	{"model":"gemma4-it:e4b","response":" today","thinking":"","done":false}
+  12.088	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  12.161	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  12.235	{"model":"gemma4-it:e4b","response":"This","thinking":"","done":false}
+  12.308	{"model":"gemma4-it:e4b","response":" essay","thinking":"","done":false}
+  12.381	{"model":"gemma4-it:e4b","response":" will","thinking":"","done":false}
+  12.454	{"model":"gemma4-it:e4b","response":" provide","thinking":"","done":false}
+  12.528	{"model":"gemma4-it:e4b","response":" a","thinking":"","done":false}
+  12.601	{"model":"gemma4-it:e4b","response":" detailed","thinking":"","done":false}
+  12.674	{"model":"gemma4-it:e4b","response":" exploration","thinking":"","done":false}
+  12.748	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  12.821	{"model":"gemma4-it:e4b","response":" this","thinking":"","done":false}
+  12.894	{"model":"gemma4-it:e4b","response":" profound","thinking":"","done":false}
+  12.968	{"model":"gemma4-it:e4b","response":" technological","thinking":"","done":false}
+  13.041	{"model":"gemma4-it:e4b","response":" evolution","thinking":"","done":false}
+  13.115	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  13.188	{"model":"gemma4-it:e4b","response":" tracing","thinking":"","done":false}
+  13.261	{"model":"gemma4-it:e4b","response":" its","thinking":"","done":false}
+  13.335	{"model":"gemma4-it:e4b","response":" origins","thinking":"","done":false}
+  13.408	{"model":"gemma4-it:e4b","response":" from","thinking":"","done":false}
+  13.482	{"model":"gemma4-it:e4b","response":" early","thinking":"","done":false}
+  13.555	{"model":"gemma4-it:e4b","response":" wood","thinking":"","done":false}
+  13.629	{"model":"gemma4-it:e4b","response":"block","thinking":"","done":false}
+  13.702	{"model":"gemma4-it:e4b","response":" printing","thinking":"","done":false}
+  13.776	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+  13.849	{"model":"gemma4-it:e4b","response":" East","thinking":"","done":false}
+  13.922	{"model":"gemma4-it:e4b","response":" Asia","thinking":"","done":false}
+  13.996	{"model":"gemma4-it:e4b","response":" through","thinking":"","done":false}
+  14.070	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  14.143	{"model":"gemma4-it:e4b","response":" refinement","thinking":"","done":false}
+  14.217	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  14.290	{"model":"gemma4-it:e4b","response":" movable","thinking":"","done":false}
+  14.364	{"model":"gemma4-it:e4b","response":" type","thinking":"","done":false}
+  14.437	{"model":"gemma4-it:e4b","response":" by","thinking":"","done":false}
+  14.511	{"model":"gemma4-it:e4b","response":" Johannes","thinking":"","done":false}
+  14.585	{"model":"gemma4-it:e4b","response":" Gutenberg","thinking":"","done":false}
+  14.658	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+  14.732	{"model":"gemma4-it:e4b","response":" Europe","thinking":"","done":false}
+  14.806	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  14.880	{"model":"gemma4-it:e4b","response":" examining","thinking":"","done":false}
+  14.955	{"model":"gemma4-it:e4b","response":" subsequent","thinking":"","done":false}
+  15.028	{"model":"gemma4-it:e4b","response":" industrial","thinking":"","done":false}
+  15.102	{"model":"gemma4-it:e4b","response":" innovations","thinking":"","done":false}
+  15.175	{"model":"gemma4-it:e4b","response":" that","thinking":"","done":false}
+  15.249	{"model":"gemma4-it:e4b","response":" fueled","thinking":"","done":false}
+  15.322	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  15.396	{"model":"gemma4-it:e4b","response":" information","thinking":"","done":false}
+  15.470	{"model":"gemma4-it:e4b","response":" age","thinking":"","done":false}
+  15.543	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  15.617	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  15.691	{"model":"gemma4-it:e4b","response":" analyzing","thinking":"","done":false}
+  15.764	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  15.838	{"model":"gemma4-it:e4b","response":" indelible","thinking":"","done":false}
+  15.912	{"model":"gemma4-it:e4b","response":" impact","thinking":"","done":false}
+  15.986	{"model":"gemma4-it:e4b","response":" each","thinking":"","done":false}
+  16.059	{"model":"gemma4-it:e4b","response":" iteration","thinking":"","done":false}
+  16.133	{"model":"gemma4-it:e4b","response":" had","thinking":"","done":false}
+  16.207	{"model":"gemma4-it:e4b","response":" on","thinking":"","done":false}
+  16.280	{"model":"gemma4-it:e4b","response":" human","thinking":"","done":false}
+  16.354	{"model":"gemma4-it:e4b","response":" thought","thinking":"","done":false}
+  16.428	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  16.501	{"model":"gemma4-it:e4b","response":" societal","thinking":"","done":false}
+  16.575	{"model":"gemma4-it:e4b","response":" structure","thinking":"","done":false}
+  16.649	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  16.723	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  16.797	{"model":"gemma4-it:e4b","response":"***","thinking":"","done":false}
+  16.871	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  16.946	{"model":"gemma4-it:e4b","response":"###","thinking":"","done":false}
+  17.019	{"model":"gemma4-it:e4b","response":" Part","thinking":"","done":false}
+  17.093	{"model":"gemma4-it:e4b","response":" I","thinking":"","done":false}
+  17.167	{"model":"gemma4-it:e4b","response":":","thinking":"","done":false}
+  17.241	{"model":"gemma4-it:e4b","response":" Pre","thinking":"","done":false}
+  17.315	{"model":"gemma4-it:e4b","response":"cursors","thinking":"","done":false}
+  17.389	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  17.463	{"model":"gemma4-it:e4b","response":" Ancient","thinking":"","done":false}
+  17.536	{"model":"gemma4-it:e4b","response":" Foundations","thinking":"","done":false}
+  17.610	{"model":"gemma4-it:e4b","response":" (","thinking":"","done":false}
+  17.684	{"model":"gemma4-it:e4b","response":"Before","thinking":"","done":false}
+  17.758	{"model":"gemma4-it:e4b","response":" Mov","thinking":"","done":false}
+  17.832	{"model":"gemma4-it:e4b","response":"able","thinking":"","done":false}
+  17.906	{"model":"gemma4-it:e4b","response":" Type","thinking":"","done":false}
+  17.980	{"model":"gemma4-it:e4b","response":")","thinking":"","done":false}
+  18.054	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  18.128	{"model":"gemma4-it:e4b","response":"The","thinking":"","done":false}
+  18.202	{"model":"gemma4-it:e4b","response":" impulse","thinking":"","done":false}
+  18.276	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+  18.350	{"model":"gemma4-it:e4b","response":" reproduce","thinking":"","done":false}
+  18.424	{"model":"gemma4-it:e4b","response":" images","thinking":"","done":false}
+  18.498	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  18.572	{"model":"gemma4-it:e4b","response":" texts","thinking":"","done":false}
+  18.646	{"model":"gemma4-it:e4b","response":" efficiently","thinking":"","done":false}
+  18.720	{"model":"gemma4-it:e4b","response":" is","thinking":"","done":false}
+  18.794	{"model":"gemma4-it:e4b","response":" ancient","thinking":"","done":false}
+  18.868	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  18.942	{"model":"gemma4-it:e4b","response":" Before","thinking":"","done":false}
+  19.017	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  19.091	{"model":"gemma4-it:e4b","response":" advent","thinking":"","done":false}
+  19.165	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  19.239	{"model":"gemma4-it:e4b","response":" mechanical","thinking":"","done":false}
+  19.313	{"model":"gemma4-it:e4b","response":" movable","thinking":"","done":false}
+  19.387	{"model":"gemma4-it:e4b","response":" type","thinking":"","done":false}
+  19.461	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  19.535	{"model":"gemma4-it:e4b","response":" humanity","thinking":"","done":false}
+  19.610	{"model":"gemma4-it:e4b","response":" utilized","thinking":"","done":false}
+  19.684	{"model":"gemma4-it:e4b","response":" various","thinking":"","done":false}
+  19.758	{"model":"gemma4-it:e4b","response":" forms","thinking":"","done":false}
+  19.832	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  19.906	{"model":"gemma4-it:e4b","response":" duplication","thinking":"","done":false}
+  19.980	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  20.054	{"model":"gemma4-it:e4b","response":" none","thinking":"","done":false}
+  20.129	{"model":"gemma4-it:e4b","response":" approaching","thinking":"","done":false}
+  20.203	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  20.277	{"model":"gemma4-it:e4b","response":" speed","thinking":"","done":false}
+  20.352	{"model":"gemma4-it:e4b","response":" or","thinking":"","done":false}
+  20.426	{"model":"gemma4-it:e4b","response":" standardization","thinking":"","done":false}
+  20.500	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  20.574	{"model":"gemma4-it:e4b","response":" what","thinking":"","done":false}
+  20.649	{"model":"gemma4-it:e4b","response":" came","thinking":"","done":false}
+  20.723	{"model":"gemma4-it:e4b","response":" later","thinking":"","done":false}
+  20.797	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  20.872	{"model":"gemma4-it:e4b","response":" The","thinking":"","done":false}
+  20.947	{"model":"gemma4-it:e4b","response":" earliest","thinking":"","done":false}
+  21.022	{"model":"gemma4-it:e4b","response":" methods","thinking":"","done":false}
+  21.096	{"model":"gemma4-it:e4b","response":" were","thinking":"","done":false}
+  21.171	{"model":"gemma4-it:e4b","response":" rooted","thinking":"","done":false}
+  21.245	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+  21.319	{"model":"gemma4-it:e4b","response":" laborious","thinking":"","done":false}
+  21.394	{"model":"gemma4-it:e4b","response":" artisanal","thinking":"","done":false}
+  21.468	{"model":"gemma4-it:e4b","response":" practices","thinking":"","done":false}
+  21.543	{"model":"gemma4-it:e4b","response":" designed","thinking":"","done":false}
+  21.617	{"model":"gemma4-it:e4b","response":" for","thinking":"","done":false}
+  21.691	{"model":"gemma4-it:e4b","response":" localized","thinking":"","done":false}
+  21.766	{"model":"gemma4-it:e4b","response":" communication","thinking":"","done":false}
+  21.840	{"model":"gemma4-it:e4b","response":" within","thinking":"","done":false}
+  21.915	{"model":"gemma4-it:e4b","response":" religious","thinking":"","done":false}
+  21.989	{"model":"gemma4-it:e4b","response":" or","thinking":"","done":false}
+  22.063	{"model":"gemma4-it:e4b","response":" royal","thinking":"","done":false}
+  22.138	{"model":"gemma4-it:e4b","response":" centers","thinking":"","done":false}
+  22.212	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  22.287	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  22.361	{"model":"gemma4-it:e4b","response":"**","thinking":"","done":false}
+  22.435	{"model":"gemma4-it:e4b","response":"1","thinking":"","done":false}
+  22.510	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  22.584	{"model":"gemma4-it:e4b","response":" Early","thinking":"","done":false}
+  22.659	{"model":"gemma4-it:e4b","response":" Image","thinking":"","done":false}
+  22.734	{"model":"gemma4-it:e4b","response":" Replication","thinking":"","done":false}
+  22.808	{"model":"gemma4-it:e4b","response":":","thinking":"","done":false}
+  22.883	{"model":"gemma4-it:e4b","response":" Cave","thinking":"","done":false}
+  22.959	{"model":"gemma4-it:e4b","response":" Art","thinking":"","done":false}
+  23.035	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  23.110	{"model":"gemma4-it:e4b","response":" St","thinking":"","done":false}
+  23.184	{"model":"gemma4-it:e4b","response":"encils","thinking":"","done":false}
+  23.259	{"model":"gemma4-it:e4b","response":":**","thinking":"","done":false}
+  23.333	{"model":"gemma4-it:e4b","response":" While","thinking":"","done":false}
+  23.408	{"model":"gemma4-it:e4b","response":" not","thinking":"","done":false}
+  23.482	{"model":"gemma4-it:e4b","response":" \"","thinking":"","done":false}
+  23.557	{"model":"gemma4-it:e4b","response":"printing","thinking":"","done":false}
+  23.632	{"model":"gemma4-it:e4b","response":"\"","thinking":"","done":false}
+  23.706	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+  23.781	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  23.856	{"model":"gemma4-it:e4b","response":" modern","thinking":"","done":false}
+  23.930	{"model":"gemma4-it:e4b","response":" sense","thinking":"","done":false}
+  24.005	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  24.080	{"model":"gemma4-it:e4b","response":" early","thinking":"","done":false}
+  24.155	{"model":"gemma4-it:e4b","response":" forms","thinking":"","done":false}
+  24.229	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  24.304	{"model":"gemma4-it:e4b","response":" pattern","thinking":"","done":false}
+  24.379	{"model":"gemma4-it:e4b","response":" application","thinking":"","done":false}
+  24.453	{"model":"gemma4-it:e4b","response":"—","thinking":"","done":false}
+  24.528	{"model":"gemma4-it:e4b","response":"using","thinking":"","done":false}
+  24.603	{"model":"gemma4-it:e4b","response":" stamps","thinking":"","done":false}
+  24.677	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  24.752	{"model":"gemma4-it:e4b","response":" molds","thinking":"","done":false}
+  24.827	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  24.902	{"model":"gemma4-it:e4b","response":" or","thinking":"","done":false}
+  24.977	{"model":"gemma4-it:e4b","response":" simple","thinking":"","done":false}
+  25.052	{"model":"gemma4-it:e4b","response":" st","thinking":"","done":false}
+  25.127	{"model":"gemma4-it:e4b","response":"enc","thinking":"","done":false}
+  25.202	{"model":"gemma4-it:e4b","response":"iling","thinking":"","done":false}
+  25.276	{"model":"gemma4-it:e4b","response":" techniques","thinking":"","done":false}
+  25.351	{"model":"gemma4-it:e4b","response":"—","thinking":"","done":false}
+  25.426	{"model":"gemma4-it:e4b","response":"represent","thinking":"","done":false}
+  25.501	{"model":"gemma4-it:e4b","response":" humanity","thinking":"","done":false}
+  25.576	{"model":"gemma4-it:e4b","response":"’","thinking":"","done":false}
+  25.651	{"model":"gemma4-it:e4b","response":"s","thinking":"","done":false}
+  25.726	{"model":"gemma4-it:e4b","response":" earliest","thinking":"","done":false}
+  25.801	{"model":"gemma4-it:e4b","response":" attempts","thinking":"","done":false}
+  25.876	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+  25.951	{"model":"gemma4-it:e4b","response":" standardize","thinking":"","done":false}
+  26.025	{"model":"gemma4-it:e4b","response":" visual","thinking":"","done":false}
+  26.101	{"model":"gemma4-it:e4b","response":" output","thinking":"","done":false}
+  26.176	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  26.251	{"model":"gemma4-it:e4b","response":" These","thinking":"","done":false}
+  26.325	{"model":"gemma4-it:e4b","response":" pre","thinking":"","done":false}
+  26.400	{"model":"gemma4-it:e4b","response":"-","thinking":"","done":false}
+  26.475	{"model":"gemma4-it:e4b","response":"industrial","thinking":"","done":false}
+  26.551	{"model":"gemma4-it:e4b","response":" methods","thinking":"","done":false}
+  26.626	{"model":"gemma4-it:e4b","response":" prioritized","thinking":"","done":false}
+  26.701	{"model":"gemma4-it:e4b","response":" iconography","thinking":"","done":false}
+  26.776	{"model":"gemma4-it:e4b","response":" over","thinking":"","done":false}
+  26.851	{"model":"gemma4-it:e4b","response":" reproducible","thinking":"","done":false}
+  26.926	{"model":"gemma4-it:e4b","response":" textual","thinking":"","done":false}
+  27.002	{"model":"gemma4-it:e4b","response":" mass","thinking":"","done":false}
+  27.077	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  27.152	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  27.227	{"model":"gemma4-it:e4b","response":"**","thinking":"","done":false}
+  27.302	{"model":"gemma4-it:e4b","response":"2","thinking":"","done":false}
+  27.378	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  27.453	{"model":"gemma4-it:e4b","response":" The","thinking":"","done":false}
+  27.528	{"model":"gemma4-it:e4b","response":" Birth","thinking":"","done":false}
+  27.603	{"model":"gemma4-it:e4b","response":"place","thinking":"","done":false}
+  27.678	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  27.753	{"model":"gemma4-it:e4b","response":" Printing","thinking":"","done":false}
+  27.829	{"model":"gemma4-it:e4b","response":":","thinking":"","done":false}
+  27.904	{"model":"gemma4-it:e4b","response":" East","thinking":"","done":false}
+  27.979	{"model":"gemma4-it:e4b","response":" Asia","thinking":"","done":false}
+  28.054	{"model":"gemma4-it:e4b","response":" (","thinking":"","done":false}
+  28.129	{"model":"gemma4-it:e4b","response":"Wood","thinking":"","done":false}
+  28.204	{"model":"gemma4-it:e4b","response":"block","thinking":"","done":false}
+  28.279	{"model":"gemma4-it:e4b","response":" Printing","thinking":"","done":false}
+  28.355	{"model":"gemma4-it:e4b","response":"):","thinking":"","done":false}
+  28.430	{"model":"gemma4-it:e4b","response":"**","thinking":"","done":false}
+  28.505	{"model":"gemma4-it:e4b","response":" The","thinking":"","done":false}
+  28.580	{"model":"gemma4-it:e4b","response":" true","thinking":"","done":false}
+  28.656	{"model":"gemma4-it:e4b","response":" ancestor","thinking":"","done":false}
+  28.731	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  28.807	{"model":"gemma4-it:e4b","response":" mechanized","thinking":"","done":false}
+  28.882	{"model":"gemma4-it:e4b","response":" printing","thinking":"","done":false}
+  28.957	{"model":"gemma4-it:e4b","response":" is","thinking":"","done":false}
+  29.034	{"model":"gemma4-it:e4b","response":" undeniably","thinking":"","done":false}
+  29.110	{"model":"gemma4-it:e4b","response":" found","thinking":"","done":false}
+  29.185	{"model":"gemma4-it:e4b","response":" in","thinking":"","done":false}
+  29.260	{"model":"gemma4-it:e4b","response":" China","thinking":"","done":false}
+  29.335	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  29.411	{"model":"gemma4-it:e4b","response":" Long","thinking":"","done":false}
+  29.486	{"model":"gemma4-it:e4b","response":" before","thinking":"","done":false}
+  29.561	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  29.636	{"model":"gemma4-it:e4b","response":" mechanical","thinking":"","done":false}
+  29.712	{"model":"gemma4-it:e4b","response":" presses","thinking":"","done":false}
+  29.787	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  29.863	{"model":"gemma4-it:e4b","response":" Europe","thinking":"","done":false}
+  29.939	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  30.014	{"model":"gemma4-it:e4b","response":" Chinese","thinking":"","done":false}
+  30.090	{"model":"gemma4-it:e4b","response":" artisans","thinking":"","done":false}
+  30.165	{"model":"gemma4-it:e4b","response":" mastered","thinking":"","done":false}
+  30.240	{"model":"gemma4-it:e4b","response":" **","thinking":"","done":false}
+  30.316	{"model":"gemma4-it:e4b","response":"wood","thinking":"","done":false}
+  30.391	{"model":"gemma4-it:e4b","response":"block","thinking":"","done":false}
+  30.467	{"model":"gemma4-it:e4b","response":" printing","thinking":"","done":false}
+  30.542	{"model":"gemma4-it:e4b","response":"**","thinking":"","done":false}
+  30.617	{"model":"gemma4-it:e4b","response":" (*","thinking":"","done":false}
+  30.693	{"model":"gemma4-it:e4b","response":"xyl","thinking":"","done":false}
+  30.768	{"model":"gemma4-it:e4b","response":"ography","thinking":"","done":false}
+  30.844	{"model":"gemma4-it:e4b","response":"*","thinking":"","done":false}
+  30.919	{"model":"gemma4-it:e4b","response":").","thinking":"","done":false}
+  30.995	{"model":"gemma4-it:e4b","response":" During","thinking":"","done":false}
+  31.073	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  31.149	{"model":"gemma4-it:e4b","response":" Tang","thinking":"","done":false}
+  31.224	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  31.300	{"model":"gemma4-it:e4b","response":" Song","thinking":"","done":false}
+  31.375	{"model":"gemma4-it:e4b","response":" dynasties","thinking":"","done":false}
+  31.451	{"model":"gemma4-it:e4b","response":" (","thinking":"","done":false}
+  31.527	{"model":"gemma4-it:e4b","response":"7","thinking":"","done":false}
+  31.602	{"model":"gemma4-it:e4b","response":"th","thinking":"","done":false}
+  31.678	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+  31.753	{"model":"gemma4-it:e4b","response":" ","thinking":"","done":false}
+  31.829	{"model":"gemma4-it:e4b","response":"1","thinking":"","done":false}
+  31.904	{"model":"gemma4-it:e4b","response":"3","thinking":"","done":false}
+  31.980	{"model":"gemma4-it:e4b","response":"th","thinking":"","done":false}
+  32.055	{"model":"gemma4-it:e4b","response":" centuries","thinking":"","done":false}
+  32.131	{"model":"gemma4-it:e4b","response":" CE","thinking":"","done":false}
+  32.207	{"model":"gemma4-it:e4b","response":"),","thinking":"","done":false}
+  32.282	{"model":"gemma4-it:e4b","response":" this","thinking":"","done":false}
+  32.358	{"model":"gemma4-it:e4b","response":" technique","thinking":"","done":false}
+  32.434	{"model":"gemma4-it:e4b","response":" flourished","thinking":"","done":false}
+  32.509	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  32.585	{"model":"gemma4-it:e4b","response":"\n\n","thinking":"","done":false}
+  32.661	{"model":"gemma4-it:e4b","response":"In","thinking":"","done":false}
+  32.737	{"model":"gemma4-it:e4b","response":" wood","thinking":"","done":false}
+  32.812	{"model":"gemma4-it:e4b","response":"block","thinking":"","done":false}
+  32.888	{"model":"gemma4-it:e4b","response":" printing","thinking":"","done":false}
+  32.964	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  33.040	{"model":"gemma4-it:e4b","response":" an","thinking":"","done":false}
+  33.116	{"model":"gemma4-it:e4b","response":" entire","thinking":"","done":false}
+  33.192	{"model":"gemma4-it:e4b","response":" page","thinking":"","done":false}
+  33.268	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  33.344	{"model":"gemma4-it:e4b","response":" text","thinking":"","done":false}
+  33.420	{"model":"gemma4-it:e4b","response":" or","thinking":"","done":false}
+  33.495	{"model":"gemma4-it:e4b","response":" imagery","thinking":"","done":false}
+  33.571	{"model":"gemma4-it:e4b","response":" was","thinking":"","done":false}
+  33.647	{"model":"gemma4-it:e4b","response":" carved","thinking":"","done":false}
+  33.723	{"model":"gemma4-it:e4b","response":" into","thinking":"","done":false}
+  33.799	{"model":"gemma4-it:e4b","response":" a","thinking":"","done":false}
+  33.875	{"model":"gemma4-it:e4b","response":" single","thinking":"","done":false}
+  33.951	{"model":"gemma4-it:e4b","response":" block","thinking":"","done":false}
+  34.026	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  34.102	{"model":"gemma4-it:e4b","response":" wood","thinking":"","done":false}
+  34.178	{"model":"gemma4-it:e4b","response":" by","thinking":"","done":false}
+  34.254	{"model":"gemma4-it:e4b","response":" skilled","thinking":"","done":false}
+  34.330	{"model":"gemma4-it:e4b","response":" artisans","thinking":"","done":false}
+  34.406	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  34.482	{"model":"gemma4-it:e4b","response":" This","thinking":"","done":false}
+  34.558	{"model":"gemma4-it:e4b","response":" matrix","thinking":"","done":false}
+  34.634	{"model":"gemma4-it:e4b","response":" was","thinking":"","done":false}
+  34.710	{"model":"gemma4-it:e4b","response":" then","thinking":"","done":false}
+  34.786	{"model":"gemma4-it:e4b","response":" inked","thinking":"","done":false}
+  34.862	{"model":"gemma4-it:e4b","response":" and","thinking":"","done":false}
+  34.938	{"model":"gemma4-it:e4b","response":" pressed","thinking":"","done":false}
+  35.014	{"model":"gemma4-it:e4b","response":" onto","thinking":"","done":false}
+  35.091	{"model":"gemma4-it:e4b","response":" paper","thinking":"","done":false}
+  35.167	{"model":"gemma4-it:e4b","response":" or","thinking":"","done":false}
+  35.243	{"model":"gemma4-it:e4b","response":" silk","thinking":"","done":false}
+  35.319	{"model":"gemma4-it:e4b","response":".","thinking":"","done":false}
+  35.395	{"model":"gemma4-it:e4b","response":" While","thinking":"","done":false}
+  35.471	{"model":"gemma4-it:e4b","response":" time","thinking":"","done":false}
+  35.547	{"model":"gemma4-it:e4b","response":"-","thinking":"","done":false}
+  35.623	{"model":"gemma4-it:e4b","response":"consuming","thinking":"","done":false}
+  35.699	{"model":"gemma4-it:e4b","response":"—","thinking":"","done":false}
+  35.775	{"model":"gemma4-it:e4b","response":"as","thinking":"","done":false}
+  35.851	{"model":"gemma4-it:e4b","response":" an","thinking":"","done":false}
+  35.927	{"model":"gemma4-it:e4b","response":" entirely","thinking":"","done":false}
+  36.003	{"model":"gemma4-it:e4b","response":" new","thinking":"","done":false}
+  36.079	{"model":"gemma4-it:e4b","response":" block","thinking":"","done":false}
+  36.155	{"model":"gemma4-it:e4b","response":" had","thinking":"","done":false}
+  36.231	{"model":"gemma4-it:e4b","response":" to","thinking":"","done":false}
+  36.308	{"model":"gemma4-it:e4b","response":" be","thinking":"","done":false}
+  36.384	{"model":"gemma4-it:e4b","response":" carved","thinking":"","done":false}
+  36.460	{"model":"gemma4-it:e4b","response":" for","thinking":"","done":false}
+  36.536	{"model":"gemma4-it:e4b","response":" every","thinking":"","done":false}
+  36.612	{"model":"gemma4-it:e4b","response":" subsequent","thinking":"","done":false}
+  36.688	{"model":"gemma4-it:e4b","response":" document","thinking":"","done":false}
+  36.764	{"model":"gemma4-it:e4b","response":" featuring","thinking":"","done":false}
+  36.841	{"model":"gemma4-it:e4b","response":" different","thinking":"","done":false}
+  36.917	{"model":"gemma4-it:e4b","response":" content","thinking":"","done":false}
+  36.993	{"model":"gemma4-it:e4b","response":"—","thinking":"","done":false}
+  37.070	{"model":"gemma4-it:e4b","response":"the","thinking":"","done":false}
+  37.146	{"model":"gemma4-it:e4b","response":" process","thinking":"","done":false}
+  37.222	{"model":"gemma4-it:e4b","response":" itself","thinking":"","done":false}
+  37.298	{"model":"gemma4-it:e4b","response":" marked","thinking":"","done":false}
+  37.375	{"model":"gemma4-it:e4b","response":" a","thinking":"","done":false}
+  37.451	{"model":"gemma4-it:e4b","response":" monumental","thinking":"","done":false}
+  37.527	{"model":"gemma4-it:e4b","response":" leap","thinking":"","done":false}
+  37.603	{"model":"gemma4-it:e4b","response":" from","thinking":"","done":false}
+  37.679	{"model":"gemma4-it:e4b","response":" hand","thinking":"","done":false}
+  37.755	{"model":"gemma4-it:e4b","response":"-","thinking":"","done":false}
+  37.832	{"model":"gemma4-it:e4b","response":"copy","thinking":"","done":false}
+  37.908	{"model":"gemma4-it:e4b","response":"ing","thinking":"","done":false}
+  37.984	{"model":"gemma4-it:e4b","response":" by","thinking":"","done":false}
+  38.060	{"model":"gemma4-it:e4b","response":" scrib","thinking":"","done":false}
+  38.136	{"model":"gemma4-it:e4b","response":"es","thinking":"","done":false}
+  38.212	{"model":"gemma4-it:e4b","response":",","thinking":"","done":false}
+  38.288	{"model":"gemma4-it:e4b","response":" allowing","thinking":"","done":false}
+  38.365	{"model":"gemma4-it:e4b","response":" for","thinking":"","done":false}
+  38.441	{"model":"gemma4-it:e4b","response":" the","thinking":"","done":false}
+  38.517	{"model":"gemma4-it:e4b","response":" creation","thinking":"","done":false}
+  38.593	{"model":"gemma4-it:e4b","response":" of","thinking":"","done":false}
+  38.669	{"model":"gemma4-it:e4b","response":" multiple","thinking":"","done":false}
+  38.746	{"model":"gemma4-it:e4b","response":" near","thinking":"","done":false}
+  38.822	{"model":"gemma4-it:e4b","response":"-","thinking":"","done":false}
+  38.898	{"model":"gemma4-it:e4b","response":"identical","thinking":"","done":false}
+  38.974	{"model":"gemma4-it:e4b","response":" copies","thinking":"","done":false}
+  39.050	{"model":"gemma4-it:e4b","response":" relatively","thinking":"","done":false}
+  39.127	{"model":"gemma4-it:e4b","response":" quickly","thinking":"","done":false}
+  39.203	{"model":"gemma4-it:e4b","response":" within","thinking":"","done":false}
+  39.208	{"model":"gemma4-it:e4b","response":"","context":[2,105,2364,107,6974,496,9813,20494,529,657,3198,236743,236778,236771,236771,236771,4171,580,506,4083,529,506,16386,2686,236761,106,107,105,4368,107,1408,669,49099,529,8860,30021,236787,562,61774,10358,529,506,53592,7161,108,818,16386,2686,236764,528,1061,61225,6667,236764,11979,618,886,529,506,1346,85342,86078,528,3246,4083,236761,1030,563,711,14778,496,5464,573,119364,1816,236793,625,563,614,3958,529,2777,236764,12352,236764,11639,236764,532,5255,14994,236761,3763,72269,4266,4654,237028,2003,10678,6549,531,4301,11442,236764,41691,236764,532,24412,1082,3785,1680,237028,509,144607,2579,27200,506,33744,529,39084,236764,6049,27069,699,506,236273,5111,12268,529,78169,531,506,43110,9254,529,3413,1938,73019,236761,2282,9535,506,4083,529,506,16386,2686,563,531,15819,496,22323,15812,170730,600,529,121364,4850,236787,699,143424,10946,3719,531,193075,8459,2066,236764,532,15334,236764,531,506,167733,2151,5177,54471,665,692,2707,3124,236761,108,2094,20494,795,2847,496,9813,22824,529,672,27725,22351,11294,236764,52065,1061,38320,699,3649,3863,5088,16386,528,7123,11560,1343,506,56904,529,79305,1722,684,47660,180558,528,3879,236764,34629,13323,8459,36253,600,85132,506,1938,3911,236764,532,32187,506,188880,4100,1546,27497,1053,580,3246,3305,532,61269,3904,236761,108,13513,108,10354,4040,564,236787,3946,75701,532,41956,90530,568,13286,72759,742,9250,236768,108,818,48170,531,38449,4876,532,23505,23057,563,12440,236761,13677,506,11575,529,12974,79305,1722,236764,27069,25015,3572,6667,529,72691,236764,7293,29220,506,4249,653,102036,529,1144,3588,3209,236761,669,29435,4615,964,49035,528,143424,141474,10154,5402,573,36297,7283,2351,12352,653,19833,16545,236761,108,1018,236770,236761,21107,9466,187600,236787,61713,4585,532,842,143139,53121,5978,711,623,82273,236775,528,506,4532,5113,236764,3649,6667,529,3759,3739,237028,3091,44830,236764,79639,236764,653,3606,579,923,5206,8403,237028,26998,27069,236858,236751,29435,16972,531,163296,7426,3938,236761,3143,877,236772,71758,4615,124406,212812,1024,95655,83096,3413,236761,108,1018,236778,236761,669,49935,2811,529,53592,236787,7123,11560,568,31317,5088,53592,1473,1018,669,1847,72630,529,193075,16386,563,164774,1765,528,5818,236761,8099,1680,506,12974,63581,529,3879,236764,8555,90760,83949,5213,5168,5088,16386,1018,14083,223181,5167,236829,769,9529,506,30752,532,15960,218235,568,236832,594,531,236743,236770,236800,594,24744,20200,779,672,9939,117508,236761,108,902,3863,5088,16386,236764,614,4251,3104,529,1816,653,41001,691,39043,1131,496,3161,3355,529,3863,684,23482,90760,236761,1174,6113,691,1299,178784,532,21216,8990,3627,653,27373,236761,5978,990,236772,59711,237028,527,614,11716,861,3355,1053,531,577,39043,573,1418,13323,2354,18482,1607,3004,237028,1437,1657,4850,11373,496,82247,42681,699,1526,236772,10401,522,684,81660,507,236764,10678,573,506,11381,529,5065,3541,236772,189078,16258,9150,6077,2351],"prompt_eval_count":30,"eval_count":512,"total_duration":39206977536,"load_duration":1944,"prompt_eval_duration":1192201088,"eval_duration":37780472000,"done_reason":"length","done":true}
