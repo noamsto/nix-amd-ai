@@ -63,17 +63,19 @@
     # host's glibc is newer than the pin they fail to load and llama.cpp silently
     # runs on CPU (#215). So point the loader at this nixpkgs' own RADV and skip
     # implicit layers; `--set-default` leaves an operator override in charge. A
-    # symlinkJoin, so the backends themselves aren't rebuilt.
+    # symlinkJoin, so the backends themselves aren't rebuilt. The unwrapped
+    # package is `.unwrapped`, for `.override`/`.overrideAttrs`.
     withOwnVulkanDriver = pkgs: pkg:
       pkgs.symlinkJoin {
-        inherit (pkg) pname version meta passthru;
+        inherit (pkg) pname version meta;
+        passthru = pkg.passthru // {unwrapped = pkg; inherit (pkg) src;} // pkgs.lib.optionalAttrs (pkg ? dev) {inherit (pkg) dev;};
         paths = [pkg];
         nativeBuildInputs = [pkgs.makeWrapper];
         postBuild = ''
           for f in $out/bin/*; do
             case $f in *.so) continue ;; esac
             wrapProgram "$f" \
-              --set-default VK_DRIVER_FILES ${pkgs.mesa}/share/vulkan/icd.d/radeon_icd.x86_64.json \
+              --set-default VK_DRIVER_FILES ${pkgs.mesa}/share/vulkan/icd.d/radeon_icd.${pkgs.stdenv.hostPlatform.parsed.cpu.name}.json \
               --set-default VK_LOADER_LAYERS_DISABLE '~implicit~'
           done
         '';
