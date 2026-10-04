@@ -22,18 +22,16 @@ index 7ea11e5..b578824 100644
              }
              return new_tag;
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 5bf1621..2ae5cd2 100644
+index 5bf1621..90cd23d 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -556,7 +556,17 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -556,7 +556,15 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
      // rectify_model_tag() indexes config by type: only safe for a supported tag.
      std::string ensure_tag = supported_models.cut_tag(model_tag);
      if (supported_models.is_model_supported(ensure_tag)) {
 -        ensure_tag = supported_models.rectify_model_tag(ensure_tag);
-+        // rectify_model_tag() picks the first size for a bare tag; a size map
-+        // that is missing, non-object or empty would read end().key() (undefined
-+        // behavior) or throw invalid_iterator. Both are malformed-entry faults,
-+        // so refuse them here, before anything is unloaded.
++        // rectify_model_tag() throws on a malformed size map, so answer it as a
++        // load fault here, before anything is unloaded.
 +        try {
 +            ensure_tag = supported_models.rectify_model_tag(ensure_tag);
 +        }
@@ -44,7 +42,7 @@ index 5bf1621..2ae5cd2 100644
      }
      // "model-faker" is the sentinel for `flm serve` started without a chat model,
      // and the handlers default `model` to current_model_tag -- so a request naming
-@@ -589,6 +599,30 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -589,6 +597,30 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
      try {
          auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
          family = info["details"]["family"];
