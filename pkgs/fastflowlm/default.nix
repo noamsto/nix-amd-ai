@@ -205,6 +205,19 @@ stdenv.mkDerivation (finalAttrs: {
   #     as on every non-streaming branch already. Read-side EOF cannot tell a
   #     half-close from a close; lemond (libcurl), curl, requests and httpx
   #     were checked and do not half-close.
+  #   - qwen3-5-omni-prefill-cancel.patch (#209): Qwen3_5_Omni::insert checks
+  #     the cancellation predicate between prefill chunks and, on a cancel,
+  #     sets stop_reason = CANCEL_DETECTED and breaks -- but still sampled
+  #     from last_thinker_result (only assigned on the last chunk, so stale on
+  #     an early cancel), bumped total_tokens, checkpointed and returned true.
+  #     The caller then ran generate(), whose forced  thinking block does four
+  #     NPU forwards and samples a token before its first cancel check, so a
+  #     request cancelled mid-prefill decoded one token from a truncated
+  #     prompt. It now returns false right after meta_info.prompt_tokens, as
+  #     AutoModel::_shared_insert and Qwen3VL_Flash::insert do: before
+  #     total_tokens, sampling and checkpoint, so no KV/checkpoint state is
+  #     left half-updated. No model_list.json entry selects this class, so
+  #     the fix is build-verified only (#209).
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -221,7 +234,8 @@ stdenv.mkDerivation (finalAttrs: {
   # ROCm/FastFlowLM#680), a pre-accept reset killing the accept loop (on main
   # at 39ff855632), ignoring a client disconnect outside
   # /v1/chat/completions, answering a malformed model_list.json entry as a
-  # client error, ignoring a disconnect on non-streaming /api/chat, and
+  # client error, ignoring a prefill cancel in Qwen3_5_Omni::insert,
+  # ignoring a disconnect on non-streaming /api/chat, and
   # erasing a cancel that lands before a streaming handler starts (the last
   # two on main at ef60a5f, the latter in /v1/chat/completions). A bump that
   # breaks any patch fails the build rather than silently losing it.
@@ -241,6 +255,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/model-list-download-check.patch
     ./patches/cancel-chat-nonstream.patch
     ./patches/cancel-keep-early.patch
+    ./patches/qwen3-5-omni-prefill-cancel.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
