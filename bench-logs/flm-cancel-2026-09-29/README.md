@@ -3,7 +3,9 @@
 Red/green for #200 and #201. Both belong to #191's invariant: once the client
 is gone (socket closed, or `POST /api/cancel`), the request stops promptly and
 releases the NPU, whether the cancel arrives while the request is queued, during
-a model load, during prefill or during decode. Also included: byte-identity of
+a model load, during prefill or during decode. (Only the socket close was
+probed. `POST /api/cancel` never reached its target on this build; see
+[flm-request-id-2026-10-04](../flm-request-id-2026-10-04/).) Also included: byte-identity of
 normal non-streaming `/api/chat` answers, a half-close characterisation with a
 check of real clients, and reruns of #198's slot probes, #206's
 reset-before-accept probe and OFLM-Next's server-api conformance suite.

@@ -1,0 +1,55 @@
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 1990624..74c7593 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -13,6 +13,8 @@
+ #include <iostream>
+ #include <iomanip>
+ #include <locale>
++#include <cstdlib>
++#include <sys/random.h>
+ 
+ 
+ // Global NPU access control
+@@ -141,6 +143,22 @@ static std::string safe_dump(const json& j) {
+     return j.dump(-1, ' ', false, json::error_handler_t::replace);
+ }
+ 
++// A guessable default request id lets any client cancel another client's
++// in-flight request via POST /api/cancel, so draw 128 bits from the kernel.
++// getrandom(2) for <= 256 bytes never returns short or EINTR once the pool
++// is initialised, and blocks until then. Abort rather than throw: the call
++// site is outside every catch in process_task, so an exception would leave
++// the client without a response; and a weaker fallback would silently make
++// ids guessable again.
++static std::string random_request_id() {
++    unsigned char bytes[16];
++    if (getrandom(bytes, sizeof bytes, 0) != static_cast<ssize_t>(sizeof bytes)) std::abort();
++    static const char hex[] = "0123456789abcdef";
++    std::string id = "req_";
++    for (unsigned char b : bytes) { id += hex[b >> 4]; id += hex[b & 0xf]; }
++    return id;
++}
++
+ // Releases the NPU lock exactly once per held acquisition, regardless of
+ // which exit path process_task takes, including an exception that escapes
+ // every catch in process_task uncaught (WebServer::start() wraps ioc.run()
+@@ -814,13 +832,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             return;
+         }
+ 
++        // /api/cancel's request_id names the request to cancel, not this one.
++        // Registering under it overwrote the target's token, so the cancel
++        // cancelled itself and erased the slot, leaving the target running.
+         std::string request_id;
+-        if (request_json.contains("request_id")) {
++        if (key != "POST /api/cancel" && request_json.contains("request_id")) {
+             request_id = request_json["request_id"];
+         }
+         else {
+-            static std::atomic<int> counter{ 0 };
+-            request_id = "req_" + std::to_string(counter.fetch_add(1));
++            request_id = random_request_id();
+         }
+ 
+         register_active_request(request_id, cancellation_token);
