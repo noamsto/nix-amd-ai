@@ -72,7 +72,11 @@ jobs:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
       - name: Build openflowlm kernel set ${{ matrix.set }}
-        run: nix build -L ".#openflowlm.kernels.passthru.sets.\"${{ matrix.set }}\""
+        env:
+          SET: ${{ matrix.set }}
+        run: |
+          [[ $SET =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unexpected set name: $SET" >&2; exit 1; }
+          nix build -L ".#openflowlm.kernels.passthru.sets.\"$SET\""
 
   build:
     needs: [rocm, npu-kernels]

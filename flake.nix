@@ -524,6 +524,44 @@
                 touch $out
               '';
 
+            # Cheap (no kernel build): runs the join's plan executor with stub
+            # sets. gemma3-12b and gemma3-4b both export into Gemma3-4B-NPU2;
+            # with gemma3-12b and a later set built inline, the serial order
+            # still leaves gemma3-4b's files in that directory.
+            openflowlm-kernel-sets-join =
+              pkgs.runCommand "openflowlm-kernel-sets-join" {
+                nativeBuildInputs = [pkgs.jq];
+                SRC = linuxPackages.openflowlm.passthru.src;
+                PLAN = ./pkgs/openflowlm/kernel-sets-plan.sh;
+                JOIN = ./pkgs/openflowlm/kernel-sets-join.sh;
+                SETS = ./pkgs/openflowlm/kernel-sets.json;
+              } ''
+                jq '.llmSpecs -= ["gemma3-12b", "qwen36-35b-a3b"]' "$SETS" > d.json
+                bash "$PLAN" "$SRC" d.json > plan.txt
+                grep -qx 'BUILD-LLM gemma3-12b' plan.txt
+                grep -qx 'BUILD-LLM qwen36-35b-a3b' plan.txt
+
+                # Stub sets write a marker naming the set, into the shared
+                # directory when the set has one.
+                dir() { case "$1" in gemma3-12b | gemma3-4b) echo Gemma3-4B-NPU2 ;; *) echo "$1" ;; esac; }
+                stage() { mkdir -p "src/xclbins/$(dir "$1")"; echo "$1" > "src/xclbins/$(dir "$1")/marker"; }
+                copy() { chmod -R u+w "$out_x"; mkdir -p "$out_x/$(dir "$1")"; echo "$1" > "$out_x/$(dir "$1")/marker"; }
+                copy_llm() { copy "$1"; }
+                copy_bert() { copy "$1"; }
+                build_LLM() { stage "$1"; }
+                build_BERT() { stage "$1"; }
+
+                out_x=$PWD/out/xclbins
+                mkdir -p "$out_x" src/xclbins
+                source "$JOIN"
+                execute_plan plan.txt "$out_x" 2>/dev/null
+
+                test "$(cat "$out_x/Gemma3-4B-NPU2/marker")" = gemma3-4b
+                test "$(cat "$out_x/qwen36-35b-a3b/marker")" = qwen36-35b-a3b
+
+                touch $out
+              '';
+
             module-eval-rocm-false =
               (inputs.nixpkgs.lib.nixosSystem {
                 inherit system;

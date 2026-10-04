@@ -76,8 +76,16 @@ let
     # One BERT family's export command, args read from families.json (the same
     # source export_bert_sets reads). $1 is the family name.
     bert_args() {
-      readarray -t _args < <(jq -r --arg n "$1" '.families[] | select(.name == $n) | .args[]' npu_offload/gemm_rtp/families.json)
-      readarray -t _common < <(jq -r '.common[]' npu_offload/gemm_rtp/families.json)
+      # Assigned first: a jq failure inside < <(...) is invisible to errexit.
+      local args common
+      args=$(jq -r --arg n "$1" '.families[] | select(.name == $n) | .args[]' npu_offload/gemm_rtp/families.json)
+      common=$(jq -r '.common[]' npu_offload/gemm_rtp/families.json)
+      if [ -z "$args" ] || [ -z "$common" ]; then
+        echo "error: no args/common for BERT family $1 in families.json" >&2
+        return 1
+      fi
+      readarray -t _args <<<"$args"
+      readarray -t _common <<<"$common"
       ./ironvenv/bin/python npu_offload/gemm_rtp/export_gemm_rtp.py "''${_args[@]}" "''${_common[@]}" --out "src/xclbins/$1"
     }
   '';
@@ -191,27 +199,13 @@ let
 
       bash ${./kernel-sets-plan.sh} . ${./kernel-sets.json} > plan.txt
 
-      while IFS=' ' read -r action name; do
-        case "$action" in
-          COPY-LLM) copy_llm "$name" ;;
-          COPY-BERT) copy_bert "$name" ;;
-          BUILD-LLM)
-            echo "WARNING: kernel set $name is present in src but missing from kernel-sets.json; building it in the join. Run pkgs/openflowlm/update-kernel-sets.sh to refresh the list." >&2
-            ./ironvenv/bin/python open_kernels/export_qwen36_kernels.py --spec "open_kernels/recipes/specs/$name.json" --force
-            chmod -R u+w $out/xclbins
-            cp -a src/xclbins/. $out/xclbins/
-            ;;
-          BUILD-BERT)
-            echo "WARNING: BERT family $name is present in src but missing from kernel-sets.json; building it in the join. Run pkgs/openflowlm/update-kernel-sets.sh to refresh the list." >&2
-            bert_args "$name"
-            chmod -R u+w $out/xclbins
-            cp -a src/xclbins/. $out/xclbins/
-            ;;
-          SKIP-LLM | SKIP-BERT)
-            echo "WARNING: kernel set $name is listed in kernel-sets.json but absent from src; skipping it. Run pkgs/openflowlm/update-kernel-sets.sh to refresh the list." >&2
-            ;;
-        esac
-      done < plan.txt
+      build_LLM() {
+        ./ironvenv/bin/python open_kernels/export_qwen36_kernels.py --spec "open_kernels/recipes/specs/$1.json" --force
+      }
+      build_BERT() { bert_args "$1"; }
+
+      source ${./kernel-sets-join.sh}
+      execute_plan plan.txt $out/xclbins
 
       # Same validation the monolithic export ran after the BERT sets.
       python3.12 npu_offload/gemm_rtp/check_design_sets.py --xclbins $out/xclbins
