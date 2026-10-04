@@ -21,7 +21,7 @@ index ea1cb30..890db72 100644
              // read the json file as a string
              std::string json_str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 9d08436..b5efdb8 100644
+index 9d08436..92c675f 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
 @@ -671,18 +671,26 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
@@ -62,7 +62,7 @@ index 9d08436..b5efdb8 100644
      try {
          auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
          auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
-@@ -710,27 +718,32 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -710,27 +718,36 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
  void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
      std::string ensure_tag = model_tag;
@@ -107,12 +107,16 @@ index 9d08436..b5efdb8 100644
 -        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()));
 -        exit(EXIT_FAILURE);
 +        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()) + "; serving without ASR");
++        // load_model() creates the NPU manager before it reads config.json, so
++        // a throw can leave a half-loaded engine holding NPU state; the old
++        // exit() freed it, so drop it here too before serving.
++        this->whisper_engine.reset();
 +        this->asr = false;
 +        return;
      }
  #else
      throw std::runtime_error("ASR models are not supported in this build");
-@@ -742,28 +755,33 @@ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
+@@ -742,28 +759,36 @@ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
  void RestHandler::ensure_embed_model_loaded(const std::string& model_tag) {
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
      std::string ensure_tag = model_tag;
@@ -159,6 +163,9 @@ index 9d08436..b5efdb8 100644
 -        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()));
 -        exit(EXIT_FAILURE);
 +        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()) + "; serving without embeddings");
++        // Drop a half-loaded engine rather than keep it for the server's
++        // lifetime; the old exit() freed it.
++        this->auto_embedding_engine.reset();
 +        this->embed = false;
 +        return;
      }
