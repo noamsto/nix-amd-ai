@@ -24,7 +24,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
-CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`. The GPU backends track nixpkgs too; the `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944), backed by llama.cpp [#22673](https://github.com/ggml-org/llama.cpp/pull/22673) — fires on any nixpkgs llama.cpp past `b9175`.
+CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`. The GPU backends track nixpkgs too; the `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944) — fires on any nixpkgs llama.cpp past `b9175`. llama.cpp is pinned to **b11382**, which carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 
 The `lemonade` package composes three derivations:
 
@@ -372,6 +372,32 @@ This deletes downloaded models the list doesn't mention. It's off by default —
 models are large and slow to re-fetch, and anything pulled by hand for an
 experiment would vanish on the next activation. It requires a non-empty
 `lemonade.models`, so an empty list can never be read as "delete everything".
+
+### Speculative MTP: `lemonade.customModels`
+
+The `mtp` label makes lemond pass `--spec-type draft-mtp`, which needs the model
+to carry an MTP draft head. For Qwen3.8-Flash-Next the head is a **separate**
+self-contained GGUF, declared as the `draft` checkpoint alongside `main`:
+
+```nix
+hardware.amd-npu.lemonade.customModels."Qwen3.8-Flash-Next-MTP" = {
+  checkpoints = {
+    main  = "unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS";
+    draft = "ggml-org/Qwen3.8-Flash-Next-GGUF:mtp-Qwen3.8-Flash-Next-Q8_0.gguf";
+  };
+  recipe = "llamacpp";
+  recipe_options = {
+    ctx_size = 131072;
+    llamacpp_args = "-ctk q8_0 -ctv q8_0 --spec-draft-n-max 3";
+  };
+  labels = ["chat" "reasoning" "tool-calling" "mtp"];
+};
+```
+
+The `draft` head must be the **ggml-org** one, not unsloth's `MTP/` copy — the
+latter was built for the superseded fork and aborts stock b11382 (see the
+bench-logs README). `--spec-draft-n-max 3` is the best setting measured here;
+4 is slower than 3 on this host.
 
 ### Tauri desktop app: download progress is fragile when backgrounded
 
@@ -853,8 +879,11 @@ reference: wizard flow, modes (HTTP / MTP A/B / backend), the model picker
 (search, fit glyphs, markers), the results columns (Decode, Predicted, % ceil), the
 status rail, preflight fixers, and every headless flag.
 
-Authoritative MTP A/B numbers (idle GPU + AC + performance power profile) are **pending**
-— the methodology is stable but no clean reference run has been committed yet.
+Authoritative MTP A/B numbers (idle GPU + AC + performance power profile) for
+Qwen3.8-Flash-Next on halo are in
+[`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
+The older `bench-logs/mtp-2026-05-*` rows (Qwen3.6 on Strix Point) stay
+provisional.
 
 ## CI
 

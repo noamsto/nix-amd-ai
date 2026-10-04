@@ -140,6 +140,13 @@ not repeated here since it uses different models from this doc's Qwen3.5-4B.
 gfx1150 was **not** re-measured (no gfx1150 host available this session); its
 last-known numbers stay the widened-patch ones above.
 
+## b11382 re-measurement
+
+The MTP bump to b11382 (#137) re-ran the same corpus/flags and got **6.8311**
+again — identical to b11207 and 0.19% from the 6.8182 reference. The Qwen3.8
+MTP work is not a ROCm numerics regression. Details in
+[bench-logs/qwen38-flash-next-mtp-2026-10-04/](../bench-logs/qwen38-flash-next-mtp-2026-10-04/).
+
 ## What was measured
 
 Measured 2026-09-06/07 on **this** Halo host and nowhere else — Ryzen AI MAX+ 395,
