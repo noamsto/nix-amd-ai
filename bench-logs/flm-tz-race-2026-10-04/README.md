@@ -35,7 +35,7 @@ one process-wide static `struct tm`:
 - the request logger's `get_current_time_string()` in `server.cpp`;
 - minja's `strftime_now` from `chat_template::apply`.
 
-The patch switches the first and third to `localtime_r` with a caller-owned
+The patch switches all three sites to `localtime_r` with a caller-owned
 `struct tm`, and takes `handle_ps`'s offset directly from `local_tm.tm_gmtoff`
 (libc's own UTC offset for that instant), so the offset is correct across DST
 and month/year boundaries and no two threads share a time buffer. The
