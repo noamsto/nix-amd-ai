@@ -58,20 +58,13 @@ row() {
 vulkan() { row vulkan "$SERVER_VULKAN" "$@"; }
 rocm() { row rocm "$SERVER_ROCM" "$@"; }
 
-# A. Vulkan clean re-take: baseline before each config, round 2 in reversed order
-cfgs=(3:0 3:0.6 4:0.75 5:0.75 3:0.75)
-for round in 1 2; do
-    if [ "$round" = 2 ]; then
-        rev=()
-        for ((i = ${#cfgs[@]} - 1; i >= 0; i--)); do rev+=("${cfgs[i]}"); done
-        order=("${rev[@]}")
-    else
-        order=("${cfgs[@]}")
-    fi
-    for cfg in "${order[@]}"; do
-        vulkan --spec none --label "A-r$round-base-before-$cfg"
-        vulkan --spec draft-mtp --nmax "${cfg%:*}" --pmin "${cfg#*:}" --label "A-r$round-mtp-$cfg"
-    done
+# Shortened row set (~20 rows, time budget). Dropped: the A configs 3:0.6 and
+# 5:0.75 and round 2, the ROCm -fa rows and 8K depth rows, and all of E.
+
+# A. Vulkan clean re-take: baseline before each config, one round
+for cfg in 3:0 3:0.75 4:0.75; do
+    vulkan --spec none --label "A-base-before-$cfg"
+    vulkan --spec draft-mtp --nmax "${cfg%:*}" --pmin "${cfg#*:}" --label "A-mtp-$cfg"
 done
 
 # B. Vulkan, n-max 3 / no p-min
@@ -87,21 +80,10 @@ vulkan --spec draft-mtp --nmax 3 --pmin 0 --depth 32768 --label B-d32768-mtp
 # C. ROCm
 rocm --spec none --depth 512 --label C-d512-off
 rocm --spec draft-mtp --nmax 3 --pmin 0 --depth 512 --label C-d512-mtp
-rocm --spec none --fa off --label C-fa-off-off
-rocm --spec draft-mtp --nmax 3 --pmin 0 --fa off --label C-fa-off-mtp
-rocm --spec none --fa on --ctk f16 --ctv f16 --label C-fa-on-f16kv-off
-rocm --spec draft-mtp --nmax 3 --pmin 0 --fa on --ctk f16 --ctv f16 --label C-fa-on-f16kv-mtp
-for depth in 8192 32768; do
-    rocm --spec none --depth "$depth" --label "C-d$depth-off"
-    rocm --spec draft-mtp --nmax 3 --pmin 0 --depth "$depth" --label "C-d$depth-mtp"
-done
+rocm --spec none --depth 32768 --label C-d32768-off
+rocm --spec draft-mtp --nmax 3 --pmin 0 --depth 32768 --label C-d32768-mtp
 
-# D. Vulkan (3,0): residency, ngram-mod, tool call
-vulkan --spec none --residency --label D-residency-off
+# D. Vulkan (3,0): residency with the n-gram share, tool call
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --residency --label D-residency
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --ngram-mod --residency --label D-ngram-mod-residency
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --tool-call --label D-tool-call
-
-# E. Vulkan control, n-max 3 / no p-min: default threads (f16-KV control rows live in B)
-vulkan --spec none --threads -1 --label E-threads-auto-off
-vulkan --spec draft-mtp --nmax 3 --pmin 0 --threads -1 --label E-threads-auto-mtp
