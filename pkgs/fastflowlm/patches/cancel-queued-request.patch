@@ -59,19 +59,15 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
                  is_json = true;
              }
              else if (content_type.find("multipart/form-data") != std::string::npos) {
-@@ -823,12 +843,38 @@
+@@ -823,12 +843,31 @@
      // Decide if this handler needs exclusive NPU access.
      bool needs_npu = requires_npu_access(std::string(req.method_string()), std::string(req.target()));
  
 +    const bool cancel_route = (key == "POST /api/cancel");
-+    // A route with no cancellation path registers only when it starts running
-+    // (defer_registration); a cancellable route registers now, before queueing.
 +    const bool defer_registration = needs_npu && !handler_honours_cancel(key) && !cancel_route;
 +
-+    // A non-string request_id threw inside process_task while it held the NPU
-+    // lock -- which was then never released, so every request queued behind it
-+    // waited forever. Refuse it here, before a token is registered or the
-+    // request is queued.
++    // Refuse a non-string request_id before registering or queueing: the
++    // handler throws on it, and it used to throw while holding the NPU lock.
 +    if (request_json.contains("request_id") && !request_json["request_id"].is_string()) {
 +        res.result(http::status::bad_request);
 +        res.body() = safe_dump(json{ {"error", {
@@ -90,17 +86,14 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
 -    // Define a task lambda with is_deferred flag
 -    auto process_task = [this, it, req_ptr, res_ptr, session, needs_npu, key, is_json](bool is_deferred) {
-+    // Define a task lambda with is_deferred flag. The cancellation token (and,
-+    // for a cancellable route, the registry entry) is created by prepare() below
-+    // -- before the request is queued -- so POST /api/cancel can reach a request
-+    // still waiting for the NPU. A route with no cancellation path registers
-+    // here, when the task starts, as before.
++    // Define a task lambda with is_deferred flag. The token and id come from
++    // prepare() below; a no-cancel-path route registers here, when it starts.
 +    auto process_task = [this, it, req_ptr, res_ptr, session, needs_npu, defer_registration]
 +        (bool is_deferred, std::shared_ptr<CancellationToken> cancellation_token, std::string request_id) {
          auto& req_ref = *req_ptr;
          auto& res_ref = *res_ptr;
  
-@@ -838,63 +884,7 @@
+@@ -838,63 +877,7 @@
          auto npu_guard = std::make_shared<NpuReleaseGuard>(
              [this] { this->process_next_npu_request(); }, needs_npu);
  
@@ -165,7 +158,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
          // catch is_deferred
          auto send_response = [res_ptr, session, this, request_id, is_deferred, cancellation_token](const json& response_data) {
-@@ -925,7 +915,7 @@
+@@ -925,7 +908,7 @@
              response_ref.set(http::field::content_type, "application/json");
              response_ref.prepare_payload();
              cancellation_token->complete();
@@ -174,7 +167,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
              if (is_deferred && session) {
                  session->write_response_from_callback();
-@@ -941,7 +931,7 @@
+@@ -941,7 +924,7 @@
                  session->write_streaming_response(data, is_final);
              }
              if (is_final) {
@@ -183,7 +176,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
              }
          };
  
-@@ -958,7 +948,7 @@
+@@ -958,7 +941,7 @@
              // application/json) -- refuse it like the parse failure above,
              // not the generic 500 below.
              cancellation_token->complete();
@@ -192,7 +185,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
              res_ref.result(http::status::bad_request);
              res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
-@@ -973,7 +963,7 @@
+@@ -973,7 +956,7 @@
          }
          catch (const std::exception& e) {
              cancellation_token->complete();
@@ -201,7 +194,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
              res_ref.result(http::status::internal_server_error);
              header_print("ERROR", "Handler exception: " + std::string(e.what()));
-@@ -989,7 +979,7 @@
+@@ -989,7 +972,7 @@
          }
          catch (...) {
              cancellation_token->complete();
@@ -210,7 +203,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
              res_ref.result(http::status::internal_server_error);
              res_ref.body() = safe_dump(json{ {"error", "Unknown handler exception"} });
-@@ -1007,8 +997,32 @@
+@@ -1007,8 +990,32 @@
  
      // --- Logic to run or queue the task ---
  
@@ -244,7 +237,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
          return false;
      }
  
-@@ -1016,7 +1030,8 @@
+@@ -1016,7 +1023,8 @@
          if (needs_npu) {
              header_print("🟢 ", "NPU Locked!");
          }
@@ -254,7 +247,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
          return false;
      }
  
-@@ -1034,9 +1049,12 @@
+@@ -1034,9 +1042,12 @@
          return false;
      }
      else {

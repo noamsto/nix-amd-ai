@@ -86,7 +86,10 @@ another request's slot; a non-aware NPU route (embeddings, audio) registers when
 it starts and unregisters on completion. The `registry` case drives exactly this
 id-reuse sequence and fails if the slot is erased early; `queued-cancel`,
 `queued-disconnect` and `queued-normal` exercise the cancel-hit, disconnect and
-normal-completion paths.
+normal-completion paths. Two requests in flight at once with the same
+caller-supplied id still overwrite each other's slot, so a cancel hits only the
+newest; that leaks and double-erases nothing, but re-using an id while it is in
+flight is a caller hazard.
 
 ## Limits
 
