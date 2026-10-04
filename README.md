@@ -552,8 +552,8 @@ plus `"openflowlm"` in the unfree predicate (see [Usage](#usage)). Lemonade
 drives `oflm` through its `flm` recipe exactly as it drives `flm` itself;
 models still show as `*-FLM`.
 
-Upstream has no tags or releases, so the package pins `main` at `8c83712`
-(2026-09-27). It is pre-alpha: `oflm version` reports `0.1.0`, and upstream
+Upstream has no tags or releases, so the package pins `main` at `3621edf`
+(2026-10-03). It is pre-alpha: `oflm version` reports `0.1.0`, and upstream
 says anything may change before a 1.0.
 
 **What is open and what is not.** The package builds OFLM's open kernel sets
@@ -561,18 +561,19 @@ from source in the Nix sandbox with this flake's `mlir-aie` 1.4.2 and
 `llvm-aie` Peano (upstream's pinned pair), no NPU needed: the dense/MoE sets
 for 11 models (12 recipe specs; `gemma3-12b`'s set is overwritten by
 `gemma3-4b`'s, an upstream naming quirk) and the 5 BERT embedding design sets.
-The BERT export is made device-free by a carried patch, open upstream as
-[Atomic-Germ/OpenFlowLM-Next#126](https://github.com/Atomic-Germ/OpenFlowLM-Next/pull/126).
+The BERT export is device-free upstream, merged as
+[Atomic-Germ/OpenFlowLM-Next#126](https://github.com/Atomic-Germ/OpenFlowLM-Next/pull/126),
+so the package carries no patch for it.
 Every other model, including `llama3.2:1b`, still runs on FastFlowLM's closed
 engine libraries and kernels, which OFLM's tree ships alongside its own —
 that is why `pkgs.openflowlm` is unfree. The kernel build is its own
 derivation (`openflowlm.kernels`), ~50 min on halo, cached in this flake's
 Cachix.
 
-**A carried fix.** A model file whose size differed from OFLM's manifest
-printed a `[WARNING]` to stdout ahead of `oflm list --json`, which made
-lemonade's strict JSON parse drop every FLM model. The package moves that
-warning to stderr.
+A model file whose size differs from OFLM's manifest is treated as missing;
+upstream prints that warning to stderr, keeping the `oflm list --json` stdout a
+single JSON document for lemonade to parse (upstream
+[#133](https://github.com/Atomic-Germ/OpenFlowLM-Next/issues/133)).
 
 **Shared model store caveat.** With no `~/.config/oflm` and no
 `OFLM_MODEL_PATH`, `oflm` falls back to FastFlowLM's `~/.config/flm` store, so

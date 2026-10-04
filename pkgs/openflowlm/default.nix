@@ -33,35 +33,20 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "openflowlm";
-  # Upstream has no tags or releases (checked 2026-09-28), so this pins main;
+  # Upstream has no tags or releases (checked 2026-10-03), so this pins main;
   # the binary reports upstream's own 0.1.0.
-  version = "0.1.0-unstable-2026-09-27";
+  version = "0.1.0-unstable-2026-10-03";
 
   src = fetchFromGitHub {
     owner = "Atomic-Germ";
     repo = "OpenFlowLM-Next";
-    rev = "8c837120d25d18bfbae9d7aa79572ccbb785e2f3";
-    hash = "sha256-NkxTT0pYDxql7JtQYEVzcfIWrnjisoqqbFrSmyq5u60=";
+    rev = "3621edf2561c2a4438c73abd4f74412387dcd06e";
+    hash = "sha256-PD91GN4sZn3iRwZqkl1Pa/uw3hYuNKLZLA5c1krE4Ls=";
     fetchSubmodules = true;
   };
 
-  patches = [
-    # The BERT exporter allocated device="npu" tensors and ran each GEMM
-    # once, needing /dev/accel and pyxrt at build time; compile-only is
-    # byte-identical in insts. Drop when Atomic-Germ/OpenFlowLM-Next#126
-    # merges.
-    ./patches/device-free-bert-export.patch
-    # A size-mismatched model file printed a [WARNING] to stdout ahead of
-    # `list --json`, and lemonade's strict json::parse of that output then
-    # drops every FLM model. Drop when upstream prints it to stderr.
-    ./patches/list-json-warning-to-stderr.patch
-  ];
-
-  # Kernels get ONLY the device-free patch, so changing the engine-only
-  # list-json patch never invalidates the ~50 min kernels build.
   passthru.kernels = callPackage ./kernels.nix {
     inherit (finalAttrs) src version;
-    patches = [./patches/device-free-bert-export.patch];
     inherit mlir-aie llvm-aie xrt;
   };
 
