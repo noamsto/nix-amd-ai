@@ -26,6 +26,7 @@ results="$outdir/$label.results"
 : >"$results"
 
 server_pid=""
+start_err=""
 
 cleanup() {
   local p
@@ -76,7 +77,7 @@ start_server() {
   local busy=0
   while flm_running; do
     if (( busy >= 1800 )); then
-      echo "NPU still busy after ${busy}s" >&2
+      start_err="NPU still busy after ${busy}s"; echo "$start_err" >&2
       return 1
     fi
     echo "another flm process is running; waiting 5s..." >&2
@@ -89,13 +90,13 @@ start_server() {
   local waited=0
   while (( waited < 300 )); do
     if ! kill -0 "$server_pid" 2>/dev/null; then
-      echo "server died before ready" >&2
+      start_err="server died before ready"; echo "$start_err" >&2
       server_pid=""; return 1
     fi
     curl -s -o /dev/null "$base/api/version" && return 0
     sleep 1; (( waited++ ))
   done
-  echo "server not ready within 300s" >&2
+  start_err="server not ready within 300s"; echo "$start_err" >&2
   return 1
 }
 
@@ -187,7 +188,7 @@ case_own_id() {
 }
 
 if ! start_server; then
-  record startup FAIL "server did not start; see server-$label.log"
+  record startup FAIL "$start_err"
   exit 1
 fi
 
