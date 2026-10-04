@@ -102,6 +102,6 @@ vulkan --spec draft-mtp --nmax 3 --pmin 0 --residency --label D-residency
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --ngram-mod --residency --label D-ngram-mod-residency
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --tool-call --label D-tool-call
 
-# E. Vulkan controls, n-max 3 / no p-min: f16 KV with FA on, default threads
+# E. Vulkan control, n-max 3 / no p-min: default threads (f16-KV control rows live in B)
 vulkan --spec none --threads -1 --label E-threads-auto-off
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --threads -1 --label E-threads-auto-mtp
