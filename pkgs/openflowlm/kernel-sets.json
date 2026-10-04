@@ -1,0 +1,23 @@
+{
+  "llmSpecs": [
+    "gemma3-12b",
+    "gemma3-4b",
+    "granite42-3b",
+    "hy-mt2-7b",
+    "lfm2-1.2b",
+    "llama31-8b",
+    "minicpm5-2b",
+    "phi4-mini-4b",
+    "qwen25-3b",
+    "qwen3-4b",
+    "qwen35-9b",
+    "qwen36-35b-a3b"
+  ],
+  "bertFamilies": [
+    "BERT-h384-bfp16",
+    "BERT-h384-bf16",
+    "BERT-h768-bfp16",
+    "BERT-h768-gated-bfp16",
+    "BERT-h1024-bfp16"
+  ]
+}

@@ -566,9 +566,10 @@ The BERT export is device-free upstream, merged as
 so the package carries no patch for it.
 Every other model, including `llama3.2:1b`, still runs on FastFlowLM's closed
 engine libraries and kernels, which OFLM's tree ships alongside its own —
-that is why `pkgs.openflowlm` is unfree. The kernel build is its own
-derivation (`openflowlm.kernels`), ~50 min on halo, cached in this flake's
-Cachix.
+that is why `pkgs.openflowlm` is unfree. Each kernel set is its own derivation
+(`openflowlm.kernels.passthru.sets`) and `openflowlm.kernels` is a cheap join
+over them, built in parallel locally and as a per-set CI matrix
+(`kernel-sets.json`), cached in this flake's Cachix.
 
 A model file whose size differs from OFLM's manifest is treated as missing;
 upstream prints that warning to stderr, keeping the `oflm list --json` stdout a

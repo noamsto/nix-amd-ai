@@ -45,10 +45,19 @@ stdenv.mkDerivation (finalAttrs: {
     fetchSubmodules = true;
   };
 
+  # Bumping rev means the open_kernels specs and BERT families may have
+  # changed; run pkgs/openflowlm/update-kernel-sets.sh to refresh
+  # pkgs/openflowlm/kernel-sets.json (the join recovers from drift either way,
+  # but the per-set derivations and CI matrix read the committed list).
+
   passthru.kernels = callPackage ./kernels.nix {
     inherit (finalAttrs) src version;
     inherit mlir-aie llvm-aie xrt;
   };
+
+  # Exposed so update-kernel-sets.sh can resolve the pinned source without
+  # re-deriving the fetchFromGitHub rev.
+  passthru.src = finalAttrs.src;
 
   cargoDeps = rustPlatform.importCargoLock {lockFile = ./Cargo.lock;};
   cargoRoot = "third_party/tokenizers-cpp/rust";

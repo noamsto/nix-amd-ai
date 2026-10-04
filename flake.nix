@@ -486,6 +486,44 @@
                 touch $out
               '';
 
+            # Cheap (no kernel build): exercises the same src-vs-list plan the
+            # kernels join executes, in both drift directions, with a doctored
+            # list. Drift is recoverable, so this only proves the plan reports
+            # it instead of failing or silently dropping a set.
+            openflowlm-kernel-sets-drift =
+              pkgs.runCommand "openflowlm-kernel-sets-drift" {
+                nativeBuildInputs = [pkgs.jq];
+                SRC = linuxPackages.openflowlm.passthru.src;
+                PLAN = ./pkgs/openflowlm/kernel-sets-plan.sh;
+                SETS = ./pkgs/openflowlm/kernel-sets.json;
+              } ''
+                run() { bash "$PLAN" "$SRC" "$1"; }
+
+                # The committed list matches the pinned source: nothing to build
+                # inline and nothing to skip.
+                run "$SETS" > plan.txt
+                if grep -qE '^(BUILD|SKIP)-' plan.txt; then
+                  echo "kernel-sets.json is out of date with the pinned source:" >&2
+                  cat plan.txt >&2
+                  exit 1
+                fi
+
+                # src has a set the list lacks; the list has one src lacks.
+                jq '.llmSpecs -= ["gemma3-4b"] | .bertFamilies += ["Phantom-Family"]' "$SETS" > d1.json
+                run d1.json > plan1.txt
+                grep -qx 'BUILD-LLM gemma3-4b' plan1.txt
+                grep -qx 'SKIP-BERT Phantom-Family' plan1.txt
+
+                # The other direction: the list names a set src lacks, and misses
+                # one src has.
+                jq '.llmSpecs += ["Phantom-Llm"] | (.bertFamilies -= ["BERT-h384-bf16"])' "$SETS" > d2.json
+                run d2.json > plan2.txt
+                grep -qx 'SKIP-LLM Phantom-Llm' plan2.txt
+                grep -qx 'BUILD-BERT BERT-h384-bf16' plan2.txt
+
+                touch $out
+              '';
+
             module-eval-rocm-false =
               (inputs.nixpkgs.lib.nixosSystem {
                 inherit system;

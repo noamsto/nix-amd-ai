@@ -36,11 +36,30 @@ jobs:
       - name: Build ${{ matrix.package }}
         run: nix build -L .#${{ matrix.package }}
 
-  # The open NPU kernel export takes ~50 min on a 16-core host and longer on
-  # the 4-core runner; built here so `build` substitutes it from Cachix.
+  # The open NPU kernel export is one derivation per set; a matrix runner each
+  # exports one set in parallel instead of one job exporting all of them
+  # serially, and the join that `build` needs substitutes them from Cachix.
+  # The set list is kernel-sets.json, read through the flake attr so it cannot
+  # drift from the per-set derivations.
+  npu-kernel-sets:
+    runs-on: ubuntu-latest
+    outputs:
+      sets: ${{ steps.list.outputs.sets }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - name: List kernel sets
+        id: list
+        run: echo "sets=$(nix eval --json .#openflowlm.kernels.passthru.sets --apply builtins.attrNames)" >> "$GITHUB_OUTPUT"
+
   npu-kernels:
+    needs: npu-kernel-sets
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        set: ${{ fromJSON(needs.npu-kernel-sets.outputs.sets) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
@@ -48,8 +67,8 @@ jobs:
         with:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: Build openflowlm kernels
-        run: nix build -L .#openflowlm.kernels
+      - name: Build openflowlm kernel set ${{ matrix.set }}
+        run: nix build -L ".#openflowlm.kernels.passthru.sets.\"${{ matrix.set }}\""
 
   build:
     needs: [rocm, npu-kernels]
