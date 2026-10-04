@@ -96,9 +96,9 @@
     # source of truth to derive them from (fetchFromGitHub's `src.rev` here is
     # just the tag we passed in, not the resolved commit).
     llamaCppPin = pkgs: pkg: let
-      pinTag = "b11207";
-      pinBuildNumber = "11207";
-      pinCommit = "7ac59a6";
+      pinTag = "b11382";
+      pinBuildNumber = "11382";
+      pinCommit = "11fe021";
     in
       pkg.overrideAttrs (old: {
         version = pinBuildNumber;
@@ -107,7 +107,7 @@
           owner = "ggml-org";
           repo = "llama.cpp";
           tag = pinTag;
-          hash = "sha256-ckEFqkLHWFRN6ciR/gjBIflYLsnRwbql1naDEb0uKmQ=";
+          hash = "sha256-km1Ze5KyHX7BCRbPd/Goo3j0PnNX0lFkgoqJaO3Wp1s=";
         };
         # nixpkgs bakes its own pin's build number/commit into `--version` and
         # `/props` as plain -D flags (the release tarball carries no .git for
