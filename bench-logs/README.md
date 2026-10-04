@@ -29,6 +29,7 @@ Each run keeps a README with the decisive numbers and the scripts that reproduce
 | [`flm-accept-reset-2026-09-28`](flm-accept-reset-2026-09-28/) | halo (XDNA2 NPU) | Accept loop after a client resets before accept (#202): red/green, slot-counter check, suite rerun | `GET /api/version` timed out after 1 cycle (red) → **200 ×15** (green). |
 | [`flm-accept-error-2026-10-04`](flm-accept-error-2026-10-04/) | halo (XDNA2 NPU) | Accept loop under descriptor exhaustion (#207): red/green CPU and recovery | Exhausted CPU **296.0 % → 0.0 %**; both builds accept again once the limit is restored. |
 | [`rebase-206-2026-09-29`](rebase-206-2026-09-29/) | halo (XDNA2 NPU) | `disconnect.sh` (chat, generate) on the build rebased onto main after #206 | **16 passed, 0 failed** on llama3.2:1b and gemma4-it:e4b. |
+| [`flm-stream-error-2026-10-04`](flm-stream-error-2026-10-04/) | halo (XDNA2 NPU) | Streaming error body after a mid-stream `generate()` fault (#199): fault-injection red/green raw-byte capture on `/api/chat` and `/v1/chat/completions`, slot-release check, normal-path check | Red: truncated stream, no error, no terminator. Green: `{"error":…}` / `data: {"error":…}` plus terminating `0\r\n\r\n`. Slot still released; normal stream unchanged. |
 
 The rocWMMA result is why `llama-cpp-rocm` ships plain; see
 `docs/therock-eval-results.md`, which argues rocWMMA should be **on** for

@@ -1,0 +1,45 @@
+diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel.cpp
+index 78a4a0f..41fcdec 100644
+--- a/src/common/AutoModel/automodel.cpp
++++ b/src/common/AutoModel/automodel.cpp
+@@ -6,6 +6,7 @@
+ /// \note This is a source file for the auto_model class
+ 
+ #include "AutoModel/automodel.hpp"
++#include <cstdlib>
+ 
+ 
+ AutoModel::AutoModel(flm_rt::device* npu_device_inst, std::string current_model) {
+@@ -290,6 +291,11 @@ void AutoModel::_apply_tool_choice_mask(buffer<bf16>& y, const chat_meta_info_t&
+ }
+ 
+ std::string AutoModel::_shared_generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    // Test-only (#199 evidence build; not shipped): throw after N emitted
++    // chunks so a decode fault lands mid-stream, after the 200/chunk headers.
++    const char* fault_after_env = std::getenv("FLM_INJECT_DECODE_FAULT_AFTER");
++    const int fault_after = fault_after_env ? std::atoi(fault_after_env) : 0;
++    int injected_chunks = 0;
+     std::vector<int> sampled_tokens;
+     std::string result;
+     if (length_limit > 0){
+@@ -307,7 +313,9 @@ std::string AutoModel::_shared_generate(chat_meta_info_t& meta_info, int length_
+         std::string token_str = this->tokenizer->run_time_decoder(last_sampled_token);
+         result += token_str;
+         os << token_str << std::flush;
+-
++        if (fault_after > 0 && ++injected_chunks >= fault_after) {
++            throw std::runtime_error("injected mid-stream decode fault");
++        }
+     }
+     if (this->is_eos(last_sampled_token)){
+         return result;
+@@ -345,6 +353,9 @@ std::string AutoModel::_shared_generate(chat_meta_info_t& meta_info, int length_
+             std::string token_str = this->tokenizer->run_time_decoder(sampled_token);
+             os << token_str << std::flush;
+             result += token_str;
++            if (fault_after > 0 && ++injected_chunks >= fault_after) {
++                throw std::runtime_error("injected mid-stream decode fault");
++            }
+         }
+         this->profiler_list[TKOEN_DECODE_TIME].stop(1);
+         this->token_history.push_back(sampled_token);
