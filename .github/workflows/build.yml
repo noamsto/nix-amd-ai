@@ -79,9 +79,23 @@ jobs:
           nix build -L ".#openflowlm.kernels.passthru.sets.\"$SET\""
 
   build:
-    needs: [rocm, npu-kernels]
+    needs: [rocm, npu-kernel-sets, npu-kernels]
+    # A failed upstream job would otherwise SKIP this job, and the ruleset
+    # counts a skipped required check as passing. Run unless cancelled, and fail
+    # in the first step instead; every later step is gated on its success.
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
+      - name: Require every upstream job to succeed
+        env:
+          NEEDS: ${{ toJSON(needs) }}
+        run: |
+          bad=$(jq -r 'to_entries[] | select(.value.result != "success") | "\(.key): \(.value.result)"' <<< "$NEEDS")
+          if [ -n "$bad" ]; then
+            echo "$bad"
+            echo "::error::upstream job did not succeed: ${bad//$'\n'/, }"
+            exit 1
+          fi
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
