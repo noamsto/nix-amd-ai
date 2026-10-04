@@ -117,7 +117,11 @@ jobs:
         id: pr
         if: steps.check.outputs.needs_update == 'true'
         env:
-          GH_TOKEN: ${{ github.token }}
+          # RELEASE_PAT, not github.token: a PR opened by GITHUB_TOKEN never
+          # triggers build.yml, so the required `build`/`build-darwin` checks
+          # would never report. The branch push can stay on the checkout token;
+          # the PR's checks come from its pull_request event, not the push.
+          GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           FLAKE_CHECK_LOG: ${{ steps.flake_check.outputs.log }}
           FLAKE_CHECK_STATUS: ${{ steps.flake_check.outputs.status }}
           BUILD_FAILED: ${{ steps.build.outputs.failed }}
@@ -268,12 +272,14 @@ jobs:
           BODY+="The branches diverge both ways, so the newer one is not a superset -- check what \`$XDNA_BRANCH\` carries that \`$XDNA_BRANCH_LATEST\` does not before moving the pin."$'\n'
           echo "$BODY" | gh issue create --title "$TITLE" --body-file -
 
-      # Auto-merge only the clean path: this job already built the 4 packages and
-      # ran flake check on the bumped tree, so build success here IS the gate.
-      # MTP hand-bumps still build green with a stale override, so they stay for
-      # review. The merge runs under RELEASE_PAT, not the default GITHUB_TOKEN,
-      # because pushes made by GITHUB_TOKEN do not trigger other workflows — the
-      # resulting push to main must fire build.yml (darwin build + release job).
+      # Request auto-merge only on the clean path: this job already built the 4
+      # packages and ran flake check on the bumped tree, so build success here
+      # gates whether we ask. The merge itself waits for main's required checks
+      # (`build`, `build-darwin`) via --auto. MTP hand-bumps still build green
+      # with a stale override, so they stay for review. Runs under RELEASE_PAT,
+      # not GITHUB_TOKEN, because pushes made by GITHUB_TOKEN do not trigger
+      # other workflows -- the resulting push to main must fire build.yml
+      # (darwin build + release job).
       - name: Auto-merge clean bumps
         if: |
           steps.pr.outputs.pr_url != '' &&
@@ -285,4 +291,4 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
           PR_URL: ${{ steps.pr.outputs.pr_url }}
-        run: gh pr merge --squash --delete-branch "$PR_URL"
+        run: gh pr merge --auto --squash --delete-branch "$PR_URL"
