@@ -402,7 +402,7 @@ def main():
     if a.spec == "draft-mtp" and not a.draft:
         ap.error("--spec draft-mtp needs --draft")
 
-    with tempfile.TemporaryFile(mode="w+") as log:
+    with tempfile.TemporaryFile(mode="w+", errors="replace") as log:
         def fail(e, code):
             log.seek(0)
             print(json.dumps({"error": e if isinstance(e, str) else str(e), "label": a.label,

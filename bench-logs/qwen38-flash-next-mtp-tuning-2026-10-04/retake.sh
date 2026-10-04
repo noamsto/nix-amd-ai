@@ -34,7 +34,7 @@ if [ -s "$OUT" ]; then
     echo "$OUT already exists and is non-empty; move it aside first" >&2
     exit 1
 fi
-printf '{"run": "%s", "git_sha": "%s"}\n' "$(date -u)" "$(git rev-parse --short HEAD)" >"$OUT"
+printf '{"run": "%s", "git_sha": "%s"}\n' "$(date -u)" "$(git rev-parse --short HEAD)" >"$OUT" || exit 1
 
 row() {
     local backend=$1 server=$2 rc
@@ -103,7 +103,5 @@ vulkan --spec draft-mtp --nmax 3 --pmin 0 --ngram-mod --residency --label D-ngra
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --tool-call --label D-tool-call
 
 # E. Vulkan controls, n-max 3 / no p-min: f16 KV with FA on, default threads
-vulkan --spec none --ctk f16 --ctv f16 --fa on --label E-f16kv-off
-vulkan --spec draft-mtp --nmax 3 --pmin 0 --ctk f16 --ctv f16 --fa on --label E-f16kv-mtp
 vulkan --spec none --threads -1 --label E-threads-auto-off
 vulkan --spec draft-mtp --nmax 3 --pmin 0 --threads -1 --label E-threads-auto-mtp
