@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 1990624..6069a13 100644
+index 1990624..1a006e9 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -245,6 +245,37 @@ void HttpSession::release_slot() {
@@ -40,16 +40,17 @@ index 1990624..6069a13 100644
  ///@brief close connection
  void HttpSession::close_connection() {
      boost::system::error_code ec;
-@@ -350,8 +381,15 @@ void HttpSession::handle_request(bool cors) {
+@@ -349,9 +380,15 @@ void HttpSession::handle_request(bool cors) {
+     if (!is_streaming_ && !deferred) {
          write_response();
      } else if (is_streaming_ && !deferred && !slot_released_.load()) {
-         // A synchronous handler that threw after sending chunks returns without
+-        // A synchronous handler that threw after sending chunks returns without
 -        // a final chunk and with no async op left to release the slot.
 -        release_slot();
-+        // a final chunk, with its error serialized in res_ but unwritten (the
-+        // send_response lambda only writes for a deferred session). Emit it in
-+        // the stream's own framing and end the chunked body; when there is no
-+        // pending body, this is the #194 release-only case.
++        // A synchronous handler that threw after sending chunks left its error
++        // serialized in res_ but unwritten (send_response only writes for a
++        // deferred session). Emit it in the stream's framing and end the
++        // chunked body.
 +        if (!res_.body().empty()) {
 +            write_streaming_error(res_.body());
 +        } else {
