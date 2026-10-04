@@ -155,6 +155,8 @@ sandbox.
 
 ### 2.2 The patch, and what running it here showed
 
+**Merged upstream as `457ddfd` (2026-09-30); the package no longer carries it.**
+The account below is the dated research snapshot that led to the patch.
 The minimal change replaces [L457-467][egr-457] with the compile-only call:
 
 ```diff
@@ -693,7 +695,7 @@ mismatches with lemonade. Do the following, in this order:
 | # | step | effort | notes |
 |---|---|---|---|
 | 1 | **Carry the FLM server error-status fix** in `pkgs/fastflowlm` (`patches/`), with `Co-authored-by: Vegard Berget` in a branch commit | 2-4 h | verify against lemonade that a 500 surfaces; unit-level only, no hardware needed. `[untested]` |
-| 2 | **Upstream the device-free BERT export patch** (§2.2) to Atomic-Germ, with the comparison from §2.2 in the PR, and ask them for a tagged release | Done | [PR #126](https://github.com/Atomic-Germ/OpenFlowLM-Next/pull/126), open; byte-comparison 17/17 `insts*.bin` matched the bcaee46 reference; hardware check on halo passed at kernel level (3 of 16 shapes via `pyxrt`), full `test_open_npue.ps1` embedding gate still `[untested]` |
+| 2 | **Upstream the device-free BERT export patch** (§2.2) to Atomic-Germ, with the comparison from §2.2 in the PR, and ask them for a tagged release | Done | [PR #126](https://github.com/Atomic-Germ/OpenFlowLM-Next/pull/126), merged `457ddfd` (2026-09-30); byte-comparison 17/17 `insts*.bin` matched the bcaee46 reference; hardware check on halo passed at kernel level (3 of 16 shapes via `pyxrt`), full `test_open_npue.ps1` embedding gate still `[untested]` |
 | 3 | **`pkgs/mlir-aie` and `pkgs/llvm-aie`** as wheel FODs (1.4.2 with Peano 21), mirrored into our cache | 3-6 h | prerequisite for any OFLM kernel build; also useful to anyone doing IRON work; not needed until step 4 is wanted |
 | 4 | Wait for a tag, then add `pkgs/openflowlm` (engine plus open kernels, BERT sets from a device-free build) behind the planned `hardware.amd-npu.fastflowlm.package` seam, exposing an `flm`-named wrapper and pinning `flm.npu_bin` to an absolute path | 1-2 days | only after 1-3, a release tag, and a licence clarification; needs a hardware smoke test (`list`, `serve`, one chat, one embedding) |
 | 5 | Run `oflm-test --api` against `flm serve` on Halo | 0.5 day | hardware-gated; would also validate step 1 |

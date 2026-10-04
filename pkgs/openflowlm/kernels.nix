@@ -1,6 +1,7 @@
 # Builds OFLM's open NPU kernel sets (12 open_kernels recipe specs + 5 BERT
-# embedding design sets) with no NPU and no pyxrt, thanks to the device-free
-# BERT export patch; ~50 min on halo. Upstream quirk: gemma3-12b.json names
+# embedding design sets) with no NPU and no pyxrt, thanks to upstream's
+# device-free BERT export (Atomic-Germ/OpenFlowLM-Next#126, merged as 457ddfd);
+# ~50 min on halo. Upstream quirk: gemma3-12b.json names
 # no model, so its set lands under and is overwritten by Gemma3-4B-NPU2.
 # xclbins are not bit-reproducible (UUID/timestamp fields); insts*.bin and
 # design.json are.
@@ -9,14 +10,13 @@
   stdenv,
   src,
   version,
-  patches,
   mlir-aie,
   llvm-aie,
   xrt,
 }:
 stdenv.mkDerivation {
   pname = "openflowlm-kernels";
-  inherit version src patches;
+  inherit version src;
 
   nativeBuildInputs = [mlir-aie.passthru.python];
 
