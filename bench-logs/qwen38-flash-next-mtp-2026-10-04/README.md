@@ -60,6 +60,47 @@ rises toward 1.0 there and the on-arm speedup is optimistic; only the shallow
 and 30.9K rows use a non-repeating prompt, and their acceptance (0.54–0.63) is
 the representative figure. The off-arm slope is unaffected by the repetition.
 
+### Run conditions (our rows)
+
+From `mtp-ab.sh` / `depth-probe.py` and the `benchmark-go` defaults:
+
+- **A/B and n-max sweep** (`--mtp-ab`): `--ctx-size 2048` (the `benchmark-go` default; `mtp-ab.sh` does not override it), `--parallel 1`, `--flash-attn on`, `--n-gpu-layers 99`.
+- **Depth curve**: `--ctx-size` is set per row by `--ctx` and sized just above the prompt depth (the script's example is 82176 for a 78000-token prompt); the exact value per row is not recorded. Same `--parallel 1`, `--flash-attn on`, `--n-gpu-layers 99`.
+- **KV cache type, `-t`, `-ub`, `-b`**: none are passed by either script, so llama-server defaults apply (KV f16, threads auto-detected, `-ub 512`, `-b 2048`). The values the server actually resolved are not recorded.
+
+## Compared with external reports
+
+Every row except the first is a third-party report on a Strix Halo 395 and
+predates the upstream MTP merge (#29761); those used forks or older builds. The
+Reddit figures were read via a mirror, not reddit.com. "not stated" means the
+source does not give it. All links were fetched and resolved (HTTP 200) on
+2026-10-04 and the headline figure was found on the page; the HF discussion was
+only confirmed to mention IQ4_XS, not the 20–23 figure, so treat that row as
+unverified.
+
+| Source (date) | Host | Engine + build | Quant | MTP | KV | Alloc. ctx | Depth | Decode t/s | Prefill t/s |
+| --- | --- | --- | --- | --- | --- | --- | --- | ---: | ---: |
+| [llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761) (2026-09-30) | DGX Spark (not Strix Halo) | upstream | IQ4_XS | off / on, n-max 3 (accept 0.64) | not stated | not stated | not stated | 28.36 / 43.88 | not stated |
+| [Framework forum](https://community.frame.work/t/qwen3-8-please-share-your-t-s-any-quant/84405), Guest209 (2026-09-02) | Strix Halo | llama.cpp, build not stated | UD-IQ4_XS | off | not stated | not stated | tg128 / pp512 | 27.47 | 405 |
+| same, Martin_Roth (2026-08-28) | Strix Halo | ROCm, build not stated | IQ4_XS | off | not stated | not stated | ~16K | ~21 | not stated |
+| [HF unsloth discussion #3](https://huggingface.co/unsloth/Qwen3.8-Flash-Next-GGUF/discussions/3) | Strix Halo | not stated | IQ4_XS | off | not stated | not stated | not stated | 20–23 | not stated |
+| [r/LocalLLM, u/emptyharddrive](https://reddit.sentinel-team.org/posts/1w5xaqt/snapshots/2026-09-04T21%3A20%3A12.3645Z) (≤2026-09-04, mirror) | Strix Halo | Vulkan RADV, unsloth b10715-mix | UD-Q3_K_XL | off / on, n-max 4, p-min 0.7 | not stated | not stated | short; 121K | 16–17 off; on 37–43 code, 25–31 prose; 22.0 at 121K (MTP state unclear) | ~300 (short) |
+| [sleepingrobots](https://sleepingrobots.com/dreams/engramhalo-qwen38-flash-next-strix-halo/) (2026-08-29) | Strix Halo | ROCm 7.14, EngramHalo | AD-4.27bpw | off / draft-mtp+ngram-mod n4 | not stated | not stated | 3.4K | 20.9 / 38.5 peak | 391–453 |
+| [EasiiX card](https://huggingface.co/EasiiX/Qwen3.8-Flash-Next-MTP-Strix-Halo-GGUF) | Strix Halo | EngramHalo | UD-IQ3_XXS | off / on | not stated | not stated | 156K for the +49% | 23.5 / 35.7 | not stated |
+| [julianmb/haloq38flash](https://github.com/julianmb/haloq38flash) | Strix Halo | Vulkan llama.cpp fork | IQ4_XS | on, n-max 6 | not stated | not stated | 0 / 32K / 128K | 48.1 / 29.6 / 11.8 | 78 / 500 / 239 |
+| [peonist-ai/halogen-flash-server](https://github.com/peonist-ai/halogen-flash-server) | Strix Halo | closed engine, ROCm 7.14 | native / UD-IQ4_XS | off 37.6 (native) / 25.4 (UD-IQ4_XS) at 1.5K; on 46.0 at 32K | not stated | not stated | 1.5K; 32K | see MTP column | ~1580 |
+| [Atlas-Inf/atlas#143](https://github.com/Atlas-Inf/atlas/issues/143) (2026-09-28..30) | Strix Halo | reference llama.cpp, Linux | Q4_K_XL | off / on | not stated | not stated | 1.5K | 25.9 / 32.2 | not stated |
+
+### Conclusions
+
+Drawn only from depth-matched pairs; unknown context and KV settings limit
+every comparison, and ours are 2048 allocated for the A/B and f16 KV.
+
+- **Shallow, MTP off:** ours 26.8 @0.5K vs 27.47 (tg128), 25.9 and 25.4 @1.5K — in line.
+- **~31–32K, MTP on:** ours 29.3 @31K vs haloq38flash 29.6 @32K (n-max 6) — in line.
+- **~121–128K, MTP off only:** ours 20.8 vs 22.0 @121K (that report's MTP state is unclear). Our deep MTP-on rows (77K, 123K) use a repeated corpus that inflates acceptance, so they must not be compared with haloq38flash's 11.8 @128K.
+- **ROCm:** our 19.0 @0.5K is not comparable to ~21 @16K; no ROCm-vs-others conclusion.
+
 ## What MTP needs (answers #137 step 2)
 
 The existing `unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS` file **has no MTP
