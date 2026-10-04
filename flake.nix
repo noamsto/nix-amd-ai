@@ -68,7 +68,13 @@
     withOwnVulkanDriver = pkgs: pkg:
       pkgs.symlinkJoin {
         inherit (pkg) pname version meta;
-        passthru = pkg.passthru // {unwrapped = pkg; inherit (pkg) src;} // pkgs.lib.optionalAttrs (pkg ? dev) {inherit (pkg) dev;};
+        passthru =
+          pkg.passthru
+          // {
+            unwrapped = pkg;
+            inherit (pkg) src;
+          }
+          // pkgs.lib.optionalAttrs (pkg ? dev) {inherit (pkg) dev;};
         paths = [pkg];
         nativeBuildInputs = [pkgs.makeWrapper];
         postBuild = ''
@@ -1322,11 +1328,8 @@
                 touch $out
               '';
 
-            # Backends are built against this flake's pinned nixpkgs, so lemond
-            # must not hand them host libraries via LD_LIBRARY_PATH: a host with
-            # a newer glibc then loads its clr into a pinned-glibc process (#215).
-            # The allowlist is exactly xrt-combined/lib (flm's own libxrt_core
-            # lookup); any other entry fails.
+            # An allowlist, not a blacklist: lemond's LD_LIBRARY_PATH is exactly
+            # xrt-combined/lib or unset, so no host library dir can return (#215).
             module-eval-lemond-ld-library-path = let
               mkEnv = extra:
                 (inputs.nixpkgs.lib.nixosSystem {
@@ -1380,10 +1383,8 @@
                 touch $out
               '';
 
-            # Each Vulkan backend must carry its own nixpkgs' RADV ICD and
-            # disable implicit layers, else a host's mesa under /run/opengl-driver
-            # is loaded into a pinned-glibc process (#215). This cannot
-            # reproduce the host glibc split itself: CI's nixpkgs equals the pin.
+            # Guards withOwnVulkanDriver on both the perSystem and overlay builds.
+            # It cannot reproduce the host glibc split itself: CI's nixpkgs is the pin.
             vulkan-backends-own-driver = let
               overlaid = import inputs.nixpkgs {
                 inherit system;

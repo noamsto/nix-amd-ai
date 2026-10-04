@@ -76,9 +76,7 @@
   # here: LD_LIBRARY_PATH outranks RUNPATH, so it shadows the backends' own clr,
   # and a newer host glibc makes it unloadable (#215). The ROCm backends find
   # their own clr via RUNPATH.
-  ldLibraryPath = concatStringsSep ":" (
-    optional cfg.enableNPU "${xrt-combined}/lib"
-  );
+  ldLibraryPath = optionalString cfg.enableNPU "${xrt-combined}/lib";
 
   pathList =
     optional cfg.enableNPU xrt-combined
