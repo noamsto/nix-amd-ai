@@ -1,0 +1,73 @@
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 1990624..1a006e9 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -245,6 +245,37 @@ void HttpSession::release_slot() {
+     }
+ }
+ 
++///@brief emit a handler's pending error into the already-started stream
++///@param body the serialized error response the handler left in res_
++///@note The 200 + chunked headers are already on the wire, so the status cannot
++/// change; the error goes out as the stream's final event, and
++/// send_chunk_data(..., true) terminates the chunked body, closes the socket and
++/// releases the slot (once). A throw while framing falls back to the #194
++/// release so the slot never leaks.
++void HttpSession::write_streaming_error(const std::string& body) {
++    try {
++        const std::string target = std::string(req_.target());
++        if (target.rfind("/v1/", 0) == 0) {
++            // OpenAI SSE: data: {...}\n\n, in the same framing the stream used.
++            write_streaming_response(json("data: " + body + "\n\n"), true);
++        } else {
++            // Ollama NDJSON: one {"error": "..."} line. Ollama carries the
++            // error as a string, and its clients (ollama-python, the Go
++            // client) read `error` as one; collapse the handler's object body
++            // to its message rather than making them fail to parse. The
++            // message is already generic, so no exception text (#175).
++            json doc = json::parse(body);
++            if (doc.contains("error") && doc["error"].is_object() &&
++                doc["error"].contains("message") && doc["error"]["message"].is_string()) {
++                doc["error"] = doc["error"]["message"];
++            }
++            write_streaming_response(json(safe_dump(doc) + "\n"), true);
++        }
++    } catch (...) {
++        release_slot();
++    }
++}
++
+ ///@brief close connection
+ void HttpSession::close_connection() {
+     boost::system::error_code ec;
+@@ -349,9 +380,15 @@ void HttpSession::handle_request(bool cors) {
+     if (!is_streaming_ && !deferred) {
+         write_response();
+     } else if (is_streaming_ && !deferred && !slot_released_.load()) {
+-        // A synchronous handler that threw after sending chunks returns without
+-        // a final chunk and with no async op left to release the slot.
+-        release_slot();
++        // A synchronous handler that threw after sending chunks left its error
++        // serialized in res_ but unwritten (send_response only writes for a
++        // deferred session). Emit it in the stream's framing and end the
++        // chunked body.
++        if (!res_.body().empty()) {
++            write_streaming_error(res_.body());
++        } else {
++            release_slot();
++        }
+     } else {
+         // For streaming responses, we need to handle connection cleanup differently
+         // The connection will be closed when streaming ends
+diff --git a/src/server/server.hpp b/src/server/server.hpp
+index 7e94db1..cef7a74 100644
+--- a/src/server/server.hpp
++++ b/src/server/server.hpp
+@@ -192,6 +192,7 @@ private:
+     void send_chunk_data(const json& data, bool is_final);
+     void start_client_disconnect_monitor(std::shared_ptr<CancellationToken> token);
+     void release_slot();
++    void write_streaming_error(const std::string& body);
+     
+     ///@brief socket
+     tcp::socket socket_;

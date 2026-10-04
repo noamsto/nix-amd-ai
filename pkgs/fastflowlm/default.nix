@@ -257,6 +257,19 @@ stdenv.mkDerivation (finalAttrs: {
   #     client, so such a request is cancellable only by client disconnect.
   #     A caller-supplied request_id is still used verbatim, and anyone who
   #     knows it can cancel it: /api/cancel has no ownership check.
+  #   - stream-error-body.patch (#199): a non-deferred streaming handler whose
+  #     generate() threw (or that otherwise reached its outer catch) after
+  #     chunks were sent called send_response(error) and returned, but
+  #     send_response only writes for a deferred session and handle_request
+  #     skipped write_response() because is_streaming_ was already set, so the
+  #     client got a truncated stream with no error. handle_request now emits
+  #     the handler's pending res_ body in the stream's own framing (Ollama
+  #     NDJSON {"error":"..."}, the string its clients read; OpenAI SSE
+  #     data: {"error":{...}}) as the stream's final
+  #     event, which terminates the chunked body, closes the connection and
+  #     releases the slot; the body is the handler's existing generic error
+  #     (no exception text, #175). Covers /api/generate, /api/chat,
+  #     /v1/chat/completions and /v1/completions, including their outer catches.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -279,8 +292,11 @@ stdenv.mkDerivation (finalAttrs: {
   # two on main at ef60a5f, the latter in /v1/chat/completions), exiting on a
   # model_list.json entry with no `files` and reading end().key() for a bare
   # tag with no size variants, and /api/cancel cancelling itself instead of
-  # its target. A bump that breaks any patch fails the build rather than
-  # silently losing it.
+  # its target; and leaving a truncated stream instead of an error when a
+  # streaming insert()/generate() fails after the first chunk (still on main
+  # at v1.0.6; this repo's #199). (An insert() failure is pre-stream in all
+  # four handlers, so it keeps the unchanged HTTP 4xx/5xx path.)
+  # A bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
@@ -301,6 +317,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/accept-error-backoff.patch
     ./patches/model-list-entry-validation.patch
     ./patches/cancel-request-id.patch
+    ./patches/stream-error-body.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
