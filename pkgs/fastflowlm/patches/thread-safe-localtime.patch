@@ -13,10 +13,10 @@ index 2cb3eca..1f2ae7a 100644
                  ss << std::put_time(&local_time, format.c_str());
                  return ss.str();
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 5bf1621..fafe63a 100644
+index 5bf1621..a426b5b 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1380,19 +1380,23 @@ void RestHandler::handle_ps(const json& request,
+@@ -1380,19 +1380,21 @@ void RestHandler::handle_ps(const json& request,
          auto expires_tp = std::chrono::system_clock::from_time_t(expires_time_t);
          auto fractional_seconds = std::chrono::duration_cast<std::chrono::microseconds>(expires_time - expires_tp).count();
          
@@ -24,22 +24,22 @@ index 5bf1621..fafe63a 100644
 -        std::tm* local_tm = std::localtime(&expires_time_t);
 -        std::tm* utc_tm = std::gmtime(&expires_time_t);
 -        
-+        // Reentrant variants: localtime()/gmtime() share one static struct tm
-+        // across all I/O threads, and using both would alias local_tm and utc_tm
-+        // (so the offset below always came out 0).
-+        std::tm local_tm{};
-+        std::tm utc_tm{};
-+        localtime_r(&expires_time_t, &local_tm);
-+        gmtime_r(&expires_time_t, &utc_tm);
-+
-         // Calculate timezone offset in minutes
+-        // Calculate timezone offset in minutes
 -        int offset_minutes = (local_tm->tm_hour - utc_tm->tm_hour) * 60 + (local_tm->tm_min - utc_tm->tm_min);
 -        if (local_tm->tm_mday != utc_tm->tm_mday) {
 -            offset_minutes += (local_tm->tm_mday > utc_tm->tm_mday) ? 1440 : -1440;
-+        int offset_minutes = (local_tm.tm_hour - utc_tm.tm_hour) * 60 + (local_tm.tm_min - utc_tm.tm_min);
-+        if (local_tm.tm_mday != utc_tm.tm_mday) {
-+            offset_minutes += (local_tm.tm_mday > utc_tm.tm_mday) ? 1440 : -1440;
-         }
+-        }
++        // localtime()/gmtime() share one process-wide static struct tm across
++        // all I/O threads, and using both aliased local_tm and utc_tm, so the
++        // offset below always came out 0. localtime_r writes a caller-owned
++        // tm, and tm_gmtoff is the local zone's UTC offset at this instant --
++        // correct across DST and month/year boundaries, unlike an hour/min
++        // difference, whose day-wrap correction only handled a rollover within
++        // one month.
++        std::tm local_tm{};
++        localtime_r(&expires_time_t, &local_tm);
++
++        int offset_minutes = static_cast<int>(local_tm.tm_gmtoff / 60);
          
          std::stringstream expires_ss;
          expires_ss.imbue(std::locale::classic()); // Use C locale to avoid commas

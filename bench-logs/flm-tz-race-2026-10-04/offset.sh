@@ -3,11 +3,12 @@
 #
 # Serve llama3.2:1b under TZ=Asia/Jerusalem and check GET /api/ps
 # expires_at. The response is a fixed-offset ISO-8601 instant
-# (YYYY-MM-DDThh:mm:ss.fffff+HH:MM). The probe splits it at its +HH:MM
-# suffix and re-derives, with GNU date under the same TZ, the local offset
-# and wall clock at the instant the string denotes. Both must equal what the
-# server printed: if the suffix were wrong (e.g. the unpatched +00:00), date
-# parses a different instant and both checks disagree.
+# (YYYY-MM-DDThh:mm:ss.fffff+HH:MM). The probe re-derives, with GNU date
+# under the same TZ, the local offset and wall clock at the instant the
+# string denotes. Both must equal what the server printed. The unpatched
+# server printed the UTC wall clock with +00:00 -- the same instant as local,
+# but the wrong offset and representation -- so both comparisons fail there;
+# a suffix naming a different instant would fail the same way.
 #
 # Exit 0 on match, 1 on mismatch, 2 on setup failure. The server is always
 # stopped by its own PID; a pre-existing flm is waited for, never killed.

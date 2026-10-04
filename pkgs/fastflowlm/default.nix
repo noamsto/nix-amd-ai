@@ -277,8 +277,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     and utc_tm aliased and its timezone offset was always +00:00; the
   #     request logger's get_current_time_string() and minja's strftime_now
   #     (from chat_template::apply) raced the same buffer. All three now use
-  #     localtime_r/gmtime_r with a caller-owned struct tm, so the offset is
-  #     the real local one and no two threads share a time buffer.
+  #     localtime_r with a caller-owned struct tm, and handle_ps takes the
+  #     offset from tm_gmtoff (correct across DST and month ends), so no two
+  #     threads share a time buffer.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
