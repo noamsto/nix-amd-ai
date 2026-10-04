@@ -15,10 +15,9 @@ type ServerArgs struct {
 }
 
 // BuildLlamaServerArgs returns the argv slice to spawn llama-server.
-// Always includes --flash-attn on; when SpecType != "none", appends the external
-// --model-draft (if any) and --spec-draft-n-max (default 6); --parallel 1 for
-// KV-cache budget control. The draft model is only loaded on the MTP arm, so the
-// no-spec arm stays a true MTP-off baseline.
+// --flash-attn on and --parallel 1 always; on the MTP arm (SpecType != "none")
+// an external --model-draft is appended if set, plus --spec-draft-n-max
+// (default 6).
 func BuildLlamaServerArgs(sa ServerArgs) []string {
 	args := []string{
 		sa.BinPath,
