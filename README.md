@@ -17,8 +17,8 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
 | `lemonade-headless` | `lemonade` without the Tauri desktop shell — what `lemonade.desktopApp.enable = false` selects, cached so headless hosts substitute it | `lemonade.override { withDesktopApp = false; }` |
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
-| `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
-| `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
+| `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
+| `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
@@ -135,6 +135,10 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 # bad — forces rebuilds of llama-cpp / whisper-cpp / stable-diffusion-cpp
 # inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs";
 ```
+
+Because the backends run against this flake's pinned `nixpkgs`, the module never hands them your system's ROCm or mesa libraries, and the Vulkan backends carry their own driver. A system `nixpkgs` with a newer glibc makes those libraries unloadable, and llama.cpp then silently falls back to the CPU ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)).
+
+To use a different Vulkan driver (another GPU, AMDVLK), set `VK_DRIVER_FILES` yourself, e.g. `systemd.services.lemond.environment.VK_DRIVER_FILES = "...";` — the wrappers only set it when it is unset.
 
 ## Requirements
 
