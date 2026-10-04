@@ -297,6 +297,17 @@ stdenv.mkDerivation (finalAttrs: {
   #     completion; embeddings and audio have no cancellation path and keep
   #     registering when they start; a non-string request_id is refused 400
   #     before the request is queued.
+  #   - lm-config-throw.patch (#220): LM_Config::_load_json() called exit(1)
+  #     when a model directory had no config.json, so the fault was
+  #     uncatchable and killed the process on every path that parsed a
+  #     model's config -- `flm pull`, and the optional whisper-v3 /
+  #     embed-gemma loads at `flm serve` startup. It now throws
+  #     std::runtime_error and its callers handle it: ensure_model_loaded
+  #     already answers the serve request path 500 model_load_failed
+  #     (#204/#205, kept, plus the post-get_auto_model check); pull_model's
+  #     existing catch turns it into a clean CLI error and exit 1; and the
+  #     optional startup loads log the fault, drop ASR/embeddings and keep
+  #     serving chat models instead of aborting startup.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -348,6 +359,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/stream-error-body.patch
     ./patches/thread-safe-localtime.patch
     ./patches/cancel-queued-request.patch
+    ./patches/lm-config-throw.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
