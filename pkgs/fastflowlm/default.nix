@@ -218,6 +218,17 @@ stdenv.mkDerivation (finalAttrs: {
   #     total_tokens, sampling and checkpoint, so no KV/checkpoint state is
   #     left half-updated. No model_list.json entry selects this class, so
   #     the fix is build-verified only (#209).
+  #   - accept-error-backoff.patch (#207): do_accept re-armed unconditionally
+  #     after its handler ran, including when async_accept had failed. A
+  #     persistent accept error such as EMFILE/ENFILE -- once the process is
+  #     out of file descriptors -- fails again the instant the next accept is
+  #     armed, so the I/O thread spun on it and never let a descriptor free
+  #     up. The error branch now waits 100 ms on a steady_timer before
+  #     re-arming; the success path (including the connection-cap reject) is
+  #     unchanged, and the pending connection stays in the backlog, so it is
+  #     accepted once a descriptor is available. Measured on halo under
+  #     descriptor exhaustion: the process burned ~3 cores before and stayed
+  #     idle after, and it accepts again once the limit is restored.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -256,6 +267,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/cancel-chat-nonstream.patch
     ./patches/cancel-keep-early.patch
     ./patches/qwen3-5-omni-prefill-cancel.patch
+    ./patches/accept-error-backoff.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {

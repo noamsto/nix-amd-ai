@@ -27,6 +27,7 @@ Each run keeps a README with the decisive numbers and the scripts that reproduce
 | [`oflm-api-conformance-2026-09-28-after-191`](oflm-api-conformance-2026-09-28-after-191/) | halo (XDNA2 NPU) | Decode continuing after the client disconnects (#191): six-endpoint red/green plus a suite rerun | `disconnect.sh` 28 passed / 20 failed → **48 passed, 0 failed**. |
 | [`oflm-api-conformance-2026-09-28-after-194`](oflm-api-conformance-2026-09-28-after-194/) | halo (XDNA2 NPU) | Connection slot released exactly once on disconnect (#194): red/green, slot-counter check, suite rerun | Final connection after 12 aborts: `Connection reset by peer` with 3 `Connection limit reached` lines → **ACCEPTED**, 0 lines. |
 | [`flm-accept-reset-2026-09-28`](flm-accept-reset-2026-09-28/) | halo (XDNA2 NPU) | Accept loop after a client resets before accept (#202): red/green, slot-counter check, suite rerun | `GET /api/version` timed out after 1 cycle (red) → **200 ×15** (green). |
+| [`flm-accept-error-2026-10-04`](flm-accept-error-2026-10-04/) | halo (XDNA2 NPU) | Accept loop under descriptor exhaustion (#207): red/green CPU and recovery | Exhausted CPU **296.0 % → 0.0 %**; both builds accept again once the limit is restored. |
 | [`rebase-206-2026-09-29`](rebase-206-2026-09-29/) | halo (XDNA2 NPU) | `disconnect.sh` (chat, generate) on the build rebased onto main after #206 | **16 passed, 0 failed** on llama3.2:1b and gemma4-it:e4b. |
 
 The rocWMMA result is why `llama-cpp-rocm` ships plain; see
