@@ -35,36 +35,29 @@ FILLER = ("The quick brown fox jumps over the lazy dog. "
           "In a distant galaxy, an ancient signal repeats. ")
 
 
-def token_count(prompt):
+def tokenize(text):
     req = urllib.request.Request(
         f"http://127.0.0.1:{PORT}/tokenize",
-        data=json.dumps({"content": prompt}).encode(),
+        data=json.dumps({"content": text}).encode(),
         headers={"Content-Type": "application/json"},
     )
     with urllib.request.urlopen(req, timeout=120) as r:
-        return len(json.load(r)["tokens"])
+        return json.load(r)["tokens"]
 
 
 def build_prompt(target_tokens):
+    """Return (prompt, repeats): token ids sliced to exactly target_tokens."""
     if target_tokens <= 16:
-        return "The capital of France is"
+        return "The capital of France is", 1
     filler = FILLER
     if FILLER_FILE:
         with open(FILLER_FILE, encoding="utf-8", errors="replace") as fh:
             filler = fh.read()
-    # one copy first, so the initial repeat count is in the right ballpark
-    tpc = max(1, token_count(filler))
-    k = max(1, round(target_tokens / tpc))
-    p = filler * k
-    for _ in range(60):
-        n = token_count(p)
-        if n == 0:
-            break
-        if abs(n - target_tokens) <= max(8, target_tokens // 100):
-            return p
-        k = max(1, int(k * target_tokens / n))
-        p = filler * k
-    return p
+    ids = tokenize(filler)
+    if not ids:
+        raise SystemExit("filler tokenized to zero tokens")
+    k = -(-target_tokens // len(ids))
+    return (ids * k)[:target_tokens], k
 
 
 def wait_ready(proc, deadline_s=900):
@@ -120,7 +113,7 @@ def main():
     try:
         if not wait_ready(proc):
             return fail("server not ready")
-        prompt = build_prompt(DEPTH)
+        prompt, repeats = build_prompt(DEPTH)
         body = json.dumps({
             "prompt": prompt, "n_predict": NGEN, "temperature": 0,
             "ignore_eos": True, "cache_prompt": False,
@@ -136,8 +129,12 @@ def main():
         except Exception as e:  # noqa: BLE001 - surface the server tail for any failure
             return fail(repr(e))
         t = resp.get("timings", {})
+        if SPEC == "draft-mtp" and t.get("draft_n") is None:
+            return fail("draft-mtp run drafted no tokens (draft_n missing)")
+        if t.get("predicted_n") != NGEN:
+            return fail(f"generation stopped short: predicted_n={t.get('predicted_n')} != {NGEN}")
         print(json.dumps({
-            "device": DEVICE, "spec": SPEC, "nmax": NMAX, "depth_req": DEPTH,
+            "device": DEVICE, "spec": SPEC, "nmax": NMAX, "depth_req": DEPTH, "repeats": repeats,
             "ctx": CTX, "prompt_n": t.get("prompt_n"), "predicted_n": t.get("predicted_n"),
             "prompt_tps": t.get("prompt_per_second"), "decode_tps": t.get("predicted_per_second"),
             "draft_n": t.get("draft_n"), "draft_n_accepted": t.get("draft_n_accepted"),

@@ -11,11 +11,13 @@ Stock upstream, no fork. Build under test: llama.cpp tag **b11382** (commit
 ("Qwen4Exp: add MTP"), the PR that superseded #28243 that #137 was waiting on.
 Built through this flake (`nix build .#llama-cpp{,-vulkan,-rocm}`), so the
 Vulkan backends carry #223's `withOwnVulkanDriver` wrapper and offload to the
-GPU. Old arm = the same flake pinned back to **b11207** (commit `7ac59a6`).
+GPU. Old arm = the same flake at rev `81ffca6`, which pins **b11207** (llama.cpp
+commit `7ac59a6`).
 
 ## MTP A/B (MTP off vs `--spec-type draft-mtp`)
 
-`nix run .#benchmark -- --mtp-ab Qwen3.8-Flash-Next-GGUF --mtp-draft <mtp head>`,
+`nix run .#benchmark -- --mtp-ab Qwen3.8-Flash-Next-GGUF --mtp-draft <mtp head>
+--mtp-draft-n-max 3 --no-tui` (see `mtp-ab.sh`),
 prompt 512 tokens, generate 128, 1 warmup + 3 measured, fresh `llama-server`
 per arm, `--spec-draft-n-max 3`, target `unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS`.
 
@@ -40,25 +42,40 @@ DGX Spark; the speedup reproduces here, on a different host and backend.
 
 ### Depth curve (Vulkan, single request, `depth-probe.py`)
 
-Prompt built from real text, one `/completion` request, 128 generated tokens;
-`prompt_n` is the server-reported token count.
+One `/completion` request per cell (a single cold sample, no warmup or repeats),
+128 generated tokens; `prompt_n` is the server-reported token count. Every
+prompt above 16 tokens is a file repeated `k` times (`depth-probe.py`
+`build_prompt` returns `filler * k`). The 501 row cannot come from the 15 435-token
+corpus (one copy is already larger), so it used the built-in synthetic filler
+or another file; which one was not recorded. The corpus file name and sha256, the
+per-row `--depth`/`--ctx` values, and the 77K/123K acceptance counts were not
+recorded.
 
 | prompt_n | MTP off (t/s) | MTP on (t/s) | Speedup | Draft acceptance |
 | ---: | ---: | ---: | ---: | ---: |
 | 501 | 26.83 | 39.74 | 1.48× | 0.63 (83/132) |
-| 30 870 | 24.52 | 29.28 | 1.19× | 0.54 (78/144) |
-| 77 175 | 22.61 | 38.54 | 1.70× | see note |
-| 123 480 | 20.77 | 34.38 | 1.66× | see note |
+| 30 870 (2× corpus) | 24.52 | 29.28 | 1.19× | 0.54 (78/144) |
+| 77 175 (5× corpus) | 22.61 | 38.54 | 1.70× | not recorded |
+| 123 480 (8× corpus) | 20.77 | 34.38 | 1.66× | not recorded |
 
 **No cliff through 123K.** MTP-off decode falls monotonically 26.8 → 20.8 t/s
-across the curve — a −23% slope over 123K tokens, not the "severe degradation
-after ~120K" the #135 report describes. MTP-on stays 1.2–1.7× off across the
-range.
+across the curve — a −23% slope over 123K tokens, a gradual drop. (#135 reports
+"severe degradation after about 120K", but that is about the model's output
+quality, which was not measured here; its throughput figures, 30–40 → 25–30 t/s
+on Vulkan near the end of a 131K context, describe a gradual decline too, on a
+fork with different settings.) MTP-on stays 1.2–1.7× off across the range, but
+see the caveat.
 
-Caveat: the two deepest prompts repeat a shorter corpus, so MTP acceptance
-rises toward 1.0 there and the on-arm speedup is optimistic; only the shallow
-and 30.9K rows use a non-repeating prompt, and their acceptance (0.54–0.63) is
-the representative figure. The off-arm slope is unaffected by the repetition.
+Caveat: **every row above 501 repeats a shorter corpus** — 2×, 5× and 8× of the
+same 15 435 tokens — so the draft head can predict the repeats and MTP
+acceptance is inflated on all three deep rows, 30.9K included. The MTP-on
+numbers at depth are therefore optimistic and not representative of real
+prompts; do not compare them with other reports. The MTP-off column is
+unaffected (decode speed does not depend on acceptance), so the −23% slope
+stands. Each point is a single sample. The committed `depth-probe.py` now
+tokenizes the corpus once and slices to exactly `--depth` tokens (reporting the
+repeat count), so it will not reproduce the 30 870 / 77 175 / 123 480 token
+counts above, which came from the earlier whole-copy repeat.
 
 ### Run conditions (our rows)
 
@@ -94,11 +111,13 @@ unverified.
 ### Conclusions
 
 Drawn only from depth-matched pairs; unknown context and KV settings limit
-every comparison, and ours are 2048 allocated for the A/B and f16 KV.
+every comparison. Our A/B ran at ctx 2048 (the 26.8 t/s shallow MTP-off figure
+comes from the depth curve, whose ctx was not recorded); KV is the unpassed
+default (f16 per llama-server's defaults), also not recorded.
 
-- **Shallow, MTP off:** ours 26.8 @0.5K vs 27.47 (tg128), 25.9 and 25.4 @1.5K — in line.
-- **~31–32K, MTP on:** ours 29.3 @31K vs haloq38flash 29.6 @32K (n-max 6) — in line.
-- **~121–128K, MTP off only:** ours 20.8 vs 22.0 @121K (that report's MTP state is unclear). Our deep MTP-on rows (77K, 123K) use a repeated corpus that inflates acceptance, so they must not be compared with haloq38flash's 11.8 @128K.
+- **Shallow, MTP off** (the only comparison that stands cleanly): ours 26.8 @0.5K vs 27.47 (tg128), 25.9 and 25.4 @1.5K — in line.
+- **~31–32K, MTP on:** not a clean comparison. Ours (29.3 @31K) used a prompt that is the corpus repeated twice, so its acceptance is inflated; the nominal match with haloq38flash's 29.6 @32K (n-max 6) means nothing.
+- **~121–128K, MTP off only:** ours 20.8 vs 22.0 @121K (that report's MTP state is unclear). Our deep MTP-on rows (31K, 77K, 123K) repeat the corpus and inflate acceptance, so they must not be compared with haloq38flash's 29.6 @32K or 11.8 @128K.
 - **ROCm:** our 19.0 @0.5K is not comparable to ~21 @16K; no ROCm-vs-others conclusion.
 
 ## What MTP needs (answers #137 step 2)
@@ -169,8 +188,14 @@ The gpt-oss-120b Vulkan row is the one apparent regression, so it was re-run
 
 Flash-Next Vulkan is noisy in the same way (new pp512 ranged 443.6–494.9 across
 runs): interleaved medians old 423.4 / new 480.3 and tg128 old 26.36 / new 27.19,
-i.e. no regression. The 27B and Flash-Next ROCm rows are stable and within a few
-percent.
+i.e. no regression. The 27B rows are within a few percent. Flash-Next ROCm was
+not re-run interleaved: its tg128 reads 22.78 ± 0.44 → 21.82 ± 0.43 (−4.2%) in
+the single run, untested for noise.
+
+`old-vs-new.sh` (below) scripts this interleaved sequence. The figures quoted
+here were taken by driving the same sequence by hand before the script existed,
+so a re-run reproduces the method, not these exact numbers. The possible gpt-oss-120b Vulkan pp512
+regression is tracked in [#233](https://github.com/noamsto/nix-amd-ai/issues/233).
 
 ## Reproduce
 
@@ -178,7 +203,9 @@ percent.
   paths via env: `TARGET`, `MTP_HEAD`, `LEMONADE_LLAMACPP_{VULKAN,ROCM}_BIN`).
 - `depth-probe.py` — the depth curve: starts `llama-server`, sends one long
   `/completion`, prints server timings and draft acceptance.
-- `old-vs-new.sh` — the `llama-bench` matrix for both pins.
+- `old-vs-new.sh` — the interleaved `llama-bench` matrix for both pins (rounds
+  loop, per-label logs, median and paired-mean summary). Old arm: flake rev
+  `81ffca6`.
 
 Probe scripts, not raw logs. Each script reads its binary and model paths from
 arguments or the environment, so nothing below hardcodes a store or model path.

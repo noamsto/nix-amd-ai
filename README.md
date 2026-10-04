@@ -397,7 +397,8 @@ hardware.amd-npu.lemonade.customModels."Qwen3.8-Flash-Next-MTP" = {
 The `draft` head must be the **ggml-org** one, not unsloth's `MTP/` copy — the
 latter was built for the superseded fork and aborts stock b11382 (see the
 bench-logs README). `--spec-draft-n-max 3` is the best setting measured here;
-4 is slower than 3 on this host.
+4 is slower than 3 (best of {2,3,4} on halo, gfx1151, Vulkan; this exact
+q8_0-KV / 131K-ctx config was not benchmarked).
 
 ### Tauri desktop app: download progress is fragile when backgrounded
 
@@ -718,7 +719,7 @@ Binds `127.0.0.1:8000` by default (`host`/`port`); the unit runs with `render`/`
 
 All numbers measured on Strix Point (gfx1150, Radeon 890M iGPU, 64 GiB DDR5-5600). Prompt 256 tokens, generation 128 tokens, 3 iterations after 1 warmup.
 
-> **⚠️ The ROCm rows below were measured on a numerically broken backend.** gfx1150 is hit by the same RDNA3.5 host-access bug as gfx1151: on this host, ROCm reads perplexity 250,459 against a CPU reference of 385 for the very Gemma-4-26B-A4B model benchmarked here (and 1,638 vs 6.79 for Qwen3.5-4B), while CPU and Vulkan are correct. The throughput figures are real, but they time a backend producing garbage, so the ROCm-vs-Vulkan comparison is not a choice worth making from these numbers. Upstream has since fixed the underlying regression (`d4389a4d`, [ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)), and this flake's llama.cpp pin (b11207) is past that revert, so no patch is carried anymore. The rows below are left in place, unrevised, until they can be re-measured on the fixed build. Vulkan and FLM rows are unaffected. See [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
+> **⚠️ The ROCm rows below were measured on a numerically broken backend.** gfx1150 is hit by the same RDNA3.5 host-access bug as gfx1151: on this host, ROCm reads perplexity 250,459 against a CPU reference of 385 for the very Gemma-4-26B-A4B model benchmarked here (and 1,638 vs 6.79 for Qwen3.5-4B), while CPU and Vulkan are correct. The throughput figures are real, but they time a backend producing garbage, so the ROCm-vs-Vulkan comparison is not a choice worth making from these numbers. Upstream has since fixed the underlying regression (`d4389a4d`, [ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)), and this flake's llama.cpp pin (b11382) is past that revert, so no patch is carried anymore. The rows below are left in place, unrevised, until they can be re-measured on the fixed build. Vulkan and FLM rows are unaffected. See [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
 
 ### Large: Gemma-4-26B-A4B-it-GGUF (~15.7 GB, via `llama-bench`, llama.cpp b8770)
 
@@ -772,14 +773,14 @@ The concurrency row is the interesting one: an NPU workload running alongside an
   since landed the real fix unconditionally (`d4389a4d`,
   [ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)),
   which covers gfx1150 too, and this flake's llama.cpp pin (`llamaCppPin` in
-  `flake.nix`, b11207) is past that revert — so the override and its patch are
+  `flake.nix`, b11382) is past that revert — so the override and its patch are
   gone. Full diagnosis and history:
   [docs/rocm-gfx1151-numerics.md](docs/rocm-gfx1151-numerics.md).
 
   Still open, tracked in that doc: this README's gfx1150 ROCm benchmark rows
   (Large: Gemma-4-26B-A4B, Qwen3.5-9B) were all measured through the old,
-  broken host-memory path and want re-running against the unpatched b11207
-  build.
+  broken host-memory path and want re-running against the unpatched
+  b11382 build.
 
 Enable all three and let lemonade pick the recipe per model.
 
@@ -879,7 +880,7 @@ reference: wizard flow, modes (HTTP / MTP A/B / backend), the model picker
 (search, fit glyphs, markers), the results columns (Decode, Predicted, % ceil), the
 status rail, preflight fixers, and every headless flag.
 
-Authoritative MTP A/B numbers (idle GPU + AC + performance power profile) for
+Authoritative MTP A/B numbers (idle GPU; host load not recorded) for
 Qwen3.8-Flash-Next on halo are in
 [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 The older `bench-logs/mtp-2026-05-*` rows (Qwen3.6 on Strix Point) stay
