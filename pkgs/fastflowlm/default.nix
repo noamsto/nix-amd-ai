@@ -270,6 +270,16 @@ stdenv.mkDerivation (finalAttrs: {
   #     releases the slot; the body is the handler's existing generic error
   #     (no exception text, #175). Covers /api/generate, /api/chat,
   #     /v1/chat/completions and /v1/completions, including their outer catches.
+  #   - thread-safe-localtime.patch (#197): flm serve runs its handlers on 10
+  #     I/O threads, and three served-path sites called the non-reentrant
+  #     localtime()/gmtime(), which share one process-wide static struct tm.
+  #     handle_ps (expires_at) called both into that same buffer, so local_tm
+  #     and utc_tm aliased and its timezone offset was always +00:00; the
+  #     request logger's get_current_time_string() and minja's strftime_now
+  #     (from chat_template::apply) raced the same buffer. All three now use
+  #     localtime_r with a caller-owned struct tm, and handle_ps takes the
+  #     offset from tm_gmtoff (correct across DST and month ends), so no two
+  #     threads share a time buffer.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -294,8 +304,9 @@ stdenv.mkDerivation (finalAttrs: {
   # tag with no size variants, and /api/cancel cancelling itself instead of
   # its target; and leaving a truncated stream instead of an error when a
   # streaming insert()/generate() fails after the first chunk (still on main
-  # at v1.0.6; this repo's #199). (An insert() failure is pre-stream in all
-  # four handlers, so it keeps the unchanged HTTP 4xx/5xx path.)
+  # at v1.0.6; this repo's #199), and racing libc's shared static struct tm
+  # in the served time formatting (#197). (An insert() failure is pre-stream
+  # in all four handlers, so it keeps the unchanged HTTP 4xx/5xx path.)
   # A bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -318,6 +329,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/model-list-entry-validation.patch
     ./patches/cancel-request-id.patch
     ./patches/stream-error-body.patch
+    ./patches/thread-safe-localtime.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
