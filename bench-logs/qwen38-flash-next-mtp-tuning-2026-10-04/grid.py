@@ -11,7 +11,10 @@ acceptance on repeated text is inflated, so every depth uses this builder.
 
 --ngram-mod: llama-server's --spec-type is a comma-separated list, so
 --ngram-mod appends ngram-mod (`draft-mtp,ngram-mod`, or plain `ngram-mod`
-with --spec none). Verified against `llama-server --help` on build 11207.
+with --spec none). Untested whether the pinned build accepts `draft-mtp,ngram-mod`
+combos; a failing row means it does not.
+
+--corpus-rev REV builds the corpus from that git revision instead of the working tree.
 
 Example:
   grid.py row --server BIN --target T.gguf --draft D.gguf --backend vulkan \
@@ -22,6 +25,7 @@ import hashlib
 import json
 import os
 import re
+import signal
 import statistics
 import subprocess
 import sys
@@ -41,6 +45,10 @@ class RowError(Exception):
 
 
 class MemError(RowError):
+    pass
+
+
+class BusyError(RowError):
     pass
 
 
@@ -129,6 +137,8 @@ def http(port, path, body=None, timeout=3600):
             return json.load(r)
     except urllib.error.HTTPError as e:
         raise RowError(f"HTTP {e.code} on {path}: {e.read().decode()[:500]}") from e
+    except (urllib.error.URLError, TimeoutError, OSError) as e:
+        raise RowError(f"request to {path} failed: {e!r}") from e
 
 
 def wait_ready(proc, port, deadline_s=900):
@@ -155,16 +165,21 @@ def ngram_dupes(ids):
     return len(g) - len(set(g))
 
 
-def build_corpus(port, repo, depth):
+def build_corpus(port, repo, depth, rev=None):
     """Return (token ids sliced to depth, files used, sha256 of the ids)."""
-    out = subprocess.run(["git", "-C", repo, "ls-files"], capture_output=True,
+    listing = ["ls-tree", "-r", "--name-only", rev] if rev else ["ls-files"]
+    out = subprocess.run(["git", "-C", repo, *listing], capture_output=True,
                          text=True, check=True).stdout.split("\n")
     files = sorted(f for f in out if f.endswith(EXTS)
                    and not re.fullmatch(r"bench-logs/[^/]+/README\.md", f))
     seen, ids, used = set(), [], 0
     for f in files:
-        with open(os.path.join(repo, f), encoding="utf-8", errors="replace") as fh:
-            text = fh.read()
+        if rev:
+            text = subprocess.run(["git", "-C", repo, "show", f"{rev}:{f}"], capture_output=True,
+                                  check=True).stdout.decode("utf-8", errors="replace")
+        else:
+            with open(os.path.join(repo, f), encoding="utf-8", errors="replace") as fh:
+                text = fh.read()
         if not text.strip():
             continue
         toks = http(port, "/tokenize", {"content": text}, timeout=120)["tokens"]
@@ -230,7 +245,7 @@ def tool_call(port):
             "name": "get_weather", "description": "Get the current weather for a city.",
             "parameters": {"type": "object", "properties": {"city": {"type": "string"}},
                            "required": ["city"]}}}],
-        "max_tokens": 512, "temperature": 0,
+        "max_tokens": 2048, "temperature": 0,
     })
     choice = resp["choices"][0]
     msg = choice["message"]
@@ -241,8 +256,11 @@ def tool_call(port):
             ok = "city" in json.loads(calls[0]["function"]["arguments"])
         except (json.JSONDecodeError, KeyError, TypeError):
             pass
-    return {"tool_call_ok": ok, "finish_reason": choice.get("finish_reason"),
-            "content_head": (msg.get("content") or "")[:200]}
+    out = {"tool_call_ok": ok, "finish_reason": choice.get("finish_reason"),
+           "content_head": (msg.get("content") or "")[:200]}
+    if out["finish_reason"] == "length":
+        out.update(tool_call_ok=False, truncated=True)
+    return out
 
 
 def completion(port, ids, gen):
@@ -281,8 +299,11 @@ def run_row(a, log):
 
     busy = preflight_busy()
     if busy:
-        raise RowError(f"other benchmark processes running: {busy}")
+        raise BusyError(f"other benchmark processes running: {busy}")
     load_flag = wait_for_quiet_load()
+    busy = preflight_busy()
+    if busy:
+        raise BusyError(f"other benchmark processes running: {busy}")
     check_memory(a.target, a.draft)
     loadavg_start = round(os.getloadavg()[0], 2)
 
@@ -305,9 +326,12 @@ def run_row(a, log):
 
         if a.depth <= 16:
             ids = http(port, "/tokenize", {"content": "The capital of France is"}, timeout=120)["tokens"][:a.depth]
+            row["depth"] = len(ids)
             files, sha = 0, hashlib.sha256(json.dumps(ids).encode()).hexdigest()
         else:
-            ids, files, sha = build_corpus(port, a.corpus_glob_root, a.depth)
+            ids, files, sha = build_corpus(port, a.corpus_glob_root, a.depth, a.corpus_rev)
+            if len(ids) != a.depth:
+                raise RowError(f"corpus length {len(ids)} != depth {a.depth}")
         row.update(corpus_files=files, corpus_sha256=sha, ngram64_dupes=ngram_dupes(ids))
 
         for _ in range(a.warmup):
@@ -323,6 +347,8 @@ def run_row(a, log):
         decode = [r["predicted_per_second"] for r in runs]
         drafted = sum(r.get("draft_n") or 0 for r in runs)
         accepted = sum(r.get("draft_n_accepted") or 0 for r in runs)
+        if a.spec != "none" and drafted == 0:
+            raise RowError("no drafts recorded")
         row.update(
             prompt_n=runs[0]["prompt_n"],
             decode_tps_mean=round(statistics.mean(decode), 3),
@@ -364,26 +390,35 @@ def main():
     p.add_argument("--warmup", type=int, default=1)
     p.add_argument("--repeat", type=int, default=3)
     p.add_argument("--corpus-glob-root", default=".", help="git repo whose files build the prompt corpus")
+    p.add_argument("--corpus-rev", default=None, help="git rev to read the corpus from (default: working tree)")
     p.add_argument("--residency", action="store_true")
     p.add_argument("--ngram-mod", action="store_true")
     p.add_argument("--tool-call", action="store_true")
     p.add_argument("--label", default="")
     p.add_argument("--port", type=int, default=18120)
     a = ap.parse_args()
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
+    signal.signal(signal.SIGHUP, lambda *_: sys.exit(143))
     if a.spec == "draft-mtp" and not a.draft:
         ap.error("--spec draft-mtp needs --draft")
 
     with tempfile.TemporaryFile(mode="w+") as log:
+        def fail(e, code):
+            log.seek(0)
+            print(json.dumps({"error": e if isinstance(e, str) else str(e), "label": a.label,
+                              "backend": a.backend, "server_tail": log.read()[-1500:]}))
+            return code
+
         try:
             row = run_row(a, log)
         except MemError as e:
-            print(json.dumps({"error": str(e)}))
-            return 3
+            return fail(e, 3)
+        except BusyError as e:
+            return fail(e, 2)
         except RowError as e:
-            log.seek(0)
-            err = {"error": str(e), "server_tail": log.read()[-1500:]}
-            print(json.dumps(err))
-            return 2 if str(e).startswith("other benchmark") else 1
+            return fail(e, 1)
+        except Exception as e:
+            return fail(repr(e), 1)
     print(json.dumps(row))
     return 0
 

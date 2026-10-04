@@ -36,8 +36,10 @@ n-max 3 on Vulkan): `-c` 2816 vs 2048, q8_0 KV vs the f16 default, `-t 8` vs
 auto, and a different 512-token prompt (repo text vs the built-in passage). The
 n-max 3 / no p-min row here reaches only 1.07–1.14× at 0.42 acceptance vs 0.63
 in #231. I have **not** isolated which difference (or the host load) accounts
-for it; the prompt is the most likely, because acceptance is content-driven, but
-that is unmeasured. `retake.sh` is the place to bisect it.
+for it. The prompt is a suspect, because acceptance is content-driven, but that
+is unmeasured and `retake.sh` cannot isolate it (the #231 prompt is not
+reproducible from this repo). It does bisect the other differences: f16 vs q8_0
+KV and default vs 8 threads, on a quiet host.
 
 ## Grid — Vulkan, 512 prompt / 128 gen (halo, gfx1151)
 
@@ -97,8 +99,8 @@ either. **Provisional pick: n-max 3, no p-min.**
   is suspiciously high for a non-repeating prompt: the text has no repeated
   64-token run but is repetitive in structure (similar docs and code), so I do
   **not** read this as "MTP gains grow with depth". The "gain gone by ~26K"
-  fork claim is not supported on this prompt, but this prompt is not prose.
-  Re-take on prose is in `retake.sh`'s to-do list (swap the corpus).
+  fork claim is not supported on this prompt, but this prompt is not prose; a
+  prose-corpus re-take is still to do.
 - **ROCm at depth:** MTP-off decode is 21.6 → 19.8 → 16.5 t/s at 0.5K / 8K / 32K.
   No collapse to ~5 t/s past 1K context on this build, so the reported hipCUB
   cliff does **not** appear here at 8K or 32K (decode only; MTP-on at 32K not
