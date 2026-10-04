@@ -1,0 +1,29 @@
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -660,7 +660,24 @@
+                 }
+             }
+             if (running) {
+-                do_accept();
++                if (ec) {
++                    // A persistent accept error -- EMFILE/ENFILE once the
++                    // process runs out of file descriptors -- fails again the
++                    // instant the next async_accept is armed, so re-arming
++                    // here burns an I/O thread and never lets a descriptor
++                    // free up. Wait briefly first; the pending connection
++                    // stays in the backlog, so it is accepted once the wait
++                    // ends and a descriptor is available.
++                    auto timer = std::make_shared<net::steady_timer>(
++                        ioc, std::chrono::milliseconds(100));
++                    timer->async_wait([this, timer](const beast::error_code&) {
++                        if (running) {
++                            do_accept();
++                        }
++                    });
++                } else {
++                    do_accept();
++                }
+             }
+         });
+ }
