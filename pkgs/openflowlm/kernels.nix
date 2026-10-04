@@ -6,13 +6,9 @@
 #
 # The set list lives in ./kernel-sets.json (regenerate with
 # ./update-kernel-sets.sh after a src bump); ./kernel-sets-plan.sh turns
-# (src, list) into the serial execution order the join follows, and recovers
-# from drift in either direction instead of failing:
-#   * a set present in src but not in kernel-sets.json -> the join builds it
-#     inline (same export command) so the output stays complete, and warns;
-#   * a set listed but absent from src -> its per-set derivation emits an empty
-#     output with a warning and the join skips it.
-# Either way the joined tree equals what the monolithic export would produce.
+# (src, list) into the serial execution order the join follows and reports
+# drift in either direction, which the join recovers from rather than failing
+# (see that script's header).
 #
 # Upstream quirk preserved exactly: gemma3-12b.json and gemma3-4b.json both
 # carry extra.model = "Gemma3-4B-NPU2", so they export into the same directory.
