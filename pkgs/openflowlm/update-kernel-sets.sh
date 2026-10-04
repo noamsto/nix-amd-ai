@@ -23,9 +23,12 @@ if [ ! -d "$src/open_kernels/recipes/specs" ]; then
   exit 1
 fi
 
-# Stems, sorted; the join builds the specs in this order.
+# Stems in upstream's serial order. Sort the *.json filenames before
+# stripping the extension so the order matches Python's
+# sorted(SPECS_DIR.glob('*.json')): 'qwen3-4b.json' sorts before 'qwen3.json'
+# ("-" < ".") even though the stems sort the other way.
 llm_specs=$(find "$src/open_kernels/recipes/specs" -maxdepth 1 -name '*.json' -printf '%f\n' |
-  sed 's/\.json$//' | LC_ALL=C sort)
+  LC_ALL=C sort | sed 's/\.json$//')
 # Families in families.json order (that is the serial BERT order).
 bert_families=$(jq -r '.families[].name' "$src/npu_offload/gemm_rtp/families.json")
 

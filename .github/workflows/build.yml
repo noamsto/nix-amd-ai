@@ -50,7 +50,11 @@ jobs:
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
       - name: List kernel sets
         id: list
-        run: echo "sets=$(nix eval --json .#openflowlm.kernels.passthru.sets --apply builtins.attrNames)" >> "$GITHUB_OUTPUT"
+        # Assign first: under the shell's `-e`, a failed substitution inside
+        # echo's argument is swallowed, but a failed assignment aborts the step.
+        run: |
+          sets=$(nix eval --json .#openflowlm.kernels.passthru.sets --apply builtins.attrNames)
+          echo "sets=$sets" >> "$GITHUB_OUTPUT"
 
   npu-kernels:
     needs: npu-kernel-sets

@@ -20,8 +20,10 @@ sets=$2
 listed_llm=$(jq -r '.llmSpecs[]' "$sets" | LC_ALL=C sort)
 listed_bert=$(jq -r '.bertFamilies[]' "$sets" | LC_ALL=C sort)
 
+# Sort the *.json filenames before stripping, matching the serial
+# sorted(SPECS_DIR.glob('*.json')) order (see update-kernel-sets.sh).
 src_llm=$(find "$src/open_kernels/recipes/specs" -maxdepth 1 -name '*.json' -printf '%f\n' |
-  sed 's/\.json$//' | LC_ALL=C sort)
+  LC_ALL=C sort | sed 's/\.json$//')
 src_bert=$(jq -r '.families[].name' "$src/npu_offload/gemm_rtp/families.json")
 
 while IFS= read -r name; do
