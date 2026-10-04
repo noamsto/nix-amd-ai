@@ -280,6 +280,21 @@ stdenv.mkDerivation (finalAttrs: {
   #     localtime_r with a caller-owned struct tm, and handle_ps takes the
   #     offset from tm_gmtoff (correct across DST and month ends), so no two
   #     threads share a time buffer.
+  #   - cancel-queued-request.patch (#222): a request waiting in the NPU queue
+  #     was registered only when process_task ran, so POST /api/cancel with its
+  #     request_id answered "not found" and the request then ran in full (#221
+  #     reached registered targets only). handle_request now parses the body
+  #     once and creates and registers the cancellation token at accept time for
+  #     the routes whose handler composes it into its generation loop
+  #     (/api/generate, /api/chat, /v1/chat/completions, /v1/completions); a
+  #     dequeued already-cancelled request answers through the handler's existing
+  #     cancellation branch -- the same shape a client disconnect while queued
+  #     produces -- and AutoModel::_shared_insert checks the predicate before any
+  #     prefill, so the cancelled request never decodes. /api/cancel keeps its
+  #     own random id and is not registered, so it cannot erase another
+  #     request's slot; embeddings and audio have no cancellation path and keep
+  #     registering when they start; a non-string request_id is refused 400
+  #     before the request is queued.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -330,6 +345,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/cancel-request-id.patch
     ./patches/stream-error-body.patch
     ./patches/thread-safe-localtime.patch
+    ./patches/cancel-queued-request.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
