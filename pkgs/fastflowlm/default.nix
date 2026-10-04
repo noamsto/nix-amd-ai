@@ -291,8 +291,10 @@ stdenv.mkDerivation (finalAttrs: {
   #     cancellation branch -- the same shape a client disconnect while queued
   #     produces -- and AutoModel::_shared_insert checks the predicate before any
   #     prefill, so the cancelled request never decodes. /api/cancel keeps its
-  #     own random id and is not registered, so it cannot erase another
-  #     request's slot; embeddings and audio have no cancellation path and keep
+  #     own random id and is not registered; unregister_active_request erases a
+  #     slot only while it still holds that request's token, so a request that
+  #     reuses an id after a cancel is not erased by the cancelled request's
+  #     completion; embeddings and audio have no cancellation path and keep
   #     registering when they start; a non-string request_id is refused 400
   #     before the request is queued.
   # None of the patches carries attribution: require_field, safe_dump, the

@@ -22,7 +22,25 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  ///@brief HttpSession class implementation
  ///@param socket the socket
  ///@param server the server
-@@ -788,15 +802,15 @@
+@@ -656,9 +670,15 @@
+ 
+ ///@brief unregister active request
+ ///@param request_id the request ID
+-void WebServer::unregister_active_request(const std::string& request_id) {
++void WebServer::unregister_active_request(const std::string& request_id, const std::shared_ptr<CancellationToken>& token) {
+     std::lock_guard<std::mutex> lock(active_requests_mutex_);
+-    active_requests_.erase(request_id);
++    auto it = active_requests_.find(request_id);
++    // Drop the entry only if it is still this request's. A cancel erases the
++    // slot, and the id can be re-used by a later request before this one
++    // finishes; erasing by key alone would take that new request's slot.
++    if (it != active_requests_.end() && it->second == token) {
++        active_requests_.erase(it);
++    }
+ }
+ 
+ ///@brief cancel request
+@@ -788,15 +808,15 @@
      header_print("LOG", "Target: " << req.target());
      header_print("LOG", "Version: " << req.version());
      header_print("LOG", "Keep-Alive: " << req.keep_alive());
@@ -41,7 +59,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
                  is_json = true;
              }
              else if (content_type.find("multipart/form-data") != std::string::npos) {
-@@ -823,12 +837,38 @@
+@@ -823,12 +843,38 @@
      // Decide if this handler needs exclusive NPU access.
      bool needs_npu = requires_npu_access(std::string(req.method_string()), std::string(req.target()));
  
@@ -82,7 +100,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
          auto& req_ref = *req_ptr;
          auto& res_ref = *res_ptr;
  
-@@ -838,63 +878,7 @@
+@@ -838,63 +884,7 @@
          auto npu_guard = std::make_shared<NpuReleaseGuard>(
              [this] { this->process_next_npu_request(); }, needs_npu);
  
@@ -147,7 +165,52 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
          // catch is_deferred
          auto send_response = [res_ptr, session, this, request_id, is_deferred, cancellation_token](const json& response_data) {
-@@ -1007,8 +991,32 @@
+@@ -925,7 +915,7 @@
+             response_ref.set(http::field::content_type, "application/json");
+             response_ref.prepare_payload();
+             cancellation_token->complete();
+-            unregister_active_request(request_id);
++            unregister_active_request(request_id, cancellation_token);
+ 
+             if (is_deferred && session) {
+                 session->write_response_from_callback();
+@@ -941,7 +931,7 @@
+                 session->write_streaming_response(data, is_final);
+             }
+             if (is_final) {
+-                unregister_active_request(request_id);
++                unregister_active_request(request_id, cancellation_token);
+             }
+         };
+ 
+@@ -958,7 +948,7 @@
+             // application/json) -- refuse it like the parse failure above,
+             // not the generic 500 below.
+             cancellation_token->complete();
+-            unregister_active_request(request_id);
++            unregister_active_request(request_id, cancellation_token);
+ 
+             res_ref.result(http::status::bad_request);
+             res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
+@@ -973,7 +963,7 @@
+         }
+         catch (const std::exception& e) {
+             cancellation_token->complete();
+-            unregister_active_request(request_id);
++            unregister_active_request(request_id, cancellation_token);
+ 
+             res_ref.result(http::status::internal_server_error);
+             header_print("ERROR", "Handler exception: " + std::string(e.what()));
+@@ -989,7 +979,7 @@
+         }
+         catch (...) {
+             cancellation_token->complete();
+-            unregister_active_request(request_id);
++            unregister_active_request(request_id, cancellation_token);
+ 
+             res_ref.result(http::status::internal_server_error);
+             res_ref.body() = safe_dump(json{ {"error", "Unknown handler exception"} });
+@@ -1007,8 +997,32 @@
  
      // --- Logic to run or queue the task ---
  
@@ -181,7 +244,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
          return false;
      }
  
-@@ -1016,7 +1024,8 @@
+@@ -1016,7 +1030,8 @@
          if (needs_npu) {
              header_print("🟢 ", "NPU Locked!");
          }
@@ -191,7 +254,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
          return false;
      }
  
-@@ -1034,9 +1043,12 @@
+@@ -1034,9 +1049,12 @@
          return false;
      }
      else {
@@ -206,6 +269,18 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
              });
          header_print("🕒 ", "NPU busy, request queued (" + std::to_string(npu_request_queue_.size()) + "/" + std::to_string(max_npu_queue_) + "): " + key);
  
+diff --git a/src/server/server.hpp b/src/server/server.hpp
+--- a/src/server/server.hpp
++++ b/src/server/server.hpp
+@@ -130,7 +130,7 @@
+ 
+     // Request tracking methods
+     void register_active_request(const std::string& request_id, std::shared_ptr<CancellationToken> token);
+-    void unregister_active_request(const std::string& request_id);
++    void unregister_active_request(const std::string& request_id, const std::shared_ptr<CancellationToken>& token);
+     bool cancel_request(const std::string& request_id);
+     
+     // Statistics
 diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel.cpp
 --- a/src/common/AutoModel/automodel.cpp
 +++ b/src/common/AutoModel/automodel.cpp

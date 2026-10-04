@@ -152,6 +152,14 @@ cancel() { curl -s -m 10 -X POST "$base/api/cancel" -H 'Content-Type: applicatio
   -d "{\"request_id\":\"$1\"}" | tee -a "$cancels"; }
 done_reason() { jq -r 'select(.done == true) | .done_reason // "none"' "$1" 2>/dev/null | tail -n1; }
 content_lines() { jq -c 'select(.response != null and .response != "")' "$1" 2>/dev/null | wc -l; }
+wait_done() { # <ndjson> <timeout_s>
+  local waited=0
+  while (( waited < $2 )); do
+    jq -e 'select(.done == true)' "$1" >/dev/null 2>&1 && return 0
+    sleep 1; (( waited++ ))
+  done
+  return 1
+}
 
 case_queued_cancel() {
   local a="$outdir/$label.qc.a.ndjson" b="$outdir/$label.qc.b.ndjson" bid="qc-$RANDOM$RANDOM"
@@ -173,34 +181,28 @@ case_queued_cancel() {
   else
     record queued-cancel FAIL "cancelled=$cancelled B_done_reason=$reason B_content_lines=$blines A_done_reason=$areason"
   fi
-  # registry: the slot must be gone after B answered
-  local second
-  second=$(jq -r '.cancelled' <<<"$(cancel "$bid")" 2>/dev/null)
-  if [[ "$cancelled" == true && "$second" == false ]]; then
-    record registry PASS "first cancel cancelled:true, second cancelled:false"
-  else
-    record registry FAIL "first=$cancelled second=$second"
-  fi
 }
 
 case_queued_disconnect() {
   local a="$outdir/$label.qd.a.ndjson" b="$outdir/$label.qd.b.ndjson" bid="qd-$RANDOM$RANDOM"
-  local before after qc0
+  local before after pbefore pafter qc0
   start_stream "" "$a"; local apid=$stream_pid
   if ! wait_first_content "$a"; then record queued-disconnect FAIL "A no content within 60s"; return; fi
   qc0=$(queued_count)
   start_stream "$bid" "$b"; local bpid=$stream_pid
   if ! wait_queued_after "$qc0" 60; then record queued-disconnect FAIL "B never appeared in the NPU queue"; return; fi
-  # Either message means the monitor noticed the gone client.
+  # Either cancel message means the monitor noticed the gone client.
   before=$(grep -c 'cancelling active request' "$log" 2>/dev/null || true)
+  pbefore=$(grep -c 'Prefill Cancelled' "$log" 2>/dev/null || true)
   kill "$bpid" 2>/dev/null; wait "$bpid" 2>/dev/null
   wait_stream_end "$apid" 300 || echo "A stream did not finish within 300s" >&2
   sleep 3
   after=$(grep -c 'cancelling active request' "$log" 2>/dev/null || true)
-  if [[ "$after" -gt "$before" ]]; then
-    record queued-disconnect PASS "server saw the disconnect (${before}->${after}) and A finished"
+  pafter=$(grep -c 'Prefill Cancelled' "$log" 2>/dev/null || true)
+  if [[ "$after" -gt "$before" && "$pafter" -gt "$pbefore" ]]; then
+    record queued-disconnect PASS "monitor fired (${before}->${after}) and B answered cancelled (Prefill Cancelled ${pbefore}->${pafter})"
   else
-    record queued-disconnect FAIL "no cancelling-active-request line after B's client left (${before}->${after})"
+    record queued-disconnect FAIL "monitor ${before}->${after}, Prefill Cancelled ${pbefore}->${pafter} (want both to rise)"
   fi
 }
 
@@ -223,6 +225,31 @@ case_queued_normal() {
   fi
 }
 
+case_registry() { # erase-once: a reused id must survive the cancelled request's completion
+  local a="$outdir/$label.rg.a.ndjson" b="$outdir/$label.rg.b.ndjson" c="$outdir/$label.rg.c.ndjson"
+  local bid="rg-$RANDOM$RANDOM" resp first reused qc0 qc1
+  start_stream "" "$a"; local apid=$stream_pid
+  if ! wait_first_content "$a"; then record registry FAIL "A no content within 60s"; return; fi
+  qc0=$(queued_count)
+  start_stream "$bid" "$b"; local bpid=$stream_pid
+  if ! wait_queued_after "$qc0" 60; then record registry FAIL "B never appeared in the NPU queue"; return; fi
+  resp=$(cancel "$bid"); first=$(jq -r '.cancelled' <<<"$resp" 2>/dev/null)
+  # Re-use the cancelled id for C while B is still queued. B's completion must
+  # not erase C's slot when it answers.
+  qc1=$(queued_count)
+  start_stream "$bid" "$c"; local cpid=$stream_pid
+  if ! wait_queued_after "$qc1" 60; then record registry FAIL "C never appeared in the NPU queue"; return; fi
+  if ! wait_done "$b" 300; then record registry FAIL "B did not answer within 300s (first=$first)"; return; fi
+  resp=$(cancel "$bid"); reused=$(jq -r '.cancelled' <<<"$resp" 2>/dev/null)
+  wait_stream_end "$cpid" 120 || true
+  wait_stream_end "$apid" 300 || echo "A stream did not finish within 300s" >&2
+  if [[ "$first" == true && "$reused" == true ]]; then
+    record registry PASS "first cancel true; reused-id cancel true (B's completion did not erase C's slot)"
+  else
+    record registry FAIL "first=$first reused=$reused"
+  fi
+}
+
 if ! start_server; then
   record startup FAIL "$start_err"
   exit 1
@@ -232,6 +259,7 @@ echo "queued so far: $(queued_count)" >&2
 case_queued_cancel
 case_queued_disconnect
 case_queued_normal
+case_registry
 
 echo "--- summary ($results)"
 cat "$results"
