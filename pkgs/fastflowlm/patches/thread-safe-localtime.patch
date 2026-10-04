@@ -1,0 +1,66 @@
+diff --git a/src/include/minja/chat-template.hpp b/src/include/minja/chat-template.hpp
+index 2cb3eca..1f2ae7a 100644
+--- a/src/include/minja/chat-template.hpp
++++ b/src/include/minja/chat-template.hpp
+@@ -511,7 +511,8 @@ class chat_template {
+                 auto format = args.args[0].get<std::string>();
+ 
+                 auto time = std::chrono::system_clock::to_time_t(now);
+-                auto local_time = *std::localtime(&time);
++                std::tm local_time{};
++                localtime_r(&time, &local_time);
+                 std::ostringstream ss;
+                 ss << std::put_time(&local_time, format.c_str());
+                 return ss.str();
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 5bf1621..fafe63a 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -1380,19 +1380,23 @@ void RestHandler::handle_ps(const json& request,
+         auto expires_tp = std::chrono::system_clock::from_time_t(expires_time_t);
+         auto fractional_seconds = std::chrono::duration_cast<std::chrono::microseconds>(expires_time - expires_tp).count();
+         
+-        // Get local time and timezone offset
+-        std::tm* local_tm = std::localtime(&expires_time_t);
+-        std::tm* utc_tm = std::gmtime(&expires_time_t);
+-        
++        // Reentrant variants: localtime()/gmtime() share one static struct tm
++        // across all I/O threads, and using both would alias local_tm and utc_tm
++        // (so the offset below always came out 0).
++        std::tm local_tm{};
++        std::tm utc_tm{};
++        localtime_r(&expires_time_t, &local_tm);
++        gmtime_r(&expires_time_t, &utc_tm);
++
+         // Calculate timezone offset in minutes
+-        int offset_minutes = (local_tm->tm_hour - utc_tm->tm_hour) * 60 + (local_tm->tm_min - utc_tm->tm_min);
+-        if (local_tm->tm_mday != utc_tm->tm_mday) {
+-            offset_minutes += (local_tm->tm_mday > utc_tm->tm_mday) ? 1440 : -1440;
++        int offset_minutes = (local_tm.tm_hour - utc_tm.tm_hour) * 60 + (local_tm.tm_min - utc_tm.tm_min);
++        if (local_tm.tm_mday != utc_tm.tm_mday) {
++            offset_minutes += (local_tm.tm_mday > utc_tm.tm_mday) ? 1440 : -1440;
+         }
+         
+         std::stringstream expires_ss;
+         expires_ss.imbue(std::locale::classic()); // Use C locale to avoid commas
+-        expires_ss << std::put_time(local_tm, "%Y-%m-%dT%H:%M:%S");
++        expires_ss << std::put_time(&local_tm, "%Y-%m-%dT%H:%M:%S");
+         expires_ss << "." << std::setfill('0') << std::setw(5) << (fractional_seconds / 40); // 5 decimal places
+         
+         // Format timezone offset
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 1990624..061b68b 100644
+--- a/src/server/server.cpp
++++ b/src/server/server.cpp
+@@ -26,8 +26,10 @@ std::atomic<int> g_npu_active_requests{0};
+ std::string get_current_time_string() {
+     auto now = std::chrono::system_clock::now();
+     auto in_time_t = std::chrono::system_clock::to_time_t(now);
++    std::tm local_tm{};
++    localtime_r(&in_time_t, &local_tm);
+     std::stringstream ss;
+-    ss << std::put_time(std::localtime(&in_time_t), "%H:%M:%S %m:%d:%Y");
++    ss << std::put_time(&local_tm, "%H:%M:%S %m:%d:%Y");
+     return ss.str();
+ }
+ 
