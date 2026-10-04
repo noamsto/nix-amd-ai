@@ -1,0 +1,15 @@
+diff --git a/src/common/AutoModel/modeling_qwen3_5_omni.cpp b/src/common/AutoModel/modeling_qwen3_5_omni.cpp
+index 2869578..fc33617 100644
+--- a/src/common/AutoModel/modeling_qwen3_5_omni.cpp
++++ b/src/common/AutoModel/modeling_qwen3_5_omni.cpp
+@@ -553,6 +553,10 @@ bool Qwen3_5_Omni::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input
+     meta_info.prefill_duration = (uint64_t)time_utils::duration_ns(prefill_start, prefill_end).first;
+     meta_info.prompt_tokens = tokens.size(); 
+ 
++    if (meta_info.stop_reason == CANCEL_DETECTED) {
++        return false;
++    }
++
+     this->total_tokens += tokens.size();
+ 
+     this->profiler_list[SAMPLING_TIME].start();
