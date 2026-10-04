@@ -1,0 +1,77 @@
+diff --git a/src/include/model_list.hpp b/src/include/model_list.hpp
+index 7ea11e5..b578824 100644
+--- a/src/include/model_list.hpp
++++ b/src/include/model_list.hpp
+@@ -125,7 +125,17 @@ class model_list {
+             if (new_tag.find(':') == std::string::npos) {
+                 // get the first size in the subset
+                 std::string model_type = new_tag;
+-                std::string model_size = this->config["models"][model_type].begin().key();
++                // A bare tag whose size map is missing, not an object, or empty
++                // has no first size: begin() is end(), and .key() on it is
++                // undefined behavior, while a non-object map throws
++                // invalid_iterator. Neither is a tag this method can resolve, so
++                // refuse it as a malformed entry instead.
++                const auto& model_map = this->config.at("models");
++                auto subset = model_map.find(model_type);
++                if (subset == model_map.end() || !subset->is_object() || subset->empty()) {
++                    throw std::runtime_error("model '" + model_type + "' has no size variants");
++                }
++                std::string model_size = subset->begin().key();
+                 new_tag = model_type + ":" + model_size;
+             }
+             return new_tag;
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 5bf1621..2ae5cd2 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -556,7 +556,17 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+     // rectify_model_tag() indexes config by type: only safe for a supported tag.
+     std::string ensure_tag = supported_models.cut_tag(model_tag);
+     if (supported_models.is_model_supported(ensure_tag)) {
+-        ensure_tag = supported_models.rectify_model_tag(ensure_tag);
++        // rectify_model_tag() picks the first size for a bare tag; a size map
++        // that is missing, non-object or empty would read end().key() (undefined
++        // behavior) or throw invalid_iterator. Both are malformed-entry faults,
++        // so refuse them here, before anything is unloaded.
++        try {
++            ensure_tag = supported_models.rectify_model_tag(ensure_tag);
++        }
++        catch (const std::exception& e) {
++            header_print("ERROR", "model '" + ensure_tag + "' has a malformed model-list entry: " + std::string(e.what()));
++            return ModelLoad::LoadFailed;
++        }
+     }
+     // "model-faker" is the sentinel for `flm serve` started without a chat model,
+     // and the handlers default `model` to current_model_tag -- so a request naming
+@@ -589,6 +599,30 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+     try {
+         auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
+         family = info["details"]["family"];
++        // A chat entry must declare the files that make up the model, including
++        // config.json: get_missing_files() swallows a missing or non-array
++        // `files` and reports nothing missing, so without this an entry for a
++        // model that is not on disk is treated as downloaded and the load
++        // reaches LM_Config::_load_json's exit(1). Refuse it here instead, still
++        // before anything is unloaded. The non-chat families are refused just
++        // below, so their entries are not validated here.
++        if (family != "whisper-v3" && family != "embed-gemma") {
++            if (!info.contains("files") || !info["files"].is_array() || info["files"].empty()) {
++                throw std::runtime_error("missing or empty 'files' array");
++            }
++            bool has_config_json = false;
++            for (const auto& file : info["files"]) {
++                if (!file.is_string()) {
++                    throw std::runtime_error("non-string entry in 'files'");
++                }
++                if (file.get<std::string>() == "config.json") {
++                    has_config_json = true;
++                }
++            }
++            if (!has_config_json) {
++                throw std::runtime_error("'files' does not list config.json");
++            }
++        }
+     }
+     catch (const std::exception& e) {
+         header_print("ERROR", "model '" + ensure_tag + "' has a malformed model-list entry: " + std::string(e.what()));

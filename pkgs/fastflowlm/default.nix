@@ -229,6 +229,20 @@ stdenv.mkDerivation (finalAttrs: {
   #     accepted once a descriptor is available. Measured on halo under
   #     descriptor exhaustion: the process burned ~3 cores before and stayed
   #     idle after, and it accepts again once the limit is restored.
+  #   - model-list-entry-validation.patch (#204, #205): two more malformed
+  #     model_list.json paths in ensure_model_loaded broke the #181 contract.
+  #     A bare tag (no ":size") whose size map is an empty object made
+  #     rectify_model_tag() read end().key() (undefined behavior), and a
+  #     non-object size map threw invalid_iterator answered 400; it now
+  #     throws std::runtime_error for a missing, non-object or empty size
+  #     map, caught before anything is unloaded and answered 500
+  #     model_load_failed (#205). And an entry with a missing or non-array
+  #     `files` had get_missing_files() swallow the type_error and report
+  #     nothing missing, so a model not on disk reached
+  #     LM_Config::_load_json's exit(1) and killed the process; the selected
+  #     chat entry's `files` is now validated up front (a non-empty array of
+  #     strings that lists config.json), so the same malformed entry is
+  #     refused 500 model_load_failed without unloading (#204).
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -248,7 +262,9 @@ stdenv.mkDerivation (finalAttrs: {
   # client error, ignoring a prefill cancel in Qwen3_5_Omni::insert,
   # ignoring a disconnect on non-streaming /api/chat, and
   # erasing a cancel that lands before a streaming handler starts (the last
-  # two on main at ef60a5f, the latter in /v1/chat/completions). A bump that
+  # two on main at ef60a5f, the latter in /v1/chat/completions), exiting on a
+  # model_list.json entry with no `files` and reading end().key() for a bare
+  # tag with no size variants. A bump that
   # breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -268,6 +284,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/cancel-keep-early.patch
     ./patches/qwen3-5-omni-prefill-cancel.patch
     ./patches/accept-error-backoff.patch
+    ./patches/model-list-entry-validation.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
