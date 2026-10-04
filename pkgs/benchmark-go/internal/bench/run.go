@@ -305,6 +305,11 @@ type MTPABOpts struct {
 	GenTokens    int
 	Warmup       int
 	Repeat       int
+	// DraftModelPath is an external MTP draft head passed as --model-draft.
+	// "" means the target model carries its own MTP tensors.
+	DraftModelPath string
+	// DraftNMax is --spec-draft-n-max. <= 0 defaults to 6.
+	DraftNMax int
 	// CtxSize is the llama-server --ctx-size. <= 0 defaults to 2048.
 	CtxSize int
 	// BackendBinEnv maps backend key → env var name for the binary path.
@@ -479,11 +484,22 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			o.ModelID, o.ModelID,
 		)
 	}
+	if o.DraftModelPath != "" {
+		if fi, statErr := os.Stat(o.DraftModelPath); statErr != nil || fi.IsDir() {
+			return nil, fmt.Errorf("MTP draft model %q not found", o.DraftModelPath)
+		}
+	}
 
-	// Model file size + the GPU-memory probe drive the pre-spawn guardrail below.
+	// Model file size (plus the draft head, when present) + the GPU-memory
+	// probe drive the pre-spawn guardrail below: both models are resident.
 	var modelBytes uint64
 	if fi, statErr := os.Stat(gguf); statErr == nil && fi.Size() > 0 {
 		modelBytes = uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above; a file size is never negative here
+	}
+	if o.DraftModelPath != "" {
+		if fi, statErr := os.Stat(o.DraftModelPath); statErr == nil && fi.Size() > 0 {
+			modelBytes += uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above
+		}
 	}
 	memFree := o.GPUMemFree
 	if memFree == nil {
@@ -569,13 +585,15 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 
 				emit("loading model")
 				argv := BuildLlamaServerArgs(ServerArgs{
-					BinPath:   binPath,
-					ModelPath: gguf,
-					Port:      port,
-					Device:    device,
-					SpecType:  specType,
-					NGL:       99,
-					Ctx:       ctxSize,
+					BinPath:        binPath,
+					ModelPath:      gguf,
+					DraftModelPath: o.DraftModelPath,
+					Port:           port,
+					Device:         device,
+					SpecType:       specType,
+					NGL:            99,
+					Ctx:            ctxSize,
+					DraftNMax:      o.DraftNMax,
 				})
 
 				srv := NewLlamaServer(argv, port)

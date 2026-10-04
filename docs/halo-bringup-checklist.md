@@ -11,7 +11,7 @@ same kernel 7.2.2 and linux-firmware 20260810. The cause was ggml letting
 gfx1151 read tensors straight out of host memory; this flake carried a patch
 for it (`llamaCppRocmOverride`, llama.cpp#28211) until upstream landed the
 real fix (`d4389a4d`, llama.cpp#28604), which this repo's llama.cpp pin
-(b11207) is now past — ROCm reads 6.8182 either way.
+(b11207, since bumped to b11382) is now past — ROCm reads 6.8182 either way.
 See [rocm-gfx1151-numerics.md](rocm-gfx1151-numerics.md).
 
 **#61's ROCm-vs-Vulkan A/B is now worth running.** A ROCm build before

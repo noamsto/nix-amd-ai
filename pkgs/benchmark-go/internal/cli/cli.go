@@ -44,6 +44,8 @@ type opts struct {
 	// MTP A/B mode
 	MTPAb         string
 	MTPAbBackends string
+	MTPDraft      string
+	MTPDraftNMax  int
 
 	// Ctx size (Go extension: Python hardcodes 2048)
 	CtxSize int
@@ -88,6 +90,10 @@ func parseFlags(args []string) (opts, error) {
 		"Run MTP on/off A/B for MODEL_ID (mutually exclusive with positional MODEL_IDs)")
 	fs.StringVar(&o.MTPAbBackends, "mtp-ab-backends", "rocm,vulkan",
 		"Comma-separated backends to sweep when --mtp-ab is set")
+	fs.StringVar(&o.MTPDraft, "mtp-draft", "",
+		"Path to an external MTP draft head GGUF for --mtp-ab (passed as --model-draft)")
+	fs.IntVar(&o.MTPDraftNMax, "mtp-draft-n-max", 6,
+		"--spec-draft-n-max for the MTP-on arm of --mtp-ab")
 	fs.IntVar(&o.CtxSize, "ctx-size", 2048,
 		"llama-server --ctx-size for MTP A/B mode (Go extension; Python hardcodes 2048)")
 	fs.BoolVar(&o.NoTUI, "no-tui", false,
@@ -195,13 +201,15 @@ func runHeadlessMTPAB(ctx context.Context, o opts) int {
 	}
 
 	abOpts := bench.MTPABOpts{
-		ModelID:      o.MTPAb,
-		Backends:     backends,
-		PromptTokens: o.PromptTokens,
-		GenTokens:    o.GenTokens,
-		Warmup:       o.Warmup,
-		Repeat:       o.Repeat,
-		CtxSize:      o.CtxSize,
+		ModelID:        o.MTPAb,
+		Backends:       backends,
+		PromptTokens:   o.PromptTokens,
+		GenTokens:      o.GenTokens,
+		Warmup:         o.Warmup,
+		Repeat:         o.Repeat,
+		DraftModelPath: o.MTPDraft,
+		DraftNMax:      o.MTPDraftNMax,
+		CtxSize:        o.CtxSize,
 		// Lets the GPU-memory guardrail evacuate a lemonade-held model.
 		BaseURL: strings.TrimRight(o.BaseURL, "/"),
 	}

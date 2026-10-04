@@ -8,7 +8,7 @@ upstream's own fix, local patch dropped).** This flake used to patch
 agreeing with CPU and Vulkan to 0.2%. Upstream has since landed the real fix
 unconditionally (`d4389a4d`, closing
 [ggml-org/llama.cpp#28604](https://github.com/ggml-org/llama.cpp/issues/28604)),
-and this repo's llama.cpp pin (b11207) is past that revert, so the local patch
+and this repo's llama.cpp pin (b11382) is past that revert, so the local patch
 is gone — see "## b11207 re-measurement (unpatched)" below for the current
 numbers. `llamacpp:rocm` is usable on Strix Halo either way.
 
@@ -106,7 +106,7 @@ condition unconditionally: `d4389a4d` (closing
 sets `integrated = false` for the whole RDNA3.5 family rather than gfx1151
 alone — see [#28211](https://github.com/ggml-org/llama.cpp/issues/28211) for
 the original report this repo filed the widened fix against. This repo's
-llama.cpp pin (b11207) is past that revert, so the local patch is gone.
+llama.cpp pin (b11382) is past that revert, so the local patch is gone.
 **gfx1150 has not been re-measured against b11207** — only gfx1151/Halo was
 (see "## b11207 re-measurement (unpatched)" below); the widened-patch numbers
 above remain the last measurement taken for gfx1150.
@@ -139,6 +139,14 @@ throughput (Vulkan on 3 models, ROCm on the 27B) is in
 not repeated here since it uses different models from this doc's Qwen3.5-4B.
 gfx1150 was **not** re-measured (no gfx1150 host available this session); its
 last-known numbers stay the widened-patch ones above.
+
+## b11382 re-measurement
+
+The MTP bump to b11382 (#137) re-ran the same corpus/flags and got **6.8311**
+again — identical to b11207 and 0.19% from the 6.8182 reference. The b11382 bump is not a
+ROCm numerics regression for Qwen3.5-4B (the run used no draft, so neither
+Qwen3.8 nor the MTP path was exercised). Details in
+[bench-logs/qwen38-flash-next-mtp-2026-10-04/](../bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 
 ## What was measured
 

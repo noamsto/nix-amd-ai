@@ -83,6 +83,77 @@ func TestBuildLlamaServerArgs_SpecTypeNone(t *testing.T) {
 	}
 }
 
+func TestBuildLlamaServerArgs_ExternalDraftModel(t *testing.T) {
+	sa := ServerArgs{
+		BinPath:        "/usr/bin/llama-server",
+		ModelPath:      "/tmp/target.gguf",
+		DraftModelPath: "/tmp/mtp.gguf",
+		Port:           18080,
+		Device:         "Vulkan0",
+		SpecType:       "draft-mtp",
+		NGL:            99,
+		Ctx:            4096,
+	}
+	args := BuildLlamaServerArgs(sa)
+
+	if v, ok := flagValue(args, "--model-draft"); !ok || v != "/tmp/mtp.gguf" {
+		t.Errorf("--model-draft: got %q %v, want /tmp/mtp.gguf true", v, ok)
+	}
+	// Default n-max when unset stays 6.
+	if v, ok := flagValue(args, "--spec-draft-n-max"); !ok || v != "6" {
+		t.Errorf("--spec-draft-n-max: got %q %v, want 6 true", v, ok)
+	}
+}
+
+func TestBuildLlamaServerArgs_NoDraftModel(t *testing.T) {
+	args := BuildLlamaServerArgs(ServerArgs{
+		BinPath:   "/usr/bin/llama-server",
+		ModelPath: "/tmp/target.gguf",
+		Port:      18080,
+		Device:    "ROCm0",
+		SpecType:  "none",
+		NGL:       99,
+		Ctx:       4096,
+	})
+	if _, ok := flagValue(args, "--model-draft"); ok {
+		t.Error("--model-draft must be absent when DraftModelPath is empty")
+	}
+}
+
+func TestBuildLlamaServerArgs_DraftOmittedOnNoSpecArm(t *testing.T) {
+	// The MTP-off arm must not load the draft model even when a path is set,
+	// so the A/B compares MTP-on against a real MTP-off baseline.
+	args := BuildLlamaServerArgs(ServerArgs{
+		BinPath:        "/usr/bin/llama-server",
+		ModelPath:      "/tmp/target.gguf",
+		DraftModelPath: "/tmp/mtp.gguf",
+		Port:           18080,
+		Device:         "Vulkan0",
+		SpecType:       "none",
+		NGL:            99,
+		Ctx:            4096,
+	})
+	if _, ok := flagValue(args, "--model-draft"); ok {
+		t.Error("--model-draft must be absent when SpecType is none")
+	}
+}
+
+func TestBuildLlamaServerArgs_DraftNMaxOverride(t *testing.T) {
+	args := BuildLlamaServerArgs(ServerArgs{
+		BinPath:   "/usr/bin/llama-server",
+		ModelPath: "/tmp/target.gguf",
+		Port:      18080,
+		Device:    "Vulkan0",
+		SpecType:  "draft-mtp",
+		NGL:       99,
+		Ctx:       4096,
+		DraftNMax: 3,
+	})
+	if v, ok := flagValue(args, "--spec-draft-n-max"); !ok || v != "3" {
+		t.Errorf("--spec-draft-n-max: got %q %v, want 3 true", v, ok)
+	}
+}
+
 func TestResolveCtxSize(t *testing.T) {
 	tests := []struct {
 		name string

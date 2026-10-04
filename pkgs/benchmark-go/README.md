@@ -168,6 +168,8 @@ scripts. It exits **non-zero** when any model falls below `--min-decode-tps` (de
 nix run .#benchmark -- --no-tui --backend rocm   Phi-4-mini-instruct-GGUF
 nix run .#benchmark -- --no-tui --backend vulkan Phi-4-mini-instruct-GGUF
 nix run .#benchmark -- --no-tui --mtp-ab Qwen3.6B-GGUF
+nix run .#benchmark -- --no-tui --mtp-ab Qwen3.8-Flash-Next-GGUF \
+    --mtp-draft /path/to/mtp-Qwen3.8-Flash-Next-Q8_0.gguf
 ```
 
 **Flags**
@@ -186,6 +188,8 @@ nix run .#benchmark -- --no-tui --mtp-ab Qwen3.6B-GGUF
 | `--no-restart` | `false` | skip the sudo restart after writing the config |
 | `--mtp-ab` | `` | run MTP on/off A/B for one model (mutually exclusive with positional ids) |
 | `--mtp-ab-backends` | `rocm,vulkan` | backends to sweep in `--mtp-ab` |
+| `--mtp-draft` | `` | path to an external MTP draft head GGUF, passed as `--model-draft` on the MTP-on arm only (for models whose head is a separate file, e.g. Qwen3.8-Flash-Next) |
+| `--mtp-draft-n-max` | `6` | `--spec-draft-n-max` for the MTP-on arm |
 | `--ctx-size` | `2048` | `llama-server --ctx-size` for MTP A/B mode |
 | `--no-tui` | `false` | disable the TUI; print markdown to stdout |
 
