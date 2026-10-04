@@ -189,6 +189,33 @@ func TestParseFlags_mtpAbAlone(t *testing.T) {
 	}
 }
 
+func TestParseFlags_mtpDraftFlags(t *testing.T) {
+	o, err := parseFlags([]string{
+		"benchmark", "--mtp-ab", "Qwen3.8-Flash-Next-GGUF",
+		"--mtp-draft", "/var/lib/models/mtp/mtp.gguf",
+		"--mtp-draft-n-max", "4", "--no-tui",
+	})
+	if err != nil {
+		t.Fatalf("parseFlags error: %v", err)
+	}
+	if o.MTPDraft != "/var/lib/models/mtp/mtp.gguf" {
+		t.Errorf("MTPDraft = %q, want the draft path", o.MTPDraft)
+	}
+	if o.MTPDraftNMax != 4 {
+		t.Errorf("MTPDraftNMax = %d, want 4", o.MTPDraftNMax)
+	}
+}
+
+func TestParseFlags_mtpDraftNMaxDefault(t *testing.T) {
+	o, err := parseFlags([]string{"benchmark", "--mtp-ab", "M", "--no-tui"})
+	if err != nil {
+		t.Fatalf("parseFlags error: %v", err)
+	}
+	if o.MTPDraftNMax != 6 {
+		t.Errorf("MTPDraftNMax default = %d, want 6", o.MTPDraftNMax)
+	}
+}
+
 func TestParseFlags_backendChoices(t *testing.T) {
 	for _, b := range []string{"rocm", "vulkan", "auto"} {
 		_, err := parseFlags([]string{"benchmark", "--backend", b, "--no-tui", "SomeModel"})
