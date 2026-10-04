@@ -89,7 +89,7 @@ Not host load. Clean (loadavg < 2) n-max 3 / no p-min is 1.13×, inside the
   40.2 t/s MTP-on. Even at f16 KV acceptance here is 0.47 and MTP-on 33.3 t/s,
   with the MTP-off baseline matching #231's (26.7 vs 27.4). Acceptance is
   content-driven, and #231's prompt is not reproducible from this repo.
-- **`-c` and `-t 8`: not tested** (row group E, dropped for time budget).
+- **`-t 8`: not tested** (row group E, dropped for time budget). **`-c` 2816 vs 2048: never scripted.**
 - `--parallel` auto (4 slots) gives the same gain (1.14× vs 1.13×).
 
 At depth the picture changes: the speedup grows to 1.51× (Vulkan) / 1.80×

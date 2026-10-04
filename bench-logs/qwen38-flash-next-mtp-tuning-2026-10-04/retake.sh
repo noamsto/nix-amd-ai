@@ -58,7 +58,8 @@ row() {
 vulkan() { row vulkan "$SERVER_VULKAN" "$@"; }
 rocm() { row rocm "$SERVER_ROCM" "$@"; }
 
-# Shortened row set (~20 rows, time budget). Dropped: the A configs 3:0.6 and
+# 5:0.75 and round 2, the ROCm -fa rows and 8K depth rows, the MTP-off
+# residency row, and all of E.
 # 5:0.75 and round 2, the ROCm -fa rows and 8K depth rows, and all of E.
 
 # A. Vulkan clean re-take: baseline before each config, one round
