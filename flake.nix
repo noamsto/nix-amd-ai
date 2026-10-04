@@ -486,6 +486,82 @@
                 touch $out
               '';
 
+            # Cheap (no kernel build): exercises the same src-vs-list plan the
+            # kernels join executes, in both drift directions, with a doctored
+            # list. Drift is recoverable, so this only proves the plan reports
+            # it instead of failing or silently dropping a set.
+            openflowlm-kernel-sets-drift =
+              pkgs.runCommand "openflowlm-kernel-sets-drift" {
+                nativeBuildInputs = [pkgs.jq];
+                SRC = linuxPackages.openflowlm.passthru.src;
+                PLAN = ./pkgs/openflowlm/kernel-sets-plan.sh;
+                SETS = ./pkgs/openflowlm/kernel-sets.json;
+              } ''
+                run() { bash "$PLAN" "$SRC" "$1"; }
+
+                # The committed list matches the pinned source: nothing to build
+                # inline and nothing to skip.
+                run "$SETS" > plan.txt
+                if grep -qE '^(BUILD|SKIP)-' plan.txt; then
+                  echo "kernel-sets.json is out of date with the pinned source:" >&2
+                  cat plan.txt >&2
+                  exit 1
+                fi
+
+                # src has a set the list lacks; the list has one src lacks.
+                jq '.llmSpecs -= ["gemma3-4b"] | .bertFamilies += ["Phantom-Family"]' "$SETS" > d1.json
+                run d1.json > plan1.txt
+                grep -qx 'BUILD-LLM gemma3-4b' plan1.txt
+                grep -qx 'SKIP-BERT Phantom-Family' plan1.txt
+
+                # The other direction: the list names a set src lacks, and misses
+                # one src has.
+                jq '.llmSpecs += ["Phantom-Llm"] | (.bertFamilies -= ["BERT-h384-bf16"])' "$SETS" > d2.json
+                run d2.json > plan2.txt
+                grep -qx 'SKIP-LLM Phantom-Llm' plan2.txt
+                grep -qx 'BUILD-BERT BERT-h384-bf16' plan2.txt
+
+                touch $out
+              '';
+
+            # Cheap (no kernel build): runs the join's plan executor with stub
+            # sets. gemma3-12b and gemma3-4b both export into Gemma3-4B-NPU2;
+            # with gemma3-12b and a later set built inline, the serial order
+            # still leaves gemma3-4b's files in that directory.
+            openflowlm-kernel-sets-join =
+              pkgs.runCommand "openflowlm-kernel-sets-join" {
+                nativeBuildInputs = [pkgs.jq];
+                SRC = linuxPackages.openflowlm.passthru.src;
+                PLAN = ./pkgs/openflowlm/kernel-sets-plan.sh;
+                JOIN = ./pkgs/openflowlm/kernel-sets-join.sh;
+                SETS = ./pkgs/openflowlm/kernel-sets.json;
+              } ''
+                jq '.llmSpecs -= ["gemma3-12b", "qwen36-35b-a3b"]' "$SETS" > d.json
+                bash "$PLAN" "$SRC" d.json > plan.txt
+                grep -qx 'BUILD-LLM gemma3-12b' plan.txt
+                grep -qx 'BUILD-LLM qwen36-35b-a3b' plan.txt
+
+                # Stub sets write a marker naming the set, into the shared
+                # directory when the set has one.
+                dir() { case "$1" in gemma3-12b | gemma3-4b) echo Gemma3-4B-NPU2 ;; *) echo "$1" ;; esac; }
+                stage() { mkdir -p "src/xclbins/$(dir "$1")"; echo "$1" > "src/xclbins/$(dir "$1")/marker"; }
+                copy() { chmod -R u+w "$out_x"; mkdir -p "$out_x/$(dir "$1")"; echo "$1" > "$out_x/$(dir "$1")/marker"; }
+                copy_llm() { copy "$1"; }
+                copy_bert() { copy "$1"; }
+                build_LLM() { stage "$1"; }
+                build_BERT() { stage "$1"; }
+
+                out_x=$PWD/out/xclbins
+                mkdir -p "$out_x" src/xclbins
+                source "$JOIN"
+                execute_plan plan.txt "$out_x" 2>/dev/null
+
+                test "$(cat "$out_x/Gemma3-4B-NPU2/marker")" = gemma3-4b
+                test "$(cat "$out_x/qwen36-35b-a3b/marker")" = qwen36-35b-a3b
+
+                touch $out
+              '';
+
             module-eval-rocm-false =
               (inputs.nixpkgs.lib.nixosSystem {
                 inherit system;
