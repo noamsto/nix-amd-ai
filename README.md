@@ -136,6 +136,8 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 # inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
+Because the backends run against this flake's pinned `nixpkgs`, the module never hands them your system's ROCm or mesa libraries, and the Vulkan backends carry their own driver. A system `nixpkgs` with a newer glibc makes those libraries unloadable, and llama.cpp then silently falls back to the CPU ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)).
+
 ## Requirements
 
 - NixOS with kernel >= 6.14 (has `amdxdna` driver built-in) — only required when `enableNPU = true`

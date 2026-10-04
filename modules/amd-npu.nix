@@ -71,10 +71,13 @@
     '';
   };
 
-  # XRT (NPU) libs only present when enableNPU; ROCm libs trail them.
+  # Only xrt-combined, which is built from the same pinned nixpkgs as the
+  # backends. Never add the host's `pkgs.rocmPackages` (the consumer's nixpkgs)
+  # here: LD_LIBRARY_PATH outranks RUNPATH, so it shadows the backends' own clr,
+  # and a newer host glibc makes it unloadable (#215). The ROCm backends find
+  # their own clr via RUNPATH.
   ldLibraryPath = concatStringsSep ":" (
     optional cfg.enableNPU "${xrt-combined}/lib"
-    ++ optional cfg.enableROCm "${pkgs.rocmPackages.clr}/lib"
   );
 
   pathList =

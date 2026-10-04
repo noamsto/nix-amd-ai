@@ -57,6 +57,28 @@
         ];
       });
 
+    # These backends run against the pinned nixpkgs, which never matches the
+    # host's (the README forbids `.follows`). The Vulkan loader otherwise takes
+    # the host's driver and implicit layers from /run/opengl-driver, and once the
+    # host's glibc is newer than the pin they fail to load and llama.cpp silently
+    # runs on CPU (#215). So point the loader at this nixpkgs' own RADV and skip
+    # implicit layers; `--set-default` leaves an operator override in charge. A
+    # symlinkJoin, so the backends themselves aren't rebuilt.
+    withOwnVulkanDriver = pkgs: pkg:
+      pkgs.symlinkJoin {
+        inherit (pkg) pname version meta passthru;
+        paths = [pkg];
+        nativeBuildInputs = [pkgs.makeWrapper];
+        postBuild = ''
+          for f in $out/bin/*; do
+            case $f in *.so) continue ;; esac
+            wrapProgram "$f" \
+              --set-default VK_DRIVER_FILES ${pkgs.mesa}/share/vulkan/icd.d/radeon_icd.x86_64.json \
+              --set-default VK_LOADER_LAYERS_DISABLE '~implicit~'
+          done
+        '';
+      };
+
     # Pin llama.cpp to a specific upstream tag instead of nixpkgs' own version,
     # so we can pick up a fix (or a newer ggml/CUDA-backend feature) ahead of
     # nixpkgs' llama-cpp update. `__intentionallyOverridingVersion` silences
@@ -164,16 +186,16 @@
             openflowlm = pinned.callPackage ./pkgs/openflowlm {inherit xrt mlir-aie llvm-aie;};
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
-            llama-cpp-vulkan = llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;});
+            llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
             llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
               llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
             });
-            whisper-cpp-vulkan = pinned.whisper-cpp.override {vulkanSupport = true;};
+            whisper-cpp-vulkan = withOwnVulkanDriver pinned (pinned.whisper-cpp.override {vulkanSupport = true;});
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {
               rocmSupport = true;
               inherit rocmGpuTargets;
             };
-            stable-diffusion-cpp-vulkan = pinned.stable-diffusion-cpp.override {vulkanSupport = true;};
+            stable-diffusion-cpp-vulkan = withOwnVulkanDriver pinned (pinned.stable-diffusion-cpp.override {vulkanSupport = true;});
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
@@ -257,16 +279,16 @@
           openflowlm = pkgs.callPackage ./pkgs/openflowlm {inherit xrt mlir-aie llvm-aie;};
           llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
-          llama-cpp-vulkan = llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;});
+          llama-cpp-vulkan = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;}));
           llama-cpp-rocm = llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
             llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
           });
-          whisper-cpp-vulkan = pkgs.whisper-cpp.override {vulkanSupport = true;};
+          whisper-cpp-vulkan = withOwnVulkanDriver pkgs (pkgs.whisper-cpp.override {vulkanSupport = true;});
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {
             rocmSupport = true;
             inherit rocmGpuTargets;
           };
-          stable-diffusion-cpp-vulkan = pkgs.stable-diffusion-cpp.override {vulkanSupport = true;};
+          stable-diffusion-cpp-vulkan = withOwnVulkanDriver pkgs (pkgs.stable-diffusion-cpp.override {vulkanSupport = true;});
           libwebsockets = libwebsocketsOverride pkgs;
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
@@ -1295,6 +1317,109 @@
                   ! echo "$plain" | grep -qw "$lib"                     || { echo "$lib pulled in without enableROCm"; exit 1; }
                 done
                 ! echo "$lemonadeOff" | grep -qw vulkan-loader                   || { echo "vulkan-loader added on a host with lemonade off"; exit 1; }
+                touch $out
+              '';
+
+            # Backends are built against this flake's pinned nixpkgs, so lemond
+            # must not hand them host libraries via LD_LIBRARY_PATH: a host with
+            # a newer glibc then loads its clr into a pinned-glibc process (#215).
+            # The allowlist is exactly xrt-combined/lib (flm's own libxrt_core
+            # lookup); any other entry fails.
+            module-eval-lemond-ld-library-path = let
+              mkEnv = extra:
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu =
+                        {
+                          enable = true;
+                          enableLemonade = true;
+                          lemonade.user = "testuser";
+                        }
+                        // extra;
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config.systemd.services.lemond.environment;
+              withNpu = mkEnv {
+                enableNPU = true;
+                enableROCm = true;
+                enableVulkan = true;
+                enableFastFlowLM = true;
+              };
+              noNpu = mkEnv {
+                enableNPU = false;
+                enableFastFlowLM = false;
+                enableROCm = true;
+                enableVulkan = true;
+              };
+              actual = builtins.unsafeDiscardStringContext (withNpu.LD_LIBRARY_PATH or "<unset>");
+              expected = builtins.unsafeDiscardStringContext (withNpu.XILINX_XRT + "/lib");
+              noNpuLd = builtins.unsafeDiscardStringContext (noNpu.LD_LIBRARY_PATH or "<unset>");
+            in
+              pkgs.runCommand "module-eval-lemond-ld-library-path" {
+                inherit actual expected noNpuLd;
+              } ''
+                [ "$actual" = "$expected" ] \
+                  || { echo "lemond LD_LIBRARY_PATH is '$actual', expected '$expected'"; exit 1; }
+                [ "$noNpuLd" = "<unset>" ] \
+                  || { echo "lemond LD_LIBRARY_PATH is '$noNpuLd' without the NPU, expected unset"; exit 1; }
+                touch $out
+              '';
+
+            # Each Vulkan backend must carry its own nixpkgs' RADV ICD and
+            # disable implicit layers, else a host's mesa under /run/opengl-driver
+            # is loaded into a pinned-glibc process (#215). This cannot
+            # reproduce the host glibc split itself: CI's nixpkgs equals the pin.
+            vulkan-backends-own-driver = let
+              overlaid = import inputs.nixpkgs {
+                inherit system;
+                overlays = [inputs.self.overlays.default];
+                config.allowUnfreePredicate = allowFastFlowLMUnfree;
+              };
+              llamas = [linuxPackages.llama-cpp-vulkan overlaid.llama-cpp-vulkan];
+              backends =
+                llamas
+                ++ [
+                  linuxPackages.whisper-cpp-vulkan
+                  linuxPackages.stable-diffusion-cpp-vulkan
+                  overlaid.whisper-cpp-vulkan
+                  overlaid.stable-diffusion-cpp-vulkan
+                ];
+            in
+              pkgs.runCommand "vulkan-backends-own-driver" {
+                ICD = "${pkgs.mesa}/share/vulkan/icd.d/radeon_icd.x86_64.json";
+                RADV = "${pkgs.mesa}/lib/libvulkan_radeon.so";
+              } ''
+                for pkg in ${builtins.concatStringsSep " " backends}; do
+                  for f in "$pkg"/bin/*; do
+                    case "$f" in *.so) continue ;; esac
+                    grep -qF "$ICD" "$f" \
+                      || { echo "$f does not pin the nixpkgs RADV ICD"; exit 1; }
+                    grep -q VK_LOADER_LAYERS_DISABLE "$f" \
+                      || { echo "$f does not disable implicit Vulkan layers"; exit 1; }
+                  done
+                done
+
+                export HOME=$TMPDIR
+                for pkg in ${builtins.concatStringsSep " " llamas}; do
+                  VK_LOADER_DEBUG=driver,error "$pkg/bin/llama-server" --list-devices > "$TMPDIR/log" 2>&1 || true
+                  grep -qF "Searching for ICD drivers named $RADV" "$TMPDIR/log" \
+                    || { tail -n 40 "$TMPDIR/log"; echo "$pkg/bin/llama-server did not search for the nixpkgs RADV driver"; exit 1; }
+                  ! grep -q "Failed loading library" "$TMPDIR/log" \
+                    || { tail -n 40 "$TMPDIR/log"; echo "$pkg/bin/llama-server failed loading a Vulkan library"; exit 1; }
+                done
                 touch $out
               '';
 
