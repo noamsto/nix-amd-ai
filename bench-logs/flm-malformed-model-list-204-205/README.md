@@ -75,20 +75,25 @@ loaded.
 | `array-size-map` (size map replaced by a one-element array) | `gemma4-it` | 500 `model_load_failed` | **400** `Invalid request` | 500 `model_load_failed` | yes |
 | `missing-files` (`e2b` without `files`) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
 | `nonarray-files` (`e2b` with a string `files`) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
+| `empty-files` (`e2b` with `files` = `[]`) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
+| `nonstring-files` (`e2b` with a non-string element) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
+| `files-without-config` (`e2b` `files` omitting `config.json`) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
 
 The red build logs `handle_openai_chat_completion:
 [json.exception.invalid_iterator.207] cannot use key() for non-object
 iterators` for `array-size-map`, and `Error checking missing files:
 [json.exception.type_error.302] type must be array, but is null` followed by
-`Failed to open file: …/Gemma4-E2B-IT-NPU2` for `missing-files`. The green
+`Failed to open file: …/Gemma4-E2B-IT-NPU2` for the `files` cases. The green
 build logs `model 'gemma4-it' has a malformed model-list entry: model
-'gemma4-it' has no size variants` and `model 'gemma4-it:e2b' has a malformed
-model-list entry: missing or empty 'files' array`.
+'gemma4-it' has no size variants` for the size-map cases and `model
+'gemma4-it:e2b' has a malformed model-list entry:` followed by `missing or
+empty 'files' array`, `non-string entry in 'files'`, or `'files' does not
+list config.json` for the `files` cases.
 
 The oracle is sensitive to the bug: `probes.sh` in `new` mode against the red
-build fails exactly the four `*/status` checks plus
-`empty-size-map/not-evicted` (7 passed, 5 failed); against the green build it
-is 12 passed, 0 failed.
+build fails exactly the seven `*/status` checks plus
+`empty-size-map/not-evicted` (13 passed, 8 failed); against the green build it
+is 21 passed, 0 failed.
 
 ## Consumer regression
 

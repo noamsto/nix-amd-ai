@@ -19,10 +19,13 @@
 # llama3.2:1b so there is a serving model to protect: GET /api/ps is checked
 # before the failing request and again after it.
 #
-#   empty-size-map   models["gemma4-it"] = {}          request "gemma4-it"
-#   array-size-map   models["gemma4-it"] = [<e4b>]     request "gemma4-it"
-#   missing-files    e2b entry without `files`         request "gemma4-it:e2b"
-#   nonarray-files   e2b entry with a string `files`   request "gemma4-it:e2b"
+#   empty-size-map    models["gemma4-it"] = {}          request "gemma4-it"
+#   array-size-map    models["gemma4-it"] = [<e4b>]     request "gemma4-it"
+#   missing-files     e2b entry without `files`         request "gemma4-it:e2b"
+#   nonarray-files    e2b entry with a string `files`   request "gemma4-it:e2b"
+#   empty-files       e2b entry with `files` = []        request "gemma4-it:e2b"
+#   nonstring-files   e2b entry with a non-string item   request "gemma4-it:e2b"
+#   files-without-config  e2b `files` omitting config.json  request "gemma4-it:e2b"
 #
 # gemma4-it:e2b is not downloaded, which the #204 mechanism requires. Only one
 # flm may drive the NPU: wait for the NPU and lemond to be free before every
@@ -95,9 +98,8 @@ stop_server() {
 # scratch_model <out> <python-expr-on-model-list>
 # The expression runs with `d` bound to the parsed model list.
 scratch_model() {
-  local out=$1 expr=$2 src
-  src=$(dirname "$FLM")/../share/flm/model_list.json
-  python3 - "$src" "$out" "$expr" <<'PY'
+  local out=$1 expr=$2
+  python3 - "$shipped_list" "$out" "$expr" <<'PY'
 import json, sys
 src, out, expr = sys.argv[1], sys.argv[2], sys.argv[3]
 d = json.load(open(src))
@@ -239,6 +241,9 @@ run_case empty-size-map 'd["models"]["gemma4-it"] = {}' 'gemma4-it' crash-or-400
 run_case array-size-map 'd["models"]["gemma4-it"] = [d["models"]["gemma4-it"]["e4b"]]' 'gemma4-it' 400
 run_case missing-files 'd["models"]["gemma4-it"]["e2b"].pop("files")' 'gemma4-it:e2b' dead
 run_case nonarray-files 'd["models"]["gemma4-it"]["e2b"]["files"] = "not-an-array"' 'gemma4-it:e2b' dead
+run_case empty-files 'd["models"]["gemma4-it"]["e2b"]["files"] = []' 'gemma4-it:e2b' dead
+run_case nonstring-files 'd["models"]["gemma4-it"]["e2b"]["files"] = ["config.json", 1]' 'gemma4-it:e2b' dead
+run_case files-without-config 'd["models"]["gemma4-it"]["e2b"]["files"] = ["model.q4nx"]' 'gemma4-it:e2b' dead
 
 echo "== summary ($mode) =="
 for r in "${results[@]}"; do echo "$r"; done
