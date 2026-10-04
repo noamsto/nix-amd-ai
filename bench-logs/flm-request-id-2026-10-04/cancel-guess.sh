@@ -3,8 +3,8 @@
 #
 # Can another client cancel a request by guessing its default request id?
 #   guess:  a streaming /api/generate with no request_id runs while we POST
-#           /api/cancel for req_0..req_$GUESS_MAX. Green: no guess hits and the
-#           victim does not end with done_reason "cancel".
+#           /api/cancel for req_0..req_$GUESS_MAX. Green: every guess answers
+#           cancelled:false and the victim completes (a done line, not "cancel").
 #   own-id: cancelling a request by the id it supplied still works.
 # Env: XRT_LIB (required), PORT=58721, MODEL=llama3.2:1b, GUESS_MAX=255.
 # Exits 0 if every case passes, 1 otherwise.
@@ -26,11 +26,12 @@ results="$outdir/$label.results"
 : >"$results"
 
 server_pid=""
-curl_pids=()
 
 cleanup() {
   local p
-  for p in "${curl_pids[@]}"; do kill "$p" 2>/dev/null; done
+  for p in $(jobs -pr); do
+    [[ "$p" == "$server_pid" ]] || kill "$p" 2>/dev/null
+  done
   [[ -n "$server_pid" ]] && stop_server
   return 0
 }
@@ -72,9 +73,15 @@ record() { # <name> <PASS|FAIL> <detail>
 }
 
 start_server() {
+  local busy=0
   while flm_running; do
+    if (( busy >= 1800 )); then
+      echo "NPU still busy after ${busy}s" >&2
+      return 1
+    fi
     echo "another flm process is running; waiting 5s..." >&2
     sleep 5
+    busy=$((busy + 5))
   done
   LD_LIBRARY_PATH="$libpath" stdbuf -oL -eL "$FLM" serve "$MODEL" --port "$PORT" \
     > >(stamp >"$outdir/server-$label.log") 2>&1 &
@@ -103,7 +110,6 @@ start_stream() {
   curl -sN -X POST "$base/api/generate" -H 'Content-Type: application/json' \
     -d "$body" >"$out" 2>/dev/null &
   stream_pid=$!
-  curl_pids+=("$stream_pid")
 }
 
 wait_first_content() { # <ndjson> -> 0 once a non-empty response line arrives
@@ -138,22 +144,24 @@ case_guess() {
     record guess/victim FAIL "no content within 60s"
     return
   fi
-  local n resp hits=0
+  local n resp hits=0 errors=0
   for n in $(seq 0 "$GUESS_MAX"); do
     resp=$(curl -s -m 10 -X POST "$base/api/cancel" -H 'Content-Type: application/json' \
       -d "{\"request_id\":\"req_$n\"}")
     jq -cn --argjson n "$n" --arg r "$resp" '{n: $n, resp: ($r | fromjson? // $r)}' >>"$cancels"
-    if [[ $(jq -r '.cancelled' <<<"$resp" 2>/dev/null) == true ]]; then
+    if ! jq -e 'has("cancelled")' <<<"$resp" >/dev/null 2>&1; then
+      errors=$((errors + 1))
+    elif [[ $(jq -r '.cancelled' <<<"$resp") == true ]]; then
       echo "hit: req_$n"
-      (( hits++ ))
+      hits=$((hits + 1))
     fi
   done
   wait_stream_end "$vpid" 180 || echo "victim stream did not finish within 180s" >&2
   local reason lines
   reason=$(done_reason "$victim"); reason=${reason:-none}
   lines=$(content_lines "$victim")
-  record guess/hits "$([[ $hits -eq 0 ]] && echo PASS || echo FAIL)" "$hits of $((GUESS_MAX + 1)) guesses returned cancelled:true"
-  record guess/victim_done_reason "$([[ $reason != cancel ]] && echo PASS || echo FAIL)" "done_reason=$reason content_lines=$lines"
+  record guess/hits "$([[ $hits -eq 0 && $errors -eq 0 ]] && echo PASS || echo FAIL)" "$hits of $((GUESS_MAX + 1)) guesses returned cancelled:true, $errors errors"
+  record guess/victim_done_reason "$([[ $reason != cancel && $reason != none ]] && echo PASS || echo FAIL)" "done_reason=$reason content_lines=$lines"
 }
 
 case_own_id() {
