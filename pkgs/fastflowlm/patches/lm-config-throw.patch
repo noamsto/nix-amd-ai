@@ -1,0 +1,166 @@
+diff --git a/src/include/lm_config.hpp b/src/include/lm_config.hpp
+index ea1cb30..890db72 100644
+--- a/src/include/lm_config.hpp
++++ b/src/include/lm_config.hpp
+@@ -10,6 +10,7 @@
+ #include "utils/utils.hpp"
+ #include "nlohmann/json.hpp"
+ #include <filesystem>
++#include <stdexcept>
+ 
+ /// \brief read one parameter out of a config json
+ /// \note Same semantics as JSON_GET (missing OR null falls back to the default),
+@@ -101,8 +102,7 @@ class LM_Config{
+         void _load_json(){
+             std::ifstream file(this->model_path + "/config.json");
+             if (!file.is_open()){
+-                std::cerr << "Failed to open file: " << this->model_path << std::endl;
+-                exit(1);
++                throw std::runtime_error("config.json is missing or unreadable in '" + this->model_path + "'");
+             }
+             // read the json file as a string
+             std::string json_str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 9d08436..b5efdb8 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -671,18 +671,26 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         this->current_model_tag = "model-faker";
+         return ModelLoad::LoadFailed;
+     }
+-    switch (downloader.is_model_downloaded(ensure_tag)) {
+-        case ModelDownloader::ModelStatus::Ready:
+-            break;
+-        case ModelDownloader::ModelStatus::Outdated:
+-        case ModelDownloader::ModelStatus::Missing:
+-            downloader.pull_model(ensure_tag, this->modelscope);
+-            break;
+-        case ModelDownloader::ModelStatus::Incompatible:
+-            this->auto_chat_engine.reset();
+-            this->current_model_tag = "model-faker";
+-            return ModelLoad::LoadFailed;
++    try {
++        switch (downloader.is_model_downloaded(ensure_tag)) {
++            case ModelDownloader::ModelStatus::Ready:
++                break;
++            case ModelDownloader::ModelStatus::Outdated:
++            case ModelDownloader::ModelStatus::Missing:
++                downloader.pull_model(ensure_tag, this->modelscope);
++                break;
++            case ModelDownloader::ModelStatus::Incompatible:
++                this->auto_chat_engine.reset();
++                this->current_model_tag = "model-faker";
++                return ModelLoad::LoadFailed;
+         }
++    }
++    catch (const std::exception& e) {
++        header_print("ERROR", "model '" + ensure_tag + "' could not be checked: " + std::string(e.what()));
++        this->auto_chat_engine.reset();
++        this->current_model_tag = "model-faker";
++        return ModelLoad::LoadFailed;
++    }
+     try {
+         auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
+         auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
+@@ -710,27 +718,32 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
+ #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
+     std::string ensure_tag = model_tag;
+-    switch (downloader.is_model_downloaded(ensure_tag)) {
+-        case ModelDownloader::ModelStatus::Ready:
+-            break;
+-        case ModelDownloader::ModelStatus::Outdated:
+-        case ModelDownloader::ModelStatus::Missing:
+-            downloader.pull_model(ensure_tag, modelscope);
+-            break;
+-        case ModelDownloader::ModelStatus::Incompatible:
+-            header_print("ERROR", "Whisper is incompatible with this version of FastFlowLM, skipping... ");
+-            this->asr = false;
+-            return;
+-    }
+-    this->whisper_engine = std::make_unique<Whisper>(&this->npu_device_inst);
+-    auto [new_ensure_tag, whisper_model_info] = this->supported_models.get_model_info(ensure_tag);
+-    std::string whisper_model_path = this->supported_models.get_model_path(new_ensure_tag);
++    // A malformed whisper-v3 entry (an absent config.json, or a non-array
++    // `files`) makes is_model_downloaded()/load_model() throw. ASR is optional:
++    // log it, drop ASR, and keep serving chat models rather than aborting
++    // startup.
+     try {
++        switch (downloader.is_model_downloaded(ensure_tag)) {
++            case ModelDownloader::ModelStatus::Ready:
++                break;
++            case ModelDownloader::ModelStatus::Outdated:
++            case ModelDownloader::ModelStatus::Missing:
++                downloader.pull_model(ensure_tag, modelscope);
++                break;
++            case ModelDownloader::ModelStatus::Incompatible:
++                header_print("ERROR", "Whisper is incompatible with this version of FastFlowLM, skipping... ");
++                this->asr = false;
++                return;
++        }
++        this->whisper_engine = std::make_unique<Whisper>(&this->npu_device_inst);
++        auto [new_ensure_tag, whisper_model_info] = this->supported_models.get_model_info(ensure_tag);
++        std::string whisper_model_path = this->supported_models.get_model_path(new_ensure_tag);
+         this->whisper_engine->load_model(whisper_model_path, whisper_model_info, this->preemption);
+     }
+     catch (const std::exception& e) {
+-        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()));
+-        exit(EXIT_FAILURE);
++        header_print("ERROR", "Failed to load ASR model: " + std::string(e.what()) + "; serving without ASR");
++        this->asr = false;
++        return;
+     }
+ #else
+     throw std::runtime_error("ASR models are not supported in this build");
+@@ -742,28 +755,33 @@ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
+ void RestHandler::ensure_embed_model_loaded(const std::string& model_tag) {
+ #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
+     std::string ensure_tag = model_tag;
+-    switch (this->downloader.is_model_downloaded(ensure_tag)) {
+-        case ModelDownloader::ModelStatus::Ready:
+-            break;
+-        case ModelDownloader::ModelStatus::Outdated:
+-        case ModelDownloader::ModelStatus::Missing:
+-            this->downloader.pull_model(ensure_tag, this->modelscope);
+-            break;
+-        case ModelDownloader::ModelStatus::Incompatible:
+-            header_print("ERROR", "EmbeddingGemma is incompatible with this version of FastFlowLM, skipping... ");
+-            this->embed = false;
+-            return;
+-    }
+-    auto [embedding_model_tag, auto_embedding_engine] = get_auto_embedding_model(ensure_tag, &this->npu_device_inst);
+-    this->auto_embedding_engine = std::move(auto_embedding_engine);
+-    auto [new_embedding_model_tag, embedding_model_info] = this->supported_models.get_model_info(embedding_model_tag);
+-    std::string embedding_model_path = this->supported_models.get_model_path(new_embedding_model_tag);
++    // A malformed embed-gemma entry (an absent config.json, or a non-array
++    // `files`) makes is_model_downloaded()/load_model() throw. Embeddings are
++    // optional: log it, drop embeddings, and keep serving chat models rather
++    // than aborting startup.
+     try {
++        switch (this->downloader.is_model_downloaded(ensure_tag)) {
++            case ModelDownloader::ModelStatus::Ready:
++                break;
++            case ModelDownloader::ModelStatus::Outdated:
++            case ModelDownloader::ModelStatus::Missing:
++                this->downloader.pull_model(ensure_tag, this->modelscope);
++                break;
++            case ModelDownloader::ModelStatus::Incompatible:
++                header_print("ERROR", "EmbeddingGemma is incompatible with this version of FastFlowLM, skipping... ");
++                this->embed = false;
++                return;
++        }
++        auto [embedding_model_tag, auto_embedding_engine] = get_auto_embedding_model(ensure_tag, &this->npu_device_inst);
++        this->auto_embedding_engine = std::move(auto_embedding_engine);
++        auto [new_embedding_model_tag, embedding_model_info] = this->supported_models.get_model_info(embedding_model_tag);
++        std::string embedding_model_path = this->supported_models.get_model_path(new_embedding_model_tag);
+         this->auto_embedding_engine->load_model(embedding_model_path, embedding_model_info, this->preemption);
+     }
+     catch (const std::exception& e) {
+-        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()));
+-        exit(EXIT_FAILURE);
++        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()) + "; serving without embeddings");
++        this->embed = false;
++        return;
+     }
+ #else
+     throw std::runtime_error("Embedding models are not supported in this build");
