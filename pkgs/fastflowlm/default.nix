@@ -192,8 +192,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     cancellation_token->reset() before insert(), so a cancel that landed
   #     before the handler -- a client that left while queued behind a busy
   #     NPU (the disconnect monitor fires as soon as the request is
-  #     dequeued), during a model load, or a POST /api/cancel -- was erased
-  #     and the whole prefill ran. Upstream added reset() in v0.9.24/v0.9.25,
+  #     dequeued), during a model load, or a POST /api/cancel (which only
+  #     reaches the target since cancel-request-id.patch) -- was erased and
+  #     the whole prefill ran. Upstream added reset() in v0.9.24/v0.9.25,
   #     when the token was already created fresh per request and only
   #     /api/cancel or a failed chunk write could set it; the disconnect
   #     monitor came in April 2026 (4ffe631). On a fresh token it can only
@@ -243,6 +244,19 @@ stdenv.mkDerivation (finalAttrs: {
   #     chat entry's `files` is now validated up front (a non-empty array of
   #     strings that lists config.json), so the same malformed entry is
   #     refused 500 model_load_failed without unloading (#204).
+  #   - cancel-request-id.patch (#210): every route, POST /api/cancel
+  #     included, registered its own cancellation token under the body's
+  #     request_id. A cancel therefore overwrote its target's registry slot,
+  #     cancelled itself, answered {"cancelled": true} and erased the slot:
+  #     it never stopped any request, and left the target uncancellable.
+  #     /api/cancel's request_id is now only the target. Fixing that alone
+  #     would have made a request without a request_id cancellable by anyone
+  #     guessing its id, "req_" + a global counter that every route, even a
+  #     readiness poll, advanced; default ids are now 128 random bits from
+  #     getrandom(2), hex, req_ prefix kept. They are never returned to the
+  #     client, so such a request is cancellable only by client disconnect.
+  #     A caller-supplied request_id is still used verbatim, and anyone who
+  #     knows it can cancel it: /api/cancel has no ownership check.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -260,12 +274,13 @@ stdenv.mkDerivation (finalAttrs: {
   # at 39ff855632), ignoring a client disconnect outside
   # /v1/chat/completions, answering a malformed model_list.json entry as a
   # client error, ignoring a prefill cancel in Qwen3_5_Omni::insert,
-  # ignoring a disconnect on non-streaming /api/chat, and
+  # ignoring a disconnect on non-streaming /api/chat,
   # erasing a cancel that lands before a streaming handler starts (the last
   # two on main at ef60a5f, the latter in /v1/chat/completions), exiting on a
   # model_list.json entry with no `files` and reading end().key() for a bare
-  # tag with no size variants. A bump that
-  # breaks any patch fails the build rather than silently losing it.
+  # tag with no size variants, and /api/cancel cancelling itself instead of
+  # its target. A bump that breaks any patch fails the build rather than
+  # silently losing it.
   patches = [
     ./patches/server-error-handling.patch
     ./patches/request-validation.patch
@@ -285,6 +300,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/qwen3-5-omni-prefill-cancel.patch
     ./patches/accept-error-backoff.patch
     ./patches/model-list-entry-validation.patch
+    ./patches/cancel-request-id.patch
   ];
 
   cargoDeps = rustPlatform.importCargoLock {
