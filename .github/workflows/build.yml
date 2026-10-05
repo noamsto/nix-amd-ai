@@ -102,13 +102,21 @@ jobs:
         with:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: Build all packages
-        run: nix build .#xrt .#xrt-plugin-amdxdna .#fastflowlm .#lemonade .#lemonade-headless .#ds4 .#mlir-aie .#llvm-aie .#openflowlm
-      - name: Check flake
-        # -L so NixOS VM tests stream their boot and assertions into the job log.
-        # Without it a VM test is a bare ✅/❌ line — indistinguishable from one
-        # that never ran, and undiagnosable when it fails.
-        run: nix flake check -L
+      - name: Build packages and checks
+        # --skip-cached: outputs already in Cachix are neither downloaded (~3 GiB)
+        # nor rebuilt. Build logs, including VM test boots, stay in the job log
+        # as collapsed ::group:: folds.
+        run: |
+          nix run --inputs-from . nixpkgs#nix-fast-build -- \
+            --no-nom --skip-cached --eval-workers 4 --eval-max-memory-size 3072 \
+            --flake '.#' --select 'o: {
+              checks = o.checks.x86_64-linux;
+              packages = { inherit (o.packages.x86_64-linux) xrt xrt-plugin-amdxdna fastflowlm lemonade lemonade-headless ds4 mlir-aie llvm-aie openflowlm; };
+            }'
+      - name: Evaluate remaining packages
+        # Eval-only: catches eval errors in packages too heavy to build here.
+        run: |
+          nix eval .#packages.x86_64-linux --apply 'builtins.mapAttrs (_: p: p.drvPath)' >/dev/null
       - name: Verify lemond unit (systemd-analyze)
         run: |
           unit=$(nix build .#lemond-unit --print-out-paths)/lemond.service
