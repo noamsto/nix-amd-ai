@@ -7,8 +7,8 @@ RAM, 104 GiB GTT), 2026-10-05**, and none of it transfers to gfx1150.
 
 **Yes: Flash-Next (UD-IQ4_XS + MTP head) and Qwen3.5-4B (UD-Q4_K_XL) stay
 resident together on halo, within the 104 GiB GTT budget and physical RAM, with
-Flash-Next at 65536 context (q8_0 KV) and the 4B at 32768.** Total GTT was
-**68.9 GiB** (66% of 104 GiB) and MemAvailable stayed at **21.3 GiB** of 123 GiB.
+Flash-Next at 65536 context (q8_0 KV) and the 4B at 32768.** Total GTT in use was
+**68.95 GiB** (66% of 104 GiB) and MemAvailable stayed at **21.3 GiB** of 123 GiB.
 Flash-Next alone also fits at **131072 context**, q8_0 or f16 KV (GTT +67.0 /
 +68.6 GiB after a decode over a ~130K-token prompt, MemAvailable ≥ 21.7 GiB), so
 the ~8 GiB MemAvailable stop condition was never reached and no context limit
@@ -57,11 +57,8 @@ amdgpu counters before the server started.
 - f16 KV was not faster at 131072 here (27.5 vs 29.4 t/s); #240's f16
   advantage was measured at a 512-token prompt and does not show up in this one
   decode, whose acceptance was lower (0.66 vs 0.80).
-- RSS 17.9 GiB after the 131072 q8_0 decode is a drop from 27.1 GiB after load:
-  host-mapped weight pages were reclaimed while the KV filled. The other three
-  rows kept 27.7 GiB. Not investigated further.
-- MemAvailable counts reclaimable page cache; the GGUF's mapped pages are the
-  bulk of what it excludes.
+- RSS 17.9 GiB after the 131072 q8_0 decode is a drop from 27.1 GiB after load,
+  unexplained; the other three rows kept 27.7 GiB. Not investigated.
 
 ## Co-residency (Flash-Next q8_0 KV `-c 65536` + Qwen3.5-4B `-c 32768`)
 
@@ -78,10 +75,10 @@ temperature 0, 1 warmup + 3 measured decodes per cell.
 | decode | Flash-Next t/s | Qwen3.5-4B t/s |
 |---|---|---|
 | Flash-Next alone | 41.6 / 41.6 / 41.6 | — |
-| 4B loaded, each model in turn | 41.6 / 41.6 / 41.6 | 59.8 / 60.2 / 60.1 |
+| 4B loaded (Flash-Next loaded too), each model in turn | 41.6 / 41.6 / 41.6 | 59.8 / 60.2 / 60.1 |
 | both decoding at the same time (3 pairs) | 37.2 / 37.1 / 37.5 | 34.2 / 34.2 / 34.3 |
 
-The 4B's weights live in GTT, hence its 0.2 GiB RSS.
+The 4B's RSS (0.2–0.3 GiB) is tiny next to its +4.1 GiB GTT; not investigated further.
 
 ## Tool call while co-resident
 
@@ -102,7 +99,12 @@ passed with Flash-Next alone, immediately before the 4B loaded.
 
 ## Files
 
+The rows above were taken with an earlier `probe.py`; review then hardened its
+failure paths only (server cleanup while loading, concurrent-decode error
+checks, lemond re-check after the load gate, a no-drafts check). The hardened
+version was not re-run on the host.
+
 - `probe.py` — one row per invocation (`context` or `coresident`), prints one
   JSON line; imports the load gate pieces, foreign-process refusal, corpus
   builder and GTT/RSS readers from `../qwen38-flash-next-mtp-tuning-2026-10-04/grid.py`.
-  Exit 2 foreign process / lemond busy, 3 low memory, 4 host not quiet.
+  Exit 2 foreign process / lemond busy, 3 low memory, 4 host not quiet, 1 any other error.

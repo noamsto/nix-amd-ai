@@ -11,7 +11,7 @@ readers of ../qwen38-flash-next-mtp-tuning-2026-10-04/grid.py.
   probe.py coresident --server BIN --target T.gguf --draft D.gguf --small S.gguf
 
 Exit 2: foreign benchmark process or lemond has a model loaded. 3: low memory.
-4: host not quiet after 30 min.
+4: host not quiet after 30 min. 1: any other error.
 """
 import argparse
 import importlib.util
@@ -70,6 +70,8 @@ def preflight(need_bytes):
     if not lemond_idle():
         raise grid.BusyError("system lemond has a model loaded")
     g = gate()
+    if not lemond_idle():
+        raise grid.BusyError("system lemond has a model loaded")
     if grid.preflight_busy():
         raise grid.BusyError(f"other benchmark processes running: {grid.preflight_busy()}")
     avail = grid.mem_available_kb() * 1024
@@ -93,8 +95,13 @@ def small_argv(a, port):
 
 def start(argv, port, log):
     proc = subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=log)
-    if not grid.wait_ready(proc, port):
-        proc.terminate()
+    try:
+        ready = grid.wait_ready(proc, port)
+    except BaseException:
+        stop(proc)
+        raise
+    if not ready:
+        stop(proc)
         raise grid.RowError("server not ready")
     return proc
 
@@ -149,6 +156,8 @@ def context_row(a, log):
         ids, files, sha = grid.build_corpus(a.port, a.corpus_root, depth, a.corpus_rev)
         row.update(depth=depth, corpus_files=files, corpus_sha256=sha)
         t = grid.completion(a.port, ids, GEN)
+        if not t.get("draft_n"):
+            raise grid.RowError("no drafts recorded")
         row.update(prompt_n=t["prompt_n"], prefill_tps=round(t["prompt_per_second"], 2),
                    decode_tps=round(t["predicted_per_second"], 3),
                    draft_n=t.get("draft_n"), draft_n_accepted=t.get("draft_n_accepted"))
@@ -182,19 +191,24 @@ def coresident_row(a, log):
         row["fn_with_4b_tps"] = decode_runs(a.port, text)
         row["small_tps"] = decode_runs(a.port + 1, text)
 
-        out = {}
-        barrier = threading.Barrier(2)
-
-        def go(name, port):
-            barrier.wait()
-            out[name] = text_completion(port, text)
         pair = []
         for _ in range(3):
+            out, errs = {}, []
+            barrier = threading.Barrier(2)
+
+            def go(name, port):
+                try:
+                    barrier.wait()
+                    out[name] = text_completion(port, text)
+                except Exception as e:
+                    errs.append(repr(e))
             ts = [threading.Thread(target=go, args=("fn", a.port)),
                   threading.Thread(target=go, args=("small", a.port + 1))]
             [t.start() for t in ts]
             [t.join() for t in ts]
-            pair.append(dict(out))
+            if errs or len(out) != 2:
+                raise grid.RowError(f"concurrent decode failed: {errs}")
+            pair.append(out)
         row["concurrent_tps"] = pair
         row["after_decodes"] = snap({"flash_next": fn, "qwen35_4b": small}, gtt0, vram0)
         row["tool_call_with_4b"] = grid.tool_call(a.port)
@@ -202,7 +216,10 @@ def coresident_row(a, log):
     finally:
         for p in (small, fn):
             if p:
-                stop(p)
+                try:
+                    stop(p)
+                except BaseException:
+                    stop(p)
 
 
 def main():
