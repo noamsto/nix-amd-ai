@@ -178,7 +178,7 @@ def main():
     with tempfile.TemporaryFile(mode="w+", errors="replace") as log:
         try:
             row = run(a, log)
-        except grid.RowError as e:
+        except (grid.RowError, OSError) as e:
             log.seek(0)
             print(json.dumps({"error": str(e), "label": a.label, "server_tail": log.read()[-1500:]}))
             return {grid.BusyError: 2, grid.MemError: 3}.get(type(e), 1)

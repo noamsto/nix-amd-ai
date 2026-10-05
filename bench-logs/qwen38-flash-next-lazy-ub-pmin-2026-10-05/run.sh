@@ -5,7 +5,7 @@
 #     bench-logs/qwen38-flash-next-lazy-ub-pmin-2026-10-05/run.sh [row1|row2|row3]...
 #
 # Unloads Qwen3.8-Flash-Next-MTP from lemond's HTTP API first (two copies do not fit) and
-# reloads it on every exit path (KEEP_OFFLINE=1 skips the reload after a clean run, so a
+# reloads it on every exit path (KEEP_OFFLINE=1 skips the reload after a run in which every row succeeded, so a
 # later invocation can continue offline; the last one must not set it). ROW2_LAZY (on|auto) is the lazy setting row 2 and 3 use.
 set -u
 : "${SERVER:?}" "${TARGET:?}" "${DRAFT:?}" "${CORPUS_REV:?}" "${OUT:?}"
@@ -21,12 +21,15 @@ loaded() { curl -sS "$LEMOND/health" | jq -r '.all_models_loaded | length'; }
 
 reload() {
     local rc=$?
-    [ "${KEEP_OFFLINE:-0}" = 1 ] && [ "$rc" = 0 ] && return
-    [ "$(loaded)" != 0 ] && return
-    post load "{\"model_name\":\"$MODEL\"}" >&2
+    [ "${KEEP_OFFLINE:-0}" = 1 ] && [ "$rc" = 0 ] && [ "$rows_ok" = 1 ] && return
+    local n
+    n=$(loaded) || n=
+    case $n in '' | 0) ;; *) return ;; esac
+    post load "{\"model_name\":\"$MODEL\"}" >&2 || echo "reload: POST /load failed" >&2
     echo >&2
     curl -sS "$LEMOND/health" | jq '{model_loaded, pinned_models, loaded: [.all_models_loaded[] | {model_name, status, pinned}]}' >&2
 }
+rows_ok=1
 trap reload EXIT
 
 row() {
@@ -36,7 +39,7 @@ row() {
     case $rc in
     0) ;;
     2 | 3) echo "aborting: probe.py exit $rc: $*" >&2; exit "$rc" ;;
-    *) echo "row failed (exit $rc): $*" >&2 ;;
+    *) echo "row failed (exit $rc): $*" >&2; rows_ok=0 ;;
     esac
 }
 
