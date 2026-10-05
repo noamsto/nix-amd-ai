@@ -15,6 +15,12 @@ the ~8 GiB MemAvailable stop condition was never reached and no context limit
 was found up to 131072. Co-residency at 131072 was **not measured** (see
 below), but the 4B adds only ~4 GiB of GTT, which that gap would cover.
 
+The 21.3 GiB MemAvailable left with both models loaded is the headroom for
+everything else on halo: other services, agent sessions, and nix builds or lint
+passes, which can each need many GiB. It was measured with halo otherwise idle,
+so a large build running alongside both models is untested and could push the
+host into swap.
+
 The cost of sharing is throughput only when both decode at once: Flash-Next
 drops from 41.6 to 37.2 t/s (−11%) and the 4B from 60.1 to 34.2 t/s (−43%).
 With the 4B merely loaded and idle, Flash-Next decode is unchanged
