@@ -144,6 +144,13 @@ Use the self-contained `-Q8_0` head (3.85 GB, carries its own `token_embd` and
 `output`); the `shared-*` variants rely on cross-model embedding borrowing that
 #29761 does not implement.
 
+## Follow-up tuning (#237)
+
+The n-max 3 setting and the p-min gate were re-examined, with parallel-slot,
+non-repeating 32K and ROCm-at-depth rows, in
+[`../qwen38-flash-next-mtp-tuning-2026-10-04`](../qwen38-flash-next-mtp-tuning-2026-10-04/README.md)
+(provisional: the host was loaded).
+
 ## ROCm correctness (perplexity)
 
 `llama-perplexity -m Qwen3.5-4B-UD-Q4_K_XL.gguf -f corpus.txt -ngl 99 -c 512

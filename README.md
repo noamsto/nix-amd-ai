@@ -400,6 +400,12 @@ bench-logs README). `--spec-draft-n-max 3` is the best setting measured here;
 4 is slower than 3 (best of {2,3,4} on halo, gfx1151, Vulkan; this exact
 q8_0-KV / 131K-ctx config was not benchmarked).
 
+The example is deliberately unchanged by the #237 tuning pass. On halo (gfx1151,
+Vulkan, 2026-10-04) a `--spec-draft-p-min` of 0.6–0.85 raised draft acceptance
+(0.42 → 0.75–0.92 at n-max 3) but not decode t/s, and n-max 4 and 5 did not beat
+3. Those rows were taken on a loaded host, so the result is provisional; see
+[`bench-logs/qwen38-flash-next-mtp-tuning-2026-10-04`](bench-logs/qwen38-flash-next-mtp-tuning-2026-10-04/README.md).
+
 ### Tauri desktop app: download progress is fragile when backgrounded
 
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
