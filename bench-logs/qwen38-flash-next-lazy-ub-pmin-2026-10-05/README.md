@@ -5,9 +5,9 @@ llama.cpp **b11382** (commit `11fe021`), Vulkan backend, and none of it transfer
 settings come from the r/StrixHalo post "I tested Qwen3.8-Flash-Next on my Bosgame M5" by
 u/Southern_Capital_885 (lazy mode, p-min 0.60 and `-ub` hints); this run checks them on halo.
 
-**Load caveat, read first.** Other sessions on this host kept 1-min loadavg at 6–20 for most of the
-run, so only the baseline row met the `< 2` load gate (`load_flag: false`); every other row is flagged
-`load_flag: true` (the gate waited its time limit, then ran). Run-to-run noise on decode is ±2–3 t/s
+**Load caveat, read first.** Other sessions on this host kept 1-min loadavg at 6–20 for the first part of
+the run, so rows 1 (lazy on), 2 and the first row 3 attempt carry `load_flag: true` (the gate waited its time
+limit, then ran). Row 3 was redone later on a quiet host; its loadavg and flag are per row below. Run-to-run noise on decode is ±2–3 t/s
 even in the quiet row. The host was also under memory pressure from other processes (swap in use,
 MemAvailable 9–40 GiB between rows), which hurt the baseline row — see below.
 
@@ -17,7 +17,7 @@ MemAvailable 9–40 GiB between rows), which hurt the baseline row — see below
 | --- | --- | --- |
 | `--lazy-mode on` | **Yes.** | llama-server host RSS after load **27.1 GiB → 0.31 GiB**. GTT is identical (66.5 GiB delta), decode and prefill are within noise (see table; the 512-depth cold decode was 30.4 → 29.4 t/s, load 42 → 26 s). MemAvailable after load 19.2 → 40.1 GiB, which is what a second resident model needs. The baseline's resident table is anonymous memory, so under host memory pressure it was pushed to swap (its RSS had fallen to 1.6 GiB by the end of the row and its 32K decode read 30.1 vs 38.4 t/s with lazy on) — lazy mode avoids that exposure rather than only saving RAM. Caveat: that 32K gap is confounded by swap and load, not a clean lazy-mode speedup. |
 | `--spec-draft-p-min 0.6` | **No change recommended.** Not shown to help. | Prose, 512 tokens, temperature 0.7, n-max 3, lazy on: p-min 0 → 32.4 ± 2.2 t/s, acceptance 0.59; p-min 0.6 → 33.1 ± 3.1 t/s, acceptance 0.65. The 0.8 t/s gap is inside the spread (3 runs each, loadavg 10.9 and 13.6). Acceptance rises, throughput does not measurably. The earlier code/docs run found no clear p-min winner either. |
-| `-ub` (2048 / 4096) | **No evidence either way — not decided.** | The `-ub 2048` row failed with `vk::Queue::submit: ErrorDeviceLost` on the first `/completion`, and the `-ub 4096` row was refused by the memory gate (MemAvailable 19.0 GiB, other processes had memory). Whether the device loss is `-ub 2048` or a one-off under loadavg ~20 was not determined; do not set `-ub` from this run. |
+| `-ub` 2048 | **Yes, 2048 (not 4096).** | Prefill ~4K 394 → 465 t/s (+18%), 32K 331 → 385 t/s (+16%) at q8_0 KV; same direction at f16 KV (383 → 470, 304 → 367, the f16 default row ran at loadavg 7.5). Costs +4.3 GiB GTT (66.5 → 70.8) and −4.7 GiB MemAvailable after load. Decode is unchanged within noise (512: 30.4 vs 30.6 t/s). `-ub 4096`: smaller gain (+7% / +10%), +10.7 GiB GTT and −11.3 GiB MemAvailable — not worth it beside a second model. One run per config, so treat the percentages as ±5%. Open item: an earlier `-ub 2048` attempt died with `ErrorDeviceLost` (below); two clean reruns did not reproduce it. |
 
 ## Rows (host halo, build b11382 Vulkan, lemond's UD-IQ4_XS target + ggml-org MTP draft, n-max 3)
 
@@ -63,20 +63,38 @@ Prompt: the first 289 tokens of Pride and Prejudice chapter 1 (public domain, `p
 
 ### 3. `-ub` (halo, b11382, lazy on)
 
-| `-ub` / `-b` | loadavg at start | result |
-| --- | ---: | --- |
-| default (512 / 2048) | 19.59 (flagged) | prefill 4K 339 t/s, 32K 289 t/s; decode 512 27.5 ± 2.5, 32K 36.2 ± 0.9 t/s; GTT delta 66.5 GiB; MemAvailable after load 34.8 GiB |
-| 2048 / 2048 | — | **failed**: `ErrorDeviceLost` on first completion |
-| 4096 / 4096 | — | **not run**: memory gate, MemAvailable 19.0 GiB < 97.1 GiB needed to load |
+Redone on a quiet host after a first attempt was disturbed (below). One run per config, `-b` = `-ub` for 2048
+and 4096. "GTT" is the delta after load; "MemAvail" is after load. 3b repeats the sweep with f16 KV
+(`-ctk f16 -ctv f16`).
+
+| KV | `-ub` | loadavg (flag) | load | GTT | MemAvail | prefill 4K | prefill 32K | decode 512 | decode 32K (acc) |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| q8_0 | default (512) | 1.00 (false) | 26 s | 66.5 GiB | 45.7 GiB | 394 | 331 | 30.6 ± 2.3 | 40.8 ± 0.4 (0.83) |
+| q8_0 | 2048 | 1.01 (false) | 40 s | 70.8 GiB | 41.0 GiB | 465 | 385 | 30.4 ± 2.3 | 38.3 ± 2.1 (0.81) |
+| q8_0 | 4096 | 1.98 (false) | 34 s | 77.2 GiB | 34.4 GiB | 421 | 363 | 30.1 ± 2.3 | 38.3 ± 1.9 (0.80) |
+| f16 | default (512) | 7.52 (true) | 30 s | 68.3 GiB | 44.3 GiB | 383 | 304 | 30.1 ± 2.1 | 34.3 ± 6.6 (0.81) |
+| f16 | 2048 | 1.68 (false) | 26 s | 72.0 GiB | 41.1 GiB | 470 | 367 | 31.7 ± 2.7 | 39.8 ± 1.8 (0.80) |
+| f16 | 4096 | 1.66 (false) | 28 s | 77.9 GiB | 35.9 GiB | 421 | 343 | 31.6 ± 2.9 | 38.9 ± 1.3 (0.80) |
+
+Prefill and decode in t/s. 32K decode acceptance falls slightly with larger `-ub` (0.83 → 0.80), and the 32K
+decode figures carry ±2 t/s noise, so no decode change is claimed.
+
+**First attempt and `ErrorDeviceLost`.** The first row 3 run (host loadavg 19.6, other sessions active)
+completed the default row, then `-ub 2048` failed on its first `/completion` with
+`decode() failed: vk::Queue::submit: ErrorDeviceLost` (HTTP 500), and the `-ub 4096` row was then refused by
+the memory gate (MemAvailable 19.0 GiB, a reload racing in). Two quiet reruns of `-ub 2048` (q8_0 and f16 KV) and
+of `-ub 4096` completed normally. The cause of the single device loss is undetermined: kernel amdgpu log lines
+were not readable from the benchmark session, so a `-ub`-triggered fault under memory pressure is not excluded.
 
 ## Not measured
 
-- `-ub` 2048 / 4096 prefill, GTT and decode (above): no result either way.
+- `-ub` between 512 and 2048 (1024) or above 4096; repeated runs of each `-ub` (one run per config).
+- The cause of the one `ErrorDeviceLost`.
 - A decode with the page cache dropped or the embedding file explicitly warmed (no root).
 - Whether `--lazy-mode auto` is already lazy for this model.
 - Prose p-min with lazy off, other n-max values, or other temperatures.
 - Any of this on gfx1150 or with the ROCm backend.
-- A quiet-host repeat: all rows after the first ran at loadavg 6–20, so small differences (≤ ~2 t/s) are noise.
+- A quiet-host repeat of row 1 (lazy on) and row 2 (p-min): both ran at loadavg 6–14, so small differences (≤ ~2 t/s) are noise.
 
 ## Reproduce
 

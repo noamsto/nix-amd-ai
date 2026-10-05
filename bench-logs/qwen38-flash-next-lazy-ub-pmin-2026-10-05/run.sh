@@ -41,6 +41,15 @@ row() {
     2 | 3) echo "aborting: probe.py exit $rc: $*" >&2; exit "$rc" ;;
     *) echo "row failed (exit $rc): $*" >&2; rows_ok=0 ;;
     esac
+    return "$rc"
+}
+
+# A device loss is a finding, not noise: retry once, and keep the kernel's amdgpu lines.
+row_retry() {
+    row "$@" && return
+    dmesg 2>&1 | grep -i amdgpu | tail -n 15 | sed 's/^/dmesg: /' >&2
+    echo "retrying once: $*" >&2
+    row "$@"
 }
 
 if [ "$(loaded)" != 0 ]; then
@@ -62,8 +71,13 @@ for r in "$@"; do
         ;;
     row3)
         row --label row3-ub-default --lazy "$ROW2_LAZY" --do decode512,prefill4k,decode32k
-        row --label row3-ub2048 --lazy "$ROW2_LAZY" --ub 2048 --batch 2048 --do decode512,prefill4k,decode32k
-        row --label row3-ub4096 --lazy "$ROW2_LAZY" --ub 4096 --batch 4096 --do decode512,prefill4k,decode32k
+        row_retry --label row3-ub2048 --lazy "$ROW2_LAZY" --ub 2048 --batch 2048 --do decode512,prefill4k,decode32k
+        row_retry --label row3-ub4096 --lazy "$ROW2_LAZY" --ub 4096 --batch 4096 --do decode512,prefill4k,decode32k
+        ;;
+    row3b)
+        row --label row3b-ub-default-f16 --lazy "$ROW2_LAZY" --kv f16 --do decode512,prefill4k,decode32k
+        row_retry --label row3b-ub2048-f16 --lazy "$ROW2_LAZY" --kv f16 --ub 2048 --batch 2048 --do decode512,prefill4k,decode32k
+        row_retry --label row3b-ub4096-f16 --lazy "$ROW2_LAZY" --kv f16 --ub 4096 --batch 4096 --do decode512,prefill4k,decode32k
         ;;
     esac
 done

@@ -84,7 +84,7 @@ def summarize(runs, with_prefill):
 
 def run(a, log):
     argv = [a.server, "--model", a.target, "--port", str(a.port), "--host", "127.0.0.1",
-            "-c", str(CTX), "-ctk", "q8_0", "-ctv", "q8_0", "-fa", "on", "--parallel", "1",
+            "-c", str(CTX), "-ctk", a.kv, "-ctv", a.kv, "-fa", "on", "--parallel", "1",
             "--jinja", "--model-draft", a.draft, "--spec-type", "draft-mtp",
             "--spec-draft-n-max", "3"]
     if a.pmin > 0:
@@ -104,7 +104,7 @@ def run(a, log):
     if busy:
         raise grid.BusyError(f"other benchmark processes running: {busy}")
     grid.check_memory(a.target, a.draft)
-    row = {"label": a.label, "build": grid.server_build(a.server), "lazy": a.lazy, "pmin": a.pmin,
+    row = {"label": a.label, "build": grid.server_build(a.server), "lazy": a.lazy, "kv": a.kv, "pmin": a.pmin,
            "ub": a.ub or "default", "batch": a.batch or "default",
            "loadavg_start": round(os.getloadavg()[0], 2), "load_flag": load_flag}
     do = set(a.do.split(","))
@@ -164,6 +164,7 @@ def main():
     ap.add_argument("--draft", required=True)
     ap.add_argument("--lazy", choices=["auto", "on", "off"], default="auto",
                     help="auto passes no flag (llama-server's default)")
+    ap.add_argument("--kv", default="q8_0", help="K and V cache type")
     ap.add_argument("--pmin", type=float, default=0.0)
     ap.add_argument("--ub", type=int, default=0, help="0 = server default")
     ap.add_argument("--batch", type=int, default=0, help="0 = server default")
