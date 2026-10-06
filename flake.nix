@@ -127,6 +127,36 @@
             old.cmakeFlags;
       });
 
+    # Aristo94/GSQHalo.cpp, a llama.cpp fork for Strix Halo, as a source swap
+    # on a llama-cpp-rocm build: same ROCm toolchain, `rocmGpuTargets` and
+    # `.override` surface, so the module can re-target it like the stock one.
+    # Opt-in via `hardware.amd-npu.llamaCppRocmPackage`.
+    llamaCppRocmGsqhalo = pkgs: pkg: let
+      rev = "5fc881b114c1ea130f5df6a30a98be2f8d397de6";
+      shortRev = builtins.substring 0 7 rev;
+    in
+      pkg.overrideAttrs (old: {
+        version = "GSQHalo.cpp-${shortRev}";
+        __intentionallyOverridingVersion = true;
+        src = pkgs.fetchFromGitHub {
+          owner = "Aristo94";
+          repo = "GSQHalo.cpp";
+          inherit rev;
+          hash = "sha256-f3aoiICLmkSAY2wqfc1g3YznfhtRfeMOCvkMx561n1k=";
+        };
+        # The fork has no upstream build number; `--version` reports the rev.
+        cmakeFlags =
+          builtins.map (
+            flag:
+              if pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=" flag
+              then "-DLLAMA_BUILD_NUMBER:STRING=0"
+              else if pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=" flag
+              then "-DLLAMA_BUILD_COMMIT:STRING=${shortRev}"
+              else flag
+          )
+          old.cmakeFlags;
+      });
+
     # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
     # upgrade response (missing the empty CRLF after the last header) for
     # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
@@ -198,6 +228,7 @@
             llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
               llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
             });
+            llama-cpp-rocm-gsqhalo = llamaCppRocmGsqhalo pinned llama-cpp-rocm;
             whisper-cpp-vulkan = withOwnVulkanDriver pinned (pinned.whisper-cpp.override {vulkanSupport = true;});
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {
               rocmSupport = true;
@@ -205,7 +236,7 @@
             };
             stable-diffusion-cpp-vulkan = withOwnVulkanDriver pinned (pinned.stable-diffusion-cpp.override {vulkanSupport = true;});
           in {
-            inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets;
+            inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
@@ -291,6 +322,7 @@
           llama-cpp-rocm = llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
             llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
           });
+          llama-cpp-rocm-gsqhalo = llamaCppRocmGsqhalo pkgs llama-cpp-rocm;
           whisper-cpp-vulkan = withOwnVulkanDriver pkgs (pkgs.whisper-cpp.override {vulkanSupport = true;});
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {
             rocmSupport = true;
@@ -305,7 +337,7 @@
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
         in {
-          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm libwebsockets lemonade;
+          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets lemonade;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
           inherit mlir-aie llvm-aie openflowlm;
           ds4 = pkgs.callPackage ./pkgs/ds4 {};
@@ -606,6 +638,34 @@
                       enableFastFlowLM = true;
                       enableLemonade = true;
                       enableROCm = true;
+                      lemonade.user = "testuser";
+                    };
+                    users.users.testuser = {
+                      isNormalUser = true;
+                      extraGroups = ["video" "render"];
+                    };
+                  }
+                ];
+              }).config.system.build.etc;
+
+            module-eval-rocm-gsqhalo =
+              (inputs.nixpkgs.lib.nixosSystem {
+                inherit system;
+                modules = [
+                  inputs.self.nixosModules.default
+                  fastFlowLMUnfreeConfig
+                  {
+                    boot.loader.grub.enable = false;
+                    fileSystems."/" = {
+                      device = "/dev/sda1";
+                      fsType = "ext4";
+                    };
+                    hardware.amd-npu = {
+                      enable = true;
+                      enableFastFlowLM = true;
+                      enableLemonade = true;
+                      enableROCm = true;
+                      llamaCppRocmPackage = inputs.self.packages.${system}.llama-cpp-rocm-gsqhalo;
                       lemonade.user = "testuser";
                     };
                     users.users.testuser = {

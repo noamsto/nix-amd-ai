@@ -17,6 +17,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
 | `lemonade-headless` | `lemonade` without the Tauri desktop shell — what `lemonade.desktopApp.enable = false` selects, cached so headless hosts substitute it | `lemonade.override { withDesktopApp = false; }` |
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
+| `llama-cpp-rocm-gsqhalo` | `llama-cpp-rocm` built from the GSQHalo.cpp fork, opt-in via `llamaCppRocmPackage` | Built from [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) |
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
@@ -411,6 +412,16 @@ Vulkan, 2026-10-04) a `--spec-draft-p-min` of 0.6–0.85 raised draft acceptance
 WebKitGTK suspends the network process for windows that are minimized, hidden, or moved to another workspace. That kills the SSE progress stream lemond uses for downloads at ~60–90 s. Without our patch, that nuked the whole download mid-flight. With the patch, the download keeps running server-side and finishes regardless — but the UI stops seeing progress until you refocus the window (and may need a refresh to pick up the result). For very large pulls, prefer the regular browser at `http://localhost:13305` or `lemonade pull <model>` from the CLI; both survive backgrounding cleanly.
 
 The desktop app is the only part of lemonade that pulls a Rust + npm build (and a crates.io cargo-vendor fetch). Headless/server hosts that only need the `lemond` API + CLI can skip it entirely with `lemonade.desktopApp.enable = false;` — this drops the Tauri build path from the closure. (The pre-built app is also on the [binary cache](#binary-cache), so configuring the substituter avoids building it from source in the first place.)
+
+## Opt-in GSQHalo.cpp ROCm backend
+
+`pkgs.llama-cpp-rocm-gsqhalo` is [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) (`5fc881b`) built through this flake's `llama-cpp-rocm`. To serve the `llamacpp-rocm` backend with it instead of stock llama.cpp:
+
+```nix
+hardware.amd-npu.llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;
+```
+
+The default is the stock `llama-cpp-rocm`, so existing hosts are unchanged; `rocmGpuTargets` applies to either. On one Strix Halo (gfx1151) host the fork with `-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3 -ctk f16 -ctv f16` cut agent-replay time 35 % against stock Vulkan llama.cpp on Qwen3.8-Flash-Next (Vulkan ran at `-ub 2048`; [`bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06`](bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06)). Those flags are what was measured, not defaults the module sets. `-lzm` is fork-only: stock llama.cpp rejects it, so don't pass it to a model served by the stock backend.
 
 ## GPU memory headroom
 
