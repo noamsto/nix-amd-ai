@@ -23,13 +23,15 @@ GSQHalo is packaged.
 | Correctness | reference (sanity 10/10) | **pass** (10/10, 12/20 greedy exact) | **pass** (10/10, 12/20 greedy exact) |
 | GTT after load / MemAvailable after replay | 70.8 GiB / 35.0 GiB | 74.9 GiB / 27.2 GiB | 77.8 GiB / 26.0 GiB |
 
-- **The 3–4× prefill claim does not reproduce on halo with this quant.** GSQHalo prefills 1.55× faster at 4K and 32K
-  and 1.19× at 128K. strix-llama.cpp only wins at 32K (1.25×). Without the MTP head, strix-llama's `llama-bench`
-  pp4096 matched Vulkan (see the diagnostic section), so the MTP draft is not what hides the gap. The fork's HIP matmul
+- **The 3–4× prefill claim does not reproduce on halo with this quant.** GSQHalo prefills 1.55× faster at 4K, 1.56×
+  at 32K and 1.19× at 128K. strix-llama.cpp wins clearly only at 32K (1.25×), plus 4% at 128K. Whether the MTP head
+  hides part of strix-llama's gain is inconclusive: the no-draft `llama-bench` diagnostic below has one slow
+  repetition out of two. The fork's HIP matmul
   tiles are quant-specific and its own figures come from other quants (GSQ-RCO IQ3_XXS). The 619 t/s it reached on
   UD-Q4_K_XL is consistent with that, but neither fork was tested on those quants with MTP here.
-- **Decode is no better on HIP.** It is level at 512 and 32K. At 128K depth both HIP builds lose a fifth of Vulkan's
-  decode (27.5 → 20.2 / 21.8 t/s, 3 runs each, stdev 2–3 t/s).
+- **Decode is no better on HIP.** GSQHalo is level with Vulkan at 512 and 32K depth; strix-llama is level at 32K and
+  16% slower at 512. At 128K depth both HIP builds lose a fifth to a quarter of Vulkan's decode (27.5 → 20.2 / 21.8
+  t/s, 3 runs each, stdev 2–3 t/s).
 - **strix-llama.cpp does not justify packaging.** Its replay gain is 8%, it decodes slower at 512 and 128K depth, and
   it uses 4 GiB more GTT.
 - **GSQHalo justifies a packaging trial, not a switch yet.** It already builds as a source override of this repo's
@@ -85,8 +87,12 @@ the actual turns.
 | host, build, loadavg | halo, b11382, 1.16 | halo, `4b2561e`, 1.93 | halo, `5fc881b`, 1.43 |
 
 All three engines reuse the cached prefix on every turn. The cached counts are identical across engines and stop
-about 4 tokens short of the previous prompt. Time to first token dominates every turn, so prefill speed is what an
-agent feels.
+4 tokens short of the previous prompt. Time to first token is 76–98% of every turn's raw wall time, so prefill speed
+is what an agent feels.
+
+The replay's decode rates are client-side chunk timing on tool-call streams; no server cross-check was recorded for
+them (the probe now records one per turn). Turn 1 read 64–80 t/s on every engine, above the 32K decode rate. Its 26–27
+tokens are under the 32-token threshold, so normalization used the 32K decode mean for it instead.
 
 ## Prefill and decode
 
@@ -95,7 +101,7 @@ corpus was tokenized once with the Vulkan server and sent to every engine as ide
 unique first line so no prompt cache can hit. The probe checks the reported cached tokens.
 
 - **Prefill** = prompt tokens / client-side time to first token, over a streamed `/v1/completions` request.
-  llama-server's own `prompt_per_second` agreed within 5% on every 4K-and-longer prompt. On the 547-token prompts of
+  llama-server's own `prompt_per_second` agreed within 2% on every 4K-and-longer prompt. On the ~550-token prompts of
   the 512-depth decode runs the client figure reads up to 8% lower, because request overhead weighs more there.
 - **Decode** = (tokens − 1) / time from first to last token, 128 tokens with `ignore_eos`: 3 runs at temperature 0.7
   (seeds 1–3, mean ± stdev) and one at temperature 0.
@@ -134,14 +140,15 @@ GTT is the delta of the amdgpu card's `mem_info_gtt_used` from before the server
 process. "After load" is read straight after `/health`; "row end" is after the last request of the speed-and-replay
 row.
 
-| engine (host, build) | GTT after load | RSS after load | MemAvailable after load | GTT / RSS / MemAvailable after replay | peak RSS |
+| engine (host, build) | GTT after load | RSS after load | MemAvailable after load | GTT / RSS / MemAvailable after replay | peak RSS (any row; the 128K row) |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Vulkan (halo, b11382) | 70.8 GiB | 0.39 GiB | 43.8 GiB | 71.4 / 11.2 / 35.0 GiB | 12.7 GiB |
 | strix-hip (halo, `4b2561e`) | 74.9 GiB | 3.86 GiB | 37.4 GiB | 76.2 / 14.3 / 27.2 GiB | 16.1 GiB |
 | gsq-hip (halo, `5fc881b`) | 77.8 GiB | 5.64 GiB | 35.1 GiB | 79.5 / 12.9 / 26.0 GiB | 14.1 GiB |
 
-RSS grows by 9–12 GiB over a replay on every engine. That is the server's prompt-cache and checkpoint state, not the
-weights, and the weights stay lazily mapped. MemAvailable depends on the rest of the host, so compare it within a
+RSS grows by 7–11 GiB over a replay. Most of it is anonymous memory, which points to the server's prompt-cache and
+checkpoint state rather than weights (an inference, not traced); on Vulkan and strix-llama 2.4 GiB of the growth is
+file-backed, i.e. lazily read weight rows. MemAvailable depends on the rest of the host, so compare it within a
 row, not across days.
 
 ## Tool call and correctness
@@ -152,9 +159,9 @@ row, not across days.
   - 20 fixed prompts (8 code, 6 math, 6 prose), greedy, 256 tokens, thinking off, MTP on. Outputs are tokenized
     with `llama-tokenize` and compared with Vulkan's.
   - Plus a 10-question arithmetic and code sanity set, scored by exact match.
-  - Failure thresholds were fixed before running: sanity below Vulkan's minus 1; a degenerate output (U+FFFD, or
-    one 8-gram covering ≥ 40% of tokens) where Vulkan's is not; or 0/20 exact with a median first divergence under
-    10 tokens.
+  - Failure thresholds were fixed before running: sanity below Vulkan's minus 1, or a degenerate output (U+FFFD,
+    or one 8-gram covering ≥ 40% of tokens) where Vulkan's is not. 0/20 exact with a median first divergence under
+    10 tokens is flagged `suspect` by `analyze` and counts as a fail unless each divergent output is checked by hand.
 
 | engine (host, build, loadavg) | tool call | sanity | greedy exact vs Vulkan | median first divergence | degenerate | verdict |
 | --- | --- | ---: | ---: | ---: | ---: | --- |
@@ -169,20 +176,21 @@ row, not across days.
 - **Single-slot only:** no HIP output was garbled. The batched-output bug the fork documents was not reproduced at
   one slot. The concurrency rows were not checked for correctness.
 
-## Concurrency (aggregate decode, 4 slots of 32,768 tokens)
+## Concurrency (4 slots of 32,768 tokens)
 
 Each engine was restarted with `-np 4 -c 131072 --no-kv-unified`, keeping its other flags. Then 2 and then 4
 concurrent streams ran, each with a distinct 512-token prompt, 128 tokens, temperature 0.7 and MTP on. "Aggregate" is
-total tokens / wall time; "Σ per-request" sums each stream's own decode rate.
+total tokens / wall time, including the concurrent prefill; "decode aggregate" is total tokens / (wall time − the
+slowest stream's time to first token); "Σ per-request" sums each stream's own decode rate.
 
-| engine (host, build, loadavg) | 2 users: aggregate / Σ per-request | 4 users: aggregate / Σ per-request |
+| engine (host, build, loadavg) | 2 users: aggregate / decode aggregate / Σ per-request | 4 users: aggregate / decode aggregate / Σ per-request |
 | --- | ---: | ---: |
-| Vulkan (halo, b11382, 1.40) | 27.7 / 50.1 t/s | 21.9 / 32.0 t/s |
-| strix-hip (halo, `4b2561e`, 0.53) | 30.8 / 47.1 t/s | 31.0 / 52.9 t/s |
-| gsq-hip (halo, `5fc881b`, 1.66) | 30.7 / 46.1 t/s | 27.4 / 42.8 t/s |
+| Vulkan (halo, b11382, 1.40) | 27.7 / 44.5 / 50.1 t/s | 21.9 / 30.1 / 32.0 t/s |
+| strix-hip (halo, `4b2561e`, 0.53) | 30.8 / 44.4 / 47.1 t/s | 31.0 / 44.4 / 52.9 t/s |
+| gsq-hip (halo, `5fc881b`, 1.66) | 30.7 / 42.8 / 46.1 t/s | 27.4 / 36.5 / 42.8 t/s |
 
-None of the three scales past about 31 t/s aggregate with MTP. Vulkan gets *slower* at 4 users: each stream drops to
-about 8 t/s. A single run per row, so the differences of a few t/s are within noise.
+Decode does not scale past about 44 t/s aggregate from 2 to 4 users with MTP on any engine, and Vulkan gets *slower*
+at 4 users: each stream drops to about 8 t/s. A single run per row, so differences of a few t/s are within noise.
 
 ## Diagnostic: prefill without the MTP head (`llama-bench`, 2026-10-05)
 
@@ -192,10 +200,11 @@ about 8 t/s. A single run per row, so the differences of a few t/s are within no
 | strix-llama `4b2561e` (`-lzm on`) | UD-IQ4_XS | 4096 | 560.3 ± 143.9 | 364.9 ± 14.0 |
 | strix-llama `4b2561e` (`-lzm on`) | UD-Q4_K_XL | 4096 | 619.1 ± 1.2 | 367.4 ± 6.3 |
 
-- **Method:** `llama-bench -fa on -ctk q8_0 -ctv q8_0`, `-r 2` for the IQ4_XS rows and `-r 3` for Q4_K_XL. The first
-  strix IQ4_XS repetition was a slow outlier.
-- **What it shows:** without the draft, strix-llama's IQ4_XS prefill equals Vulkan's. Its server prefill was slightly
-  *slower* than Vulkan's at 4K, so the MTP head costs it a little more than it costs Vulkan.
+- **Method:** `llama-bench -fa on -ctk q8_0 -ctv q8_0`, `-r 2` for the IQ4_XS rows and `-r 3` for Q4_K_XL.
+- **What it shows: inconclusive for 4K.** strix-llama's two IQ4_XS pp4096 repetitions were about 459 and 662 t/s
+  (the ± is their spread); the faster one is 1.22× Vulkan's 545, the slower one 0.84×. At 32K depth strix-llama is
+  1.12× Vulkan. Its server prefill with the MTP head was 437 vs Vulkan's 453 at 4K, so the MTP head may cost it more
+  than it costs Vulkan, but two repetitions cannot settle that.
 - **What came next:** the Vulkan run on UD-Q4_K_XL is the one that wedged the GPU (next section).
 - **How these were run:** directly, outside `run.sh`. After the wedge, every GPU run went through `run.sh`'s memory
   gate.
@@ -215,7 +224,9 @@ lazy mode the whole tensor set goes to the GPU.
 
 **What had worked.** The same file had loaded and run normally minutes earlier under strix-llama.cpp with `-lzm on`.
 
-**What it means.** Any engine that maps the full tensor set needs a GTT fit check *before* loading, as `run.sh` does.
+**What it means.** Any engine that maps the full tensor set needs a GTT fit check *before* loading. `run.sh` now
+sizes that check from the model files whenever the server's flags leave lazy mode off, and requires the need to fit
+the GTT alone.
 Exceeding the GTT can take the whole GPU down rather than fail the one load cleanly. Whether a smaller overshoot or
 another driver version fails cleanly instead was not tested.
 
@@ -248,17 +259,20 @@ unloads `Qwen3.8-Flash-Next-MTP` from lemond (`POST /api/v1/unload`), runs one `
 every exit path. `KEEP_OFFLINE=1` keeps lemond offline after a successful row so the next call can continue.
 
 ```sh
-nix build .#llama-cpp-vulkan   # VULKAN_BIN=result/bin/llama-server
-nix build --impure -f bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/strix-rocm.nix \
+nix build .#llama-cpp-vulkan -o result-vulkan
+nix build --impure -f bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/strix-rocm.nix -o result-strix \
   --argstr owner halo-box --argstr repo strix-llama.cpp \
   --argstr rev 4b2561e487f21f7fd3ccd7c975612d2e038a7070 \
-  --argstr hash sha256-7S9fCamsLMRQolptQjX7kfxnQlEmOnjhcjdBsSFLcmQ=        # STRIX_BIN
-nix build --impure -f bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/strix-rocm.nix \
+  --argstr hash sha256-7S9fCamsLMRQolptQjX7kfxnQlEmOnjhcjdBsSFLcmQ=
+nix build --impure -f bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/strix-rocm.nix -o result-gsq \
   --argstr owner Aristo94 --argstr repo GSQHalo.cpp \
   --argstr rev 5fc881b114c1ea130f5df6a30a98be2f8d397de6 \
-  --argstr hash sha256-f3aoiICLmkSAY2wqfc1g3YznfhtRfeMOCvkMx561n1k=        # GSQ_BIN
+  --argstr hash sha256-f3aoiICLmkSAY2wqfc1g3YznfhtRfeMOCvkMx561n1k=
 
-export OUT=rows.jsonl CACHE=cache.json CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
+export VULKAN_BIN=$PWD/result-vulkan/bin/llama-server STRIX_BIN=$PWD/result-strix/bin/llama-server
+export GSQ_BIN=$PWD/result-gsq/bin/llama-server
+mkdir -p "$HOME/bakeoff"
+export OUT=$HOME/bakeoff/rows.jsonl CACHE=$HOME/bakeoff/cache.json CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
 D=bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05
 KEEP_OFFLINE=1 $D/run.sh corpus
 KEEP_OFFLINE=1 $D/run.sh vulkan --label vulkan-A --do toolcall,prefill4k,decode512,decode32k,replay
@@ -267,8 +281,8 @@ KEEP_OFFLINE=1 $D/run.sh vulkan --label vulkan-C --do correctness
 KEEP_OFFLINE=1 $D/run.sh vulkan --label vulkan-D --slots 4 --do concurrency
 # … the same four groups with the strix-hip and gsq-hip presets, then:
 EXTRA_ARGS="-ctk f16 -ctv f16" $D/run.sh gsq-hip --label gsq-hip-F16 --do prefill4k,decode32k
-python3 $D/probe.py analyze --rows rows.jsonl --ref vulkan-C \
-  --tokenizer-bin <llama-tokenize> --vocab <UD-IQ4_XS first shard>
+python3 $D/probe.py analyze --rows "$OUT" --ref vulkan-C \
+  --tokenizer-bin result-vulkan/bin/llama-tokenize --vocab <UD-IQ4_XS first shard>
 ```
 
 Model paths default to the HF cache under `/var/lib/models`. Override them with `MODELS`, `IQ4` or `DRAFT_GGML`.
