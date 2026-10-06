@@ -77,7 +77,7 @@ not clear the bar for GPU time.
   trademarks of Peonist, LLC. Weights: [peonist-ai/halogen-qwen3.8-flash-next](https://huggingface.co/peonist-ai/halogen-qwen3.8-flash-next),
   proprietary `.hgn` format. See also [halogen-flash-teardown.md](halogen-flash-teardown.md) for what 0.5.6 contains.
   Pushed 2026-10-03, about 860 stars.
-- **"Halogen 0.16.2 (v2 checkpoint)"** in the comparison post therefore means this image with its default v2 checkpoint
+- **"Halogen 0.16.2 (v2 checkpoint)"** in the Kyojin model card's comparison therefore means this image with its default v2 checkpoint
   (62.1 GiB, 4.16 bits average, vs w4b 115.55 GiB). It also needs a 47.7 GiB n-gram table that is paged, not held.
 - **chlorine-server** ([Heretek-AI](https://github.com/Heretek-AI/chlorine-server)) is a clean-room reimplementation of
   halogen **0.1.3**, "not affiliated with Peonist", AGPL-3.0, scaffolded and in progress, no performance numbers, and its
