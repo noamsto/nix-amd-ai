@@ -11,7 +11,8 @@ row, so no row carries `load_flag`. Each row is one run per cell, as in #249; th
 ## Verdict
 
 **Run GSQHalo with f16 KV (`-ctk f16 -ctv f16`). With it GSQHalo beats Vulkan on agent replay *and* on 128K decode.**
-It is the one lever that mattered; the others did nothing or are not available.
+It is the one lever that mattered; the others did nothing or are not available. The gain needs the fork: this
+repo's stock `llama-cpp-rocm` with the same f16 KV is *slower* than Vulkan (table below).
 
 | (halo, same-day rows) | Vulkan b11382 | GSQHalo q8_0 KV (#249 flags) | **GSQHalo f16 KV** | GSQHalo f16 KV, UD-IQ3_XXS |
 | --- | ---: | ---: | ---: | ---: |
@@ -48,6 +49,7 @@ start (host halo in every row).
 | **1. f16 KV** (`gsq-f16-A/B`) | 0.25 / 1.69 | 723 | 774 | 761 | 40.9 (42.7) | 35.1 ± 1.1 (36.8) | 0.80 / 0.73 | **116.1 s** | 71.6 / 73.4 |
 | 2. rocWMMA FA | – | not buildable on this source (below) | | | | | | | |
 | 3. UD-IQ3_XXS, f16 KV (`gsq-iq3-A/B`) | 1.66 / 1.71 | 1043 | 1161 | 1135 | 42.1 (43.9) | 36.1 ± 2.6 (36.6) | 0.79 / 0.73 | 94.9 s | 60.9 / 62.5 |
+| **Stock HIP**, f16 KV, `-ub 2048 -b 2048` (`stock-f16-A/B`) | 0.61 / 1.79 | 346 | 293 | 188 | 33.0 (32.2) | 20.1 ± 1.9 (19.7) | 0.79 / 0.70 | 226.6 s | 71.6 / 72.2 |
 | 4a. f16, `-ub 4096` (`gsq-ub4096`) | 1.61 | – | – | 737 | – | 33.7 ± 1.4 (35.6) | – / 0.70 | – | 70.1 / 71.9 |
 | 4b. f16, `-ub 2048` (`gsq-ub2048`) | 1.82 | – | – | 677 | – | 33.7 ± 4.4 (34.8) | – / 0.69 | – | 69.5 / 72.7 |
 | 4c. f16, n-max 2 (`gsq-nmax2`) | 1.80 | – | – | 748 | – | 32.8 ± 1.2 (35.1) | – / 0.79 | – | 71.5 / 73.0 |
@@ -76,6 +78,22 @@ Row groups run: `toolcall,prefill4k,decode512,decode32k,replay` (A), `decode128k
 - Peak RSS-side numbers: f16 server RSS ended rows at 9.9–12.0 GiB, q8_0 at 14.1 GiB; MemAvailable after the rows was
   32–36 GiB for f16 and 23.7 GiB for q8_0.
 
+### Does the f16 gain need GSQHalo? Yes: stock HIP does not get it
+
+This repo's packaged `llama-cpp-rocm` (llama.cpp b11382, no fork, UD-IQ4_XS, f16 KV, the Vulkan preset's `--lazy-mode on -ub 2048 -b 2048`
+plus the shared flags; row `stock-f16-A/B/C`) is behind Vulkan on every measure and far behind GSQHalo with the same KV type:
+
+| (halo, f16 KV where HIP) | Vulkan b11382 | stock HIP b11382 | GSQHalo `5fc881b` |
+| --- | ---: | ---: | ---: |
+| Replay normalized / time to first token | 179.2 / 123.9 s | 226.6 / 159.5 s (+26% vs Vulkan) | **116.1 / 63.6 s** |
+| Prefill 4K / 32K / 128K (t/s) | 474 / 415 / 267 | 346 / 293 / 188 | **723 / 774 / 761** |
+| Decode 32K / 128K, T=0.7 (t/s) | 37.3 / 25.6 | 33.0 / 20.1 | **40.9 / 35.1** |
+| Correctness vs Vulkan | reference | pass: sanity 10/10, 12/20 exact, median divergence 29 | pass: 12/20, 43 |
+| GTT after load / peak | 70.8 / 74.3 GiB | 71.6 / 72.2 GiB | 71.6 / 73.4 GiB |
+
+The stock row used Vulkan's `-ub 2048`, not GSQHalo's 8192 and not tuned for HIP, so part of the gap may be batch size; only
+the f16 KV type was held equal. The tool call passed.
+
 ### 2. rocWMMA flash attention: not available in this build
 
 `GGML_HIP_ROCWMMA_FATTN` no longer exists in GSQHalo `5fc881b`, and not in the packaged llama.cpp b11382 either: `grep -rn
@@ -83,7 +101,7 @@ GGML_HIP_ROCWMMA` over both source trees finds only the fork's upstream CI workf
 (a flag CMake ignores). The option existed on the older llama.cpp this repo measured on gfx1150 (`bench-logs/rocwmma-2026-05-19`).
 In these sources the gfx11 flash-attention path already uses native AMD WMMA (`amd_wmma_available`,
 `fattn-mma-f16.cuh`), so there is nothing to toggle and no "both ways" build. The packaged `llama-cpp-rocm` is untouched.
-rocWMMA on gfx1151 therefore remains unmeasured. `-fa on` was already in the shared flags.
+rocWMMA on gfx1151 therefore remains unmeasured. (`run.sh` gained a `stock-hip` preset for the stock-HIP rows.) `-fa on` was already in the shared flags.
 
 ### 3. Kernel-matched quant: UD-IQ3_XXS
 
@@ -111,6 +129,7 @@ are all within one stdev of each other (stdev 1–4 t/s, 3 runs), so none is a w
 
 ## Not measured
 
+- Stock HIP with `-ub 8192` or other HIP-tuned flags;
 - Quality of UD-IQ3_XXS beyond the 20+10 prompt checks (no perplexity, no long-context task quality); rocWMMA on gfx1151;
   vision on GSQHalo; concurrency and `HIP_LAUNCH_BLOCKING` with f16 KV; repeat runs of replay and correctness rows; the kernel
   reason f16 KV prefills 2.5× faster at 128K; what makes q8_0 KV need more GTT.
@@ -119,11 +138,12 @@ are all within one stdev of each other (stdev 1–4 t/s, 3 runs), so none is a w
 ## Reproduce
 
 Builds as in the bake-off README (Vulkan b11382 and GSQHalo `5fc881b`). The IQ3 quant is `UD-IQ3_XXS` from `unsloth/Qwen3.8-Flash-Next-GGUF`.
-From the repo root, `rows.sh` stages (each through `run.sh`'s gate, lemond restored after each stage):
+From the repo root, `rows.sh` stages (`STOCK_BIN` is the packaged `.#llama-cpp-rocm`; each through `run.sh`'s gate, lemond restored after each stage):
 
 ```sh
 D=bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06
 $D/rows.sh vulkan                                  # corpus, vulkan-A/B/C
+NEED_GIB=95 $D/rows.sh stock                       # stock-f16-A/B/C (packaged llama-cpp-rocm)
 NEED_GIB=95 $D/rows.sh f16                         # gsq-f16-A/B/C
 NEED_GIB=95 $D/rows.sh q8ctl                       # q8_0 control with peak GTT
 IQ3=<path to ...UD-IQ3_XXS-00001-of-00003.gguf> $D/rows.sh iq3   # f16 KV by default

@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 # Row stages for #252. From the repo root: rows.sh <stage>. Every row goes through the #249 run.sh memory gate.
-# Stages: vulkan | f16 | q8ctl | iq3 | decode128k-variants. Within a stage lemond stays offline between rows and is
+# Stages: vulkan | stock | f16 | q8ctl | iq3 | decode128k-variants. Within a stage lemond stays offline between rows and is
 # restored after the last one. Needs the builds from the README's Reproduce section.
 set -u
 D=bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05
 W=${W:-$HOME/gsqtune}
 export OUT=$W/rows.jsonl CACHE=$W/cache.json CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
-export VULKAN_BIN=$W/result-vulkan/bin/llama-server GSQ_BIN=$W/result-gsq/bin/llama-server
+export VULKAN_BIN=$W/result-vulkan/bin/llama-server STOCK_BIN=$W/result-stock/bin/llama-server GSQ_BIN=$W/result-gsq/bin/llama-server
 IQ3=${IQ3:-/var/lib/models/gsq-tuning/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf}
 F16="-ctk f16 -ctv f16"
 mkdir -p "$W"
@@ -26,6 +26,13 @@ vulkan)
     run more vulkan --label vulkan-A --do toolcall,prefill4k,decode512,decode32k,replay
     run more vulkan --label vulkan-B --do decode128k
     run last vulkan --label vulkan-C --do correctness
+    ;;
+stock)
+    # the repo's packaged llama-cpp-rocm (no fork), f16 KV, the Vulkan preset's -ub 2048 -b 2048
+    export EXTRA_ARGS="$F16"
+    run more stock-hip --label stock-f16-A --do toolcall,prefill4k,decode512,decode32k,replay
+    run more stock-hip --label stock-f16-B --do decode128k
+    run last stock-hip --label stock-f16-C --do correctness
     ;;
 f16)
     export EXTRA_ARGS="$F16"
@@ -51,7 +58,7 @@ decode128k-variants)
     EXTRA_ARGS="${KV-$F16} --spec-draft-n-max 4" run last gsq-hip --label gsq-nmax4 --do decode128k
     ;;
 *)
-    echo "usage: rows.sh vulkan|f16|q8ctl|iq3|decode128k-variants" >&2
+    echo "usage: rows.sh vulkan|stock|f16|q8ctl|iq3|decode128k-variants" >&2
     exit 7
     ;;
 esac
