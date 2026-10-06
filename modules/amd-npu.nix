@@ -26,8 +26,8 @@
   # inner package, so it is built directly.
   llamaCppRocm =
     if cfg.rocmGpuTargets == null
-    then pkgs.llama-cpp-rocm
-    else pkgs.llama-cpp-rocm.override {
+    then cfg.llamaCppRocmPackage
+    else cfg.llamaCppRocmPackage.override {
       llama-cpp = pkgs.llama-cpp.override {rocmGpuTargets = cfg.rocmGpuTargets;};
     };
   stableDiffusionCppRocm =
@@ -394,6 +394,22 @@ in {
         Radeon 780M on `["gfx1103"]`. The value is part of the derivation,
         so any list here is a store path no substituter has: it buys native
         kernels for your chip with a local llama.cpp and sd.cpp build.
+      '';
+    };
+
+    llamaCppRocmPackage = mkOption {
+      type = types.package;
+      default = pkgs.llama-cpp-rocm;
+      defaultText = lib.literalExpression "pkgs.llama-cpp-rocm";
+      example = lib.literalExpression "pkgs.llama-cpp-rocm-gsqhalo";
+      description = ''
+        The llama.cpp ROCm build behind `/etc/lemonade/backends/llamacpp-rocm`.
+        Set it to `pkgs.llama-cpp-rocm-gsqhalo` to serve llama.cpp ROCm models
+        with the Aristo94/GSQHalo.cpp fork, which measured faster on Strix
+        Halo (gfx1151) than stock llama.cpp, Vulkan or ROCm. The fork takes
+        flags stock llama.cpp rejects (`-lzm`), so pass them per model.
+        `rocmGpuTargets` applies to whichever package is chosen; it must be a
+        llama-cpp-rocm build that accepts `.override {llama-cpp = ...;}`.
       '';
     };
 

@@ -412,6 +412,16 @@ WebKitGTK suspends the network process for windows that are minimized, hidden, o
 
 The desktop app is the only part of lemonade that pulls a Rust + npm build (and a crates.io cargo-vendor fetch). Headless/server hosts that only need the `lemond` API + CLI can skip it entirely with `lemonade.desktopApp.enable = false;` — this drops the Tauri build path from the closure. (The pre-built app is also on the [binary cache](#binary-cache), so configuring the substituter avoids building it from source in the first place.)
 
+## Opt-in GSQHalo.cpp ROCm backend
+
+`pkgs.llama-cpp-rocm-gsqhalo` is [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) (`5fc881b`) built through this flake's `llama-cpp-rocm`. To serve the `llamacpp-rocm` backend with it instead of stock llama.cpp:
+
+```nix
+hardware.amd-npu.llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;
+```
+
+The default is the stock `llama-cpp-rocm`, so existing hosts are unchanged; `rocmGpuTargets` applies to either. On one Strix Halo (gfx1151) host the fork with `-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3 -ctk f16 -ctv f16` measured 35 % faster agent turns than stock Vulkan llama.cpp ([`bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06`](bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06)). Those flags are what was measured, not defaults the module sets. `-lzm` is fork-only: stock llama.cpp rejects it, so don't pass it to a model served by the stock backend.
+
 ## GPU memory headroom
 
 The iGPU draws GPU memory from the GTT pool. By default the kernel exposes
