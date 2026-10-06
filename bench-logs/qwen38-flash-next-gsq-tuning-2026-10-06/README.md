@@ -91,8 +91,12 @@ plus the shared flags; row `stock-f16-A/B/C`) is behind Vulkan on every measure 
 | Correctness vs Vulkan | reference | pass: sanity 10/10, 12/20 exact, median divergence 29 | pass: 12/20, 43 |
 | GTT after load / peak | 70.8 / 74.3 GiB | 71.6 / 72.2 GiB | 71.6 / 73.4 GiB |
 
-The stock row used Vulkan's `-ub 2048`, not GSQHalo's 8192 and not tuned for HIP, so part of the gap may be batch size; only
-the f16 KV type was held equal. The tool call passed.
+The stock row used Vulkan's `-ub 2048 -b 2048` and none of GSQHalo's other flags (`-ub 8192`, `--spec-draft-p-min 0.3`,
+`-lzm on-direct`). The batch-matched comparison is the 128K row against `gsq-ub2048` (f16, same `-ub 2048`, the
+fork's other flags kept): **prefill 188 vs 677 t/s, decode 20.1 vs 33.7 t/s (T=0: 19.7 vs 34.8)**. So the 128K gap is the
+engine, not the batch size. Group A (4K, replay) has **no batch-matched GSQHalo row**: its replay and 4K/32K figures are
+at `-ub 8192`, so the stock-vs-fork gap there (226.6 vs 116.1 s) includes a batch-size difference of unknown size. A stock
+row at `-ub 8192` was not run. The tool call passed.
 
 ### 2. rocWMMA flash attention: not available in this build
 
