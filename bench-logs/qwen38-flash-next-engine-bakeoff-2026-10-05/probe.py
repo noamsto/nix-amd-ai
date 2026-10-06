@@ -254,6 +254,13 @@ def decode_tps(r):
     return (r["completion_tokens"] - 1) / r["gen_s"]
 
 
+def require_decode_tps(r):
+    tps = decode_tps(r)
+    if tps is None:
+        raise grid.RowError("no decode timing: all tokens in one chunk")
+    return tps
+
+
 def thinking_off(e):
     if e.engine == "gufo":
         return {"reasoning_effort": "none"}
@@ -305,18 +312,19 @@ def g_decode(e, c, quick, group):
     rs = [stream_complete(e, text, GEN, 0.7, s) for s in seeds] + [stream_complete(e, text, GEN, 0.0, 0)]
     check_uncached(rs)
     out = speed_fields(rs)
-    out["decode_tps"] = stats([decode_tps(r) for r in rs[:-1]])
-    out["decode_tps_t0"] = round(decode_tps(rs[-1]), 3)
+    out["decode_tps"] = stats([require_decode_tps(r) for r in rs[:-1]])
+    out["decode_tps_t0"] = round(require_decode_tps(rs[-1]), 3)
     drafted = sum(r["timings"].get("draft_n") or 0 for r in rs)
     accepted = sum(r["timings"].get("draft_n_accepted") or 0 for r in rs)
     out["acceptance"] = round(accepted / drafted, 4) if drafted else None
     if before is not None:
         after = scrape_metrics(e.port)
         out["metrics_delta"] = {k: round(v - before.get(k, 0), 6) for k, v in after.items()}
-        d = {k.split(":")[-1]: v for k, v in out["metrics_delta"].items()}
+        d = {k.split("{")[0].split(":")[-1]: v for k, v in out["metrics_delta"].items()}
         proposed = d.get("spec_decode_num_draft_tokens_total")
-        if out["acceptance"] is None and proposed:
-            out["acceptance"] = round(d["spec_decode_num_accepted_tokens_total"] / proposed, 4)
+        accepted_m = d.get("spec_decode_num_accepted_tokens_total")
+        if out["acceptance"] is None and proposed and accepted_m is not None:
+            out["acceptance"] = round(accepted_m / proposed, 4)
     return out
 
 
@@ -340,6 +348,9 @@ def g_replay(e, c, quick, decode32k):
                       "completion_tokens": r["completion_tokens"],
                       "decode_tps": None if own is None else round(own, 3),
                       "cached_tokens": r["cached_tokens"], "wall_s": round(r["wall_s"], 4),
+                      "server_timings": {k: r["timings"].get(k) for k in (
+                          "prompt_n", "prompt_ms", "predicted_n", "predicted_ms", "predicted_per_second")}
+                      if r["timings"] else None,
                       "finish_reason": r["finish_reason"], "rate_fallback": fallback,
                       "normalized_s": None if use is None else round(r["ttft_s"] + REPLAY_GEN / use, 4)})
     complete = all(t["normalized_s"] is not None for t in turns)
@@ -403,10 +414,11 @@ def g_concurrency(e, c, quick):
             rs = [f.result() for f in futs]
         wall = time.perf_counter() - t0
         total = sum(r["completion_tokens"] for r in rs)
-        rates = [decode_tps(r) for r in rs]
+        rates = [require_decode_tps(r) for r in rs]
         out[str(users)] = {"per_request_decode_tps": [round(x, 3) for x in rates],
                            "sum_decode_tps": round(sum(rates), 3), "completion_tokens": total,
                            "wall_s": round(wall, 3), "aggregate_tps": round(total / wall, 3),
+                           "decode_aggregate_tps": round(total / (wall - max(r["ttft_s"] for r in rs)), 3),
                            "ttft_s": [round(r["ttft_s"], 3) for r in rs],
                            "prompt_tokens": [r["prompt_tokens"] for r in rs]}
     return out
@@ -785,6 +797,10 @@ def main():
             log.seek(0)
             print(json.dumps({"error": str(e), "label": getattr(a, "label", a.cmd), "server_tail": log.read()[-4000:]}))
             return {grid.BusyError: 2, grid.MemError: 3, LoadError: 4}.get(type(e), 1)
+        except Exception as e:
+            log.seek(0)
+            print(json.dumps({"error": repr(e), "label": getattr(a, "label", a.cmd), "server_tail": log.read()[-4000:]}))
+            return 1
     print(json.dumps(result))
     return 0
 
