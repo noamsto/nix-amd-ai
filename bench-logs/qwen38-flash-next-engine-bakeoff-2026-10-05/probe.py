@@ -6,19 +6,25 @@ Subcommands:
   corpus      build the shared text corpus + agent-replay conversation into --cache
   llama       start one llama-server (stock or HIP fork), run --do groups, print one JSON row
   gufo        start one Gufo container, run --do groups, print one JSON row
+  strata      start one Strata server (python serve/server.py + the strata engine), run --do groups, print one JSON row
   gufo-help   print `gufo serve llm --help` from the image
   analyze     compare the correctness rows of a JSONL file against reference rows
 
 Every engine gets identical text over /v1/completions (speed groups) and /v1/chat/completions
 (replay, toolcall, correctness); timing is client-side so engines are comparable. Speed prompts are
-a unique nonce line plus a corpus slice. Groups (--do, comma list): prefill4k decode512 decode32k
-decode128k replay toolcall correctness concurrency.
+a unique nonce line plus a corpus slice. Strata has no /v1/completions and no ignore_eos: its speed
+groups go over /v1/chat/completions (the chat template wraps the prompt, so prompt_tokens includes
+template tokens) and ask for a long essay so generation reaches max_tokens. Groups (--do, comma
+list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision.
+vision (strata only, needs --vision-bin and --mmproj) sends a generated red|blue PNG and passes iff
+the answer names both colours.
 
 Exit: 0 ok, 1 row error, 2 foreign benchmark running, 3 memory gate, 4 strict load wait expired,
 7 usage error (argparse; no JSON row), 143 signalled. Other failures still print one JSON line with "error",
 "label" and "server_tail".
 """
 import argparse
+import base64
 import collections
 import concurrent.futures
 import contextlib
@@ -31,6 +37,7 @@ import shlex
 import signal
 import socket
 import statistics
+import struct
 import subprocess
 import sys
 import tempfile
@@ -41,15 +48,16 @@ import types
 import urllib.error
 import urllib.request
 import uuid
+import zlib
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 spec = importlib.util.spec_from_file_location(
     "grid", os.path.join(HERE, "..", "qwen38-flash-next-mtp-tuning-2026-10-04", "grid.py"))
 grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
-grid.WATCHED.add("gufo")
+grid.WATCHED.update({"gufo", "strata"})
 
-GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency"]
+GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
 CONC_OFFSETS = (40000, 60000, 80000, 100000)
@@ -137,6 +145,37 @@ class LoadError(grid.RowError):
     pass
 
 
+class EnginePid(int):
+    """The strata engine's pid; pgid is the server's process group, which holds the whole tree."""
+    pgid = None
+
+
+def group_members(pgid):
+    """Live (non-zombie) pids in a process group; a zombie has already released its files and GPU memory."""
+    out = []
+    for d in os.listdir("/proc"):
+        if not d.isdigit():
+            continue
+        try:
+            with open(f"/proc/{d}/stat") as f:
+                state, _, pgrp = f.read().rsplit(")", 1)[1].split()[:3]
+        except (OSError, ValueError):
+            continue
+        if int(pgrp) == pgid and state not in ("Z", "X"):
+            out.append(int(d))
+    return out
+
+
+def tree_status_kb(pgid, key):
+    total = 0
+    for pid in group_members(pgid):
+        try:
+            total += grid.proc_status_kb(pid, key) or 0
+        except OSError:
+            pass  # exited between the listing and the read
+    return total
+
+
 def mem_snapshot(pid, gtt0, vram0):
     gtt, vram = grid.gpu_mem()
     swap = {}
@@ -144,7 +183,7 @@ def mem_snapshot(pid, gtt0, vram0):
         for line in f:
             if line.startswith(("SwapTotal:", "SwapFree:")):
                 swap[line.split(":")[0]] = int(line.split()[1])
-    return {
+    snap = {
         "rss_kb": grid.proc_status_kb(pid, "VmRSS"),
         "rss_anon_kb": grid.proc_status_kb(pid, "RssAnon"),
         "rss_file_kb": grid.proc_status_kb(pid, "RssFile"),
@@ -153,6 +192,31 @@ def mem_snapshot(pid, gtt0, vram0):
         "mem_available_kb": grid.mem_available_kb(),
         "swap_used_kb": swap["SwapTotal"] - swap["SwapFree"],
     }
+    if getattr(pid, "pgid", None):
+        snap["tree_rss_kb"] = tree_status_kb(pid.pgid, "VmRSS")
+    return snap
+
+
+@contextlib.contextmanager
+def loadavg_peak():
+    """Max 1-min loadavg over the block, sampled every 5 s; "max" is None if sampling failed."""
+    peak = {"max": os.getloadavg()[0]}
+    stop = threading.Event()
+
+    def sample():
+        try:
+            while not stop.wait(5):
+                peak["max"] = max(peak["max"], os.getloadavg()[0])
+        except OSError:
+            peak["max"] = None  # a dead sampler must not leave a partial max that reads as a measurement
+
+    t = threading.Thread(target=sample, daemon=True)
+    t.start()
+    try:
+        yield peak
+    finally:
+        stop.set()
+        t.join(timeout=2)
 
 
 @contextlib.contextmanager
@@ -262,6 +326,17 @@ def stream(e, path, body):
 
 
 def stream_complete(e, prompt_text, max_tokens, temperature, seed, ignore_eos=True, cache_prompt=False):
+    if e.engine == "strata":
+        # Strata has no /v1/completions and no ignore_eos: ask for an essay far longer than any max_tokens used
+        # here, so the completion_tokens == max_tokens check below still catches an early stop.
+        body = {"messages": [{"role": "user", "content": (
+                    f"# run {uuid.uuid4()}\n{prompt_text}\n\nWrite a very long, detailed, multi-section essay "
+                    "about the documents above, at least 1500 words.")}],
+                "max_tokens": max_tokens, "temperature": temperature, "seed": seed, **thinking_off(e)}
+        r = stream(e, "/v1/chat/completions", body)
+        if ignore_eos and r["completion_tokens"] != max_tokens:
+            raise grid.RowError(f"generation stopped short: {r['completion_tokens']} != {max_tokens}")
+        return r
     body = {"prompt": f"# run {uuid.uuid4()}\n{prompt_text}", "max_tokens": max_tokens,
             "temperature": temperature, "seed": seed, "ignore_eos": ignore_eos}
     if e.engine == "llama":  # Gufo documents cache_prompt only for chat/responses and rejects unknown fields
@@ -354,6 +429,34 @@ def g_decode(e, c, quick, group):
         if out["acceptance"] is None and proposed and accepted_m is not None:
             out["acceptance"] = round(accepted_m / proposed, 4)
     return out
+
+
+def png(width, height, pixel):
+    """Deterministic RGB PNG; pixel(x) is the (r, g, b) of column x."""
+    def chunk(tag, data):
+        return struct.pack(">I", len(data)) + tag + data + struct.pack(">I", zlib.crc32(tag + data))
+
+    row = b"\x00" + b"".join(bytes(pixel(x)) for x in range(width))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(row * height, 9)) + chunk(b"IEND", b""))
+
+
+def red_blue_png():
+    return png(128, 128, lambda x: (255, 0, 0) if x < 64 else (0, 0, 255))
+
+
+def g_vision(e, c, quick):
+    if e.engine != "strata":
+        raise grid.RowError("the vision group is only wired for the strata subcommand")
+    url = "data:image/png;base64," + base64.b64encode(red_blue_png()).decode()
+    r = stream(e, "/v1/chat/completions", {
+        "messages": [{"role": "user", "content": [
+            {"type": "image_url", "image_url": {"url": url}},
+            {"type": "text", "text": "Which two colors does this image show? Answer with the color names only."}]}],
+        "max_tokens": 64, "temperature": 0, **thinking_off(e)})
+    answer = r["text"]
+    return {"ok": "red" in answer.lower() and "blue" in answer.lower(), "answer": answer[:200],
+            "ttft_s": round(r["ttft_s"], 3), "wall_s": round(r["wall_s"], 3), "prompt_tokens": r["prompt_tokens"]}
 
 
 def g_replay(e, c, quick, decode32k):
@@ -481,6 +584,130 @@ def llama_server(a, log):
         stop(proc)
 
 
+STRATA_READY_S = 1800  # loading the pack (and the vision encoder) takes minutes
+
+
+def strata_config(a, tmp):
+    vision = bool(a.vision_bin and a.mmproj)
+    args = ["--pack", a.pack, "--native", a.target] + (["--mtp", a.mtp_rt] if a.mtp_rt else []) \
+        + ["--max-context", str(a.ctx)] + (["--vision"] if vision else []) + shlex.split(a.extra)
+    cfg = {"exe": a.engine_bin, "args": args, "cwd": a.repo, "tokenizer": os.path.join(a.pack, "tokenizer"),
+           "model_name": "strata", "backend": "hip", "env": dict(kv.split("=", 1) for kv in a.env),
+           "lib_dirs": a.lib_dir, "log": os.path.join(tmp, "engine.log"), "host": "127.0.0.1"}
+    if vision:
+        cfg["vision"] = {"exe": a.vision_bin, "mmproj": a.mmproj, "model": a.target, "max_tokens": 300}
+    return cfg
+
+
+def find_engine(root, proc, timeout=30):
+    """Pid of the descendant of root whose comm is `strata`; polls because /health can precede the spawn."""
+    deadline = time.time() + timeout
+    while True:
+        children = {}
+        for d in os.listdir("/proc"):
+            info = grid.proc_info(int(d)) if d.isdigit() else None
+            if info:
+                children.setdefault(info[2], []).append((int(d), info[0]))
+        todo = [root]
+        while todo:
+            for pid, comm in children.get(todo.pop(), []):
+                if comm == "strata":
+                    return pid
+                todo.append(pid)
+        if proc.poll() is not None or time.time() > deadline:
+            raise grid.RowError("no strata engine process under the server")
+        time.sleep(0.5)
+
+
+def stop_group(proc):
+    """SIGTERM the server's process group, SIGKILL after 30 s, then wait for every member to be gone with no
+    timeout: a group stuck in the kernel (a wedged GPU) must hang the probe rather than return, so the caller
+    never reloads another model over it."""
+    pgid = proc.pid
+
+    def signal_group(sig):
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(pgid, sig)
+
+    signal_group(signal.SIGTERM)
+    deadline = time.time() + 30
+    while time.time() < deadline and (proc.poll() is None or group_members(pgid)):
+        time.sleep(0.2)
+    signal_group(signal.SIGKILL)
+    proc.wait()
+    while group_members(pgid):
+        time.sleep(0.5)
+
+
+def cpu_ticks(pid=None):
+    """Busy CPU ticks, system-wide from /proc/stat or one process (utime + stime); None if unreadable."""
+    try:
+        if pid is None:
+            with open("/proc/stat") as f:
+                v = [int(x) for x in f.readline().split()[1:]]
+            return sum(v[:3]) + sum(v[5:8])  # user nice system, irq softirq steal: everything but idle and iowait
+        with open(f"/proc/{pid}/stat") as f:
+            fields = f.read().rsplit(")", 1)[1].split()
+        return int(fields[11]) + int(fields[12])
+    except (OSError, ValueError, IndexError):
+        return None
+
+
+def meminfo_kb(key):
+    with open("/proc/meminfo") as f:
+        for line in f:
+            if line.startswith(key + ":"):
+                return int(line.split()[1])
+
+
+def evict_files(paths):
+    """Drop the page cache of the model files (no privilege needed): the engine reads its experts through it, and a
+    large cache is what the lemond reload after the row would otherwise start from."""
+    for path in paths:
+        with contextlib.suppress(OSError), open(path, "rb") as f:
+            os.posix_fadvise(f.fileno(), 0, 0, os.POSIX_FADV_DONTNEED)
+
+
+def gguf_shards(first):
+    m = re.match(r"^(.*)-\d{5}-of-(\d{5})\.gguf$", first)
+    if not m:
+        return [first]
+    return [f"{m.group(1)}-{i:05d}-of-{m.group(2)}.gguf" for i in range(1, int(m.group(2)) + 1)]
+
+
+@contextlib.contextmanager
+def strata_server(a, log):
+    with tempfile.TemporaryDirectory() as tmp:
+        cfg_path = os.path.join(tmp, "config.json")
+        with open(cfg_path, "w", encoding="utf-8") as f:
+            json.dump(strata_config(a, tmp), f)
+        argv = [a.python, "-m", "serve.server", "--engine", "strata", "--config", cfg_path,
+                "--host", "127.0.0.1", "--port", str(a.port)]
+        proc = subprocess.Popen(argv, cwd=a.repo, stdin=subprocess.DEVNULL, stdout=log, stderr=log,
+                                start_new_session=True)
+        try:
+            if not grid.wait_ready(proc, a.port, STRATA_READY_S):
+                if proc.poll() is not None:
+                    raise grid.RowError(f"strata server exited with code {proc.returncode} before becoming ready")
+                raise grid.RowError(f"strata server not ready after {STRATA_READY_S}s")
+            pid = EnginePid(find_engine(proc.pid, proc))
+            pid.pgid = proc.pid
+            yield pid
+        except BaseException:
+            with contextlib.suppress(OSError), open(os.path.join(tmp, "engine.log"), "rb") as f:
+                f.seek(0, os.SEEK_END)
+                f.seek(max(0, f.tell() - 3000))
+                log.write("\n--- engine log tail ---\n" + f.read().decode(errors="replace"))
+                log.flush()
+            raise
+        finally:
+            stop_group(proc)
+            if a.evict_after:
+                a.cached_kb_before_evict = meminfo_kb("Cached")
+                evict_files([os.path.realpath(p) for p in gguf_shards(a.target)])
+                a.cached_kb_after_evict = meminfo_kb("Cached")
+
+
 def docker(*args, **kw):
     return subprocess.run(["docker", *args], capture_output=True, text=True, **kw)
 
@@ -541,21 +768,26 @@ def run_row(a, log):
     load_flag = gate(a, a.draft)
     with open(a.cache, encoding="utf-8") as f:
         cache = json.load(f)
-    llama = a.cmd == "llama"
+    configurable = a.cmd in ("llama", "strata")  # extra, env and ctx come from the arguments
     row = {"host": socket.gethostname(), "engine": a.cmd, "label": a.label,
-           "build": grid.server_build(a.server) if llama else a.image,
-           "extra": a.extra if llama else None, "env": dict(kv.split("=", 1) for kv in a.env) if llama else {},
-           "slots": a.slots, "ctx": a.ctx if llama else (131072 if a.slots == 1 else 32768),
+           "build": {"llama": lambda: grid.server_build(a.server), "gufo": lambda: a.image,
+                     "strata": lambda: strata_build(a)}[a.cmd](),
+           "extra": a.extra if configurable else None,
+           "env": dict(kv.split("=", 1) for kv in a.env) if configurable else {},
+           "slots": a.slots, "ctx": a.ctx if configurable else (131072 if a.slots == 1 else 32768),
            "loadavg_start": round(os.getloadavg()[0], 2), "load_flag": load_flag,
            "corpus_sha256": cache["corpus_sha256"]}
     do = set(a.do.split(","))
     gtt0, vram0 = grid.gpu_mem()
     t0 = time.time()
-    with gtt_peak(gtt0) as peak, (llama_server if llama else gufo_server)(a, log) as pid:
+    cpu0 = {}
+    server = {"llama": llama_server, "gufo": gufo_server, "strata": strata_server}[a.cmd]
+    with gtt_peak(gtt0) as peak, loadavg_peak() as load, server(a, log) as pid:
         row["load_s"] = round(time.time() - t0, 1)
         e = types.SimpleNamespace(
             port=a.port, engine=a.cmd, model=grid.http(a.port, "/v1/models", timeout=30)["data"][0]["id"])
         row["mem_after_load"] = mem_snapshot(pid, gtt0, vram0)
+        cpu0 = {"t": time.time(), "sys": cpu_ticks(), "eng": cpu_ticks(pid)}
         if "toolcall" in do:
             row["toolcall"] = g_toolcall(e, cache, a.quick)
         if "prefill4k" in do:
@@ -570,10 +802,34 @@ def run_row(a, log):
             row["correctness"] = g_correctness(e, cache, a.quick)
         if "concurrency" in do:
             row["concurrency"] = g_concurrency(e, cache, a.quick)
+        if "vision" in do:
+            row["vision"] = g_vision(e, cache, a.quick)
         row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
         row["gtt_peak_delta_bytes"] = peak["bytes"]
         row["hwm_kb"] = grid.proc_status_kb(pid, "VmHWM")
+        if a.cmd == "strata":
+            row["tree_hwm_kb"] = tree_status_kb(pid.pgid, "VmHWM")  # sum of per-process peaks, not a joint peak
+        if a.cmd == "strata" and None not in cpu0.values():
+            # The engine's own CPU worker pool raises the 1-min loadavg by itself; the foreign share is what a
+            # load rule can act on. Average busy cores over the requests, system-wide vs the engine process.
+            wall, hz = time.time() - cpu0["t"], os.sysconf("SC_CLK_TCK")
+            sys1, eng1 = cpu_ticks(), cpu_ticks(pid)
+            if sys1 is not None and eng1 is not None and wall > 0:
+                row["cpu_cores_system"] = round((sys1 - cpu0["sys"]) / hz / wall, 2)
+                row["cpu_cores_engine"] = round((eng1 - cpu0["eng"]) / hz / wall, 2)
+        row["loadavg_end"] = round(os.getloadavg()[0], 2)
+        row["loadavg_max"] = None if load["max"] is None else round(load["max"], 2)
+    if a.cmd == "strata":
+        gtt, _ = grid.gpu_mem()
+        row["gtt_after_stop_delta_bytes"] = None if gtt0 is None or gtt is None else gtt - gtt0
+        row["cached_kb_before_evict"] = getattr(a, "cached_kb_before_evict", None)
+        row["cached_kb_after_evict"] = getattr(a, "cached_kb_after_evict", None)
     return row
+
+
+def strata_build(a):
+    r = subprocess.run(["git", "-C", a.repo, "rev-parse", "HEAD"], capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else os.path.basename(a.engine_bin)
 
 
 def detok(port, ids):
@@ -774,24 +1030,41 @@ def main():
     p.add_argument("--ctx", type=int, default=8192)
     gate_args(p)
 
-    for name in ("llama", "gufo"):
+    for name in ("llama", "gufo", "strata"):
         p = sub.add_parser(name)
-        p.add_argument("--target", required=True)
-        p.add_argument("--draft", default="" if name == "llama" else None, required=name == "gufo")
+        p.add_argument("--target", required=True, help="GGUF shard 1" if name == "strata" else None)
+        if name == "strata":
+            p.set_defaults(draft="")
+        else:
+            p.add_argument("--draft", default="" if name == "llama" else None, required=name == "gufo")
         p.add_argument("--slots", type=int, default=1)
         p.add_argument("--cache", required=True)
         p.add_argument("--label", required=True)
         p.add_argument("--do", required=True)
         gate_args(p)
-        if name == "llama":
-            p.add_argument("--server", required=True)
-            p.add_argument("--extra", default="")
-            p.add_argument("--env", action="append", default=[], metavar="K=V")
-            p.add_argument("--ctx", type=int, default=131072)
-            p.add_argument("--quick", action="store_true", help="smoke: 1 temperature-0.7 decode run per group")
-        else:
+        if name == "gufo":
             p.add_argument("--image", required=True)
             p.set_defaults(quick=False)
+            continue
+        if name == "llama":
+            p.add_argument("--server", required=True)
+        p.add_argument("--extra", default="", help="engine arguments, appended last" if name == "strata" else None)
+        p.add_argument("--env", action="append", default=[], metavar="K=V",
+                       help="engine environment, repeatable" if name == "strata" else None)
+        p.add_argument("--ctx", type=int, default=131072)
+        p.add_argument("--quick", action="store_true", help="smoke: 1 temperature-0.7 decode run per group")
+        if name == "strata":
+            p.add_argument("--repo", required=True, help="Strata checkout: server working directory")
+            p.add_argument("--python", default=sys.executable, help="interpreter that runs serve/server.py")
+            p.add_argument("--engine-bin", required=True, help="the strata engine binary")
+            p.add_argument("--pack", required=True, help="model pack directory (holds tokenizer/)")
+            p.add_argument("--mtp-rt", help="MTP runtime directory; adds --mtp DIR to the engine arguments")
+            p.add_argument("--lib-dir", action="append", default=[], metavar="DIR",
+                           help="LD_LIBRARY_PATH entry for the engine, repeatable")
+            p.add_argument("--vision-bin", help="strata-vision binary; with --mmproj turns images on")
+            p.add_argument("--mmproj", help="vision projector file; with --vision-bin turns images on")
+            p.add_argument("--evict-after", action="store_true",
+                           help="after teardown, drop the page cache of the GGUF shards (last row of a stage)")
 
     p = sub.add_parser("gufo-help")
     p.add_argument("--image", required=True)
@@ -804,12 +1077,21 @@ def main():
     p.add_argument("--vocab", required=True)
 
     a = ap.parse_args()
-    if a.cmd in ("llama", "gufo"):
+    if a.cmd in ("llama", "gufo", "strata"):
         unknown = set(a.do.split(",")) - set(GROUPS)
         if unknown:
             ap.error(f"unknown groups: {sorted(unknown)}")
         if "concurrency" in a.do.split(",") and a.slots < 4:
             ap.error("concurrency needs --slots 4")
+    if a.cmd == "strata":
+        if bool(a.vision_bin) != bool(a.mmproj):
+            ap.error("--vision-bin and --mmproj go together")
+        if "vision" in a.do.split(",") and not a.vision_bin:
+            ap.error("the vision group needs --vision-bin and --mmproj")
+        if "concurrency" in a.do.split(","):
+            ap.error("concurrency is not wired for strata")
+    elif "vision" in getattr(a, "do", "").split(","):
+        ap.error("the vision group is only for the strata subcommand")
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
     signal.signal(signal.SIGHUP, lambda *_: sys.exit(143))
 

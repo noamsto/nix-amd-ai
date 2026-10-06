@@ -3,7 +3,12 @@
 #
 # Usage (repo root): OUT=rows.jsonl CACHE=cache.json CORPUS_REV=<sha> \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh <preset> [probe.py args...]
-# Presets: corpus vulkan stock-hip strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl
+# Presets: corpus vulkan stock-hip strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl strata strata-fast
+# The strata presets (Strata's own server and engine, #257) need STRATA_REPO (checkout), STRATA_PY (python with the
+# server's deps), STRATA_ENGINE (the `strata` binary), STRATA_PACK (iq_pack output) and STRATA_EXPERT_CACHE (an explicit
+# --expert-cache blob count: `auto` sizes from MemAvailable on a unified-memory APU and can exceed the GTT limit).
+# Optional: STRATA_MTP_RT (draft layer dir), STRATA_MMPROJ + STRATA_VISION_BIN (images on), STRATA_LIB_DIRS (colon
+# separated), STRATA_TUNING (hipBLASLt table), STRATA_CTX (default 131072).
 # Remaining args go to probe.py (e.g. --label vulkan-speed --do prefill4k,decode512). Each call is one probe
 # invocation. VULKAN_BIN / STOCK_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them. EXTRA_ARGS is
 # appended to a llama preset's server flags (e.g. EXTRA_ARGS="-ctk f16 -ctv f16"; later flags win).
@@ -12,6 +17,8 @@
 # loaded model frees (GTT in use + its llama-server RSS). With lazy mode off the weights are resident, so need is
 # raised to the target shards + draft in GiB + 6. FIT_CHECK_ONLY=1 stops after that check. lemond must be reachable
 # and hold no model other than Qwen3.8-Flash-Next-MTP (exit 6, untouched).
+# While a row runs it holds $XDG_RUNTIME_DIR/halo-gpu-bench.active (line 1 pid, line 2 preset and label) so other
+# crews on the host defer CPU-heavy gates; removed on every exit path.
 # Then waits (30 min cap) for host load to settle, unloads Qwen3.8-Flash-Next-MTP from lemond (two copies do not
 # fit), runs the probe with --strict-load --max-load-wait $OFFLINE_WAIT_BUDGET, and reloads lemond on every exit
 # path, signals and configuration errors included (KEEP_OFFLINE=1 skips the reload after a probe that exited 0, so a
@@ -26,6 +33,10 @@ MODEL=Qwen3.8-Flash-Next-MTP
 prc=1
 rc=1 # the final status for reload(): the probe's once it has run
 child=
+
+SIGNAL_FILE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
+# shellcheck disable=SC2329 # invoked by the EXIT trap and reload()
+signal_clear() { [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" != "$$" ] || rm -f "$SIGNAL_FILE"; }
 
 post() { curl -fsS -X POST "$LEMOND/$1" -H 'Content-Type: application/json' -d "$2"; }
 # 0 loaded, 1 cleanly absent, 2 unreachable or unparseable
@@ -55,7 +66,7 @@ reload() {
         sleep 2
     done
     curl -fsS "$LEMOND/health" | jq '{model_loaded, pinned_models, loaded: [.all_models_loaded[] | {model_name, status, pinned}]}' >&2
-    has_model || { echo "reload FAILED: $MODEL not loaded" >&2; exit 6; }
+    has_model || { echo "reload FAILED: $MODEL not loaded" >&2; signal_clear; exit 6; }
 }
 
 # shellcheck disable=SC2329 # invoked by the signal traps
@@ -64,7 +75,7 @@ on_signal() {
     while [ -n "$child" ] && kill -0 "$child" 2>/dev/null; do wait "$child"; done
     exit "$1"
 }
-trap reload EXIT
+trap 'reload; signal_clear' EXIT
 trap 'on_signal 143' TERM
 trap 'on_signal 129' HUP
 trap 'on_signal 130' INT
@@ -84,6 +95,7 @@ DRAFT_GGML=${DRAFT_GGML:-$GGML/mtp-Qwen3.8-Flash-Next-Q8_0.gguf}
 DRAFT_SHARED=${DRAFT_SHARED:-$UNSLOTH/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf}
 GUFO_IMAGE=${GUFO_IMAGE:-ghcr.io/gufo-org/toolboxes/gufo-runtime@sha256:b280a3781e0588154149f76b6d3fb6f0bc5f56da0f5352887af521f0a62dcf70}
 OFFLINE_WAIT_BUDGET=${OFFLINE_WAIT_BUDGET:-1800}
+STRATA_CTX=${STRATA_CTX:-131072}
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROBE=${PROBE:-$HERE/probe.py}
 ROOT=$(git -C "$HERE" rev-parse --show-toplevel) || exit 7
@@ -139,6 +151,25 @@ gsq-hip | gsq-hip-hlb)
     bin=$GSQ_BIN target=$IQ4 draft=$DRAFT_GGML
     flags="-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3${EXTRA_ARGS:+ $EXTRA_ARGS}"
     ;;
+strata | strata-fast)
+    need STRATA_REPO STRATA_PY STRATA_ENGINE STRATA_PACK STRATA_EXPERT_CACHE
+    mode=strata
+    NEED_GIB=${NEED_GIB:-95}
+    target=$IQ4
+    # Strata's setup defaults (--prefill auto --spec 4 --spec-min-p 0.5, int8 KV above 8K context), lookup chain off,
+    # with two changes for a unified-memory host shared with other work: --mmap-experts (no host arena; the experts sit
+    # in the GPU cache and the page cache) and an explicit --expert-cache count instead of `auto`, which sizes from
+    # MemAvailable.
+    flags="--prefill auto --spec 4 --spec-min-p 0.5 --kv int8 --mmap-experts --expert-profile $STRATA_REPO/data/expert-profile.bin --expert-cache $STRATA_EXPERT_CACHE --vram-reserve-mib 700"
+    strata_env=("STRATA_HIPBLASLT_TUNING=${STRATA_TUNING:-$STRATA_REPO/tools/hip/gfx1151-hipblaslt-100401.txt}")
+    if [ "$preset" = strata-fast ]; then
+        # The maintainers' fast configuration (STRIX_HALO.md): bit-changing switches on, --mtp-q4 all, --prefill 16384.
+        flags="--prefill 16384 --spec 4 --spec-min-p 0.5 --mtp-q4 all --kv int8 --mmap-experts --expert-profile $STRATA_REPO/data/expert-profile.bin --expert-cache $STRATA_EXPERT_CACHE --vram-reserve-mib 700"
+        strata_env+=(STRATA_PF_FUSED=1 STRATA_PF_GEMM=1 STRATA_HC_UPMIX=1 STRATA_PA_FAST=1 STRATA_HIP_WMMA=1
+            STRATA_SELECT_WMMA=1 STRATA_HC_Q8=1 STRATA_PF_SWITCH_MIN_T=4096)
+    fi
+    flags="$flags${EXTRA_ARGS:+ $EXTRA_ARGS}"
+    ;;
 gufo)
     mode=gufo
     NEED_GIB=${NEED_GIB:-92}
@@ -158,6 +189,19 @@ esac
 case $mode in
 corpus) args=(corpus --server "$bin" --target "$target" --corpus-root "$ROOT") ;;
 gufo) args=(gufo --image "$GUFO_IMAGE" --target "$target" --draft "$draft") ;;
+strata)
+    args=(strata --repo "$STRATA_REPO" --python "$STRATA_PY" --engine-bin "$STRATA_ENGINE" --pack "$STRATA_PACK"
+        --target "$target" --extra "$flags" --ctx "$STRATA_CTX")
+    [ -z "${STRATA_MTP_RT:-}" ] || args+=(--mtp-rt "$STRATA_MTP_RT")
+    if [ -n "${STRATA_MMPROJ:-}" ]; then
+        need STRATA_VISION_BIN
+        args+=(--mmproj "$STRATA_MMPROJ" --vision-bin "$STRATA_VISION_BIN")
+    fi
+    IFS=: read -ra libdirs <<<"${STRATA_LIB_DIRS:-}"
+    for d in "${libdirs[@]}"; do args+=(--lib-dir "$d"); done
+    for kv in "${strata_env[@]}"; do args+=(--env "$kv"); done
+    [ "${KEEP_OFFLINE:-0}" = 1 ] || args+=(--evict-after) # last row of a stage: lemond reloads next, with a clean page cache
+    ;;
 *) args=(llama --server "$bin" --target "$target" --draft "$draft" --extra "$flags") ;;
 esac
 case $preset in *-hlb) args+=(--env HIP_LAUNCH_BLOCKING=1) ;; esac
@@ -249,6 +293,11 @@ others=${others//$'\n'/,}
 [ -z "$others" ] || { trap - EXIT; echo "refusing: lemond has other models loaded ($others); untouched" >&2; exit 6; }
 fit_check
 [ "${FIT_CHECK_ONLY:-0}" = 1 ] && { rc=0; exit 0; }
+
+# Tell other crews on this host a GPU row is running; the file is ours only while its pid is this process.
+row_label=$preset
+for ((i = 1; i < $#; i++)); do [ "${!i}" = --label ] && { j=$((i + 1)); row_label="$preset ${!j}"; }; done
+printf '%s\n%s\n' "$$" "$row_label" >"$SIGNAL_FILE"
 
 has_model
 case $? in
