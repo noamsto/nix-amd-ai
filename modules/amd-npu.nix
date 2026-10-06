@@ -1028,6 +1028,9 @@ in {
         Restart = "on-failure";
         RestartSec = "5s";
         KillSignal = "SIGINT";
+        # A wedged GPU leaves the server in D state, which SIGKILL can't end;
+        # the 90s default applies to both the stop signal and the kill.
+        TimeoutStopSec = mkDefault "30s";
         LimitMEMLOCK = "infinity";
         # WhisperServer resolves its writable runtime dir from RUNTIME_DIRECTORY.
         RuntimeDirectory = "lemond";
@@ -1087,6 +1090,8 @@ in {
         Restart = "on-failure";
         RestartSec = "5s";
         KillSignal = "SIGINT";
+        # Same wedged-GPU D-state stall as lemond: cap the 90s-twice default.
+        TimeoutStopSec = mkDefault "30s";
         LimitMEMLOCK = "infinity";
         StateDirectory = "ds4";
       };
