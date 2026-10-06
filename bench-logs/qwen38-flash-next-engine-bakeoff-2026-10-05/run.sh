@@ -156,15 +156,16 @@ strata | strata-fast)
     mode=strata
     NEED_GIB=${NEED_GIB:-95}
     target=$IQ4
+    printf -v profile '%q' "$STRATA_REPO/data/expert-profile.bin" # the flag string is shlex-split by probe.py
     # Strata's setup defaults (--prefill auto --spec 4 --spec-min-p 0.5, int8 KV above 8K context), lookup chain off,
     # with two changes for a unified-memory host shared with other work: --mmap-experts (no host arena; the experts sit
     # in the GPU cache and the page cache) and an explicit --expert-cache count instead of `auto`, which sizes from
     # MemAvailable.
-    flags="--prefill auto --spec 4 --spec-min-p 0.5 --kv int8 --mmap-experts --expert-profile $STRATA_REPO/data/expert-profile.bin --expert-cache $STRATA_EXPERT_CACHE --vram-reserve-mib 700"
+    flags="--prefill auto --spec 4 --spec-min-p 0.5 --kv int8 --mmap-experts --expert-profile $profile --expert-cache $STRATA_EXPERT_CACHE --vram-reserve-mib 700"
     strata_env=("STRATA_HIPBLASLT_TUNING=${STRATA_TUNING:-$STRATA_REPO/tools/hip/gfx1151-hipblaslt-100401.txt}")
     if [ "$preset" = strata-fast ]; then
         # The maintainers' fast configuration (STRIX_HALO.md): bit-changing switches on, --mtp-q4 all, --prefill 16384.
-        flags="--prefill 16384 --spec 4 --spec-min-p 0.5 --mtp-q4 all --kv int8 --mmap-experts --expert-profile $STRATA_REPO/data/expert-profile.bin --expert-cache $STRATA_EXPERT_CACHE --vram-reserve-mib 700"
+        flags="--prefill 16384 --spec 4 --spec-min-p 0.5 --mtp-q4 all --kv int8 --mmap-experts --expert-profile $profile --expert-cache $STRATA_EXPERT_CACHE --vram-reserve-mib 700"
         strata_env+=(STRATA_PF_FUSED=1 STRATA_PF_GEMM=1 STRATA_HC_UPMIX=1 STRATA_PA_FAST=1 STRATA_HIP_WMMA=1
             STRATA_SELECT_WMMA=1 STRATA_HC_Q8=1 STRATA_PF_SWITCH_MIN_T=4096)
     fi
@@ -306,7 +307,7 @@ case $? in
     post unload "{\"model_name\":\"$MODEL\"}" >&2
     echo >&2
     ;;
-2) trap - EXIT; echo "lemond unreachable: $LEMOND" >&2; exit 6 ;;
+2) trap signal_clear EXIT; echo "lemond unreachable: $LEMOND" >&2; exit 6 ;;
 esac
 has_model
 [ $? = 1 ] || { echo "lemond still has $MODEL loaded or is unreachable" >&2; exit 6; }

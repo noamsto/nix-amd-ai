@@ -16,8 +16,17 @@ in
     inherit (src) version;
 
     src = fetchurl {inherit (src) url hash;};
-    sourceRoot = ".";
     nativeBuildInputs = [patchelf];
+
+    # Unpack into a subdirectory: copying the build directory itself would put stdenv's env-vars file (and with it the
+    # source tarball and the toolchain) into the output's references.
+    unpackPhase = ''
+      runHook preUnpack
+      mkdir sdk
+      tar -xzf $src -C sdk
+      cd sdk
+      runHook postUnpack
+    '';
 
     dontConfigure = true;
     dontBuild = true;

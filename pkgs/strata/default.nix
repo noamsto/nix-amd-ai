@@ -13,7 +13,6 @@
   makeWrapper,
   python3,
   glibc,
-  gpuTarget ? "gfx1151",
 }: let
   sources = import ./sources.nix;
   therock = callPackage ./therock-sdk.nix {};
@@ -54,7 +53,8 @@ in
       "-DSTRATA_ENABLE_CUDA=OFF"
       "-DSTRATA_PREFILL_MMQ=ON"
       "-DSTRATA_BUILD_TESTS=OFF"
-      "-DCMAKE_HIP_ARCHITECTURES=${gpuTarget}"
+      # The SDK is the gfx1151-only TheRock tarball, so this package is gfx1151-only.
+      "-DCMAKE_HIP_ARCHITECTURES=gfx1151"
       "-DSTRATA_GGML_DIR=${ggml}"
       "-DCMAKE_HIP_COMPILER=${therock}/lib/llvm/bin/clang++"
       "-DCMAKE_HIP_COMPILER_ROCM_ROOT=${therock}"
@@ -63,6 +63,9 @@ in
     ];
 
     env = {
+      # Upstream builds ggml's CPU backend with -march=native; the cc-wrapper drops that flag unless this is 0, which
+      # leaves the CPU expert kernels and the image encoder without AVX.
+      NIX_ENFORCE_NO_NATIVE = "0";
       ROCM_PATH = "${therock}";
       HIP_PATH = "${therock}";
       HIP_PLATFORM = "amd";

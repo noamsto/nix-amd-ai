@@ -455,7 +455,7 @@ def g_vision(e, c, quick):
             {"type": "text", "text": "Which two colors does this image show? Answer with the color names only."}]}],
         "max_tokens": 64, "temperature": 0, **thinking_off(e)})
     answer = r["text"]
-    return {"ok": "red" in answer.lower() and "blue" in answer.lower(), "answer": answer[:200],
+    return {"ok": {"red", "blue"} <= set(re.findall(r"[a-z]+", answer.lower())), "answer": answer[:200],
             "ttft_s": round(r["ttft_s"], 3), "wall_s": round(r["wall_s"], 3), "prompt_tokens": r["prompt_tokens"]}
 
 
@@ -701,11 +701,23 @@ def strata_server(a, log):
                 log.flush()
             raise
         finally:
-            stop_group(proc)
-            if a.evict_after:
-                a.cached_kb_before_evict = meminfo_kb("Cached")
-                evict_files([os.path.realpath(p) for p in gguf_shards(a.target)])
-                a.cached_kb_after_evict = meminfo_kb("Cached")
+            # A second signal (run.sh forwards its own TERM to this process) must not cut the teardown short:
+            # the engine is in its own session and only this wait keeps lemond from reloading over it. Handlers
+            # are replaced rather than masked because the sampler threads would still take a masked signal.
+            got = []
+            old = {s: signal.signal(s, lambda n, _frame: got.append(n))
+                   for s in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)}
+            try:
+                stop_group(proc)
+                if a.evict_after:
+                    a.cached_kb_before_evict = meminfo_kb("Cached")
+                    evict_files([os.path.realpath(p) for p in gguf_shards(a.target)])
+                    a.cached_kb_after_evict = meminfo_kb("Cached")
+            finally:
+                for sig, handler in old.items():
+                    signal.signal(sig, handler)
+            if got:
+                sys.exit(143)
 
 
 def docker(*args, **kw):

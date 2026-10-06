@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Row stages for #257 (Strata on halo). From the repo root: rows.sh <stage>. Every row goes through the #249 run.sh
 # memory gate; lemond stays offline between the rows of a stage and is restored after the last one.
-# Stages: smoke | arm <def|defL|fast|fastL> | vulkan-ref
+# Stages: smoke | arm <def|defL|fast|fastL>
 # Arms: def = Strata's setup defaults, fast = the maintainers' fast configuration (STRIX_HALO.md); an L suffix adds
 # --lookup-chain 3 (prompt lookup after the MTP drafts). Needs the builds and files from the README's Reproduce section.
 set -u
@@ -27,7 +27,7 @@ case ${1:-} in
 smoke)
     # one small gated load: proves the server, the chat-completions speed path, vision and the memory arithmetic
     # SMOKE_EXTRA adds engine flags (e.g. --mmap-experts) to the preset's
-    EXTRA_ARGS=${SMOKE_EXTRA:-} STRATA_CTX=${STRATA_CTX:-8192} run last strata --label "${SMOKE_LABEL:-strata-smoke}" --quick --do toolcall,prefill4k,decode512,vision
+    EXTRA_ARGS=${SMOKE_EXTRA:-} STRATA_CTX=8192 STRATA_EXPERT_CACHE=${SMOKE_EXPERT_CACHE:-2048} run last strata --label "${SMOKE_LABEL:-strata-smoke}" --quick --do toolcall,prefill4k,decode512,vision
     ;;
 arm)
     arm=${2:?arm name}
