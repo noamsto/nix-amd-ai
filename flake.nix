@@ -347,6 +347,8 @@
           lemonade-headless = lemonade.override {withDesktopApp = false;};
           gaia = pkgs.callPackage ./pkgs/gaia {};
           vllm-rocm = pkgs.callPackage ./pkgs/vllm-rocm {};
+          # Bench-only engine (#257), not wired into the overlay or the NixOS module.
+          strata = pkgs.callPackage ./pkgs/strata {};
           lemond-unit = lemondUnit;
           ds4-server-unit = ds4ServerUnit;
         };
