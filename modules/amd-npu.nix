@@ -407,8 +407,8 @@ in {
         Set it to `pkgs.llama-cpp-rocm-gsqhalo` to serve llama.cpp ROCm models
         with the Aristo94/GSQHalo.cpp fork, which measured faster on Strix
         Halo (gfx1151) than stock llama.cpp on Vulkan, and than stock ROCm at
-        long context. The fork takes
-        flags stock llama.cpp rejects (`-lzm`), so pass them per model.
+        long context. The fork takes flags stock llama.cpp rejects (`-lzm`), so
+        pass them per model.
         `rocmGpuTargets` applies to whichever package is chosen; it must be a
         llama-cpp-rocm build that accepts `.override {llama-cpp = ...;}`.
       '';
