@@ -15,7 +15,7 @@ a unique nonce line plus a corpus slice. Groups (--do, comma list): prefill4k de
 decode128k replay toolcall correctness concurrency.
 
 Exit: 0 ok, 1 row error, 2 foreign benchmark running, 3 memory gate, 4 strict load wait expired,
-143 signalled. Failures still print one JSON line with "error", "label" and "server_tail".
+7 usage error, 143 signalled. Failures still print one JSON line with "error", "label" and "server_tail".
 """
 import argparse
 import collections
@@ -724,8 +724,14 @@ def gate_args(p):
     p.add_argument("--port", type=int, default=18140)
 
 
+class Parser(argparse.ArgumentParser):
+    def error(self, message):
+        self.print_usage(sys.stderr)
+        self.exit(7, f"{self.prog}: error: {message}\n")  # 2 means a foreign benchmark is busy
+
+
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap = Parser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("wait-load")

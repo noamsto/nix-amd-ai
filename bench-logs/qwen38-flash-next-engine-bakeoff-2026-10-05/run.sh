@@ -14,42 +14,38 @@
 # and hold no model other than Qwen3.8-Flash-Next-MTP (exit 6, untouched).
 # Then waits (30 min cap) for host load to settle, unloads Qwen3.8-Flash-Next-MTP from lemond (two copies do not
 # fit), runs the probe with --strict-load --max-load-wait $OFFLINE_WAIT_BUDGET, and reloads lemond on every exit
-# path after the cd, signals included (KEEP_OFFLINE=1 skips the reload after a probe that exited 0, so a later call
-# can continue offline; the last one must not set it). Relative OUT and CACHE resolve against the caller's cwd.
+# path, signals and configuration errors included (KEEP_OFFLINE=1 skips the reload after a probe that exited 0, so a
+# later call can continue offline; the last one must not set it). Relative OUT and CACHE resolve against the
+# caller's cwd.
 # Exit: 0 ok, 1 row error (probe printed a JSON row), 2 foreign benchmark busy, 3 memory gate, 4 paused on host
-# load, 5 does not fit, 6 run.sh/lemond failure (unreachable, other models loaded, reload failed),
-# 129/130/143 signalled (HUP/INT/TERM).
+# load, 5 does not fit, 6 lemond failure (unreachable, other models loaded, reload failed, still loaded),
+# 7 configuration or usage error, 129/130/131/143 signalled (HUP/INT/QUIT/TERM).
 set -u
-: "${OUT:?}" "${CACHE:?}" "${CORPUS_REV:?}"
-MODELS=${MODELS:-/var/lib/models}
-UNSLOTH=$MODELS/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66
-GGML=$MODELS/hf/hub/models--ggml-org--Qwen3.8-Flash-Next-GGUF/snapshots/052beeaca7bec4a303e59cc7bc630c4f3a1b845d
-IQ4=${IQ4:-$UNSLOTH/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf}
-Q4KXL=${Q4KXL:-$UNSLOTH/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf}
-DRAFT_GGML=${DRAFT_GGML:-$GGML/mtp-Qwen3.8-Flash-Next-Q8_0.gguf}
-DRAFT_SHARED=${DRAFT_SHARED:-$UNSLOTH/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf}
-GUFO_IMAGE=${GUFO_IMAGE:-ghcr.io/gufo-org/toolboxes/gufo-runtime@sha256:b280a3781e0588154149f76b6d3fb6f0bc5f56da0f5352887af521f0a62dcf70}
-OFFLINE_WAIT_BUDGET=${OFFLINE_WAIT_BUDGET:-1800}
 LEMOND=${LEMOND:-http://127.0.0.1:13305/api/v1}
 MODEL=Qwen3.8-Flash-Next-MTP
-HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROBE=${PROBE:-$HERE/probe.py}
-ROOT=$(git -C "$HERE" rev-parse --show-toplevel) || exit 1
-case $OUT in /*) ;; *) OUT=$PWD/$OUT ;; esac
-case $CACHE in /*) ;; *) CACHE=$PWD/$CACHE ;; esac
-cd "$ROOT" || exit 1
-
 prc=1
 rc=1 # the final status for reload(): the probe's once it has run
 child=
 
 post() { curl -fsS -X POST "$LEMOND/$1" -H 'Content-Type: application/json' -d "$2"; }
-has_model() { curl -fsS "$LEMOND/health" | jq -e --arg m "$MODEL" 'any(.all_models_loaded[]?; .model_name == $m)' >/dev/null; }
-other_models() { curl -fsS "$LEMOND/health" | jq -r --arg m "$MODEL" '.all_models_loaded[]? | select(.model_name != $m) | .model_name'; }
+# 0 loaded, 1 cleanly absent, 2 unreachable or unparseable
+has_model() {
+    local h
+    h=$(curl -fsS "$LEMOND/health") || return 2
+    jq -e --arg m "$MODEL" 'any(.all_models_loaded[]; .model_name == $m)' <<<"$h" >/dev/null
+    case $? in 0) return 0 ;; 1) return 1 ;; *) return 2 ;; esac
+}
+# Fails when health is unreachable or unparseable.
+other_models() {
+    local h
+    h=$(curl -fsS "$LEMOND/health") || return 2
+    jq -r --arg m "$MODEL" '.all_models_loaded[] | select(.model_name != $m) | .model_name' <<<"$h"
+}
 
 # shellcheck disable=SC2329 # invoked by the EXIT trap
 reload() {
     local i
+    trap '' INT TERM HUP QUIT # a signal must not kill the in-flight /load; ignored dispositions pass to curl
     [ "${KEEP_OFFLINE:-0}" = 1 ] && [ "$rc" = 0 ] && return
     has_model && return
     post load "{\"model_name\":\"$MODEL\"}" >&2 || echo "reload: POST /load failed" >&2
@@ -72,6 +68,28 @@ trap reload EXIT
 trap 'on_signal 143' TERM
 trap 'on_signal 129' HUP
 trap 'on_signal 130' INT
+trap 'on_signal 131' QUIT
+
+need() {
+    local v
+    for v; do [ -n "${!v:-}" ] || { echo "$v is required" >&2; exit 7; }; done
+}
+need OUT CACHE CORPUS_REV
+MODELS=${MODELS:-/var/lib/models}
+UNSLOTH=$MODELS/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66
+GGML=$MODELS/hf/hub/models--ggml-org--Qwen3.8-Flash-Next-GGUF/snapshots/052beeaca7bec4a303e59cc7bc630c4f3a1b845d
+IQ4=${IQ4:-$UNSLOTH/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf}
+Q4KXL=${Q4KXL:-$UNSLOTH/UD-Q4_K_XL/Qwen3.8-Flash-Next-UD-Q4_K_XL-00001-of-00004.gguf}
+DRAFT_GGML=${DRAFT_GGML:-$GGML/mtp-Qwen3.8-Flash-Next-Q8_0.gguf}
+DRAFT_SHARED=${DRAFT_SHARED:-$UNSLOTH/MTP/mtp-Qwen3.8-Flash-Next-shared-Q8_0.gguf}
+GUFO_IMAGE=${GUFO_IMAGE:-ghcr.io/gufo-org/toolboxes/gufo-runtime@sha256:b280a3781e0588154149f76b6d3fb6f0bc5f56da0f5352887af521f0a62dcf70}
+OFFLINE_WAIT_BUDGET=${OFFLINE_WAIT_BUDGET:-1800}
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROBE=${PROBE:-$HERE/probe.py}
+ROOT=$(git -C "$HERE" rev-parse --show-toplevel) || exit 7
+case $OUT in /*) ;; *) OUT=$PWD/$OUT ;; esac
+case $CACHE in /*) ;; *) CACHE=$PWD/$CACHE ;; esac
+cd "$ROOT" || exit 7
 
 # Run probe.py in the background so a signal reaches run.sh's trap instead of waiting out the child; sets prc.
 probe() {
@@ -85,32 +103,32 @@ probe() {
     child=
 }
 
-[ $# -gt 0 ] || { echo "usage: run.sh <preset> [probe.py args...]" >&2; exit 1; }
+[ $# -gt 0 ] || { echo "usage: run.sh <preset> [probe.py args...]" >&2; exit 7; }
 preset=$1
 shift
 mode=llama
 target='' draft='' flags='' bin=''
 case $preset in
 corpus)
-    : "${VULKAN_BIN:?}"
+    need VULKAN_BIN
     mode=corpus
     NEED_GIB=${NEED_GIB:-77}
     bin=$VULKAN_BIN target=$IQ4
     ;;
 vulkan)
-    : "${VULKAN_BIN:?}"
+    need VULKAN_BIN
     NEED_GIB=${NEED_GIB:-77}
     bin=$VULKAN_BIN target=$IQ4 draft=$DRAFT_GGML
     flags="--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}"
     ;;
 strix-hip | strix-hip-hlb)
-    : "${STRIX_BIN:?}"
+    need STRIX_BIN
     NEED_GIB=${NEED_GIB:-85}
     bin=$STRIX_BIN target=$IQ4 draft=$DRAFT_GGML
     flags="-lzm on -ub 4096 -b 4096${EXTRA_ARGS:+ $EXTRA_ARGS}"
     ;;
 gsq-hip | gsq-hip-hlb)
-    : "${GSQ_BIN:?}"
+    need GSQ_BIN
     NEED_GIB=${NEED_GIB:-85}
     bin=$GSQ_BIN target=$IQ4 draft=$DRAFT_GGML
     flags="-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3${EXTRA_ARGS:+ $EXTRA_ARGS}"
@@ -121,14 +139,14 @@ gufo)
     target=$Q4KXL draft=$DRAFT_SHARED
     ;;
 vulkan-q4kxl)
-    : "${VULKAN_BIN:?}"
+    need VULKAN_BIN
     NEED_GIB=${NEED_GIB:-92}
     bin=$VULKAN_BIN target=$Q4KXL draft=$DRAFT_GGML
     flags="--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}"
     ;;
 *)
     echo "unknown preset: $preset" >&2
-    exit 1
+    exit 7
     ;;
 esac
 case $mode in
@@ -142,7 +160,7 @@ if [ "$mode" = corpus ]; then
 else
     args+=(--cache "$CACHE" --need-gib "$NEED_GIB" --strict-load --max-load-wait "$OFFLINE_WAIT_BUDGET")
 fi
-case $NEED_GIB in '' | *[!0-9]*) echo "NEED_GIB must be an integer, got '$NEED_GIB'" >&2; exit 1 ;; esac
+case $NEED_GIB in '' | *[!0-9]*) echo "NEED_GIB must be an integer, got '$NEED_GIB'" >&2; exit 7 ;; esac
 
 # Sum VmRSS (bytes) of the processes whose parent is lemond.
 lemond_rss() {
@@ -192,7 +210,7 @@ fit_check() {
             total=$gtt
         fi
     done
-    [ -n "$best" ] || { echo "fit: no amdgpu card with mem_info_gtt_total" >&2; exit 1; }
+    [ -n "$best" ] || { echo "fit: no amdgpu card with mem_info_gtt_total" >&2; exit 7; }
     card=${best%/device}
     card=${card##*/}
     vram=$(<"$best/mem_info_vram_total")
@@ -201,9 +219,9 @@ fit_check() {
         rss=$(lemond_rss)
     fi
     if ! lazy_on "$flags"; then
-        bytes=$(gguf_bytes "$target") || { echo "fit: cannot stat $target" >&2; exit 1; }
+        bytes=$(gguf_bytes "$target") || { echo "fit: cannot stat $target" >&2; exit 7; }
         if [ -n "$draft" ]; then
-            dbytes=$(gguf_bytes "$draft") || { echo "fit: cannot stat $draft" >&2; exit 1; }
+            dbytes=$(gguf_bytes "$draft") || { echo "fit: cannot stat $draft" >&2; exit 7; }
             bytes=$((bytes + dbytes))
         fi
         floor=$(((bytes + 1073741823) / 1073741824 + 6))
@@ -220,18 +238,23 @@ fit_check() {
     fi
 }
 
-curl -fsS "$LEMOND/health" >/dev/null || { trap - EXIT; echo "lemond unreachable: $LEMOND" >&2; exit 6; }
-others=$(other_models | paste -sd, -)
+others=$(other_models) || { trap - EXIT; echo "lemond unreachable or health unparseable: $LEMOND" >&2; exit 6; }
+others=${others//$'\n'/,}
 [ -z "$others" ] || { trap - EXIT; echo "refusing: lemond has other models loaded ($others); untouched" >&2; exit 6; }
 fit_check
 [ "${FIT_CHECK_ONLY:-0}" = 1 ] && { rc=0; exit 0; }
 
-if has_model; then
+has_model
+case $? in
+0)
     probe wait-load --max-load-wait 1800 >&2
     post unload "{\"model_name\":\"$MODEL\"}" >&2
     echo >&2
-fi
-! has_model || { echo "lemond still has $MODEL loaded" >&2; exit 6; }
+    ;;
+2) trap - EXIT; echo "lemond unreachable: $LEMOND" >&2; exit 6 ;;
+esac
+has_model
+[ $? = 1 ] || { echo "lemond still has $MODEL loaded or is unreachable" >&2; exit 6; }
 
 if [ "$mode" = corpus ]; then
     probe "${args[@]}" "$@"
