@@ -266,6 +266,7 @@ case $rc in
 0) ;;
 2 | 3) echo "aborting: probe.py exit $rc: $preset $*" >&2 ;;
 4) echo "paused: host load" >&2 ;;
+7) echo "usage error in probe args (no row): $preset $*" >&2 ;;
 *) echo "row failed (exit $rc): $preset $*" >&2 ;;
 esac
 exit "$rc"

@@ -15,7 +15,8 @@ a unique nonce line plus a corpus slice. Groups (--do, comma list): prefill4k de
 decode128k replay toolcall correctness concurrency.
 
 Exit: 0 ok, 1 row error, 2 foreign benchmark running, 3 memory gate, 4 strict load wait expired,
-7 usage error, 143 signalled. Failures still print one JSON line with "error", "label" and "server_tail".
+7 usage error (argparse; no JSON row), 143 signalled. Other failures still print one JSON line with "error",
+"label" and "server_tail".
 """
 import argparse
 import collections
