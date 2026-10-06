@@ -5,7 +5,8 @@
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh <preset> [probe.py args...]
 # Presets: corpus vulkan strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl
 # Remaining args go to probe.py (e.g. --label vulkan-speed --do prefill4k,decode512). Each call is one probe
-# invocation. VULKAN_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them.
+# invocation. VULKAN_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them. EXTRA_ARGS is
+# appended to a llama preset's server flags (e.g. EXTRA_ARGS="-ctk f16 -ctv f16"; later flags win).
 #
 # Fit check first (exit 5, lemond untouched): NEED_GIB must fit in the GPU's GTT+VRAM and in MemAvailable plus
 # what lemond's loaded model frees (GTT in use + its llama-server RSS). FIT_CHECK_ONLY=1 stops after that check.
@@ -45,18 +46,18 @@ corpus)
 vulkan)
     : "${VULKAN_BIN:?}"
     NEED_GIB=${NEED_GIB:-77}
-    args=(llama --server "$VULKAN_BIN" --target "$IQ4" --draft "$DRAFT_GGML" --extra "--lazy-mode on -ub 2048 -b 2048")
+    args=(llama --server "$VULKAN_BIN" --target "$IQ4" --draft "$DRAFT_GGML" --extra "--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}")
     ;;
 strix-hip | strix-hip-hlb)
     : "${STRIX_BIN:?}"
     NEED_GIB=${NEED_GIB:-85}
-    args=(llama --server "$STRIX_BIN" --target "$IQ4" --draft "$DRAFT_GGML" --extra "-lzm on -ub 4096 -b 4096")
+    args=(llama --server "$STRIX_BIN" --target "$IQ4" --draft "$DRAFT_GGML" --extra "-lzm on -ub 4096 -b 4096${EXTRA_ARGS:+ $EXTRA_ARGS}")
     ;;
 gsq-hip | gsq-hip-hlb)
     : "${GSQ_BIN:?}"
     NEED_GIB=${NEED_GIB:-85}
     args=(llama --server "$GSQ_BIN" --target "$IQ4" --draft "$DRAFT_GGML"
-        --extra "-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3")
+        --extra "-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3${EXTRA_ARGS:+ $EXTRA_ARGS}")
     ;;
 gufo)
     mode=gufo
@@ -66,7 +67,7 @@ gufo)
 vulkan-q4kxl)
     : "${VULKAN_BIN:?}"
     NEED_GIB=${NEED_GIB:-92}
-    args=(llama --server "$VULKAN_BIN" --target "$Q4KXL" --draft "$DRAFT_GGML" --extra "--lazy-mode on -ub 2048 -b 2048")
+    args=(llama --server "$VULKAN_BIN" --target "$Q4KXL" --draft "$DRAFT_GGML" --extra "--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}")
     ;;
 *)
     echo "unknown preset: $preset" >&2
