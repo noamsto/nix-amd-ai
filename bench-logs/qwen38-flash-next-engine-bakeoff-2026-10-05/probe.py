@@ -157,16 +157,19 @@ def mem_snapshot(pid, gtt0, vram0):
 
 @contextlib.contextmanager
 def gtt_peak(gtt0):
-    """Max GTT delta over the block, sampled every 0.5 s; the dict's "bytes" is None without a GTT reading."""
+    """Max GTT delta over the block, sampled every 0.5 s (shorter spikes are missed); "bytes" is None without a reading or if sampling failed."""
     peak = {"bytes": None}
     stop = threading.Event()
 
     def sample():
-        while not stop.is_set():
-            gtt, _ = grid.gpu_mem()
-            if gtt is not None and gtt0 is not None:
-                peak["bytes"] = max(peak["bytes"] or 0, gtt - gtt0)
-            stop.wait(0.5)
+        try:
+            while not stop.is_set():
+                gtt, _ = grid.gpu_mem()
+                if gtt is not None and gtt0 is not None:
+                    peak["bytes"] = max(peak["bytes"] or 0, gtt - gtt0)
+                stop.wait(0.5)
+        except (OSError, ValueError):
+            peak["bytes"] = None  # a dead sampler must not leave a partial peak that reads as a measurement
 
     t = threading.Thread(target=sample, daemon=True)
     t.start()
@@ -174,7 +177,7 @@ def gtt_peak(gtt0):
         yield peak
     finally:
         stop.set()
-        t.join()
+        t.join(timeout=2)  # a sysfs read stuck on a wedged GPU must not hang the exit path
 
 
 def stats(xs):

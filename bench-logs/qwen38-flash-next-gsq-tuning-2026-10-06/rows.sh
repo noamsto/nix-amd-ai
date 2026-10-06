@@ -10,6 +10,7 @@ export VULKAN_BIN=$W/result-vulkan/bin/llama-server GSQ_BIN=$W/result-gsq/bin/ll
 IQ3=${IQ3:-/var/lib/models/gsq-tuning/Qwen3.8-Flash-Next-UD-IQ3_XXS-00001-of-00003.gguf}
 F16="-ctk f16 -ctv f16"
 mkdir -p "$W"
+unset EXTRA_ARGS IQ4 # a leftover export must not change a labelled row
 
 # run <last|more> <preset> args...: KEEP_OFFLINE=1 unless this is the stage's last row.
 run() {
@@ -36,18 +37,18 @@ q8ctl)
     run last gsq-hip --label gsq-q8-peak --do prefill4k,decode32k,decode128k
     ;;
 iq3)
-    # KV type is chosen from the f16 rows: pass EXTRA_ARGS in the environment ("$F16" or empty)
-    export IQ4=$IQ3 NEED_GIB=${NEED_GIB:-85}
+    # KV type: KV unset = f16, KV= (empty) = the preset's q8_0
+    export IQ4=$IQ3 NEED_GIB=${NEED_GIB:-85} EXTRA_ARGS="${KV-$F16}"
     run more gsq-hip --label gsq-iq3-A --do toolcall,prefill4k,decode512,decode32k,replay
     run more gsq-hip --label gsq-iq3-B --do decode128k
     run last gsq-hip --label gsq-iq3-C --do correctness
     ;;
 decode128k-variants)
     # flags appended after the preset's own, so the later value wins
-    EXTRA_ARGS="${KV:-$F16} -ub 4096" run more gsq-hip --label gsq-ub4096 --do decode128k
-    EXTRA_ARGS="${KV:-$F16} -ub 2048" run more gsq-hip --label gsq-ub2048 --do decode128k
-    EXTRA_ARGS="${KV:-$F16} --spec-draft-n-max 2" run more gsq-hip --label gsq-nmax2 --do decode128k
-    EXTRA_ARGS="${KV:-$F16} --spec-draft-n-max 4" run last gsq-hip --label gsq-nmax4 --do decode128k
+    EXTRA_ARGS="${KV-$F16} -ub 4096" run more gsq-hip --label gsq-ub4096 --do decode128k
+    EXTRA_ARGS="${KV-$F16} -ub 2048" run more gsq-hip --label gsq-ub2048 --do decode128k
+    EXTRA_ARGS="${KV-$F16} --spec-draft-n-max 2" run more gsq-hip --label gsq-nmax2 --do decode128k
+    EXTRA_ARGS="${KV-$F16} --spec-draft-n-max 4" run last gsq-hip --label gsq-nmax4 --do decode128k
     ;;
 *)
     echo "usage: rows.sh vulkan|f16|q8ctl|iq3|decode128k-variants" >&2

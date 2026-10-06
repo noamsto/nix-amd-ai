@@ -126,11 +126,12 @@ D=bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06
 $D/rows.sh vulkan                                  # corpus, vulkan-A/B/C
 NEED_GIB=95 $D/rows.sh f16                         # gsq-f16-A/B/C
 NEED_GIB=95 $D/rows.sh q8ctl                       # q8_0 control with peak GTT
-IQ3=<path to ...UD-IQ3_XXS-00001-of-00003.gguf> EXTRA_ARGS="-ctk f16 -ctv f16" $D/rows.sh iq3
+IQ3=<path to ...UD-IQ3_XXS-00001-of-00003.gguf> $D/rows.sh iq3   # f16 KV by default
 NEED_GIB=95 $D/rows.sh decode128k-variants
+OUT=$HOME/gsqtune/rows.jsonl   # rows.sh writes $W/rows.jsonl, W defaults to ~/gsqtune
 $D/tables.sh "$OUT"
 python3 bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/probe.py analyze --rows "$OUT" --ref vulkan-C \
   --tokenizer-bin <vulkan>/bin/llama-tokenize --vocab <UD-IQ4_XS first shard>
 ```
 
-`probe.py` gained a peak-GTT sampler (`gtt_peak_delta_bytes` in each row) for this work; nothing else in the #249 harness changed.
+`probe.py` gained a peak-GTT sampler (0.5 s interval, so spikes shorter than that are missed) (`gtt_peak_delta_bytes` in each row) for this work; nothing else in the #249 harness changed.
