@@ -34,6 +34,7 @@ import subprocess
 import sys
 import tempfile
 import time
+import traceback
 import types
 import urllib.error
 import urllib.request
@@ -798,6 +799,7 @@ def main():
             print(json.dumps({"error": str(e), "label": getattr(a, "label", a.cmd), "server_tail": log.read()[-4000:]}))
             return {grid.BusyError: 2, grid.MemError: 3, LoadError: 4}.get(type(e), 1)
         except Exception as e:
+            traceback.print_exc()
             log.seek(0)
             print(json.dumps({"error": repr(e), "label": getattr(a, "label", a.cmd), "server_tail": log.read()[-4000:]}))
             return 1
