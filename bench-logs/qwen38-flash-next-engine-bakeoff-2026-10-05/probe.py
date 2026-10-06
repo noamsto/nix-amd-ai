@@ -34,6 +34,7 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import traceback
 import types
@@ -152,6 +153,31 @@ def mem_snapshot(pid, gtt0, vram0):
         "mem_available_kb": grid.mem_available_kb(),
         "swap_used_kb": swap["SwapTotal"] - swap["SwapFree"],
     }
+
+
+@contextlib.contextmanager
+def gtt_peak(gtt0):
+    """Max GTT delta over the block, sampled every 0.5 s (shorter spikes are missed); "bytes" is None without a reading or if sampling failed."""
+    peak = {"bytes": None}
+    stop = threading.Event()
+
+    def sample():
+        try:
+            while not stop.is_set():
+                gtt, _ = grid.gpu_mem()
+                if gtt is not None and gtt0 is not None:
+                    peak["bytes"] = max(peak["bytes"] or 0, gtt - gtt0)
+                stop.wait(0.5)
+        except (OSError, ValueError):
+            peak["bytes"] = None  # a dead sampler must not leave a partial peak that reads as a measurement
+
+    t = threading.Thread(target=sample, daemon=True)
+    t.start()
+    try:
+        yield peak
+    finally:
+        stop.set()
+        t.join(timeout=2)  # a sysfs read stuck on a wedged GPU must not hang the exit path
 
 
 def stats(xs):
@@ -525,7 +551,7 @@ def run_row(a, log):
     do = set(a.do.split(","))
     gtt0, vram0 = grid.gpu_mem()
     t0 = time.time()
-    with (llama_server if llama else gufo_server)(a, log) as pid:
+    with gtt_peak(gtt0) as peak, (llama_server if llama else gufo_server)(a, log) as pid:
         row["load_s"] = round(time.time() - t0, 1)
         e = types.SimpleNamespace(
             port=a.port, engine=a.cmd, model=grid.http(a.port, "/v1/models", timeout=30)["data"][0]["id"])
@@ -545,6 +571,7 @@ def run_row(a, log):
         if "concurrency" in do:
             row["concurrency"] = g_concurrency(e, cache, a.quick)
         row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
+        row["gtt_peak_delta_bytes"] = peak["bytes"]
         row["hwm_kb"] = grid.proc_status_kb(pid, "VmHWM")
     return row
 

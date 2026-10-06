@@ -3,9 +3,9 @@
 #
 # Usage (repo root): OUT=rows.jsonl CACHE=cache.json CORPUS_REV=<sha> \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh <preset> [probe.py args...]
-# Presets: corpus vulkan strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl
+# Presets: corpus vulkan stock-hip strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl
 # Remaining args go to probe.py (e.g. --label vulkan-speed --do prefill4k,decode512). Each call is one probe
-# invocation. VULKAN_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them. EXTRA_ARGS is
+# invocation. VULKAN_BIN / STOCK_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them. EXTRA_ARGS is
 # appended to a llama preset's server flags (e.g. EXTRA_ARGS="-ctk f16 -ctv f16"; later flags win).
 #
 # Fit check first (exit 5, lemond untouched): NEED_GIB must fit in GTT and in MemAvailable plus what lemond's
@@ -119,6 +119,12 @@ vulkan)
     need VULKAN_BIN
     NEED_GIB=${NEED_GIB:-77}
     bin=$VULKAN_BIN target=$IQ4 draft=$DRAFT_GGML
+    flags="--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}"
+    ;;
+stock-hip)
+    need STOCK_BIN
+    NEED_GIB=${NEED_GIB:-85}
+    bin=$STOCK_BIN target=$IQ4 draft=$DRAFT_GGML
     flags="--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}"
     ;;
 strix-hip | strix-hip-hlb)
