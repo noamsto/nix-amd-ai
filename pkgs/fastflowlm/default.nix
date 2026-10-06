@@ -179,7 +179,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     with the NPU held. The predicate is now a defaulted trailing
   #     parameter of generate_with_prompt in AutoModel and every override,
   #     forwarded to the insert()/generate() each already calls (Nanbeige's
-  #     inlined decode loop gets the same check its generate() has);
+  #     inlined decode loop gets the same check its generate() has;
+  #     Qwen3_8MTP, new in 1.0.7, forwards it to _speculative_generate());
   #     insert()+generate() was not an option (#180). A cancelled request
   #     answers like non-streaming /api/generate: {} when
   #     generate_with_prompt() returned nothing and no token was generated

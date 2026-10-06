@@ -797,3 +797,39 @@ index e282a6d..4bf0f20 100644
              //std::string response_text = chat_engine->generate_with_prompt(meta_info, prompts, length_limit, std::cout, payload);
              auto total_end_time = time_utils::now();
              meta_info.total_duration = (uint64_t)time_utils::duration_ns(total_start_time, total_end_time).first;
+diff --git a/src/common/AutoModel/modeling_qwen3_8mtp.cpp b/src/common/AutoModel/modeling_qwen3_8mtp.cpp
+index 82016e3..188c245 100644
+--- a/src/common/AutoModel/modeling_qwen3_8mtp.cpp
++++ b/src/common/AutoModel/modeling_qwen3_8mtp.cpp
+@@ -619,15 +619,15 @@ void Qwen3_8MTP::clear_context() {
+     }
+ }
+ 
+-std::string Qwen3_8MTP::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_8MTP::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     header_print("FLM", "Prompt inserted, starting generation...");
+     if (this->enable_think) {
+         os << "<think>\n" << std::flush;
+     }
+-    return this->_speculative_generate(meta_info, length_limit, os);
++    return this->_speculative_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff --git a/src/include/AutoModel/modeling_qwen3_8mtp.hpp b/src/include/AutoModel/modeling_qwen3_8mtp.hpp
+index c9563d0..23b2171 100644
+--- a/src/include/AutoModel/modeling_qwen3_8mtp.hpp
++++ b/src/include/AutoModel/modeling_qwen3_8mtp.hpp
+@@ -148,7 +148,7 @@ public:
+     void load_model(std::string model_path, json model_inf, int default_context_length = -1, bool enable_preemption = false) override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);

@@ -79,6 +79,11 @@ stdenv.mkDerivation rec {
     "-DXRT_INSTALL_PREFIX=${placeholder "out"}/opt/xilinx/xrt"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DDISABLE_WERROR=ON"
+    # abseil (via protobuf) requires C++20 <compare>; XRT defaults to 17
+    "-DCMAKE_CXX_STANDARD=20"
+    # Its host_defines.h defines __noinline__ empty, which breaks libstdc++'s
+    # <format> (pulled in by <chrono> under C++20). Nothing here uses HIP.
+    "-DXRT_ENABLE_HIP=OFF"
     # Disable kernel module building (we use mainline amdxdna)
     "-DXRT_DKMS_DRIVER_SRC_BASE_DIR="
     # XRT_UPSTREAM_DEBIAN enables XRT_UPSTREAM which propagates to AIEBU_UPSTREAM
