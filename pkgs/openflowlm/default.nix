@@ -93,6 +93,12 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     # Upstream commits no Cargo.lock.
     cp ${./Cargo.lock} third_party/tokenizers-cpp/rust/Cargo.lock
+
+    # abseil needs C++20 <compare>; both subprojects pin C++17.
+    substituteInPlace \
+      third_party/tokenizers-cpp/CMakeLists.txt \
+      third_party/tokenizers-cpp/sentencepiece/CMakeLists.txt \
+      --replace-fail 'set(CMAKE_CXX_STANDARD 17)' 'set(CMAKE_CXX_STANDARD 20)'
   '';
 
   cmakeDir = "../src";

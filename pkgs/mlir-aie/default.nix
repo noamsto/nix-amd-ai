@@ -99,7 +99,13 @@ stdenv.mkDerivation (finalAttrs: {
     # cloudpickle at runtime; no pip here, so the deps are carried by this env.
     # With the package on PYTHONPATH, e.g.
     #   PYTHONPATH=${mlir-aie.passthru.pythonPath} ${mlir-aie.passthru.python}/bin/python3.12 -c 'import aie.iron'
-    python = python312.withPackages (ps: [
+    # anyio's own test suite fails on this CPython (PurePosixPath._tail_cached,
+    # TLS client-mode tests), and it is only a test-time dependency here.
+    python = (python312.override {
+      packageOverrides = _: prev: {
+        anyio = prev.anyio.overridePythonAttrs {doCheck = false;};
+      };
+    }).withPackages (ps: [
       ps.numpy
       ps."ml-dtypes"
       ps.rich
