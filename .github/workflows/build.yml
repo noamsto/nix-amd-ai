@@ -19,7 +19,7 @@ jobs:
   # The ROCm backends are the critical path -- 33 of the 35 minutes a cold
   # `build` job takes, sharing its 4 cores. A runner each doubles that, and
   # standard runners are free and unmetered on public repos, so the only cost
-  # is two extra checkouts; `build` then substitutes both instead of building.
+  # is one extra checkout per package; `build` then substitutes them instead of building.
   rocm:
     runs-on: ubuntu-latest
     strategy:
