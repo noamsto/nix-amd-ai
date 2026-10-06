@@ -45,6 +45,18 @@ standalone credits table has the opposite property: it needs a manual edit per
 contributor, and it goes *actively wrong* when a figure is re-measured by someone
 else — a misattributed measurement is worse than an unattributed one.
 
+## Bench PRs conflict on the `bench-logs/README.md` index
+
+Every bench PR adds a row to that index, so parallel or stacked bench PRs
+conflict there; expect it. Before merging, rebase onto the default branch and
+keep every row from both sides in the table's existing order; change nothing
+else in the file. If the PR has a stacked child, the rebase rewrites the
+child's base: rebase the child with
+`git rebase --onto <new parent> <old parent head>`, not a plain rebase.
+
+**Why:** this is the usual reason a bench PR shows as conflicting, and the
+stacked-child consequence is easy to miss.
+
 ## Hardware-gated claims
 
 Numbers in this repo are hardware-specific and rarely transfer. Say which host a
