@@ -40,8 +40,8 @@ def parse_args(settings):
     if os.path.realpath(args.model) != os.path.realpath(settings["model"]):
         die(f"model {args.model} does not match the configured model {settings['model']}")
     for e in extra:
-        if e.startswith("-") and e.split("=", 1)[0] not in TUNING_FLAGS:
-            die(f"{e.split('=', 1)[0]} is not allowed: engine arguments from lemond are limited to tuning flags")
+        if e.startswith("-") and e not in TUNING_FLAGS:
+            die(f"{e} is not allowed: engine arguments from lemond are limited to tuning flags")
     return args, extra
 
 

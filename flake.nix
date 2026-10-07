@@ -780,6 +780,56 @@
               touch $out
             '';
 
+            strata-lemond-server = pkgs.runCommand "strata-lemond-server" {
+              nativeBuildInputs = [pkgs.python3];
+            } ''
+              mkdir -p "$TMPDIR/stub/serve"
+              touch "$TMPDIR/stub/serve/__init__.py"
+              cat > "$TMPDIR/stub/serve/server.py" <<'PY'
+              import os
+
+
+              class Vision:
+                  @staticmethod
+                  def load(source):
+                      return b"loaded"
+
+                  @staticmethod
+                  def download(url):
+                      return b"downloaded"
+
+
+              def refused(call, arg):
+                  try:
+                      call(arg)
+                  except ValueError:
+                      return True
+                  print(f"not refused: {call.__qualname__}({arg!r})")
+                  return False
+
+
+              def main():
+                  if Vision.load("data:image/png;base64,AAAA") != b"loaded":
+                      print("data: URL was not passed through")
+                      return 1
+                  for call, arg in (
+                      (Vision.load, "/etc/hostname"),
+                      (Vision.load, "file:///etc/hostname"),
+                      (Vision.load, "http://127.0.0.1:1/x"),
+                      (Vision.download, "http://127.0.0.1:1/x"),
+                  ):
+                      if not refused(call, arg):
+                          return 1
+                  with open(os.environ["RESULT"], "w") as f:
+                      f.write("ok")
+                  return 0
+              PY
+              export RESULT="$TMPDIR/result"
+              (cd "$TMPDIR/stub" && python3 ${./pkgs/strata/lemond-server.py})
+              [ "$(cat "$RESULT")" = ok ] || { echo "FAILED: stub server did not report ok"; exit 1; }
+              touch $out
+            '';
+
             strata-shim = pkgs.runCommand "strata-shim" {
               nativeBuildInputs = [pkgs.jq pkgs.procps pkgs.coreutils];
             } ''
@@ -812,7 +862,7 @@
               [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started on model mismatch"
 
               # Engine arguments from lemond are limited to tuning flags.
-              for bad in "--expert-cache 5" "--native /x" "--max-context 8"; do
+              for bad in "--expert-cache 5" "--native /x" "--max-context 8" "--spec=4"; do
                 new_seen "bad-''${bad%% *}"
                 rc=0
                 # shellcheck disable=SC2086
