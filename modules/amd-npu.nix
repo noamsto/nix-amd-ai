@@ -131,6 +131,7 @@
           ]
           ++ cfg.strata.extraArgs;
       }
+      // optionalAttrs (cfg.strata.sampling != {}) {sampling = cfg.strata.sampling;}
       // optionalAttrs strataVision {
         vision = {
           exe = "${strataPkg}/bin/strata-vision";
@@ -916,6 +917,27 @@ in {
           Expert cache size (`--expert-cache`), an explicit count and always
           paired with `--mmap-experts`. Strata's `auto` sizes from MemAvailable,
           which is unsafe on unified memory, so it is rejected.
+        '';
+      };
+
+      sampling = mkOption {
+        type = types.attrsOf (types.either types.int types.float);
+        default = {
+          temperature = 0.6;
+          top_p = 0.95;
+          top_k = 20;
+        };
+        example = {
+          temperature = 0.7;
+          top_p = 0.8;
+          top_k = 20;
+          presence_penalty = 1.5;
+        };
+        description = ''
+          Sampling defaults for requests that send none (the run config's `sampling` block; strata-server decodes
+          greedily without it). A request's own fields always win, so `temperature = 0` stays greedy. strata-server
+          takes one set, not one per thinking mode; the default is Qwen's recommended thinking set, which matches
+          how lemond serves the model (thinking on unless a request turns it off). `{}` restores greedy decoding.
         '';
       };
 

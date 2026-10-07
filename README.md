@@ -426,7 +426,7 @@ The default is the stock `llama-cpp-rocm`, so existing hosts are unchanged; `roc
 
 ## Opt-in Strata backend (Strix Halo)
 
-[Strata](https://github.com/Niko1221/Strata) (pinned `82f46a8`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through lemonade's existing `ds4` recipe: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "DwarfStar4 (experimental)" recipe name. Measurements and the build are in [`bench-logs/qwen38-flash-next-strata-2026-10-06`](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md).
+[Strata](https://github.com/Niko1221/Strata) (pinned v0.1.40.2 `e8ca9af`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through lemonade's existing `ds4` recipe: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "DwarfStar4 (experimental)" recipe name. Measurements and the build are in [`bench-logs/qwen38-flash-next-strata-2026-10-06`](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md).
 
 ```nix
 hardware.amd-npu = {
@@ -442,7 +442,9 @@ hardware.amd-npu = {
 };
 ```
 
-The pack, the MTP draft and the mmproj are prepared once by hand; the bench README's "Reproduce" section has the steps. Other options: `contextSize` (131072), `expertCache` (20000), `vision.enable` (true, CPU encoder) and `extraArgs`. `expertCache` is always an explicit count passed with `--mmap-experts`; `auto` is rejected at evaluation because it sizes the cache from MemAvailable, which on a unified-memory machine is most of the RAM.
+The pack, the MTP draft and the mmproj are prepared once by hand; the bench README's "Reproduce" section has the steps. Other options: `sampling` (below), `contextSize` (131072), `expertCache` (20000), `vision.enable` (true, CPU encoder) and `extraArgs`. `expertCache` is always an explicit count passed with `--mmap-experts`; `auto` is rejected at evaluation because it sizes the cache from MemAvailable, which on a unified-memory machine is most of the RAM.
+
+`sampling` sets the decoding defaults for requests that send none: strata-server decodes greedily otherwise. The default is Qwen's recommended thinking set (`temperature` 0.6, `top_p` 0.95, `top_k` 20), because strata-server takes one set rather than one per thinking mode and lemond serves the model with thinking on. A request's own fields win, so `temperature: 0` stays greedy. For a non-thinking deployment use `{temperature = 0.7; top_p = 0.8; top_k = 20; presence_penalty = 1.5;}`; `{}` restores greedy.
 
 `profile = "defaults"` is Strata's setup defaults. `"fast"` is the maintainers' fast configuration: it turns on bit-changing switches, and its quality has not been checked (no KL or perplexity). The bench README has the measured speed difference between the two, on halo only.
 
