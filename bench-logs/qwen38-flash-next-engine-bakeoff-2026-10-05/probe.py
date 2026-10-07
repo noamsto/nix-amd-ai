@@ -61,7 +61,6 @@ DEFER = None
 
 
 def _on_signal(sig, _frame):
-    """Record TERM/HUP/INT while a teardown defers them, else exit as the default handler would."""
     if isinstance(DEFER, list):
         DEFER.append(sig)
     elif sig == signal.SIGINT:
@@ -713,10 +712,8 @@ def strata_server(a, log):
                 log.flush()
             raise
         finally:
-            # A second signal (run.sh forwards its own TERM to this process) must not cut the teardown short: the
-            # engine is in its own session and only this wait keeps lemond from reloading over it. The module-level
-            # handler (installed once in main) records them here rather than being swapped: signal.signal() runs a
-            # pending signal with the old handler, so a swap could exit the probe mid-teardown.
+            # A second signal (run.sh forwards its own TERM to this process) must not cut the teardown short:
+            # the engine is in its own session and only this wait keeps lemond from reloading over it.
             global DEFER
             DEFER = got = []
             try:
