@@ -251,18 +251,24 @@ else
 fi
 case $NEED_GIB in '' | *[!0-9]*) echo "NEED_GIB must be an integer, got '$NEED_GIB'" >&2; exit 7 ;; esac
 
-# Sum VmRSS (bytes) of the processes whose parent is lemond.
+# Sum RssAnon (bytes) of every descendant of lemond: the backend may sit below a wrapper, and its anonymous memory is what an
+# unload gives back (file-backed pages are already in MemAvailable). PROC_ROOT is /proc unless a test points it elsewhere.
 lemond_rss() {
-    local -A lemond=()
-    local pid ppid comm kib total=0
+    local -A tree=()
+    local pid ppid comm kib total=0 grew=1
     while read -r pid ppid comm; do
-        [ "$comm" = lemond ] && lemond[$pid]=1
+        [ "$comm" = lemond ] && tree[$pid]=1
     done < <(ps -eo pid=,ppid=,comm=)
-    while read -r pid ppid comm; do
-        [ -n "${lemond[$ppid]:-}" ] || continue
-        kib=$(awk '/^VmRSS:/ {print $2}' "/proc/$pid/status" 2>/dev/null)
-        total=$((total + ${kib:-0} * 1024))
-    done < <(ps -eo pid=,ppid=,comm=)
+    while [ "$grew" = 1 ]; do
+        grew=0
+        while read -r pid ppid comm; do
+            [ -n "${tree[$pid]:-}" ] || [ -z "${tree[$ppid]:-}" ] && continue
+            tree[$pid]=2
+            grew=1
+            kib=$(awk '/^RssAnon:/ {print $2}' "${PROC_ROOT:-/proc}/$pid/status" 2>/dev/null)
+            total=$((total + ${kib:-0} * 1024))
+        done < <(ps -eo pid=,ppid=,comm=)
+    done
     echo "$total"
 }
 
