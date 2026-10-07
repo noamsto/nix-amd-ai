@@ -3,7 +3,7 @@
 #
 # Usage (repo root): OUT=rows.jsonl CACHE=cache.json CORPUS_REV=<sha> \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh <preset> [probe.py args...]
-# Presets: corpus vulkan stock-hip strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl strata strata-fast
+# Presets: corpus vulkan stock-hip strix-hip strix-hip-hlb gsq-hip gsq-hip-hlb gufo vulkan-q4kxl strata strata-fast exec
 # The strata presets (Strata's own server and engine, #257) need STRATA_REPO (checkout), STRATA_PY (python with the
 # server's deps), STRATA_ENGINE (the `strata` binary), STRATA_PACK (iq_pack output) and STRATA_EXPERT_CACHE (an explicit
 # --expert-cache blob count: `auto` sizes from MemAvailable on a unified-memory APU and can exceed the GTT limit).
@@ -12,6 +12,13 @@
 # Remaining args go to probe.py (e.g. --label vulkan-speed --do prefill4k,decode512). Each call is one probe
 # invocation. VULKAN_BIN / STOCK_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them. EXTRA_ARGS is
 # appended to a llama preset's server flags (e.g. EXTRA_ARGS="-ctk f16 -ctv f16"; later flags win).
+#
+# exec runs an arbitrary child behind the same gate and lemond handoff: `run.sh exec [probe.py args] -- cmd...`.
+# Env: OUT (row file), TARGET (model shard 1, sizes the floor), EXEC_DEV=gpu|cpu, EXEC_LOG (the child's stdout and
+# stderr; OUT only gets probe's JSON row), optional DRAFT; CACHE and CORPUS_REV are not used. NEED_GIB defaults to 85
+# (gpu) or 24 (cpu). The lazy-mode flags and the shard floor come from the child's argv. cpu: no floor, no GTT
+# comparison (the child must not grow GTT), NEED_GIB is an anonymous-memory budget and also the child's kill limit.
+# EXEC_SWAP_LIMIT_GIB (default 4) kills the child when system swap use grows by more than that.
 #
 # Fit check first (exit 5, lemond untouched): NEED_GIB must fit in GTT and in MemAvailable plus what lemond's
 # loaded model frees (GTT in use + its llama-server RSS). With lazy mode off the weights are resident, so need is
@@ -87,7 +94,11 @@ need() {
     local v
     for v; do [ -n "${!v:-}" ] || { echo "$v is required" >&2; exit 7; }; done
 }
-need OUT CACHE CORPUS_REV
+if [ "${1:-}" = exec ]; then
+    need OUT TARGET EXEC_DEV EXEC_LOG
+else
+    need OUT CACHE CORPUS_REV
+fi
 MODELS=${MODELS:-/var/lib/models}
 UNSLOTH=$MODELS/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66
 GGML=$MODELS/hf/hub/models--ggml-org--Qwen3.8-Flash-Next-GGUF/snapshots/052beeaca7bec4a303e59cc7bc630c4f3a1b845d
@@ -102,7 +113,11 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROBE=${PROBE:-$HERE/probe.py}
 ROOT=$(git -C "$HERE" rev-parse --show-toplevel) || exit 7
 case $OUT in /*) ;; *) OUT=$PWD/$OUT ;; esac
-case $CACHE in /*) ;; *) CACHE=$PWD/$CACHE ;; esac
+if [ "${1:-}" = exec ]; then
+    case $EXEC_LOG in /*) ;; *) EXEC_LOG=$PWD/$EXEC_LOG ;; esac
+else
+    case $CACHE in /*) ;; *) CACHE=$PWD/$CACHE ;; esac
+fi
 cd "$ROOT" || exit 7
 
 # Run probe.py in the background so a signal reaches run.sh's trap instead of waiting out the child; sets prc.
@@ -185,6 +200,22 @@ vulkan-q4kxl)
     bin=$VULKAN_BIN target=$Q4KXL draft=$DRAFT_GGML
     flags="--lazy-mode on -ub 2048 -b 2048${EXTRA_ARGS:+ $EXTRA_ARGS}"
     ;;
+exec)
+    mode="exec"
+    case $EXEC_DEV in
+    gpu) NEED_GIB=${NEED_GIB:-85} ;;
+    cpu) NEED_GIB=${NEED_GIB:-24} ;;
+    *) echo "EXEC_DEV must be gpu or cpu, got '$EXEC_DEV'" >&2; exit 7 ;;
+    esac
+    # shellcheck disable=SC2153 # TARGET is the exec env contract, not a typo for target
+    target=$TARGET draft=${DRAFT:-}
+    execv=() seen=0
+    for w; do
+        if [ $seen = 1 ]; then execv+=("$w"); elif [ "$w" = -- ]; then seen=1; fi
+    done
+    [ ${#execv[@]} -gt 0 ] || { echo "usage: run.sh exec [probe.py args] -- cmd..." >&2; exit 7; }
+    flags="${execv[*]}"
+    ;;
 *)
     echo "unknown preset: $preset" >&2
     exit 7
@@ -206,11 +237,15 @@ strata)
     for kv in "${strata_env[@]}"; do args+=(--env "$kv"); done
     [ "${KEEP_OFFLINE:-0}" = 1 ] || args+=(--evict-after) # last row of a stage: lemond reloads next, with a clean page cache
     ;;
+exec) args=(exec --target "$target" --dev "$EXEC_DEV" --child-log "$EXEC_LOG" --label exec) ;;
 *) args=(llama --server "$bin" --target "$target" --draft "$draft" --extra "$flags") ;;
 esac
 case $preset in *-hlb) args+=(--env HIP_LAUNCH_BLOCKING=1) ;; esac
 if [ "$mode" = corpus ]; then
     args+=(--cache "$CACHE" --corpus-rev "$CORPUS_REV")
+elif [ "$mode" = exec ]; then
+    [ -z "$draft" ] || args+=(--draft "$draft")
+    args+=(--need-gib "$NEED_GIB" --strict-load --max-load-wait "$OFFLINE_WAIT_BUDGET")
 else
     args+=(--cache "$CACHE" --need-gib "$NEED_GIB" --strict-load --max-load-wait "$OFFLINE_WAIT_BUDGET")
 fi
@@ -253,9 +288,11 @@ gguf_bytes() {
     awk '{ s += $1 } END { print s + 0 }' <<<"$sizes"
 }
 
-# Exit 5 unless the need fits GTT and the memory that is free once lemond's model is gone.
+# Exit 5 unless the need fits GTT and the memory that is free once lemond's model is gone. exec on cpu skips the GTT
+# comparison and has no floor. Sets anon_gib, the need that was checked.
 fit_check() {
-    local dev card best='' gtt total=0 vram gtt_used=0 rss=0 avail_kib avail need foot floor=0 bytes dbytes
+    local dev card best='' gtt total=0 vram gtt_used=0 rss=0 avail_kib avail need foot floor=0 bytes dbytes cpu=0
+    [ "$mode" = exec ] && [ "$EXEC_DEV" = cpu ] && cpu=1
     for dev in /sys/class/drm/card*/device; do
         [ -r "$dev/mem_info_gtt_total" ] || continue
         gtt=$(<"$dev/mem_info_gtt_total")
@@ -272,7 +309,7 @@ fit_check() {
         gtt_used=$(<"$best/mem_info_gtt_used")
         rss=$(lemond_rss)
     fi
-    if ! lazy_on "$flags"; then
+    if [ $cpu = 0 ] && ! lazy_on "$flags"; then
         bytes=$(gguf_bytes "$target") || { echo "fit: cannot stat $target" >&2; exit 7; }
         if [ -n "$draft" ]; then
             dbytes=$(gguf_bytes "$draft") || { echo "fit: cannot stat $draft" >&2; exit 7; }
@@ -284,6 +321,16 @@ fit_check() {
     avail=$((avail_kib * 1024))
     foot=$((gtt_used + rss))
     need=$((NEED_GIB > floor ? NEED_GIB : floor))
+    anon_gib=$need
+    if [ $cpu = 1 ]; then
+        awk -v need="$need" -v card="$card" -v avail="$avail" -v gu="$gtt_used" -v rss="$rss" \
+            'BEGIN { g = 1073741824; printf "fit: need %d GiB anonymous (cpu: lazy-off floor and GTT comparison skipped); %s; MemAvailable %.1f + lemond (gtt used %.1f + rss %.1f) = %.1f GiB\n", need, card, avail/g, gu/g, rss/g, (avail+gu+rss)/g }' >&2
+        if [ $((need * 1073741824)) -gt $((avail + foot)) ]; then
+            echo "fit: refusing, $need GiB does not fit; lemond untouched" >&2
+            exit 5
+        fi
+        return
+    fi
     awk -v need="$need" -v ng="$NEED_GIB" -v floor="$floor" -v card="$card" -v gtt="$total" -v vram="$vram" -v avail="$avail" -v gu="$gtt_used" -v rss="$rss" \
         'BEGIN { g = 1073741824; printf "fit: need %d GiB (NEED_GIB %d, lazy-off floor %s); %s gtt %.1f GiB (vram %.1f); MemAvailable %.1f + lemond (gtt used %.1f + rss %.1f) = %.1f GiB\n", need, ng, floor ? floor : "n/a", card, gtt/g, vram/g, avail/g, gu/g, rss/g, (avail+gu+rss)/g }' >&2
     if [ $((need * 1073741824)) -gt "$total" ] || [ $((need * 1073741824)) -gt $((avail + foot)) ]; then
@@ -295,7 +342,9 @@ fit_check() {
 others=$(other_models) || { trap - EXIT; echo "lemond unreachable or health unparseable: $LEMOND" >&2; exit 6; }
 others=${others//$'\n'/,}
 [ -z "$others" ] || { trap - EXIT; echo "refusing: lemond has other models loaded ($others); untouched" >&2; exit 6; }
+anon_gib=
 fit_check
+[ "$mode" = exec ] && args+=(--anon-limit-gib "$anon_gib" --swap-limit-gib "${EXEC_SWAP_LIMIT_GIB:-4}")
 [ "${FIT_CHECK_ONLY:-0}" = 1 ] && { rc=0; exit 0; }
 
 # Tell other crews on this host a GPU row is running; the file is ours only while its pid is this process.

@@ -7,6 +7,7 @@ Subcommands:
   llama       start one llama-server (stock or HIP fork), run --do groups, print one JSON row
   gufo        start one Gufo container, run --do groups, print one JSON row
   strata      start one Strata server (python serve/server.py + the strata engine), run --do groups, print one JSON row
+  exec        run the argv after `--` behind the gate under a memory watchdog, print one JSON row (output in --child-log)
   gufo-help   print `gufo serve llm --help` from the image
   analyze     compare the correctness rows of a JSONL file against reference rows
 
@@ -15,9 +16,10 @@ Every engine gets identical text over /v1/completions (speed groups) and /v1/cha
 a unique nonce line plus a corpus slice. Strata has no /v1/completions and no ignore_eos: its speed
 groups go over /v1/chat/completions (the chat template wraps the prompt, so prompt_tokens includes
 template tokens) and ask for a long essay so generation reaches max_tokens. Groups (--do, comma
-list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision.
+list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision tasks.
 vision (strata only, needs --vision-bin and --mmproj) sends a generated red|blue PNG and passes iff
 the answer names both colours.
+tasks (the 16-task agent/code/long-context quality set of ../qwen38-flash-next-iq3-quality-2026-10-06/tasks.py; --quick runs one task per category).
 
 Exit: 0 ok, 1 row error, 2 foreign benchmark running, 3 memory gate, 4 strict load wait expired,
 7 usage error (argparse; no JSON row), 143 signalled. Other failures still print one JSON line with "error",
@@ -56,6 +58,7 @@ spec = importlib.util.spec_from_file_location(
 grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
 grid.WATCHED.update({"gufo", "strata"})
+grid.WATCHED.add("llama-perplexity")  # comm is truncated to 15 chars; preflight_busy matches argv[0]'s basename
 
 DEFER = None
 
@@ -68,7 +71,7 @@ def _on_signal(sig, _frame):
     else:
         sys.exit(143)
 
-GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision"]
+GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
 CONC_OFFSETS = (40000, 60000, 80000, 100000)
@@ -547,6 +550,14 @@ def g_correctness(e, c, quick):
     return {"outputs": outputs, "sanity": sanity, "sanity_score": sum(s["ok"] for s in sanity)}
 
 
+def g_tasks(e, c, quick):
+    path = os.path.join(HERE, "..", "qwen38-flash-next-iq3-quality-2026-10-06", "tasks.py")
+    tasks_spec = importlib.util.spec_from_file_location("tasks", path)
+    tasks = importlib.util.module_from_spec(tasks_spec)
+    tasks_spec.loader.exec_module(tasks)
+    return tasks.run(e, c, quick)
+
+
 def g_concurrency(e, c, quick):
     out = {}
     for users in (2, 4):
@@ -568,10 +579,10 @@ def g_concurrency(e, c, quick):
 
 # ---- servers ----------------------------------------------------------------------------------
 
-def stop(proc):
+def stop(proc, timeout=30):
     proc.terminate()
     try:
-        proc.wait(timeout=30)
+        proc.wait(timeout=timeout)
     except subprocess.TimeoutExpired:
         proc.kill()
         proc.wait()
@@ -824,6 +835,8 @@ def run_row(a, log):
             row["concurrency"] = g_concurrency(e, cache, a.quick)
         if "vision" in do:
             row["vision"] = g_vision(e, cache, a.quick)
+        if "tasks" in do:
+            row["tasks"] = g_tasks(e, cache, a.quick)
         row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
         row["gtt_peak_delta_bytes"] = peak["bytes"]
         row["hwm_kb"] = grid.proc_status_kb(pid, "VmHWM")
@@ -925,6 +938,69 @@ def run_corpus(a, log):
             "corpus_files": cache["corpus_files"], "slice_tokens": cache["slice_tokens"],
             "conc_slice_tokens": cache["conc_slice_tokens"], "replay_tokens": cache["replay_tokens"],
             "tokenizer_target": cache["tokenizer_target"]}
+
+
+EXEC_CPU_GTT_LIMIT = 1 << 30
+
+
+def swap_used_kb():
+    swap = {}
+    with open("/proc/meminfo") as f:
+        for line in f:
+            if line.startswith(("SwapTotal:", "SwapFree:")):
+                swap[line.split(":")[0]] = int(line.split()[1])
+    return swap["SwapTotal"] - swap["SwapFree"]
+
+
+def run_exec(a, log):
+    """Run argv after `--` behind the memory gate; a watchdog kills it on host-memory trouble.
+
+    Child stdout and stderr go to --child-log only: stdout here is one JSON row that run.sh appends to the row file.
+    """
+    load_flag = gate(a, a.draft)
+    row = {"host": socket.gethostname(), "label": a.label, "engine": "exec", "dev": a.dev,
+           "loadavg_start": round(os.getloadavg()[0], 2), "load_flag": load_flag, "argv": a.child,
+           "child_log": a.child_log}
+    gtt0, _ = grid.gpu_mem()
+    swap0 = swap_used_kb()
+    killed_by = None
+    peak_anon_kb = peak_swap_kb = None
+    t0 = time.time()
+    with open(a.child_log, "wb") as out, gtt_peak(gtt0) as peak:
+        proc = subprocess.Popen(a.child, stdin=subprocess.DEVNULL, stdout=out, stderr=subprocess.STDOUT)
+        try:
+            while True:
+                try:
+                    proc.wait(timeout=0.5)
+                    break
+                except subprocess.TimeoutExpired:
+                    pass
+                try:
+                    anon_kb = grid.proc_status_kb(proc.pid, "RssAnon")
+                except OSError:  # exited since the wait timed out
+                    continue
+                swap_kb = swap_used_kb() - swap0
+                peak_anon_kb = max(peak_anon_kb or 0, anon_kb or 0)
+                peak_swap_kb = max(peak_swap_kb or 0, swap_kb)
+                if a.dev == "cpu" and (peak["bytes"] or 0) > EXEC_CPU_GTT_LIMIT:
+                    killed_by = "gtt_on_cpu"
+                elif swap_kb > a.swap_limit_gib << 20:
+                    killed_by = "swap_growth"
+                elif (anon_kb or 0) > a.anon_limit_gib << 20:
+                    killed_by = "anon_limit"
+                if killed_by:
+                    break
+        finally:
+            stop(proc, 5)
+    row.update({"rc": proc.returncode, "killed_by": killed_by, "gtt_peak_delta_bytes": peak["bytes"],
+                "rss_anon_peak_bytes": None if peak_anon_kb is None else peak_anon_kb * 1024,
+                "swap_growth_peak_bytes": None if peak_swap_kb is None else peak_swap_kb * 1024,
+                "wall_s": round(time.time() - t0, 1)})
+    if killed_by:
+        row["error"] = f"child killed by watchdog: {killed_by}"
+    elif proc.returncode:
+        row["error"] = f"child exited {proc.returncode}"
+    return row
 
 
 def run_wait_load(a):
@@ -1086,6 +1162,17 @@ def main():
             p.add_argument("--evict-after", action="store_true",
                            help="after teardown, drop the page cache of the GGUF shards (last row of a stage)")
 
+    p = sub.add_parser("exec", usage="%(prog)s [options] -- cmd [args...]")
+    p.add_argument("--target", required=True)
+    p.add_argument("--draft", default="")
+    p.add_argument("--label", required=True)
+    p.add_argument("--dev", choices=("gpu", "cpu"), required=True, help="cpu: the child must not grow GTT")
+    p.add_argument("--anon-limit-gib", type=int, required=True, help="kill the child above this RssAnon")
+    p.add_argument("--swap-limit-gib", type=int, default=4,
+                   help="kill the child when system swap use grows by more than this (the kernel may swap other processes' cold pages out for the page cache of an mmap'd model)")
+    p.add_argument("--child-log", required=True, help="the child's stdout and stderr")
+    gate_args(p)
+
     p = sub.add_parser("gufo-help")
     p.add_argument("--image", required=True)
 
@@ -1096,7 +1183,19 @@ def main():
     p.add_argument("--tokenizer-bin", required=True)
     p.add_argument("--vocab", required=True)
 
-    a = ap.parse_args()
+    argv, child = sys.argv[1:], []
+    if "--" in argv:
+        i = argv.index("--")
+        argv, child = argv[:i], argv[i + 1:]
+    a = ap.parse_args(argv)
+    if a.cmd == "exec":
+        if not child:
+            ap.error("exec needs a command after --")
+        if a.need_gib is None:
+            ap.error("exec needs --need-gib")
+        a.child = child
+    elif child:
+        ap.error("unexpected arguments after --")
     if a.cmd in ("llama", "gufo", "strata"):
         unknown = set(a.do.split(",")) - set(GROUPS)
         if unknown:
@@ -1129,7 +1228,7 @@ def main():
         return 0
     with tempfile.TemporaryFile(mode="w+", errors="replace") as log:
         try:
-            result = (run_corpus if a.cmd == "corpus" else run_row)(a, log)
+            result = {"corpus": run_corpus, "exec": run_exec}.get(a.cmd, run_row)(a, log)
         except (grid.RowError, OSError) as e:
             log.seek(0)
             print(json.dumps({"error": str(e), "label": getattr(a, "label", a.cmd), "server_tail": log.read()[-4000:]}))
@@ -1140,7 +1239,7 @@ def main():
             print(json.dumps({"error": repr(e), "label": getattr(a, "label", a.cmd), "server_tail": log.read()[-4000:]}))
             return 1
     print(json.dumps(result))
-    return 0
+    return 1 if "error" in result else 0
 
 
 if __name__ == "__main__":
