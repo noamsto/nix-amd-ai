@@ -14,13 +14,13 @@ Requests that fail are counted, not fatal: a soak that stops at its first error 
 import base64
 import concurrent.futures
 import contextlib
-import json
 import os
 import statistics
+import struct
 import threading
 import time
-import urllib.request
 import uuid
+import zlib
 
 CANARY_EVERY_S = 300
 SAMPLE_EVERY_S = 30
@@ -316,8 +316,6 @@ def summarize_long(requests, canaries, samples, wall):
 
 def tagged_png(data, tag):
     """The same pixels with a different tEXt chunk, so the encoder's cache (keyed on the file's bytes) misses."""
-    import struct
-    import zlib
     body = b"nonce\x00" + tag.encode()
     chunk = struct.pack(">I", len(body)) + b"tEXt" + body + struct.pack(">I", zlib.crc32(b"tEXt" + body))
     end = data.rindex(b"\x00\x00\x00\x00IEND")
