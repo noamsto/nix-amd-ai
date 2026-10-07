@@ -447,8 +447,10 @@ def run_image(e, c, P):
             th.start()
             time.sleep(4)  # into steady decode
             t_img = time.perf_counter()
-            ri = post(P, e, image_body(img, q, uuid.uuid4(), 64))
-            th.join()
+            try:
+                ri = post(P, e, image_body(img, q, uuid.uuid4(), 64))
+            finally:
+                th.join()
             if "error" in holder:
                 raise holder["error"]
             rt = holder["text"]
@@ -484,8 +486,10 @@ def run_image(e, c, P):
             th.start()
             time.sleep(3)
             t_text = time.perf_counter()
-            rt = post(P, e, text_request(600))
-            th.join()
+            try:
+                rt = post(P, e, text_request(600))
+            finally:
+                th.join()
             if "error" in holder:
                 raise holder["error"]
             ri = holder["img"]

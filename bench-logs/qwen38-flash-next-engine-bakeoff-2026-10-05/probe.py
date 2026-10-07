@@ -34,6 +34,7 @@ import collections
 import concurrent.futures
 import contextlib
 import grp
+import http.client
 import importlib.util
 import json
 import os
@@ -861,7 +862,7 @@ def run_row(a, log):
             if group in do:
                 try:
                     row[group] = g_soak(group, e, cache, a.quick, a.soak_minutes)
-                except (grid.RowError, OSError, KeyError, TypeError, ValueError) as exc:
+                except (grid.RowError, OSError, KeyError, TypeError, ValueError, http.client.HTTPException) as exc:
                     row[group] = {"error": f"{type(exc).__name__}: {exc}"}
         try:  # a soak that saw the engine restart holds a stale pid here
             row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
@@ -1031,7 +1032,11 @@ def run_exec(a, log):
             stop(proc, 5)
             # a child that set up its own process group (kl_strata's engine) outlives a SIGKILLed parent for a moment:
             # lemond must not reload over it
+            waited = False
             while any(_comm(pid) == "strata" for pid in map(int, filter(str.isdigit, os.listdir("/proc")))):
+                if not waited:
+                    print("waiting for a strata engine process to exit before returning", file=sys.stderr, flush=True)
+                    waited = True
                 time.sleep(0.5)
     row.update({"rc": proc.returncode, "killed_by": killed_by, "gtt_peak_delta_bytes": peak["bytes"],
                 "rss_anon_peak_bytes": None if peak_anon_kb is None else peak_anon_kb * 1024,

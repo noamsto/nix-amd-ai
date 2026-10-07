@@ -226,6 +226,8 @@ def run(a):
             print(f"chunk {i + 1}/{n} {rows[-1]['wall_s']} s", flush=True)
             write_meta(a, argv, env, offsets, load_s, rows)
     finally:
+        # teardown must finish: a further TERM kills the group without raising
+        signal.signal(signal.SIGTERM, lambda *_: os.killpg(proc.pid, signal.SIGKILL))
         stop_engine(proc)
         evict(shards(a.target))
     return 0
@@ -299,6 +301,7 @@ def summary(name, kl, same, nll, nll_base, p_diff):
 def compare(a):
     toks, n_vocab = read_tokens(a.ref)
     n_chunk = len(toks)
+    want = min(a.chunks or n_chunk, n_chunk)
     ref_mm = np.memmap(a.ref, dtype=np.uint8, mode="r")
     results, cats = [], []
     for spec in a.candidates:
@@ -307,14 +310,13 @@ def compare(a):
         acc = {k: [] for k in ("kl", "same", "nll", "nll_base", "p_diff", "kl_full", "p_rest", "q_rest", "argmax")}
         if kind == "strata":
             meta = json.load(open(os.path.join(path, "chunks.json")))
-            n = min(a.chunks or n_chunk, len(meta["offsets"]) - 1)
+            n = min(want, len(meta["offsets"]) - 1)
         else:
             cand_toks, cand_vocab = read_tokens(path)
-            if cand_vocab != n_vocab or len(cand_toks) < (a.chunks or n_chunk) or not (
-                    cand_toks[:a.chunks or n_chunk] == toks[:a.chunks or n_chunk]).all():
+            if cand_vocab != n_vocab or len(cand_toks) < want or not (cand_toks[:want] == toks[:want]).all():
                 raise SystemExit(f"{path}: its vocabulary or token ids differ from the reference's")
             n_cand = len(cand_toks)
-            n = a.chunks or n_chunk
+            n = want
             cand_mm = np.memmap(path, dtype=np.uint8, mode="r")
         for i in range(n):
             off, nv = chunk_offset(n_chunk, n_vocab, i)
