@@ -273,10 +273,9 @@
         # /etc symlink it named. Drop only that stale value, or a later real
         # ds4 load fails validating a path that no longer exists.
         if jq -s '
-          .[0] as $cfg | .[1] as $defaults |
-          ($cfg * $defaults) |
-          if (.ds4.rocm_bin // "") == "/etc/lemonade/backends/ds4-rocm"
-          then del(.ds4.rocm_bin) else . end
+          .[0] * .[1]
+          | if (.ds4.rocm_bin // "") == "/etc/lemonade/backends/ds4-rocm"
+            then del(.ds4.rocm_bin) else . end
         ' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
           # lemond may have tightened the mode; rename would silently widen it back.
           chmod --reference="$config" "$tmp"
