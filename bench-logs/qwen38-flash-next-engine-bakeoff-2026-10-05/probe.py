@@ -16,7 +16,7 @@ Every engine gets identical text over /v1/completions (speed groups) and /v1/cha
 a unique nonce line plus a corpus slice. Strata has no /v1/completions and no ignore_eos: its speed
 groups go over /v1/chat/completions (the chat template wraps the prompt, so prompt_tokens includes
 template tokens) and ask for a long essay so generation reaches max_tokens. Groups (--do, comma
-list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision tasks soak longsoak bigimage.
+list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision tasks soak longsoak bigimage quirks.
 vision (strata only, needs --vision-bin and --mmproj) sends a generated red|blue PNG and passes iff
 the answer names both colours.
 tasks (the 16-task agent/code/long-context quality set of ../qwen38-flash-next-iq3-quality-2026-10-06/tasks.py; --quick runs one task per category).
@@ -75,7 +75,7 @@ def _on_signal(sig, _frame):
         sys.exit(143)
 
 GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks",
-          "soak", "longsoak", "bigimage"]
+          "soak", "longsoak", "bigimage", "quirks"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
 CONC_OFFSETS = (40000, 60000, 80000, 100000)
@@ -572,6 +572,8 @@ def g_soak(group, e, c, quick, minutes=None):
         return soak.run_short(e, c, me)
     if group == "longsoak":
         return soak.run_long(e, c, me, minutes)
+    if group == "quirks":
+        return soak.run_quirks(e, c, me)
     return soak.run_image(e, c, me)
 
 
@@ -855,7 +857,7 @@ def run_row(a, log):
             row["vision"] = g_vision(e, cache, a.quick)
         if "tasks" in do:
             row["tasks"] = g_tasks(e, cache, a.quick)
-        for group in ("soak", "longsoak", "bigimage"):
+        for group in ("soak", "longsoak", "bigimage", "quirks"):
             if group in do:
                 row[group] = g_soak(group, e, cache, a.quick, a.soak_minutes)
         row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
@@ -1235,7 +1237,7 @@ def main():
             ap.error("concurrency is not wired for strata")
         if "bigimage" in a.do.split(",") and not a.vision_bin:
             ap.error("the bigimage group needs --vision-bin and --mmproj")
-    elif {"vision", "soak", "longsoak", "bigimage"} & set(getattr(a, "do", "").split(",")):
+    elif {"vision", "soak", "longsoak", "bigimage", "quirks"} & set(getattr(a, "do", "").split(",")):
         ap.error("the vision and soak groups are only for the strata subcommand")
     for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
         signal.signal(sig, _on_signal)

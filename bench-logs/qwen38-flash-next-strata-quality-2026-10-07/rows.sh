@@ -10,7 +10,8 @@
 #                               build, stock-hip = HIP build, gsq = GSQHalo, f16 KV as #260)
 #   probe <def|fast> <label> <groups> [probe.py args...]
 #                               one `run.sh strata[-fast]` row (a Strata server, vision on) running probe.py groups, e.g.
-#                               soak, longsoak (--soak-minutes N), bigimage (--vision-max-tokens 1024, SCREENSHOT_PNG)
+#                               soak, longsoak (--soak-minutes N), bigimage (--vision-max-tokens 1024, SCREENSHOT_PNG), quirks,
+#                               correctness (NO_MTP=1 drops the draft layer)
 # Env (no defaults): W work dir (reference logits, rows, run logs), REF reference logits, IQ4 shard 1 of the UD-IQ4_XS file,
 # STRATA_ENGINE STRATA_PACK STRATA_REPO STRATA_MTP_RT (kl; the other stages also take run.sh's STRATA_ variables),
 # PY python with numpy (kl), CACHE STRATA_PY STRATA_VISION_BIN STRATA_MMPROJ (probe; run.sh's strata variables), STOCK_BIN / STOCK_HIP_BIN / GSQ_BIN (llama; the server binary, llama-perplexity sits beside it).
@@ -77,7 +78,8 @@ llama)
 probe)
     arm=${2:?arm} label=${3:?label} groups=${4:?groups}
     shift 4
-    : "${CACHE:?}" "${STRATA_PY:?}" "${STRATA_ENGINE:?}" "${STRATA_PACK:?}" "${STRATA_REPO:?}" "${STRATA_MTP_RT:?}"
+    : "${CACHE:?}" "${STRATA_PY:?}" "${STRATA_ENGINE:?}" "${STRATA_PACK:?}" "${STRATA_REPO:?}"
+    [ "${NO_MTP:-0}" = 1 ] && unset STRATA_MTP_RT || : "${STRATA_MTP_RT:?}"
     : "${STRATA_VISION_BIN:?}" "${STRATA_MMPROJ:?}" "${STRATA_EXPERT_CACHE:?}"
     case $arm in
     def) preset=strata ;;

@@ -74,6 +74,10 @@ def arm_spec(arm, cache, repo):
             # fast's --prefill 16384 vs def's --prefill auto
             i = flags.index("--prefill")
             flags[i + 1] = "auto" if sign == "-" else "16384"
+        elif n == "kvf16":
+            if sign == "-":
+                raise SystemExit("kvf16 only adds")
+            flags[flags.index("--kv") + 1] = "fp16"
         elif n == "mtpq4":
             if sign == "-":
                 i = flags.index("--mtp-q4")

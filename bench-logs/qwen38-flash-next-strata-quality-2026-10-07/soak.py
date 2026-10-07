@@ -4,6 +4,8 @@ probe's engine namespace (port, model, pid with .pgid, args, gtt0, vram0), `c` t
   run_short   the 8-turn agent replay three times, 2 and 4 concurrent requests (long-context decode and tool calls)
   run_long    continuous mixed requests with thinking on for SOAK_MINUTES (default 60), a canary every 5 minutes, and a
               30 s sampler of GTT, engine RSS and the engine pid
+  run_quirks  the literal tool-call start token in prose and code, tools on and off; the sampling defaults a request that
+              omits them gets
   run_image   one realistic screenshot through the CPU encoder: encode window, time to first token cold and repeated,
               and the decode rate of a concurrent text request with and without the encode running
 
@@ -453,4 +455,59 @@ def run_image(e, c, P):
                                       "text_wall_s": round(rt["wall_s"], 1)})
     for r in out["text_alone"]:
         r.pop("t0", None)
+    return out
+
+
+# ---- quirks -----------------------------------------------------------------------------------------------------
+
+TAG = "<tool_call>"
+TOKEN_PROMPTS = {
+    "prose": f"Explain what the literal text {TAG} means in Qwen's chat format. Quote it in a sentence and once in an "
+             f"inline code span like `{TAG}`, then explain what the matching closing text does.",
+    "code": f"Write a short Python function that splits a model reply on the literal strings '{TAG}' and "
+            "'</tool_call>' and returns the JSON between them. Reply with a code block, then a paragraph explaining it.",
+    "fence": f"Show me, in a fenced code block, an example reply that contains {TAG} followed by a JSON call and its "
+             "closing tag, then describe in two sentences how a client should parse it.",
+}
+
+
+def judge(r):
+    """Heuristics only: the tail of the text is kept so a reader can see where it stopped."""
+    t = r["text"].rstrip()
+    done = t.endswith((".", "!", "?", "`", ")", "*", ":")) and t.count("```") % 2 == 0
+    return {"finish": r["finish"], "completion_tokens": r["completion_tokens"], "chars": len(t),
+            "literal_tag_in_text": t.count(TAG), "spurious_tool_call": r["tool_chunks"] > 0 or r["finish"] == "tool_calls",
+            "looks_truncated": not done or r["completion_tokens"] < 40, "tail": t[-100:]}
+
+
+def run_quirks(e, c, P):
+    out = {"token": []}
+    for name, prompt in TOKEN_PROMPTS.items():
+        for tools in (False, True):
+            for temp, seed in ((0.0, 0), (0.7, 1), (0.7, 2)):
+                body = {"messages": [{"role": "user", "content": prompt}], "max_tokens": 700, "temperature": temp,
+                        "seed": seed, "chat_template_kwargs": {"enable_thinking": False}}
+                if tools:
+                    body["tools"] = c["replay"]["tools"]
+                r, err = guarded(post, P, e, body)
+                out["token"].append({"prompt": name, "tools": tools, "temperature": temp, "seed": seed,
+                                     **({"error": err} if err else judge(r))})
+    # sampling: what a request that omits everything gets, and whether what it sends is honoured
+    q = {"messages": [{"role": "user", "content": "Name five unusual fruits and describe each in one sentence."}],
+         "max_tokens": 120, "chat_template_kwargs": {"enable_thinking": False}}
+
+    def text(**kw):
+        r, err = guarded(post, P, e, {**q, **kw})
+        return err or r["text"]
+
+    omitted = [text(), text()]
+    greedy = text(temperature=0)
+    s1, s1b, s2 = text(temperature=0.7, seed=1), text(temperature=0.7, seed=1), text(temperature=0.7, seed=2)
+    topk1 = text(temperature=0.7, top_k=1, seed=3)
+    hot = text(temperature=1.5, top_p=1.0, top_k=64, seed=4)
+    out["sampling"] = {
+        "omitted_twice_identical": omitted[0] == omitted[1], "omitted_equals_temperature0": omitted[0] == greedy,
+        "temperature0.7_same_seed_identical": s1 == s1b, "temperature0.7_seeds_differ": s1 != s2,
+        "temperature0.7_differs_from_omitted": s1 != omitted[0], "top_k1_at_0.7_equals_greedy": topk1 == greedy,
+        "temperature1.5_differs_from_greedy": hot != greedy}
     return out
