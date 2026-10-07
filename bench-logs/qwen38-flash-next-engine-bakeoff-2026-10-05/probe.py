@@ -16,10 +16,13 @@ Every engine gets identical text over /v1/completions (speed groups) and /v1/cha
 a unique nonce line plus a corpus slice. Strata has no /v1/completions and no ignore_eos: its speed
 groups go over /v1/chat/completions (the chat template wraps the prompt, so prompt_tokens includes
 template tokens) and ask for a long essay so generation reaches max_tokens. Groups (--do, comma
-list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision tasks.
+list): prefill4k decode512 decode32k decode128k replay toolcall correctness concurrency vision tasks soak longsoak bigimage.
 vision (strata only, needs --vision-bin and --mmproj) sends a generated red|blue PNG and passes iff
 the answer names both colours.
 tasks (the 16-task agent/code/long-context quality set of ../qwen38-flash-next-iq3-quality-2026-10-06/tasks.py; --quick runs one task per category).
+soak, longsoak, bigimage (strata only; ../qwen38-flash-next-strata-quality-2026-10-07/soak.py): three agent replays plus 2 and 4 concurrent
+requests; --soak-minutes of continuous mixed requests with thinking on; a screenshot (SCREENSHOT_PNG, needs --vision-max-tokens 1024)
+through the CPU encoder with a concurrent text request.
 
 Exit: 0 ok, 1 row error, 2 foreign benchmark running, 3 memory gate, 4 strict load wait expired,
 7 usage error (argparse; no JSON row), 143 signalled. Other failures still print one JSON line with "error",
@@ -71,7 +74,8 @@ def _on_signal(sig, _frame):
     else:
         sys.exit(143)
 
-GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks"]
+GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks",
+          "soak", "longsoak", "bigimage"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
 CONC_OFFSETS = (40000, 60000, 80000, 100000)
@@ -558,6 +562,19 @@ def g_tasks(e, c, quick):
     return tasks.run(e, c, quick)
 
 
+def g_soak(group, e, c, quick, minutes=None):
+    path = os.path.join(HERE, "..", "qwen38-flash-next-strata-quality-2026-10-07", "soak.py")
+    soak_spec = importlib.util.spec_from_file_location("soak", path)
+    soak = importlib.util.module_from_spec(soak_spec)
+    soak_spec.loader.exec_module(soak)
+    me = sys.modules[__name__]
+    if group == "soak":
+        return soak.run_short(e, c, me)
+    if group == "longsoak":
+        return soak.run_long(e, c, me, minutes)
+    return soak.run_image(e, c, me)
+
+
 def g_concurrency(e, c, quick):
     out = {}
     for users in (2, 4):
@@ -617,7 +634,7 @@ def strata_config(a, tmp):
            "model_name": "strata", "backend": "hip", "env": dict(kv.split("=", 1) for kv in a.env),
            "lib_dirs": a.lib_dir, "log": os.path.join(tmp, "engine.log"), "host": "127.0.0.1"}
     if vision:
-        cfg["vision"] = {"exe": a.vision_bin, "mmproj": a.mmproj, "model": a.target, "max_tokens": 300}
+        cfg["vision"] = {"exe": a.vision_bin, "mmproj": a.mmproj, "model": a.target, "max_tokens": a.vision_max_tokens}
     return cfg
 
 
@@ -816,7 +833,8 @@ def run_row(a, log):
     with gtt_peak(gtt0) as peak, loadavg_peak() as load, server(a, log) as pid:
         row["load_s"] = round(time.time() - t0, 1)
         e = types.SimpleNamespace(
-            port=a.port, engine=a.cmd, model=grid.http(a.port, "/v1/models", timeout=30)["data"][0]["id"])
+            port=a.port, engine=a.cmd, model=grid.http(a.port, "/v1/models", timeout=30)["data"][0]["id"],
+            pid=pid, gtt0=gtt0, vram0=vram0, args=a)
         row["mem_after_load"] = mem_snapshot(pid, gtt0, vram0)
         cpu0 = {"t": time.time(), "sys": cpu_ticks(), "eng": cpu_ticks(pid)}
         if "toolcall" in do:
@@ -837,6 +855,9 @@ def run_row(a, log):
             row["vision"] = g_vision(e, cache, a.quick)
         if "tasks" in do:
             row["tasks"] = g_tasks(e, cache, a.quick)
+        for group in ("soak", "longsoak", "bigimage"):
+            if group in do:
+                row[group] = g_soak(group, e, cache, a.quick, a.soak_minutes)
         row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
         row["gtt_peak_delta_bytes"] = peak["bytes"]
         row["hwm_kb"] = grid.proc_status_kb(pid, "VmHWM")
@@ -1158,6 +1179,9 @@ def main():
             p.add_argument("--lib-dir", action="append", default=[], metavar="DIR",
                            help="LD_LIBRARY_PATH entry for the engine, repeatable")
             p.add_argument("--vision-bin", help="strata-vision binary; with --mmproj turns images on")
+            p.add_argument("--vision-max-tokens", type=int, default=300,
+                           help="most tokens one picture becomes (Strata's own maximum is 1024)")
+            p.add_argument("--soak-minutes", type=float, default=60, help="longsoak duration")
             p.add_argument("--mmproj", help="vision projector file; with --vision-bin turns images on")
             p.add_argument("--evict-after", action="store_true",
                            help="after teardown, drop the page cache of the GGUF shards (last row of a stage)")
@@ -1209,8 +1233,10 @@ def main():
             ap.error("the vision group needs --vision-bin and --mmproj")
         if "concurrency" in a.do.split(","):
             ap.error("concurrency is not wired for strata")
-    elif "vision" in getattr(a, "do", "").split(","):
-        ap.error("the vision group is only for the strata subcommand")
+        if "bigimage" in a.do.split(",") and not a.vision_bin:
+            ap.error("the bigimage group needs --vision-bin and --mmproj")
+    elif {"vision", "soak", "longsoak", "bigimage"} & set(getattr(a, "do", "").split(",")):
+        ap.error("the vision and soak groups are only for the strata subcommand")
     for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
         signal.signal(sig, _on_signal)
 
