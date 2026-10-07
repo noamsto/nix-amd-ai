@@ -31,8 +31,10 @@ halo; it should not replace the resident model until a soak and a decode re-meas
 - **Costs.** 113 GiB on disk (v2 62.1 GiB, n-gram table 47.7 GiB, head, vision tower, tokenizer); a resident footprint
   of 69 GiB (file-backed and pinned) that cannot coexist with lemond's 72 GiB model; a closed binary pinned by digest,
   which nobody here can patch; one maintainer.
-- **Security.** No outbound traffic seen over a full container lifetime; the container serves with its network cut.
-  See the Security section.
+- **Security.** No connected outbound flow seen over a container lifetime, and the container loads and serves on an
+  `--internal` network with no route out (the offline row). The run line below uses podman's default network, so adopt
+  it with an internal network. `--ipc=host` also gives the container read-write access to the host's `/dev/shm`. See the
+  Security section.
 - **Not done:** a soak, concurrency, thinking-on workloads, a decode row on code and agent text, a real build as the
   co-tenant (a 20 GiB memory holder was used), and the BYO arm confirmation (below).
 
@@ -141,11 +143,13 @@ suspect and nothing more. v2 completed both tasks without error.
 ## Egress and Security (owner question: does the closed image phone home?)
 
 1. **Audit.** For a full container lifetime of the audit row (start, weight pin, tool call, prefill, decode, vision and the checks, stop) the host-side
-   `passt` process's sockets were sampled with `ss -tunp` about once a second, recording every non-loopback peer: **none**.
-   The sampler is validated by a positive control: a container deliberately connecting to a public address shows up
-   (`tcp <host LAN address> -> 1.1.1.1:443`). Limits: one-second sampling can miss a connection shorter than that, and a
-   hostname lookup is not visible this way (a lookup would also need a DNS flow, and none was seen). Hostnames were not
-   recorded.
+   `passt` process's sockets were sampled with `ss -tunp` about once a second, recording every connected non-loopback
+   peer: **none**. The sampler is validated by a TCP positive control: a container deliberately connecting to a public
+   address shows up (`tcp <host LAN address> -> 1.1.1.1:443`). Limits: one-second sampling can miss a shorter flow;
+   unconnected UDP sockets, ICMP and a loopback resolver stub were not recorded by the sampler that ran, and no UDP
+   positive control was run; hostnames are not visible. Only the audit and offline rows were sampled (the co-tenant and
+   `ppl` containers were not), and the audit row's network was podman's default (pasta NAT). The offline row is the
+   stronger evidence: a container with no route out loaded and served.
 2. **Offline run.** A representative v2 row (tool call, prefill 4K, decode, vision, and the checks) ran on an `--internal`
    netavark network with the port still published to 127.0.0.1. From inside the container, a connection to `1.1.1.1:443` and a
    lookup of `huggingface.co` both failed; Halogen loaded, served and passed every check, with no licence check and no
@@ -158,10 +162,15 @@ suspect and nothing more. v2 completed both tasks without error.
    `HALOGEN_DOWNLOAD` unset the container opens no outbound connections. The licence permits benchmarking and publishing
    with no approval (section 4) and asks that figures name the version and the prompt set; both are here. The audit and the
    offline run are evidence for those statements on this image, not proof for other versions.
-4. **Remaining exposure.** `--ipc=host` (the image's documented run line; the container shares the host IPC namespace),
-   `/dev/kfd` and `/dev/dri` (the kernel driver attack surface, as with any GPU container), a writable scratch mount for the
-   `ppl` mode only (`/ppl`; the serving container mounts models read-only), and an unauthenticated engine protocol, which the
-   run line keeps off the network (the engine port is not published; the API port is bound to 127.0.0.1). The image is
+4. **Remaining exposure.** `--ipc=host` (the image's documented run line; whether the image works without it was not
+   tested): the container shares the host IPC namespace **and gets the host's `/dev/shm` read-write**, so the closed image
+   can read and modify every shared-memory file the user's session owns (browser, audio and game segments on a desktop
+   host), and in rootless podman its root is that user. `--group-add keep-groups` adds the user's supplementary groups.
+   `/dev/kfd` and `/dev/dri` (the kernel driver attack surface, as with any GPU container). A writable scratch mount for
+   the `ppl` mode only (`/ppl`, outputs; the token ids are a separate read-only mount; the serving container mounts
+   models read-only). An unauthenticated engine protocol, which the run line keeps off the network (the engine port is
+   not published; the API port is bound to 127.0.0.1). No `--memory` or `--pids-limit` is set; the memory floor in
+   `halogen.py` kills the container below 6 GiB MemAvailable. The image is
    pinned by digest, so a tag move cannot change what runs; whoever updates the pin must repeat the audit.
 
 ## Co-tenant row (v2 only)
@@ -183,7 +192,8 @@ podman run -d --rm --name <name> --label bench=halogen258 --device /dev/kfd --de
   ghcr.io/peonist-ai/halogen-flash-server@sha256:0c61bf84ac22308a53f5d1ca6b86806702d7039e5ebc51cae4c66621b92fe04a
 ```
 
-The offline row adds `--network <an --internal netavark network>`. Rootless podman reached the GPU nodes with
+The default network is podman's (pasta NAT, outbound allowed). The offline row adds `--network <an --internal netavark network>`;
+a lemond backend should always do that. Rootless podman reached the GPU nodes with
 `--group-add keep-groups`, so the docker fallback was not used. No capability was added and the network is podman's default
 (pasta NAT) except for the offline row. `<models>` holds `qwen38-flash-next-v2.hgn`, `-ngram.hgn`, `-mtp.hgn`, `-vision.hgn`
 and `tokenizer/`, fetched at Hugging Face revision `af037250` with sha256 checked against the repository's LFS digests. The BYO arm
@@ -204,6 +214,12 @@ image (3.6 GB) can be deleted.
 - Concurrency (four slots), thinking on, 256K context, the vision encoder at larger images, the n-gram table's paging cost
   under memory pressure, and an IOMMU-off comparison were not measured.
 - A decode re-measure on code and agent turns, and a soak, would be needed before this could be resident.
+- Review hardening landed after the rows ran and was not re-run on the GPU: the container is registered before
+  `podman run`, the memory floor is watched during the model load, teardown raises if the container is still listed,
+  `--env` accepts only `HALOGEN_*=value`, the offline network must be `--internal`, the token ids are mounted read-only,
+  and `rows.sh` checks for a leftover container before each stage. None of it changes what a row measures. `run.sh` still
+  reloads lemond on its own as soon as the child exits (a SIGKILLed child while a container runs is the case nothing
+  here covers).
 
 ## Reproduce
 

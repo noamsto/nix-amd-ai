@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 # Halogen 0.16.2 rows for #258. From the repo root: rows.sh <stage> <arm>. Every stage is one lemond-offline window:
 # each row runs through run.sh's `exec` preset (probe.py gate, signal file, lemond unload) with halogen.py as the
-# child; lemond is reloaded at the end of the stage, after the Halogen container is confirmed gone.
+# child. Limitation: run.sh reloads lemond itself as soon as the child exits, with no check for a container. What
+# keeps the two apart is halogen.py (the container is killed before the child exits, the child raises if it is still
+# listed, and its SIGTERM handler kills without waiting inside run.sh's 5 s stop budget) and the clean-state check
+# this script makes before every stage. A SIGKILLed child is the case nothing here covers.
 # Env (no defaults): W work dir (rows, logs; outside the repo), CACHE the #249/#252 corpus cache.
 # Optional: MODELS_V2 / MODELS_BYO model directories (mounted read-only), IMAGE (pinned digest), PODMAN_DIR (PATH
 # entry holding podman and the newuidmap wrappers), BYO_ENV / V2_ENV (extra HALOGEN_* settings, space separated),
@@ -47,21 +50,29 @@ wait_free() {
 }
 
 gtt_used() { cat /sys/class/drm/card*/device/mem_info_gtt_used 2>/dev/null | sort -n | tail -1; }
+PODMAN_BIN=${PODMAN:-podman}
 
-lemond_loaded() { curl -fsS "${LEMOND:-http://127.0.0.1:13305/api/v1}/health" | jq -e '.all_models_loaded | length > 0' >/dev/null; }
+lemond_loaded() {
+    curl -fsS "${LEMOND:-http://127.0.0.1:13305/api/v1}/health" |
+        jq -e 'any(.all_models_loaded[]; .model_name == "Qwen3.8-Flash-Next-MTP")' >/dev/null
+}
 
-# No labelled container, and GTT below 6 GiB (nothing is loaded), before lemond may load.
+# Fails closed: no labelled container (and podman answering), and a readable GTT figure. With lemond's model not loaded
+# GTT must be below 6 GiB; with it loaded only the container check applies.
 assert_clean() {
-    local left used
-    left=$(podman ps -aq --filter label=bench=halogen258 | wc -l)
-    [ "$left" = 0 ] || { echo "ABORT: $left halogen container(s) still present; lemond not reloaded" >&2; return 1; }
+    local ids used
+    ids=$("$PODMAN_BIN" ps -aq --filter label=bench=halogen258) || { echo "ABORT: podman ps failed" >&2; return 1; }
+    [ -z "$ids" ] || { echo "ABORT: halogen container(s) present: $ids" >&2; return 1; }
+    lemond_loaded && return 0
     used=$(gtt_used)
-    [ "${used:-0}" -lt 6442450944 ] || { echo "ABORT: GTT used $used with nothing loaded; lemond not reloaded" >&2; return 1; }
+    case $used in '' | *[!0-9]*) echo "ABORT: GTT used is unreadable" >&2; return 1 ;; esac
+    [ "$used" -lt 6442450944 ] || { echo "ABORT: GTT used $used with nothing loaded" >&2; return 1; }
 }
 
 restore() {
     trap '' INT TERM HUP
-    lemond_loaded && return 0 # run.sh's own exit path already reloaded it (after a row failure)
+    wait_free
+    lemond_loaded && return 0 # run.sh's own exit path already reloaded it
     assert_clean || return 1
     FIT_CHECK_ONLY=1 KEEP_OFFLINE=0 OUT=$W/rows.jsonl EXEC_DEV=cpu TARGET=${target:-$MODELS_BYO/x} EXEC_LOG=$W/restore.log \
         NEED_GIB=1 "$D/run.sh" exec -- true >&2 || { echo "lemond restore FAILED (exit $?)" >&2; return 1; }
@@ -94,7 +105,9 @@ exec_row() {
     shift 4
     for kv in $COMMON_ENV $arm_env; do envflags+=(--env "$kv"); done
     [ "$pos" = last ] && keep=0
+    label=$label-$(printf '%s %s %s' "$IMAGE" "$COMMON_ENV" "$arm_env" | sha256sum | cut -c1-6)
     if [ -e "$W/$label.ok" ]; then echo "skip: $label already complete" >&2; return; fi
+    assert_clean || exit 1
     wait_free
     offline=1
     KEEP_OFFLINE=$keep OUT=$W/rows.jsonl EXEC_DEV=gpu TARGET=$target EXEC_LOG=$W/$label.log NEED_GIB=$need \
@@ -120,6 +133,7 @@ need_gib=${NEED_GIB_OVERRIDE:-$(awk -v b="$(du -Lb --apparent-size -c "$models"/
     'BEGIN { printf "%d", b / 1073741824 + 8 }')}
 case $stage in
 fit)
+    assert_clean || exit 1
     wait_free
     FIT_CHECK_ONLY=1 OUT=$W/fit.jsonl EXEC_DEV=gpu TARGET=$target EXEC_LOG=$W/fit.log NEED_GIB=$need_gib "$D/run.sh" exec -- true
     ;;
@@ -157,8 +171,8 @@ ppl)
     # KL against #260's Q8_0 reference: Halogen's own top-128 dump over the reference's 64 x 2048 token ids, scored
     # with kl_halogen.py (second half of each chunk, as llama-perplexity does). The ids file is /ids in the container.
     mkdir -p "$W/ppl"
-    ln -f "$IDS" "$W/ppl/ids.bin" 2>/dev/null || cp "$IDS" "$W/ppl/ids.bin"
-    exec_row last "$need_gib" "halogen-$2-ppl" ppl --scratch "$W/ppl" -- "/models/$ckpt" --ids /ppl/ids.bin --seq 2048 --json \
+    rm -f "${W:?}/ppl/halogen-$2.href" "${W:?}/ppl/halogen-$2.perpos" # outputs only; the ids file is a separate read-only mount
+    exec_row last "$need_gib" "halogen-$2-ppl" ppl --scratch "$W/ppl" --ids "$IDS" -- "/models/$ckpt" --ids /ids.bin --seq 2048 --json \
         --ref-out "/ppl/halogen-$2.href" --per-pos "/ppl/halogen-$2.perpos"
     ;;
 restore)

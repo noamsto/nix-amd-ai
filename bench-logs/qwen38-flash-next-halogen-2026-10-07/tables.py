@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Markdown tables for the README from halogen.py row files: tables.py <work dir> (reads halogen-<arm>-<stage>.row.json)."""
+import glob
 import json
 import os
 import sys
@@ -8,8 +9,18 @@ GIB = 1 << 30
 
 
 def load(w, arm, stage):
-    with open(os.path.join(w, f"halogen-{arm}-{stage}.row.json")) as f:
+    """The newest row file of a stage (rows.sh appends a short hash of the image and settings to its label)."""
+    found = sorted(glob.glob(os.path.join(w, f"halogen-{arm}-{stage}*.row.json")), key=os.path.getmtime)
+    with open(found[-1]) as f:
         return json.load(f)
+
+
+def cell(fn, row):
+    """One table cell; a field the harness could not measure (None or absent) prints as n/a."""
+    try:
+        return fn(row)
+    except (KeyError, TypeError):
+        return "n/a"
 
 
 def main(w):
@@ -17,7 +28,7 @@ def main(w):
     print("| | v2 checkpoint | BYO UD-IQ4_XS |\n| --- | ---: | ---: |")
 
     def line(name, fn):
-        print(f"| {name} | " + " | ".join(fn(rows[a]) for a in ("v2", "byo")) + " |")
+        print(f"| {name} | " + " | ".join(cell(fn, rows[a]) for a in ("v2", "byo")) + " |")
 
     line("Prefill 4K (t/s)", lambda r: f"{r['prefill4k']['prefill_tps']['mean']:.0f}")
     for g, n in (("decode512", "512"), ("decode32k", "32K"), ("decode128k", "128K")):
@@ -35,7 +46,7 @@ def main(w):
     print("| memory | v2 | BYO |\n| --- | ---: | ---: |")
 
     def mline(name, fn):
-        print(f"| {name} | " + " | ".join(fn(rows[a]) for a in ("v2", "byo")) + " |")
+        print(f"| {name} | " + " | ".join(cell(fn, rows[a]) for a in ("v2", "byo")) + " |")
 
     mline("GTT peak delta (GiB)", lambda r: f"{r['gtt_peak_delta_bytes'] / GIB:.1f}")
     mline("Container cgroup after load / end (GiB)", lambda r: f"{r['mem_after_load']['cgroup']['current_bytes'] / GIB:.1f} / {r['mem_end']['cgroup']['current_bytes'] / GIB:.1f}")

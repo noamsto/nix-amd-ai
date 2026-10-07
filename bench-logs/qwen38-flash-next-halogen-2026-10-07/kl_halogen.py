@@ -93,7 +93,7 @@ def positions_per_seq(meta, data, n_ctx, n_chunk):
     return per
 
 
-def compare(ref, dump, chunks=0, estimator_check=False):
+def compare(ref, dump, chunks=0):
     toks, n_ctx, n_vocab = read_ref_header(ref)
     n_chunk = len(toks)
     meta, data = read_href(dump)

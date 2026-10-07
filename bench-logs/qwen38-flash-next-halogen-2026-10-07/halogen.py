@@ -16,10 +16,13 @@ speculation on and off, logprobs exposure). Exit: 0 ok, 1 row error, 2 foreign b
 import argparse
 import base64
 import contextlib
+import ctypes
+import http.client
 import importlib.util
 import json
 import os
 import re
+import select
 import signal
 import socket
 import subprocess
@@ -30,7 +33,6 @@ import time
 import types
 import urllib.error
 import urllib.request
-import uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 _spec = importlib.util.spec_from_file_location(
@@ -43,7 +45,9 @@ PODMAN = os.environ.get("PODMAN", "podman")
 LABEL = "bench=halogen258"
 CONTAINER_PORT = 8731
 GIB = 1 << 30
+TEARDOWN_S = 60
 containers = []  # names of live containers, for the signal handler
+loaders = []  # memory-holder child processes, killed first by the signal handler
 
 
 def podman(*args, **kw):
@@ -51,7 +55,8 @@ def podman(*args, **kw):
 
 
 def hygiene_args(name, models):
-    """Everything the closed image gets: the two GPU nodes, a read-only model mount, a loopback-only port."""
+    """Everything the closed image gets: the two GPU nodes, a read-only model mount, host IPC (its documented run line;
+    with it the container can read and write the host's /dev/shm) and its supplementary groups. No other capability."""
     return ["--rm", "--name", name, "--label", LABEL,
             "--device", "/dev/kfd", "--device", "/dev/dri", "--group-add", "keep-groups",
             "--ipc=host", "--ulimit", "memlock=-1:-1", "-v", f"{models}:/models:ro"]
@@ -68,6 +73,16 @@ def ensure_offline_network():
         made = podman("network", "create", "--internal", OFFLINE_NETWORK)
         if made.returncode:
             raise grid.RowError(f"cannot create the internal network: {made.stderr.strip()[:300]}")
+    internal = podman("network", "inspect", "-f", "{{.Internal}}", OFFLINE_NETWORK).stdout.strip()
+    if internal != "true":
+        raise grid.RowError(f"network {OFFLINE_NETWORK} exists but is not --internal")
+
+
+def check_env(items):
+    """-e NAME without a value would copy that variable from the host; only HALOGEN_*=value settings are passed on."""
+    for kv in items:
+        if not re.fullmatch(r"HALOGEN_[A-Z0-9_]+=.*", kv):
+            raise grid.RowError(f"--env {kv!r}: only HALOGEN_NAME=value settings are accepted")
 
 
 def run_args(a, name):
@@ -81,18 +96,23 @@ def run_args(a, name):
 
 def mode_args(a, name, mode, extra):
     scratch = ["-v", f"{a.scratch}:/ppl"] if getattr(a, "scratch", None) else []
-    return ["run", *hygiene_args(name, a.models), *scratch, "-e", f"HALOGEN_CHECKPOINT=/models/{a.checkpoint}",
+    ids = ["-v", f"{a.ids}:/ids.bin:ro"] if getattr(a, "ids", None) else []
+    return ["run", *hygiene_args(name, a.models), *scratch, *ids, "-e", f"HALOGEN_CHECKPOINT=/models/{a.checkpoint}",
             *[x for kv in a.env for x in ("-e", kv)], a.image, mode, *extra]
 
 
 def teardown(name):
-    """Kill and wait until the container is gone; a container left holding GPU memory is what wedges amdgpu."""
+    """Kill and wait until the container is gone; a container left holding GPU memory is what wedges amdgpu.
+    Raises when it is still listed after 60 s or `podman ps` itself fails: a row must not report success then."""
     podman("kill", name)
     podman("rm", "-f", name)
-    deadline = time.time() + 30
-    while time.time() < deadline:
-        if not podman("ps", "-aq", "--filter", f"name=^{name}$").stdout.strip():
+    deadline = time.time() + TEARDOWN_S
+    while True:
+        listed = podman("ps", "-aq", "--filter", f"name=^{name}$")
+        if listed.returncode == 0 and not listed.stdout.strip():
             break
+        if time.time() > deadline:
+            raise grid.RowError(f"container {name} is still present after teardown (podman ps rc {listed.returncode})")
         time.sleep(0.5)
     if name in containers:
         containers.remove(name)
@@ -103,11 +123,22 @@ def teardown_all():
         teardown(name)
 
 
+def kill_loaders():
+    for p in list(loaders):
+        p.kill()
+        p.wait()
+        loaders.remove(p)
+
+
 def _on_signal(sig, _frame):
-    for name in list(containers):  # kill first, all of them: run.sh follows its SIGTERM with SIGKILL after 5 s
+    # kill first and without waiting: run.sh follows its SIGTERM with SIGKILL after 5 s
+    kill_loaders()
+    for name in list(containers):
         podman("kill", name)
-    teardown_all()
-    sys.exit(143)
+    try:
+        teardown_all()
+    finally:
+        sys.exit(143)
 
 
 def cgroup_dir(pid):
@@ -136,7 +167,8 @@ def cgroup_mem(pid):
 
 @contextlib.contextmanager
 def mem_watch(floor_gib, name):
-    """Track the lowest MemAvailable; below the floor kill the container (a request then fails) and say so."""
+    """Track the lowest MemAvailable; below the floor kill the container (a request then fails) and say so.
+    server() starts it before the model loads, the phase where host memory grows fastest."""
     state = {"min_avail_kb": None, "breach": False}
     stop = threading.Event()
 
@@ -194,19 +226,27 @@ def kfd_check():
 
 def is_loopback(addr):
     host = addr.rsplit(":", 1)[0].strip("[]")
-    return host.startswith("127.") or host in ("::1", "*", "0.0.0.0", "::", "")
+    return host == "127.0.0.1" or host in ("::1", "*", "0.0.0.0", "::", "")
 
 
 @contextlib.contextmanager
 def egress_watch():
-    """Sample `ss -tunp` about once a second and keep every non-loopback peer of the passt/pasta process (the host side
-    of the container's network). Hostnames are not visible here; DNS shows as a flow to the host's resolver."""
+    """Sample `ss -tunp` about once a second and keep every connected non-loopback peer of any passt/pasta process
+    (the host side of container networks; other containers of this user would show too). Blind spots: flows shorter than
+    a sample, unconnected UDP sockets, ICMP, hostnames. The result is "sampler_failed" if `ss` could not be read."""
     seen = {}
     stop = threading.Event()
 
     def sample():
         while not stop.is_set():
-            out = subprocess.run(["ss", "-tunpH"], capture_output=True, text=True).stdout
+            try:
+                ran = subprocess.run(["ss", "-tunpH"], capture_output=True, text=True)
+            except OSError:
+                seen["sampler_failed"] = 1
+                return
+            if ran.returncode:
+                seen["sampler_failed"] = 1
+            out = ran.stdout
             for line in out.splitlines():
                 cols = line.split()
                 if len(cols) < 6 or not ("passt" in line or "pasta" in line):
@@ -236,9 +276,12 @@ OFFLINE_PROBE = ("import socket,sys\nr={}\n"
 def offline_probe(name):
     out = podman("exec", name, "python3", "-c", OFFLINE_PROBE)
     try:
-        return json.loads(out.stdout.strip().splitlines()[-1])
+        result = json.loads(out.stdout.strip().splitlines()[-1])
     except (ValueError, IndexError):
-        return {"error": (out.stdout + out.stderr)[-300:]}
+        raise grid.RowError(f"offline probe did not run: {(out.stdout + out.stderr)[-300:]}") from None
+    if any(not v.startswith("failed") for v in result.values()):
+        raise grid.RowError(f"outbound traffic worked on the offline network: {result}")
+    return result
 
 
 def http_get(port, path, timeout=30):
@@ -249,28 +292,33 @@ def http_get(port, path, timeout=30):
 @contextlib.contextmanager
 def server(a, log):
     name = f"halogen258-{re.sub(r'[^A-Za-z0-9_.-]', '-', a.label)}-{os.getpid()}"
+    check_env(a.env)
     if getattr(a, "offline", False):
         ensure_offline_network()
+    containers.append(name)  # before `podman run`: a signal while it starts must still find the name
     started = podman(*run_args(a, name))
     if started.returncode:
+        teardown(name)
         raise grid.RowError(f"podman run failed: {started.stderr.strip()[:500]}")
-    containers.append(name)
     try:
-        pid = int(podman("inspect", "-f", "{{.State.Pid}}", name).stdout)
-        deadline = time.time() + a.ready_s
-        while True:
-            if podman("inspect", "-f", "{{.State.Running}}", name).stdout.strip() != "true":
-                raise grid.RowError("container exited before becoming ready")
-            try:
-                status, _ = http_get(a.port, "/health", timeout=5)
-                if status == 200:
-                    break
-            except (OSError, urllib.error.URLError):
-                pass
-            if time.time() > deadline:
-                raise grid.RowError(f"not ready after {a.ready_s} s")
-            time.sleep(2)
-        yield pid, name
+        with mem_watch(a.floor_gib, name) as watch:
+            pid = int(podman("inspect", "-f", "{{.State.Pid}}", name).stdout)
+            deadline = time.time() + a.ready_s
+            while True:
+                if watch["breach"]:
+                    raise grid.MemError(f"MemAvailable fell below {a.floor_gib} GiB while loading; container killed")
+                if podman("inspect", "-f", "{{.State.Running}}", name).stdout.strip() != "true":
+                    raise grid.RowError("container exited before becoming ready")
+                try:
+                    status, _ = http_get(a.port, "/health", timeout=5)
+                    if status == 200:
+                        break
+                except (OSError, urllib.error.URLError, http.client.HTTPException):
+                    pass
+                if time.time() > deadline:
+                    raise grid.RowError(f"not ready after {a.ready_s} s")
+                time.sleep(2)
+            yield pid, name, watch
     except BaseException:
         tail = podman("logs", "--tail", "120", name)
         log.write(tail.stdout + tail.stderr)
@@ -478,6 +526,17 @@ def base_row(a, load_flag):
             "loadavg_start": round(os.getloadavg()[0], 2), "load_flag": load_flag}
 
 
+@contextlib.contextmanager
+def breach_as_error(watch, floor_gib):
+    """A request failing because the watcher killed the container is a floor breach (exit 3), not a request error."""
+    try:
+        yield
+    except (grid.RowError, OSError, http.client.HTTPException) as err:
+        if watch["breach"] and not isinstance(err, grid.MemError):
+            raise grid.MemError(f"MemAvailable fell below {floor_gib} GiB; container killed ({err})") from err
+        raise
+
+
 def run_row(a, log):
     load_flag = probe.gate(a, "")
     with open(a.cache, encoding="utf-8") as f:
@@ -490,7 +549,7 @@ def run_row(a, log):
     gtt0, vram0 = grid.gpu_mem()
     t0 = time.time()
     with probe.gtt_peak(gtt0) as peak, probe.loadavg_peak() as load, egress_watch() as egress:
-        with server(a, log) as (pid, name), mem_watch(a.floor_gib, name) as watch:
+        with server(a, log) as (pid, name, watch), breach_as_error(watch, a.floor_gib):
             row["load_s"] = round(time.time() - t0, 1)
             if a.offline:
                 row["offline_probe"] = offline_probe(name)
@@ -516,34 +575,40 @@ def run_row(a, log):
     return row
 
 
+def die_with_parent():
+    ctypes.CDLL("libc.so.6").prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG: the holder must not outlive its row
+
+
 def hold_memory(gib):
     """Anonymous memory held and touched by a child process, so it is the child's RSS and not ours."""
     code = ("import sys,time;n=int(sys.argv[1]);b=bytearray(n<<30);"
             "[b.__setitem__(slice(i,i+4096),b'x'*4096) for i in range(0,len(b),4096)];print('held',flush=True);"
             "time.sleep(86400)")
-    return subprocess.Popen([sys.executable, "-c", code, str(gib)], stdout=subprocess.PIPE, text=True)
+    p = subprocess.Popen([sys.executable, "-c", code, str(gib)], stdout=subprocess.PIPE, text=True,
+                         preexec_fn=die_with_parent)
+    loaders.append(p)
+    return p
+
+
+def wait_held(loader, watch, timeout_s=600):
+    """True once the holder printed `held`; False on timeout, holder exit or a floor breach (polled, never blocking)."""
+    deadline = time.time() + timeout_s
+    while time.time() < deadline and not watch["breach"] and loader.poll() is None:
+        if select.select([loader.stdout], [], [], 1)[0]:
+            return loader.stdout.readline().startswith("held")
+    return False
 
 
 def run_cotenant(a, log):
     load_flag = probe.gate(a, "")
     row = base_row(a, load_flag)
     gtt0, vram0 = grid.gpu_mem()
-    loader = None
     try:
-        with server(a, log) as (pid, name), mem_watch(a.floor_gib, name) as watch:
+        with server(a, log) as (pid, name, watch), breach_as_error(watch, a.floor_gib):
             row["mem_after_load"] = snapshot(pid, gtt0, vram0)
             row["mem_available_before_load_kb"] = grid.mem_available_kb()
             loader = hold_memory(a.load_gib)
-            held = False
-            deadline = time.time() + 600
-            while time.time() < deadline and not watch["breach"]:
-                if loader.poll() is not None:
-                    break
-                if loader.stdout.readable():
-                    line = loader.stdout.readline()
-                    if line.startswith("held"):
-                        held = True
-                        break
+            held = wait_held(loader, watch)
             row["load_held"] = held
             row["mem_with_load"] = snapshot(pid, gtt0, vram0)
             e = types.SimpleNamespace(port=a.port, engine="halogen",
@@ -557,18 +622,17 @@ def run_cotenant(a, log):
             row["min_mem_available_kb"] = watch["min_avail_kb"]
             row["floor_breached"] = watch["breach"]
     finally:
-        if loader is not None:
-            loader.kill()
-            loader.wait()
+        kill_loaders()
     gtt, _ = grid.gpu_mem()
     row["gtt_after_stop_delta_bytes"] = None if gtt0 is None or gtt is None else gtt - gtt0
-    if row.get("floor_breached"):
-        row["error"] = "MemAvailable fell below the floor; container killed"
+    if not row.get("load_held"):
+        row["error"] = "the memory holder never reached its size"
     return row
 
 
 def run_ppl(a, log):
     load_flag = probe.gate(a, "")
+    check_env(a.env)
     name = f"halogen258-ppl-{os.getpid()}"
     containers.append(name)
     gtt0, _ = grid.gpu_mem()
@@ -579,14 +643,16 @@ def run_ppl(a, log):
     finally:
         teardown(name)
     row = {**base_row(a, load_flag), "mode": "ppl", "rc": proc.returncode, "wall_s": round(time.time() - t0, 1),
-           "gtt_peak_delta_bytes": peak["bytes"], "min_mem_available_kb": watch["min_avail_kb"]}
-    if proc.returncode:
+           "gtt_peak_delta_bytes": peak["bytes"], "min_mem_available_kb": watch["min_avail_kb"],
+           "floor_breached": watch["breach"], "stderr_tail": proc.stderr[-1500:]}
+    if watch["breach"]:
+        row["error"] = f"MemAvailable fell below {a.floor_gib} GiB; container killed"
+    elif proc.returncode:
         row["error"] = f"ppl exited {proc.returncode}"
-        row["stderr_tail"] = proc.stderr[-1500:]
-        return row
-    with open(a.out, "w") as f:
-        f.write(proc.stdout)
-    row["stdout_bytes"] = len(proc.stdout)
+    else:
+        with open(a.out, "w") as f:
+            f.write(proc.stdout)
+        row["stdout_bytes"] = len(proc.stdout)
     return row
 
 
@@ -614,7 +680,8 @@ def build_parser():
         if name == "cotenant":
             p.add_argument("--load-gib", type=int, required=True)
         if name == "ppl":
-            p.add_argument("--scratch", required=True, help="writable host directory, /ppl in the container")
+            p.add_argument("--scratch", required=True, help="writable host directory for outputs, /ppl in the container")
+            p.add_argument("--ids", required=True, help="token ids file, mounted read-only at /ids.bin")
             p.add_argument("ppl_args", nargs=argparse.REMAINDER, help="after --: arguments for the ppl mode")
     return ap
 
@@ -633,22 +700,20 @@ def main(argv=None):
     for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
         signal.signal(sig, _on_signal)
     runner = {"row": run_row, "cotenant": run_cotenant, "ppl": run_ppl}[a.cmd]
+    row_file = a.out + ".row.json" if a.cmd == "ppl" else a.out
     with tempfile.TemporaryFile(mode="w+", errors="replace") as log:
         try:
             result = runner(a, log)
-        except (grid.RowError, OSError) as err:
+            code = 1 if "error" in result else 0
+        except Exception as err:  # every failure ends as one JSON row with the log tail, never a bare traceback
             log.seek(0)
-            result = {"error": str(err), "label": a.label, "server_tail": log.read()[-4000:]}
+            result = {"error": str(err) if isinstance(err, (grid.RowError, OSError)) else repr(err), "label": a.label,
+                      "server_tail": log.read()[-4000:]}
             code = {grid.BusyError: 2, grid.MemError: 3, probe.LoadError: 4}.get(type(err), 1)
-            with open(a.out, "w") as f:
-                json.dump(result, f)
-            print(json.dumps(result))
-            return code
-    if a.cmd != "ppl":
-        with open(a.out, "w") as f:
-            json.dump(result, f)
+    with open(row_file, "w") as f:
+        json.dump(result, f)
     print(json.dumps({k: v for k, v in result.items() if k in ("label", "error", "rc", "wall_s")}))
-    return 1 if "error" in result else 0
+    return code
 
 
 if __name__ == "__main__":

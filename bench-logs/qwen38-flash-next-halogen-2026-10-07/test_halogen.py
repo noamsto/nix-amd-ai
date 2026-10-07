@@ -13,12 +13,14 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
-FAKE_PODMAN = '#!/bin/sh\necho "$@" >> "$FAKE_PODMAN_LOG"\ncase "$1" in ps) ;; esac\n'
+FAKE_PODMAN = '#!/bin/sh\necho "$@" >> "$FAKE_PODMAN_LOG"\ncase "$1" in ps) printf "%s" "${FAKE_PS_OUT:-}" ;; esac\ncase "$1$2" in networkinspect) echo "${FAKE_INTERNAL:-true}" ;; esac\n'
 os.environ["PODMAN"] = os.path.join(tempfile.mkdtemp(), "podman")
 with open(os.environ["PODMAN"], "w") as f:
     f.write(FAKE_PODMAN)
 os.chmod(os.environ["PODMAN"], os.stat(os.environ["PODMAN"]).st_mode | stat.S_IEXEC)
 import halogen  # noqa: E402
+
+REAL_PODMAN = halogen.podman
 
 
 def args(**kw):
@@ -68,6 +70,67 @@ class Teardown(unittest.TestCase):
             self.assertIn(f"kill halogen258-{n}", calls)
             self.assertIn(f"rm -f halogen258-{n}", calls)
         self.assertEqual(halogen.containers, [])
+
+
+class Guards(unittest.TestCase):
+    def setUp(self):
+        os.environ["FAKE_PODMAN_LOG"] = os.path.join(tempfile.mkdtemp(), "calls")
+
+    def test_env_must_be_halogen_name_value(self):
+        halogen.check_env(["HALOGEN_CTX=1", "HALOGEN_X="])
+        for bad in ("HF_TOKEN", "HALOGEN_CTX", "PATH=/x", "halogen_ctx=1"):
+            with self.assertRaises(halogen.grid.RowError):
+                halogen.check_env([bad])
+
+    def test_teardown_raises_when_the_container_stays(self):
+        os.environ["FAKE_PS_OUT"] = "abc123"
+        halogen.TEARDOWN_S = 1
+        halogen.containers[:] = ["halogen258-x"]
+        try:
+            with self.assertRaises(halogen.grid.RowError):
+                halogen.teardown("halogen258-x")
+        finally:
+            del os.environ["FAKE_PS_OUT"]
+            halogen.TEARDOWN_S = 60
+            halogen.containers[:] = []
+
+    def test_offline_network_must_be_internal(self):
+        os.environ["FAKE_INTERNAL"] = "false"
+        try:
+            with self.assertRaises(halogen.grid.RowError):
+                halogen.ensure_offline_network()
+        finally:
+            del os.environ["FAKE_INTERNAL"]
+        halogen.ensure_offline_network()
+
+    def test_offline_probe_fails_on_any_success_or_no_output(self):
+        for out, ok in (('{"a": "failed: OSError"}', True), ('{"a": "SUCCEEDED"}', False), ("", False)):
+            halogen.podman = lambda *a, out=out, **k: types.SimpleNamespace(stdout=out, stderr="", returncode=0)
+            try:
+                if ok:
+                    self.assertEqual(halogen.offline_probe("n"), {"a": "failed: OSError"})
+                else:
+                    with self.assertRaises(halogen.grid.RowError):
+                        halogen.offline_probe("n")
+            finally:
+                halogen.podman = REAL_PODMAN
+
+    def test_wait_held_polls_and_stops_on_breach(self):
+        loader = halogen.subprocess.Popen(
+            [sys.executable, "-c", "import time;print('held',flush=True);time.sleep(30)"],
+            stdout=halogen.subprocess.PIPE, text=True)
+        try:
+            self.assertTrue(halogen.wait_held(loader, {"breach": False}, 10))
+        finally:
+            loader.kill()
+            loader.wait()
+        silent = halogen.subprocess.Popen([sys.executable, "-c", "import time;time.sleep(30)"],
+                                          stdout=halogen.subprocess.PIPE, text=True)
+        try:
+            self.assertFalse(halogen.wait_held(silent, {"breach": True}, 10))
+        finally:
+            silent.kill()
+            silent.wait()
 
 
 class Fake(BaseHTTPRequestHandler):
