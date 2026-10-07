@@ -36,6 +36,7 @@ def post(P, e, body):
     t_send = time.perf_counter()
     t_first = t_last = None
     stamps, usage, text, reasoning, finish, calls = [], {}, [], [], None, 0
+    called = {}
     for chunk in P.sse(e.port, "/v1/chat/completions", body):
         now = time.perf_counter()
         usage = chunk.get("usage") or usage
@@ -47,6 +48,10 @@ def post(P, e, body):
                 t_last = now
                 stamps.append(now - t_send)
                 calls += bool(d.get("tool_calls"))
+                for tc in d.get("tool_calls") or []:
+                    slot = called.setdefault(tc.get("index", 0), {"name": "", "arguments": ""})
+                    slot["name"] += (tc.get("function") or {}).get("name") or ""
+                    slot["arguments"] += (tc.get("function") or {}).get("arguments") or ""
             text.append(d.get("content") or "")
             reasoning.append(d.get("reasoning_content") or "")
             finish = ch.get("finish_reason") or finish
@@ -60,7 +65,8 @@ def post(P, e, body):
     return {"ttft_s": t_first - t_send, "wall_s": t_end - t_send, "gen_s": gen, "completion_tokens": n,
             "prompt_tokens": usage["prompt_tokens"], "decode_tps": (n - 1) / gen if n > 1 else None,
             "finish": finish, "text": "".join(text), "reasoning_chars": len("".join(reasoning)), "stamps": stamps,
-            "tool_chunks": calls}
+            "tool_chunks": calls, "called": [{"name": v["name"], "arguments": v["arguments"][:160]}
+                                             for v in called.values()]}
 
 
 def guarded(fn, *a, **kw):
@@ -444,8 +450,10 @@ def run_image(e, c, P):
             off = t_img - t_text  # the image's send time on the text request's clock
             enc = None
             if w:
+                text_end = rt["wall_s"]
                 lo, hi = off + w["start_s"], off + w["end_s"]
-                enc = {"encode_s": w["encode_s"], "cpu_s": w["cpu_s"], "text_tps_during_encode":
+                enc = {"encode_s": w["encode_s"], "cpu_s": w["cpu_s"], "encode_start_on_text_clock_s": round(lo, 1),
+                       "text_ended_on_text_clock_s": round(text_end, 1), "text_tps_during_encode":
                        rate_in(rt["stamps"], rt["completion_tokens"], lo, hi),
                        "text_tps_before": rate_in(rt["stamps"], rt["completion_tokens"], max(rt["ttft_s"], lo - 6), lo),
                        "text_tps_after": rate_in(rt["stamps"], rt["completion_tokens"], hi, hi + 6)}
@@ -453,6 +461,27 @@ def run_image(e, c, P):
                                       "text_decode_tps": round(rt["decode_tps"], 2), "encode": enc,
                                       "image_send_after_text_s": round(off, 1),
                                       "text_wall_s": round(rt["wall_s"], 1)})
+        # the image first, a text request 3 s later: does the text wait for the encode?
+        out["image_first"] = []
+        for _ in range(2):
+            img = tagged_png(png, uuid.uuid4().hex)
+            holder = {}
+            t_img = time.perf_counter()
+
+            def run_image_req():
+                holder["img"] = post(P, e, image_body(img, q, uuid.uuid4(), 64))
+
+            th = threading.Thread(target=run_image_req)
+            th.start()
+            time.sleep(3)
+            t_text = time.perf_counter()
+            rt = post(P, e, text_request(600))
+            th.join()
+            ri = holder["img"]
+            out["image_first"].append({
+                "image_ttft_s": round(ri["ttft_s"], 2), "text_sent_after_image_s": round(t_text - t_img, 1),
+                "text_ttft_s": round(rt["ttft_s"], 2), "text_decode_tps": round(rt["decode_tps"], 2),
+                "encode_window": watch.window(t_img, t_img + ri["wall_s"])})
     for r in out["text_alone"]:
         r.pop("t0", None)
     return out
@@ -476,7 +505,7 @@ def judge(r):
     t = r["text"].rstrip()
     done = t.endswith((".", "!", "?", "`", ")", "*", ":")) and t.count("```") % 2 == 0
     return {"finish": r["finish"], "completion_tokens": r["completion_tokens"], "chars": len(t),
-            "literal_tag_in_text": t.count(TAG), "spurious_tool_call": r["tool_chunks"] > 0 or r["finish"] == "tool_calls",
+            "literal_tag_in_text": t.count(TAG), "spurious_tool_call": r["tool_chunks"] > 0 or r["finish"] == "tool_calls", "calls": r["called"],
             "looks_truncated": not done or r["completion_tokens"] < 40, "tail": t[-100:]}
 
 
