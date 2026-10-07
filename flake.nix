@@ -763,6 +763,8 @@
               EXTRA_REJECTED = strataRejected {extraArgs = ["--expert-cache" "auto"];};
               NO_MMPROJ_REJECTED = strataRejected {vision.mmproj = inputs.nixpkgs.lib.mkForce null;};
               MAXCTX_REJECTED = strataRejected {extraArgs = ["--max-context" "4096"];};
+              DEFAULTS = (strataEvalHost {}).config.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
+              CUSTOM_MODELS = builtins.toJSON (strataEvalHost {}).config.hardware.amd-npu.lemonade.customModels;
             } ''
               check() {
                 printf '%s' "$1" | jq -e "$2" >/dev/null \
@@ -784,6 +786,17 @@
               [ "$MAXCTX_REJECTED" = 1 ] || { echo "extraArgs --max-context was accepted"; exit 1; }
               [ "$NO_MMPROJ_REJECTED" = 1 ] || { echo "vision without mmproj was accepted"; exit 1; }
               [ -n "$TOPLEVEL" ] || { echo "option-on host did not evaluate"; exit 1; }
+              # The native strata recipe: its bin key is seeded, global_timeout
+              # stays 0 (the backend carries its own readiness timeout), the ds4
+              # section is gone, and the custom model names the strata recipe.
+              jq -e '.global_timeout == 0' "$DEFAULTS" >/dev/null \
+                || { echo "strata forced global_timeout off 0"; exit 1; }
+              jq -e 'has("ds4") | not' "$DEFAULTS" >/dev/null \
+                || { echo "ds4 section is still seeded"; exit 1; }
+              jq -e '.strata.rocm_bin | startswith("/etc/lemonade/backends/")' "$DEFAULTS" >/dev/null \
+                || { echo "strata.rocm_bin missing from defaults"; exit 1; }
+              printf '%s' "$CUSTOM_MODELS" | jq -e '."Qwen3.8-Flash-Next-Strata".recipe == "strata"' >/dev/null \
+                || { echo "custom model does not use the strata recipe"; exit 1; }
               touch $out
             '';
 
@@ -1552,9 +1565,49 @@
                 nodes.machine = {
                   pkgs,
                   ...
-                }: {
+                }: let
+                  # A stub backend binary for the strata recipe: records the argv
+                  # lemond launched it with and answers the readiness probe, so the
+                  # recipe can be exercised with no GPU.
+                  stub = pkgs.writers.writePython3Bin "strata-stub" {flakeIgnore = ["E501"];} ''
+                    import http.server
+                    import json
+                    import os
+                    import sys
+
+
+                    def main():
+                        argv = sys.argv[1:]
+                        out = os.path.join(os.environ["RUNTIME_DIRECTORY"], "strata-argv.json")
+                        with open(out, "w") as f:
+                            json.dump(argv, f)
+
+                        port = int(argv[argv.index("--port") + 1])
+
+                        class Handler(http.server.BaseHTTPRequestHandler):
+                            def do_GET(self):
+                                if self.path == "/v1/models":
+                                    body = b'{"data":[]}'
+                                    self.send_response(200)
+                                    self.send_header("Content-Length", str(len(body)))
+                                    self.end_headers()
+                                    self.wfile.write(body)
+                                else:
+                                    self.send_response(404)
+                                    self.end_headers()
+
+                            def log_message(self, *args):
+                                pass
+
+                        http.server.ThreadingHTTPServer(("127.0.0.1", port), Handler).serve_forever()
+
+
+                    main()
+                  '';
+                in {
                   imports = [./modules/amd-npu.nix];
-                  environment.systemPackages = [pkgs.jq];
+                  environment.systemPackages = [pkgs.curl pkgs.jq];
+                  environment.etc."strata-stub".source = "${stub}/bin/strata-stub";
                   hardware.amd-npu = {
                     enable = true;
                     enableNPU = false;
@@ -1565,6 +1618,10 @@
                     lemonade = {
                       user = "tester";
                       settings.max_loaded_models = -1;
+                      # A GPU-less VM must not filter out the strata model by its
+                      # hardware support row; the recipe's own behavior is what the
+                      # second phase below checks.
+                      settings.disable_model_filtering = true;
                       # Hold lemond back so the stale config is in place before
                       # its first start; left to boot it would seed a fresh
                       # config, the one path that never exercises reconciliation.
@@ -1579,14 +1636,17 @@
                   machine.wait_for_unit("multi-user.target")
 
                   # A config as a pre-existing host holds it: one module-managed key
-                  # gone stale, one key only the user or web UI ever sets. The
-                  # user-only key is ctx_size rather than host/port because lemond
-                  # persists those two from its own flags after the hook has run
-                  # (main.cpp:82-99), so they would prove nothing here.
+                  # gone stale, one key only the user or web UI ever sets, and the
+                  # ds4.rocm_bin a previous generation seeded (whose /etc symlink
+                  # this one no longer defines). The user-only key is ctx_size rather
+                  # than host/port because lemond persists those two from its own
+                  # flags after the hook has run (main.cpp:82-99), so they would prove
+                  # nothing here.
                   machine.succeed("mkdir -p /home/tester/.config/lemonade")
                   machine.succeed(
                       "printf '%s' "
-                      "'{\"ctx_size\":8192,\"max_loaded_models\":1,\"llamacpp\":{\"args\":\"--stale\"}}'"
+                      "'{\"ctx_size\":8192,\"max_loaded_models\":1,\"llamacpp\":{\"args\":\"--stale\"},"
+                      "\"ds4\":{\"rocm_bin\":\"/etc/lemonade/backends/ds4-rocm\"}}'"
                       " > " + cfg
                   )
                   machine.succeed("chown -R tester:users /home/tester/.config")
@@ -1598,12 +1658,57 @@
                   machine.succeed("jq -e '.llamacpp.args == \"--flash-attn on\"' " + cfg)
                   machine.succeed("jq -e '.llamacpp.cpu_bin | startswith(\"/etc/lemonade/backends/\")' " + cfg)
                   machine.succeed("jq -e '.ctx_size == 8192' " + cfg)
+                  machine.succeed("jq -e '.ds4.rocm_bin == null' " + cfg)
                   machine.succeed("test $(stat -c %U " + cfg + ") = tester")
 
                   # No mode assertion: the same CLI-override save rewrites the file
                   # through a fresh ofstream + rename, resetting it to 0644 on every
                   # start. module-eval-lemonade-settings covers the hook's own
                   # mode handling, which is the part we control.
+
+                  # Second phase (AC2): a custom model with recipe = "strata"
+                  # must make lemond launch the binary named by strata.rocm_bin,
+                  # with no GPU. The stub is that binary.
+                  machine.succeed("systemctl stop lemond")
+                  machine.succeed("mkdir -p /home/tester/models")
+                  machine.succeed("truncate -s 1M /home/tester/models/dummy.gguf")
+                  machine.succeed(
+                      "jq '.[\"strata\"] = {\"rocm_bin\": \"/etc/strata-stub\"}' "
+                      + cfg + " > /tmp/strata-cfg.json && mv /tmp/strata-cfg.json " + cfg
+                  )
+                  machine.succeed(
+                      "printf '%s' '{\"strata-test\": {\"checkpoint\": "
+                      "\"/home/tester/models/dummy.gguf\", \"source\": \"local_path\", "
+                      "\"recipe\": \"strata\", \"labels\": [\"chat\"]}}' > "
+                      "/home/tester/.config/lemonade/user_models.json"
+                  )
+                  machine.succeed("chown -R tester:users /home/tester/models /home/tester/.config")
+
+                  machine.succeed("systemctl start lemond")
+                  machine.wait_for_unit("lemond.service")
+                  machine.wait_for_open_port(13305)
+                  machine.succeed("lemonade --port 13305 load user.strata-test")
+
+                  argv = "/run/lemond/strata-argv.json"
+                  machine.succeed(
+                      "jq -e 'index(\"-m\") as $i | .[$i+1] == \"/home/tester/models/dummy.gguf\"' " + argv
+                  )
+                  machine.succeed(
+                      "jq -e 'index(\"--host\") as $h | .[$h+1] == \"127.0.0.1\"' " + argv
+                  )
+                  machine.succeed(
+                      "jq -e 'index(\"--port\") as $p | (.[$p+1] | tonumber) > 0' " + argv
+                  )
+
+                  # A per-request strata_args must not override a flag the shim
+                  # consumes itself (its argparse is last-wins): the backend
+                  # rejects the reserved host/port/model/ctx flags before spawn.
+                  machine.succeed("lemonade --port 13305 unload user.strata-test")
+                  machine.fail(
+                      "curl -fsS -X POST http://127.0.0.1:13305/api/v1/load "
+                      "-H 'Content-Type: application/json' "
+                      "-d '{\"model_name\":\"user.strata-test\",\"strata_args\":\"--host 0.0.0.0\"}'"
+                  )
                 '';
               };
 

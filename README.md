@@ -426,7 +426,7 @@ The default is the stock `llama-cpp-rocm`, so existing hosts are unchanged; `roc
 
 ## Opt-in Strata backend (Strix Halo)
 
-[Strata](https://github.com/Niko1221/Strata) (pinned v0.1.40.2 `e8ca9af`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through lemonade's existing `ds4` recipe: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "DwarfStar4 (experimental)" recipe name. Measurements and the build are in [`bench-logs/qwen38-flash-next-strata-2026-10-06`](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md).
+[Strata](https://github.com/Niko1221/Strata) (pinned v0.1.40.2 `e8ca9af`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through a native `strata` recipe carried as a small patch in `pkgs/lemonade`: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "Strata (experimental)" recipe name. Because the recipe is its own, the `ds4` recipe stays free for a real DeepSeek V4 model. Measurements and the build are in [`bench-logs/qwen38-flash-next-strata-2026-10-06`](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md).
 
 ```nix
 hardware.amd-npu = {
@@ -452,9 +452,9 @@ The pack, the MTP draft and the mmproj are prepared once by hand; the bench READ
 
 **Memory.** About 67 GiB of GTT at 131072 context on halo (bench README). lemond counts loaded models per slot, not memory, so it will load Strata next to another large model if a slot is free: keep one LLM slot (`lemonade.settings.max_loaded_models`) or unload the resident model first. If a load fails, lemond evicts every loaded model, pinned ones included, and retries once.
 
-**Limits behind lemond.** While enabled, lemond's `ds4` recipe serves only this model: loading any other ds4 model (for example the registry's DeepSeek-V4-Flash) fails, and a failed load evicts every loaded model, as above. Images must be sent as `data:` URLs; file paths, `file://` URLs and http(s) URLs are refused (a request using one fails with a 400), since lemond forwards client requests as-is. Engine arguments set per model through lemond are limited to tuning flags (`--prefill`, `--spec`, `--spec-min-p`, `--mtp-q4`, `--kv`, `--lookup-chain`, `--vram-reserve-mib`).
+**Limits behind lemond.** Images must be sent as `data:` URLs; file paths, `file://` URLs and http(s) URLs are refused (a request using one fails with a 400), since lemond forwards client requests as-is. Engine arguments set per model through lemond are limited to tuning flags (`--prefill`, `--spec`, `--spec-min-p`, `--mtp-q4`, `--kv`, `--lookup-chain`, `--vram-reserve-mib`).
 
-**Timeout.** Enabling it sets lemond's `global_timeout` to 3600, because lemond's backend readiness wait uses it and 0 would mean no wait. That introduces a 1 h request cutoff where the module otherwise sets none; `lemonade.settings.global_timeout` still overrides it.
+**Timeout.** The `strata` backend carries its own fixed 1 h readiness timeout, so enabling Strata leaves lemond's `global_timeout` at 0 (no request cutoff) and `global_timeout` no longer changes the strata startup wait. vLLM still raises `global_timeout` to 3600 for its own startup wait.
 
 Unloading the model or stopping lemond ends the engine's whole process group within lemond's stop window.
 

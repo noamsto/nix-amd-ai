@@ -1,0 +1,287 @@
+--- a/CMakeLists.txt	2026-10-07 21:21:42.160451984 +0300
++++ b/CMakeLists.txt	2026-10-07 21:21:58.339616601 +0300
+@@ -190,6 +190,7 @@
+     "vllm|vllm"
+     "thenoise|thenoise"
+     "ds4|ds4"
++    "strata|strata"
+     "cloud|cloud"
+     "thinksound|thinksound"
+     "acestep|acestep"
+--- a/src/cpp/include/lemon/backends/strata/strata.h	1970-01-01 02:00:00.000000000 +0200
++++ b/src/cpp/include/lemon/backends/strata/strata.h	2026-10-07 21:21:54.721212418 +0300
+@@ -0,0 +1,50 @@
++#pragma once
++
++#include "lemon/backends/backend_descriptor.h"
++
++namespace lemon {
++namespace backends {
++namespace strata {
++
++// The strata backend descriptor (plain data). Strata (Niko1221/Strata) is a
++// Qwen3.8-Flash-Next engine for Strix Halo. Nix builds it against TheRock ROCm
++// and points strata.rocm_bin at a shim that starts the engine; lemonade spawns
++// the shim as its subprocess and proxies requests, exactly like the ds4
++// backend. Upstream publishes no binaries, so there is no managed install.
++inline const BackendDescriptor descriptor = {
++    /*recipe*/          "strata",
++    /*display_name*/    "Strata (experimental)",
++    /*binary*/          "strata-lemond-shim",
++    /*config_section*/  "",  // defaults to recipe
++    /*default_device*/  DEVICE_GPU,
++    /*slot_policy*/     SlotPolicy::Standard,
++    /*selectable_backend*/ false,  // rocm is the only variant; no option to declare
++    /*uses_ctx_size*/   true,
++    /*dynamic_models*/  false,
++    /*options*/ {
++        {"strata_args", "--strata-args", "", "ARGS",
++         "Custom arguments to pass to the Strata shim", "Strata Options"},
++    },
++    /*support*/ {
++        {"rocm", {"linux"}, {{"amd_gpu", {"gfx1151"}}}, "Strata shim for AMD Strix Halo"},
++    },
++    /*supported_modes*/ {"chat"},
++    /*required_checkpoints*/ {"main"},
++    /*default_capabilities*/ {},
++    /*experimental*/    true,
++    /*web_display_name*/ "",
++    /*rocm_channels*/   {},  // single rocm artifact, no stable/nightly channels
++    /*exposes_prometheus_metrics*/ false,
++    /*rocm_requires_cwsr_fix*/ true,
++    /*version_policy*/  VersionPolicy::Exact,
++    /*self_manages_downloads*/ false,
++    /*takes_args*/      true,
++    /*arg_variants*/    {},
++    /*bin_variants*/    {},
++    /*config_extra*/    nlohmann::json::object(),
++    /*streams_model_from_storage*/ true,
++};
++
++}  // namespace strata
++}  // namespace backends
++}  // namespace lemon
+--- a/src/cpp/include/lemon/backends/strata/strata_server.h	1970-01-01 02:00:00.000000000 +0200
++++ b/src/cpp/include/lemon/backends/strata/strata_server.h	2026-10-07 21:21:54.721212418 +0300
+@@ -0,0 +1,40 @@
++#pragma once
++
++#include "lemon/wrapped_server.h"
++#include "lemon/backends/backend_registry.h"
++#include "lemon/backends/backend_utils.h"
++#include <cstdint>
++
++namespace lemon {
++namespace backends {
++
++// Wraps the Strata shim (Niko1221/Strata on TheRock ROCm) as a lemonade
++// backend. The shim starts the Strata engine and exposes an OpenAI-compatible
++// HTTP server; lemonade spawns it as a subprocess and proxies requests, exactly
++// like the other LLM backends. There is no managed install: strata.rocm_bin is
++// pointed at the Nix-built shim.
++class StrataServer : public WrappedServer {
++public:
++    static InstallParams get_install_params(const std::string& backend, const std::string& version);
++    StrataServer(const std::string& log_level, ModelManager* model_manager,
++                 BackendManager* backend_manager);
++    ~StrataServer() override;
++
++    void load(const std::string& model_name, const ModelInfo& model_info,
++              const RecipeOptions& options, bool do_not_upgrade = false) override;
++    void unload() override;
++
++    json chat_completion(const json& request) override;
++    json completion(const json& request) override;
++    json responses(const json& request) override;
++};
++
++namespace strata {
++std::unique_ptr<WrappedServer> create(const BackendContext& ctx);
++const BackendSpec* spec();
++const BackendOps* ops();
++constexpr uint32_t capabilities() { return capability_mask_of<StrataServer>(); }
++}  // namespace strata
++
++}  // namespace backends
++}  // namespace lemon
+--- a/src/cpp/server/backends/strata/strata_server.cpp	1970-01-01 02:00:00.000000000 +0200
++++ b/src/cpp/server/backends/strata/strata_server.cpp	2026-10-07 21:39:16.155123188 +0300
+@@ -0,0 +1,178 @@
++#include "lemon/backends/strata/strata_server.h"
++#include "lemon/backends/strata/strata.h"
++#include "lemon/backends/backend_registry.h"
++#include "lemon/backends/backend_ops.h"
++#include "lemon/backends/backend_utils.h"
++#include "lemon/model_manager.h"
++#include "lemon/utils/custom_args.h"
++#include "lemon/utils/http_client.h"
++#include "lemon/utils/process_manager.h"
++#include <lemon/utils/aixlog.hpp>
++#include <filesystem>
++#include <set>
++#include <stdexcept>
++#include <vector>
++
++namespace fs = std::filesystem;
++using namespace lemon::utils;
++
++namespace lemon {
++namespace backends {
++
++// Strata loads a Qwen3.8-Flash-Next MoE, so its first /v1/models can trail a
++// long GGUF read. Pass the readiness wait explicitly instead of inheriting
++// HttpClient's global_timeout: that global stays 0 so llama.cpp requests keep
++// no request cutoff, and 0 here would mean "zero readiness attempts" and fail
++// the load instantly (see noamsto/nix-amd-ai#63).
++static constexpr long kStrataReadinessTimeoutSeconds = 3600;
++
++namespace {
++
++// Flags the shim consumes itself. Its argparse is last-wins, so a strata_args
++// token naming one of these would override Lemonade's own model/host/port or
++// the managed context instead of being rejected by the shim's tuning allow-list.
++const std::set<std::string>& reserved_custom_arg_flags() {
++    static const std::set<std::string> flags = {
++        "-m", "--model",
++        "--host", "--port",
++        "-c", "--ctx",
++    };
++    return flags;
++}
++
++}  // namespace
++
++// No managed install: Nix builds strata-lemond-shim and points strata.rocm_bin
++// at it, and load() never calls install_backend(). Keep this non-null spec so
++// the generic install/availability paths still resolve the external binary.
++InstallParams StrataServer::get_install_params(const std::string& backend, const std::string& version) {
++    (void)backend;
++    (void)version;
++    throw std::runtime_error(
++        "strata is not a managed backend; set strata.rocm_bin to the strata-lemond-shim path");
++}
++
++StrataServer::StrataServer(const std::string& log_level, ModelManager* model_manager,
++                           BackendManager* backend_manager)
++    : WrappedServer("strata-lemond-shim", log_level, model_manager, backend_manager) {
++}
++
++StrataServer::~StrataServer() {
++    unload();
++}
++
++void StrataServer::load(const std::string& model_name, const ModelInfo& model_info,
++                        const RecipeOptions& options, bool do_not_upgrade) {
++    (void)do_not_upgrade;  // nothing to install/upgrade: the binary is externally supplied
++
++    // The shim only serves the model its baked-in settings name, so resolve the
++    // same local GGUF the module registered, from either the HF-resolved path or
++    // a user_models.json absolute checkpoint.
++    std::string gguf_path = model_info.resolved_path("main");
++    if (gguf_path.empty() || !fs::exists(gguf_path)) {
++        const std::string checkpoint = model_info.checkpoint();
++        if (!checkpoint.empty() && fs::path(checkpoint).is_absolute() && fs::exists(checkpoint)) {
++            gguf_path = checkpoint;
++        }
++    }
++    if (gguf_path.empty() || !fs::exists(gguf_path)) {
++        throw std::runtime_error("strata: no local GGUF found for model '" + model_name +
++                                 "' (checkpoint: " + model_info.checkpoint() + ")");
++    }
++
++    // rocm is the only variant, so there is no backend option to read.
++    const std::string backend = "rocm";
++    device_type_ = DEVICE_GPU;
++
++    const std::string executable = BackendUtils::find_external_backend_binary("strata", backend);
++    if (executable.empty()) {
++        throw std::runtime_error(
++            "strata: strata.rocm_bin is not set (or is not a path); point it at strata-lemond-shim");
++    }
++
++    const int ctx_size = options.get_option("ctx_size");
++    const std::string strata_args = options.get_option("strata_args");
++
++    port_ = choose_port();
++
++    std::vector<std::string> args;
++    args.push_back("-m");
++    args.push_back(gguf_path);
++    args.push_back("--host");
++    args.push_back("127.0.0.1");
++    args.push_back("--port");
++    args.push_back(std::to_string(port_));
++    if (ctx_size > 0) {
++        args.push_back("-c");
++        args.push_back(std::to_string(ctx_size));
++    }
++
++    if (!strata_args.empty()) {
++        const std::string validation_error =
++            validate_custom_args(strata_args, reserved_custom_arg_flags());
++        if (!validation_error.empty()) {
++            throw std::invalid_argument("Invalid custom strata arguments:\n" + validation_error);
++        }
++        LOG(DEBUG, "Strata") << "Adding custom arguments: " << strata_args << std::endl;
++        std::vector<std::string> custom_args = parse_custom_args(strata_args);
++        args.insert(args.end(), custom_args.begin(), custom_args.end());
++    }
++
++    LOG(INFO, "Strata") << "Starting strata-lemond-shim (" << executable << ") for " << gguf_path
++                        << " on port " << port_ << std::endl;
++
++    const bool inherit_output = (log_level_ == "info") || (log_level_ == "debug");
++    set_process_handle(
++        ProcessManager::start_process(executable, args, "", inherit_output, true),
++        executable, args);
++
++    // The shim binds its port only after the engine has loaded the model, so
++    // first reachability means ready. /v1/models is the cheapest always-on route.
++    if (!wait_for_ready("/v1/models", kStrataReadinessTimeoutSeconds)) {
++        const ProcessHandle handle = consume_process_handle_for_cleanup();
++        if (has_process_handle(handle)) {
++            ProcessManager::stop_process(handle);
++        }
++        throw std::runtime_error("strata-lemond-shim failed to start within timeout");
++    }
++}
++
++void StrataServer::unload() {
++    stop_backend_watchdog();
++    const ProcessHandle handle = consume_process_handle_for_cleanup();
++    if (has_process_handle(handle)) {
++        LOG(INFO, "Strata") << "Stopping strata-lemond-shim" << std::endl;
++        ProcessManager::stop_process(handle);
++    }
++}
++
++json StrataServer::chat_completion(const json& request) {
++    return forward_request("/v1/chat/completions", request);
++}
++
++json StrataServer::completion(const json& request) {
++    return forward_request("/v1/completions", request);
++}
++
++json StrataServer::responses(const json& request) {
++    return forward_request("/v1/responses", request);
++}
++
++namespace strata {
++
++std::unique_ptr<WrappedServer> create(const BackendContext& ctx) {
++    return make_server<StrataServer>(ctx);
++}
++
++const BackendSpec* spec() {
++    return make_spec<StrataServer>(descriptor);
++}
++
++const BackendOps* ops() {
++    return default_backend_ops();
++}
++
++}  // namespace strata
++
++}  // namespace backends
++}  // namespace lemon
