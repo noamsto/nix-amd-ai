@@ -140,8 +140,9 @@
         };
       };
   };
+  strataServer = pkgs.callPackage ../pkgs/strata/lemond-server.nix {} strataPkg;
   strataShim = pkgs.callPackage ../pkgs/strata/lemond-shim.nix {} {
-    server = "${strataPkg}/bin/strata-server";
+    server = "${strataServer}/bin/strata-server";
     settings = strataSettings;
   };
 
@@ -922,7 +923,7 @@ in {
         enable = mkOption {
           type = types.bool;
           default = true;
-          description = "Serve image input through `strata-vision`. Requires `vision.mmproj`.";
+          description = "Serve image input through `strata-vision`. Requires `vision.mmproj`. Behind lemond, images must be sent as `data:` URLs.";
         };
 
         mmproj = mkOption {
@@ -936,7 +937,7 @@ in {
       extraArgs = mkOption {
         type = types.listOf types.str;
         default = [];
-        description = "Extra arguments appended to the Strata command line. `--expert-cache` is rejected; use `expertCache`.";
+        description = "Extra arguments appended to the Strata command line. `--expert-cache` and `--max-context` are rejected; use `expertCache` and `contextSize`.";
       };
 
       runConfig = mkOption {
@@ -1041,6 +1042,12 @@ in {
           !cfg.strata.enable
           || !(any (a: a == "--expert-cache" || lib.hasPrefix "--expert-cache=" a) cfg.strata.extraArgs);
         message = "hardware.amd-npu.strata.extraArgs must not contain --expert-cache; set strata.expertCache (an explicit count; Strata's `auto` is unsafe on unified memory).";
+      }
+      {
+        assertion =
+          !cfg.strata.enable
+          || !(any (a: a == "--max-context" || lib.hasPrefix "--max-context=" a) cfg.strata.extraArgs);
+        message = "hardware.amd-npu.strata.extraArgs must not contain --max-context; set strata.contextSize.";
       }
     ];
 

@@ -758,7 +758,8 @@
               TOPLEVEL = builtins.unsafeDiscardStringContext (strataEvalHost {}).config.system.build.toplevel.drvPath;
               AUTO_REJECTED = strataRejected {expertCache = "auto";};
               EXTRA_REJECTED = strataRejected {extraArgs = ["--expert-cache" "auto"];};
-              NO_MMPROJ_REJECTED = strataRejected {vision.mmproj = null;};
+              NO_MMPROJ_REJECTED = strataRejected {vision.mmproj = inputs.nixpkgs.lib.mkForce null;};
+              MAXCTX_REJECTED = strataRejected {extraArgs = ["--max-context" "4096"];};
             } ''
               check() {
                 printf '%s' "$1" | jq -e "$2" >/dev/null \
@@ -773,6 +774,7 @@
               check "$FAST_CONFIG" '.config.env.STRATA_PF_FUSED == "1"'
               [ "$AUTO_REJECTED" = 1 ] || { echo "expertCache = auto was accepted"; exit 1; }
               [ "$EXTRA_REJECTED" = 1 ] || { echo "extraArgs --expert-cache was accepted"; exit 1; }
+              [ "$MAXCTX_REJECTED" = 1 ] || { echo "extraArgs --max-context was accepted"; exit 1; }
               [ "$NO_MMPROJ_REJECTED" = 1 ] || { echo "vision without mmproj was accepted"; exit 1; }
               [ -n "$TOPLEVEL" ] || { echo "option-on host did not evaluate"; exit 1; }
               touch $out
@@ -809,24 +811,27 @@
               [ "$rc" = 2 ] || fail "model mismatch exited $rc, wanted 2"
               [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started on model mismatch"
 
-              # A caller cannot override the module's expert cache.
-              new_seen cache
-              rc=0
-              "$shim" -m "$model" --host 127.0.0.1 --port 1 --expert-cache 5 || rc=$?
-              [ "$rc" = 2 ] || fail "--expert-cache exited $rc, wanted 2"
-              [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started with --expert-cache"
+              # Engine arguments from lemond are limited to tuning flags.
+              for bad in "--expert-cache 5" "--native /x" "--max-context 8"; do
+                new_seen "bad-''${bad%% *}"
+                rc=0
+                # shellcheck disable=SC2086
+                "$shim" -m "$model" --host 127.0.0.1 --port 1 $bad || rc=$?
+                [ "$rc" = 2 ] || fail "$bad exited $rc, wanted 2"
+                [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started with $bad"
+              done
 
               # Happy path, then SIGTERM.
               new_seen happy
               LD_LIBRARY_PATH=/x "$shim" -m "$model" --host 127.0.0.1 --port 1 \
-                -c 4096 --ssd-streaming --foo &
+                -c 4096 --ssd-streaming --lookup-chain 3 &
               shim_pid=$!
               wait_for "$SEEN_DIR/child.pid" || fail "server never spawned its child"
               child=$(cat "$SEEN_DIR/child.pid")
               for _ in $(seq 50); do marker_alive && break; sleep 0.1; done
               marker_alive || fail "marker process is not running"
 
-              jq -e '.args | .[-3:] == ["--max-context", "4096", "--foo"]' \
+              jq -e '.args | .[-4:] == ["--max-context", "4096", "--lookup-chain", "3"]' \
                 "$SEEN_DIR/config.json" >/dev/null || fail "config args tail"
               jq -e '.args | index("--ssd-streaming") == null' \
                 "$SEEN_DIR/config.json" >/dev/null || fail "--ssd-streaming leaked into config"

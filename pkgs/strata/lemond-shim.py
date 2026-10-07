@@ -12,6 +12,9 @@ import time
 SETTINGS = "@settings@"
 SERVER = "@server@"
 
+# The engine parses last-wins and has file-writing flags, so only these pass through.
+TUNING_FLAGS = {"--prefill", "--spec", "--spec-min-p", "--mtp-q4", "--kv", "--lookup-chain", "--vram-reserve-mib"}
+
 PR_SET_PDEATHSIG = 1
 PR_SET_CHILD_SUBREAPER = 36
 
@@ -37,8 +40,8 @@ def parse_args(settings):
     if os.path.realpath(args.model) != os.path.realpath(settings["model"]):
         die(f"model {args.model} does not match the configured model {settings['model']}")
     for e in extra:
-        if e == "--expert-cache" or e.startswith("--expert-cache="):
-            die("--expert-cache is fixed by the module configuration")
+        if e.startswith("-") and e.split("=", 1)[0] not in TUNING_FLAGS:
+            die(f"{e.split('=', 1)[0]} is not allowed: engine arguments from lemond are limited to tuning flags")
     return args, extra
 
 
