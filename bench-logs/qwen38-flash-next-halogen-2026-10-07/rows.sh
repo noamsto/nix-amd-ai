@@ -107,8 +107,8 @@ exec_row() {
     [ "$pos" = last ] && keep=0
     label=$label-$(printf '%s %s %s' "$IMAGE" "$COMMON_ENV" "$arm_env" | sha256sum | cut -c1-6)
     if [ -e "$W/$label.ok" ]; then echo "skip: $label already complete" >&2; return; fi
-    assert_clean || exit 1
     wait_free
+    assert_clean || exit 1
     offline=1
     KEEP_OFFLINE=$keep OUT=$W/rows.jsonl EXEC_DEV=gpu TARGET=$target EXEC_LOG=$W/$label.log NEED_GIB=$need \
         EXEC_SWAP_LIMIT_GIB="${EXEC_SWAP_LIMIT_GIB:-8}" \
@@ -133,8 +133,8 @@ need_gib=${NEED_GIB_OVERRIDE:-$(awk -v b="$(du -Lb --apparent-size -c "$models"/
     'BEGIN { printf "%d", b / 1073741824 + 8 }')}
 case $stage in
 fit)
-    assert_clean || exit 1
     wait_free
+    assert_clean || exit 1
     FIT_CHECK_ONLY=1 OUT=$W/fit.jsonl EXEC_DEV=gpu TARGET=$target EXEC_LOG=$W/fit.log NEED_GIB=$need_gib "$D/run.sh" exec -- true
     ;;
 smoke)
@@ -171,7 +171,6 @@ ppl)
     # KL against #260's Q8_0 reference: Halogen's own top-128 dump over the reference's 64 x 2048 token ids, scored
     # with kl_halogen.py (second half of each chunk, as llama-perplexity does). The ids file is /ids in the container.
     mkdir -p "$W/ppl"
-    rm -f "${W:?}/ppl/halogen-$2.href" "${W:?}/ppl/halogen-$2.perpos" # outputs only; the ids file is a separate read-only mount
     exec_row last "$need_gib" "halogen-$2-ppl" ppl --scratch "$W/ppl" --ids "$IDS" -- "/models/$ckpt" --ids /ids.bin --seq 2048 --json \
         --ref-out "/ppl/halogen-$2.href" --per-pos "/ppl/halogen-$2.perpos"
     ;;

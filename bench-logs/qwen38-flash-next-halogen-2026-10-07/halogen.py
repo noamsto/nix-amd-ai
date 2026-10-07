@@ -95,8 +95,8 @@ def run_args(a, name):
 
 
 def mode_args(a, name, mode, extra):
-    scratch = ["-v", f"{a.scratch}:/ppl"] if getattr(a, "scratch", None) else []
-    ids = ["-v", f"{a.ids}:/ids.bin:ro"] if getattr(a, "ids", None) else []
+    scratch = ["-v", f"{os.path.abspath(a.scratch)}:/ppl"] if getattr(a, "scratch", None) else []
+    ids = ["-v", f"{os.path.abspath(a.ids)}:/ids.bin:ro"] if getattr(a, "ids", None) else []
     return ["run", *hygiene_args(name, a.models), *scratch, *ids, "-e", f"HALOGEN_CHECKPOINT=/models/{a.checkpoint}",
             *[x for kv in a.env for x in ("-e", kv)], a.image, mode, *extra]
 
@@ -131,7 +131,7 @@ def kill_loaders():
 
 
 def _on_signal(sig, _frame):
-    # kill first and without waiting: run.sh follows its SIGTERM with SIGKILL after 5 s
+    # kill first and without waiting: probe.py's exec watchdog follows its SIGTERM with SIGKILL after 5 s
     kill_loaders()
     for name in list(containers):
         podman("kill", name)
@@ -296,11 +296,12 @@ def server(a, log):
     if getattr(a, "offline", False):
         ensure_offline_network()
     containers.append(name)  # before `podman run`: a signal while it starts must still find the name
-    started = podman(*run_args(a, name))
-    if started.returncode:
-        teardown(name)
-        raise grid.RowError(f"podman run failed: {started.stderr.strip()[:500]}")
     try:
+        # inside the try: a signal while `podman run` is in flight kills the client, and the finally below then
+        # removes whatever container the client managed to create
+        started = podman(*run_args(a, name))
+        if started.returncode:
+            raise grid.RowError(f"podman run failed: {started.stderr.strip()[:500]}")
         with mem_watch(a.floor_gib, name) as watch:
             pid = int(podman("inspect", "-f", "{{.State.Pid}}", name).stdout)
             deadline = time.time() + a.ready_s
@@ -308,6 +309,8 @@ def server(a, log):
                 if watch["breach"]:
                     raise grid.MemError(f"MemAvailable fell below {a.floor_gib} GiB while loading; container killed")
                 if podman("inspect", "-f", "{{.State.Running}}", name).stdout.strip() != "true":
+                    if watch["breach"]:
+                        raise grid.MemError(f"MemAvailable fell below {a.floor_gib} GiB while loading; container killed")
                     raise grid.RowError("container exited before becoming ready")
                 try:
                     status, _ = http_get(a.port, "/health", timeout=5)
@@ -575,8 +578,14 @@ def run_row(a, log):
     return row
 
 
+LIBC = ctypes.CDLL("libc.so.6")  # resolved once: the fork child must not call the dynamic loader
+
+
 def die_with_parent():
-    ctypes.CDLL("libc.so.6").prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG: the holder must not outlive its row
+    parent = os.getppid()
+    LIBC.prctl(1, signal.SIGKILL)  # PR_SET_PDEATHSIG: the holder must not outlive its row
+    if os.getppid() != parent:  # the parent died before the prctl took effect
+        os._exit(1)
 
 
 def hold_memory(gib):
@@ -646,8 +655,8 @@ def run_ppl(a, log):
            "gtt_peak_delta_bytes": peak["bytes"], "min_mem_available_kb": watch["min_avail_kb"],
            "floor_breached": watch["breach"], "stderr_tail": proc.stderr[-1500:]}
     if watch["breach"]:
-        row["error"] = f"MemAvailable fell below {a.floor_gib} GiB; container killed"
-    elif proc.returncode:
+        raise grid.MemError(f"MemAvailable fell below {a.floor_gib} GiB; container killed")
+    if proc.returncode:
         row["error"] = f"ppl exited {proc.returncode}"
     else:
         with open(a.out, "w") as f:

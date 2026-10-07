@@ -11,8 +11,12 @@ GIB = 1 << 30
 def load(w, arm, stage):
     """The newest row file of a stage (rows.sh appends a short hash of the image and settings to its label)."""
     found = sorted(glob.glob(os.path.join(w, f"halogen-{arm}-{stage}*.row.json")), key=os.path.getmtime)
-    with open(found[-1]) as f:
-        return json.load(f)
+    for path in reversed(found):
+        with open(path) as f:
+            row = json.load(f)
+        if "error" not in row:
+            return row
+    raise SystemExit(f"no successful {arm} {stage} row in {w}")
 
 
 def cell(fn, row):
