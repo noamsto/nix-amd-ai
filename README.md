@@ -454,7 +454,7 @@ The pack, the MTP draft and the mmproj are prepared once by hand; the bench READ
 
 **Limits behind lemond.** Images must be sent as `data:` URLs; file paths, `file://` URLs and http(s) URLs are refused (a request using one fails with a 400), since lemond forwards client requests as-is. Engine arguments set per model through lemond are limited to tuning flags (`--prefill`, `--spec`, `--spec-min-p`, `--mtp-q4`, `--kv`, `--lookup-chain`, `--vram-reserve-mib`).
 
-**Timeout.** The `strata` backend carries its own 1 h readiness timeout, so enabling Strata leaves lemond's `global_timeout` at 0 (no request cutoff). vLLM still raises it to 3600 for its own startup wait; `lemonade.settings.global_timeout` overrides either.
+**Timeout.** The `strata` backend carries its own fixed 1 h readiness timeout, so enabling Strata leaves lemond's `global_timeout` at 0 (no request cutoff) and `global_timeout` no longer changes the strata startup wait. vLLM still raises `global_timeout` to 3600 for its own startup wait.
 
 Unloading the model or stopping lemond ends the engine's whole process group within lemond's stop window.
 

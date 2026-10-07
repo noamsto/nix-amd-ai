@@ -268,7 +268,16 @@
       config="$configDir/config.json"
       if [ -f "$config" ]; then
         tmp="$config.nix-reconcile"
-        if jq -s '.[0] * .[1]' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
+        # The merge never deletes keys, so a host from a generation that seeded
+        # ds4.rocm_bin keeps it, while this generation no longer defines the
+        # /etc symlink it named. Drop only that stale value, or a later real
+        # ds4 load fails validating a path that no longer exists.
+        if jq -s '
+          .[0] as $cfg | .[1] as $defaults |
+          ($cfg * $defaults) |
+          if (.ds4.rocm_bin // "") == "/etc/lemonade/backends/ds4-rocm"
+          then del(.ds4.rocm_bin) else . end
+        ' "$config" ${lemonadeDefaultsFile} >"$tmp"; then
           # lemond may have tightened the mode; rename would silently widen it back.
           chmod --reference="$config" "$tmp"
           mv "$tmp" "$config"

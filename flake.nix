@@ -1606,7 +1606,7 @@
                   '';
                 in {
                   imports = [./modules/amd-npu.nix];
-                  environment.systemPackages = [pkgs.jq];
+                  environment.systemPackages = [pkgs.curl pkgs.jq];
                   environment.etc."strata-stub".source = "${stub}/bin/strata-stub";
                   hardware.amd-npu = {
                     enable = true;
@@ -1636,14 +1636,17 @@
                   machine.wait_for_unit("multi-user.target")
 
                   # A config as a pre-existing host holds it: one module-managed key
-                  # gone stale, one key only the user or web UI ever sets. The
-                  # user-only key is ctx_size rather than host/port because lemond
-                  # persists those two from its own flags after the hook has run
-                  # (main.cpp:82-99), so they would prove nothing here.
+                  # gone stale, one key only the user or web UI ever sets, and the
+                  # ds4.rocm_bin a previous generation seeded (whose /etc symlink
+                  # this one no longer defines). The user-only key is ctx_size rather
+                  # than host/port because lemond persists those two from its own
+                  # flags after the hook has run (main.cpp:82-99), so they would prove
+                  # nothing here.
                   machine.succeed("mkdir -p /home/tester/.config/lemonade")
                   machine.succeed(
                       "printf '%s' "
-                      "'{\"ctx_size\":8192,\"max_loaded_models\":1,\"llamacpp\":{\"args\":\"--stale\"}}'"
+                      "'{\"ctx_size\":8192,\"max_loaded_models\":1,\"llamacpp\":{\"args\":\"--stale\"},"
+                      "\"ds4\":{\"rocm_bin\":\"/etc/lemonade/backends/ds4-rocm\"}}'"
                       " > " + cfg
                   )
                   machine.succeed("chown -R tester:users /home/tester/.config")
@@ -1655,6 +1658,7 @@
                   machine.succeed("jq -e '.llamacpp.args == \"--flash-attn on\"' " + cfg)
                   machine.succeed("jq -e '.llamacpp.cpu_bin | startswith(\"/etc/lemonade/backends/\")' " + cfg)
                   machine.succeed("jq -e '.ctx_size == 8192' " + cfg)
+                  machine.succeed("jq -e '.ds4.rocm_bin == null' " + cfg)
                   machine.succeed("test $(stat -c %U " + cfg + ") = tester")
 
                   # No mode assertion: the same CLI-override save rewrites the file
@@ -1694,6 +1698,16 @@
                   )
                   machine.succeed(
                       "jq -e 'index(\"--port\") as $p | (.[$p+1] | tonumber) > 0' " + argv
+                  )
+
+                  # A per-request strata_args must not override a flag the shim
+                  # consumes itself (its argparse is last-wins): the backend
+                  # rejects the reserved host/port/model/ctx flags before spawn.
+                  machine.succeed("lemonade --port 13305 unload user.strata-test")
+                  machine.fail(
+                      "curl -fsS -X POST http://127.0.0.1:13305/api/v1/load "
+                      "-H 'Content-Type: application/json' "
+                      "-d '{\"model_name\":\"user.strata-test\",\"strata_args\":\"--host 0.0.0.0\"}'"
                   )
                 '';
               };

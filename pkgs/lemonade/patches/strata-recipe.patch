@@ -105,8 +105,8 @@
 +}  // namespace backends
 +}  // namespace lemon
 --- a/src/cpp/server/backends/strata/strata_server.cpp	1970-01-01 02:00:00.000000000 +0200
-+++ b/src/cpp/server/backends/strata/strata_server.cpp	2026-10-07 21:21:54.721212418 +0300
-@@ -0,0 +1,155 @@
++++ b/src/cpp/server/backends/strata/strata_server.cpp	2026-10-07 21:39:16.155123188 +0300
+@@ -0,0 +1,178 @@
 +#include "lemon/backends/strata/strata_server.h"
 +#include "lemon/backends/strata/strata.h"
 +#include "lemon/backends/backend_registry.h"
@@ -118,6 +118,8 @@
 +#include "lemon/utils/process_manager.h"
 +#include <lemon/utils/aixlog.hpp>
 +#include <filesystem>
++#include <set>
++#include <stdexcept>
 +#include <vector>
 +
 +namespace fs = std::filesystem;
@@ -132,6 +134,22 @@
 +// no request cutoff, and 0 here would mean "zero readiness attempts" and fail
 +// the load instantly (see noamsto/nix-amd-ai#63).
 +static constexpr long kStrataReadinessTimeoutSeconds = 3600;
++
++namespace {
++
++// Flags the shim consumes itself. Its argparse is last-wins, so a strata_args
++// token naming one of these would override Lemonade's own model/host/port or
++// the managed context instead of being rejected by the shim's tuning allow-list.
++const std::set<std::string>& reserved_custom_arg_flags() {
++    static const std::set<std::string> flags = {
++        "-m", "--model",
++        "--host", "--port",
++        "-c", "--ctx",
++    };
++    return flags;
++}
++
++}  // namespace
 +
 +// No managed install: Nix builds strata-lemond-shim and points strata.rocm_bin
 +// at it, and load() never calls install_backend(). Keep this non-null spec so
@@ -199,6 +217,11 @@
 +    }
 +
 +    if (!strata_args.empty()) {
++        const std::string validation_error =
++            validate_custom_args(strata_args, reserved_custom_arg_flags());
++        if (!validation_error.empty()) {
++            throw std::invalid_argument("Invalid custom strata arguments:\n" + validation_error);
++        }
 +        LOG(DEBUG, "Strata") << "Adding custom arguments: " << strata_args << std::endl;
 +        std::vector<std::string> custom_args = parse_custom_args(strata_args);
 +        args.insert(args.end(), custom_args.begin(), custom_args.end());
