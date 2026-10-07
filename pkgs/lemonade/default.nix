@@ -49,6 +49,14 @@ in stdenv.mkDerivation {
   pname = "lemonade";
   inherit version src;
 
+  # Native `strata` recipe: registers a Strata shim backend so a custom model
+  # with `recipe = "strata"` starts the shim, instead of taking over the
+  # `ds4` recipe and its real DeepSeek V4 models. A patch file rather than an
+  # inline substituteInPlace because it adds three source files plus a
+  # LEMON_BACKENDS entry. Drop once upstream ships a per-model custom backend
+  # (lemonade-sdk/lemonade#3583) or accepts this recipe. See noamsto/nix-amd-ai#285.
+  patches = [./patches/strata-recipe.patch];
+
   nativeBuildInputs = [
     cmake
     ninja

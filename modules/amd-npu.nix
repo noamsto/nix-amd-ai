@@ -82,8 +82,8 @@
     optional cfg.enableNPU xrt-combined
     ++ optional cfg.enableFastFlowLM fastflowlmWrapped;
 
-  # Strata (Qwen3.8-Flash-Next) behind lemond's ds4 recipe. Referenced only
-  # under strata.enable, so an option-off host never forces pkgs.strata.
+  # Strata (Qwen3.8-Flash-Next) behind lemond's native strata recipe. Referenced
+  # only under strata.enable, so an option-off host never forces pkgs.strata.
   strataPkg = cfg.strata.package;
   strataVision = cfg.strata.vision.enable;
   strataProfileArgs =
@@ -183,7 +183,7 @@
       "lemonade/backends/flm-npu".source = "${fastflowlmWrapped}/bin/${flmProgram}";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.strata.enable) {
-      "lemonade/backends/ds4-rocm".source = "${strataShim}/bin/strata-lemond-shim";
+      "lemonade/backends/strata-rocm".source = "${strataShim}/bin/strata-lemond-shim";
     };
 
   # defaults.json seed that lemonade's get_defaults() merges over its packaged
@@ -195,10 +195,10 @@
       # 0 disables lemond's 300s request cutoff for llama.cpp (lemonade#1364).
       # But vLLM passes this same value as its startup-readiness timeout, where
       # 0 means "0 attempts" and the server never gets time to boot — so give it
-      # a large finite window instead. See noamsto/nix-amd-ai#63. The ds4
-      # readiness wait has the same trap.
+      # a large finite window instead. See noamsto/nix-amd-ai#63. The Strata
+      # backend carries its own readiness timeout, so it no longer forces this.
       global_timeout =
-        if cfg.enableVllm || cfg.strata.enable
+        if cfg.enableVllm
         then 3600
         else 0;
       llamacpp =
@@ -233,7 +233,7 @@
       vllm.rocm_bin = lemonadeBackendBin "vllm-rocm";
     }
     // optionalAttrs cfg.strata.enable {
-      ds4.rocm_bin = lemonadeBackendBin "ds4-rocm";
+      strata.rocm_bin = lemonadeBackendBin "strata-rocm";
     };
   lemonadeDefaultsFile =
     (pkgs.formats.json {}).generate "lemonade-defaults.json"
@@ -850,8 +850,9 @@ in {
         default = false;
         description = ''
           Whether to serve Qwen3.8-Flash-Next through Strata behind lemond, via
-          lemonade's `ds4` recipe. gfx1151 only. Costs an 8.9 GiB closure built
-          with `-march=native`, so it is host-specific and not built by CI. See
+          lemonade's native `strata` recipe. gfx1151 only. Costs an 8.9 GiB
+          closure built with `-march=native`, so it is host-specific and not
+          built by CI. See
           the README section "Opt-in Strata backend (Strix Halo)" and
           bench-logs/qwen38-flash-next-strata-2026-10-06/README.md.
         '';
@@ -1062,7 +1063,7 @@ in {
       }
       {
         assertion = !cfg.strata.enable || cfg.enableLemonade;
-        message = "hardware.amd-npu.strata.enable requires enableLemonade = true (Strata is served through lemond's ds4 recipe).";
+        message = "hardware.amd-npu.strata.enable requires enableLemonade = true (Strata is served through lemond's native strata recipe).";
       }
       {
         assertion = !cfg.strata.enable || cfg.gpuTarget == "gfx1151";
@@ -1094,7 +1095,7 @@ in {
       ${cfg.strata.modelName} = {
         checkpoint = cfg.strata.model;
         source = "local_path";
-        recipe = "ds4";
+        recipe = "strata";
         labels = ["chat" "reasoning" "tool-calling"] ++ optional cfg.strata.vision.enable "vision";
         recipe_options.ctx_size = cfg.strata.contextSize;
       };
