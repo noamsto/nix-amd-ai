@@ -52,6 +52,8 @@ def draw_code(d, f, lines, x, y, line_h, max_chars, n):
 def main():
     out, files = sys.argv[1], sys.argv[2:] or [os.path.join(os.path.dirname(os.path.abspath(__file__)), n)
                                               for n in ("kl_strata.py", "soak.py", "rows.sh")]
+    if len(files) < 3:
+        sys.exit("screenshot.py needs at least three files (editor, terminal, second editor column)")
     src = [open(p, encoding="utf-8").read().splitlines() for p in files]
     im = Image.new("RGB", (W, H), BG)
     d = ImageDraw.Draw(im)

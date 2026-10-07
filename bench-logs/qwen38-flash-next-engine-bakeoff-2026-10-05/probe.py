@@ -857,12 +857,18 @@ def run_row(a, log):
             row["vision"] = g_vision(e, cache, a.quick)
         if "tasks" in do:
             row["tasks"] = g_tasks(e, cache, a.quick)
-        for group in ("soak", "longsoak", "bigimage", "quirks"):
+        for group in ("soak", "quirks", "bigimage", "longsoak"):  # the hour-long one last, and no group costs another's result
             if group in do:
-                row[group] = g_soak(group, e, cache, a.quick, a.soak_minutes)
-        row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
+                try:
+                    row[group] = g_soak(group, e, cache, a.quick, a.soak_minutes)
+                except (grid.RowError, OSError, KeyError, TypeError, ValueError) as exc:
+                    row[group] = {"error": f"{type(exc).__name__}: {exc}"}
+        try:  # a soak that saw the engine restart holds a stale pid here
+            row["mem_end"] = mem_snapshot(pid, gtt0, vram0)
+            row["hwm_kb"] = grid.proc_status_kb(pid, "VmHWM")
+        except OSError:
+            row["mem_end"], row["hwm_kb"] = None, None
         row["gtt_peak_delta_bytes"] = peak["bytes"]
-        row["hwm_kb"] = grid.proc_status_kb(pid, "VmHWM")
         if a.cmd == "strata":
             row["tree_hwm_kb"] = tree_status_kb(pid.pgid, "VmHWM")  # sum of per-process peaks, not a joint peak
         if a.cmd == "strata" and None not in cpu0.values():
@@ -966,6 +972,14 @@ def run_corpus(a, log):
 EXEC_CPU_GTT_LIMIT = 1 << 30
 
 
+def _comm(pid):
+    try:
+        with open(f"/proc/{pid}/comm") as f:
+            return f.read().strip()
+    except OSError:
+        return None
+
+
 def swap_used_kb():
     swap = {}
     with open("/proc/meminfo") as f:
@@ -1015,6 +1029,10 @@ def run_exec(a, log):
                     break
         finally:
             stop(proc, 5)
+            # a child that set up its own process group (kl_strata's engine) outlives a SIGKILLed parent for a moment:
+            # lemond must not reload over it
+            while any(_comm(pid) == "strata" for pid in map(int, filter(str.isdigit, os.listdir("/proc")))):
+                time.sleep(0.5)
     row.update({"rc": proc.returncode, "killed_by": killed_by, "gtt_peak_delta_bytes": peak["bytes"],
                 "rss_anon_peak_bytes": None if peak_anon_kb is None else peak_anon_kb * 1024,
                 "swap_growth_peak_bytes": None if peak_swap_kb is None else peak_swap_kb * 1024,
@@ -1183,7 +1201,7 @@ def main():
             p.add_argument("--vision-bin", help="strata-vision binary; with --mmproj turns images on")
             p.add_argument("--vision-max-tokens", type=int, default=300,
                            help="most tokens one picture becomes (Strata's own maximum is 1024)")
-            p.add_argument("--soak-minutes", type=float, default=60, help="longsoak duration")
+            p.add_argument("--soak-minutes", type=float, default=None, help="longsoak duration (default 60 or $SOAK_MINUTES)")
             p.add_argument("--mmproj", help="vision projector file; with --vision-bin turns images on")
             p.add_argument("--evict-after", action="store_true",
                            help="after teardown, drop the page cache of the GGUF shards (last row of a stage)")

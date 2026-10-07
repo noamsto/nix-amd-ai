@@ -65,6 +65,9 @@ def arm_spec(arm, cache, repo):
     if not m:
         raise SystemExit(f"bad arm {arm!r}")
     prefix, sign, names = m.group(1), m.group(2), [n.lower() for n in (m.group(3) or "").split(",") if n]
+    if sign and any((n != "kvf16" and (prefix, sign) not in (("fast", "-"), ("def", "+"))) or (n == "kvf16" and sign != "+")
+                    for n in names):
+        raise SystemExit(f"{arm!r}: `-` removes a fast switch, `+` adds one to def (kvf16 only adds); the other forms change nothing")
     flags = list(flags_fast if prefix == "fast" else flags_def)
     env = {**base_env, **(fast_env if prefix == "fast" else {})}
     if m.group(4):
@@ -75,8 +78,6 @@ def arm_spec(arm, cache, repo):
             i = flags.index("--prefill")
             flags[i + 1] = "auto" if sign == "-" else "16384"
         elif n == "kvf16":
-            if sign == "-":
-                raise SystemExit("kvf16 only adds")
             flags[flags.index("--kv") + 1] = "fp16"
         elif n == "mtpq4":
             if sign == "-":
@@ -155,6 +156,16 @@ def shards(first):
     return [first] if not m else [f"{m.group(1)}-{i:05d}-of-{m.group(2)}.gguf" for i in range(1, int(m.group(2)) + 1)]
 
 
+def write_meta(a, argv, env, offsets, load_s, rows):
+    """Rewritten after every chunk: a run that dies at chunk 50 still scores its first 49."""
+    meta = {"arm": a.arm, "argv": argv[1:],
+            "env": {k: v for k, v in env.items() if k.startswith("STRATA_") and k != "STRATA_LOGPOS"},
+            "offsets": offsets, "load_s": round(load_s, 1), "rows": rows}
+    with open(os.path.join(a.out, "chunks.json.tmp"), "w") as f:
+        json.dump(meta, f)
+    os.replace(os.path.join(a.out, "chunks.json.tmp"), os.path.join(a.out, "chunks.json"))
+
+
 def run(a):
     toks, n_vocab = read_tokens(a.ref)
     n = min(a.chunks, len(toks))
@@ -169,7 +180,15 @@ def run(a):
     t0 = time.time()
     proc = subprocess.Popen(argv, cwd=a.repo, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=log, text=True,
                             bufsize=1, env=env, preexec_fn=die_with_parent)
-    rows, err = [], None
+    rows = []
+
+    def on_term(*_):
+        # the row's watchdog gives this process 5 s: kill the engine group now so the finally below can wait it out
+        with contextlib.suppress(ProcessLookupError):
+            os.killpg(proc.pid, signal.SIGKILL)
+        sys.exit(143)
+
+    signal.signal(signal.SIGTERM, on_term)
     try:
         for line in proc.stdout:
             if line.startswith("READY"):
@@ -205,10 +224,7 @@ def run(a):
             offsets.append(os.path.getsize(logpos))
             rows.append({"chunk": i, "wall_s": round(time.time() - t1, 2), "done": lines[-1]})
             print(f"chunk {i + 1}/{n} {rows[-1]['wall_s']} s", flush=True)
-        with open(os.path.join(a.out, "chunks.json"), "w") as f:
-            json.dump({"arm": a.arm, "argv": argv[1:], "env": {k: v for k, v in env.items() if k.startswith("STRATA_")
-                                                               and k not in ("STRATA_LOGPOS",)},
-                       "offsets": offsets, "load_s": round(load_s, 1), "rows": rows}, f)
+            write_meta(a, argv, env, offsets, load_s, rows)
     finally:
         stop_engine(proc)
         evict(shards(a.target))
@@ -293,6 +309,11 @@ def compare(a):
             meta = json.load(open(os.path.join(path, "chunks.json")))
             n = min(a.chunks or n_chunk, len(meta["offsets"]) - 1)
         else:
+            cand_toks, cand_vocab = read_tokens(path)
+            if cand_vocab != n_vocab or len(cand_toks) < (a.chunks or n_chunk) or not (
+                    cand_toks[:a.chunks or n_chunk] == toks[:a.chunks or n_chunk]).all():
+                raise SystemExit(f"{path}: its vocabulary or token ids differ from the reference's")
+            n_cand = len(cand_toks)
             n = a.chunks or n_chunk
             cand_mm = np.memmap(path, dtype=np.uint8, mode="r")
         for i in range(n):
@@ -313,7 +334,7 @@ def compare(a):
                 acc["argmax"].append(top)
                 p_tgt, q_tgt = np.exp(-nll_base), np.exp(lp_t)
             else:
-                cand = load_ref_chunk(cand_mm, off, nv, n_vocab)
+                cand = load_ref_chunk(cand_mm, chunk_offset(n_cand, n_vocab, i)[0], nv, n_vocab)
                 kl_full = full_kl(ref, cand)
                 acc["kl_full"].append(kl_full)
                 ids = np.argpartition(-cand, TOPK, axis=1)[:, :TOPK]

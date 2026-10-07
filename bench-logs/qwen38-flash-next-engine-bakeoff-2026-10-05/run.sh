@@ -251,8 +251,8 @@ else
 fi
 case $NEED_GIB in '' | *[!0-9]*) echo "NEED_GIB must be an integer, got '$NEED_GIB'" >&2; exit 7 ;; esac
 
-# Sum VmRSS (bytes) of every descendant of lemond: the backend may sit below a wrapper, and its anonymous memory is what an
-# unload gives back. PROC_ROOT is /proc unless a test points it elsewhere.
+# Sum RssAnon (bytes) of every descendant of lemond: the backend may sit below a wrapper, and its anonymous memory is what an
+# unload gives back (file-backed pages are already in MemAvailable). PROC_ROOT is /proc unless a test points it elsewhere.
 lemond_rss() {
     local -A tree=()
     local pid ppid comm kib total=0 grew=1
@@ -265,7 +265,7 @@ lemond_rss() {
             [ -n "${tree[$pid]:-}" ] || [ -z "${tree[$ppid]:-}" ] && continue
             tree[$pid]=2
             grew=1
-            kib=$(awk '/^VmRSS:/ {print $2}' "${PROC_ROOT:-/proc}/$pid/status" 2>/dev/null)
+            kib=$(awk '/^RssAnon:/ {print $2}' "${PROC_ROOT:-/proc}/$pid/status" 2>/dev/null)
             total=$((total + ${kib:-0} * 1024))
         done < <(ps -eo pid=,ppid=,comm=)
     done

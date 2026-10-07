@@ -28,6 +28,21 @@ if pgrep -x 'llama-perplexit|llama-server|llama-bench|strata' >/dev/null ||
     exit 2
 fi
 
+# After a `more` row lemond is offline until the next run.sh or the `last` row: a signal or a bad argument in that gap
+# would strand it, so the exit trap restores it through a no-op run.sh (its own EXIT trap reloads the model).
+offline=0
+# shellcheck disable=SC2329 # invoked by the EXIT trap
+restore_lemond() {
+    [ "$offline" = 1 ] || return 0
+    trap '' INT TERM HUP
+    FIT_CHECK_ONLY=1 KEEP_OFFLINE=0 OUT=$W/rows.jsonl EXEC_DEV=cpu TARGET=$IQ4 EXEC_LOG=$W/restore.log NEED_GIB=1 \
+        "$D/run.sh" exec -- true || echo "lemond restore FAILED (exit $?)" >&2
+}
+trap restore_lemond EXIT
+trap 'exit 143' TERM
+trap 'exit 130' INT
+trap 'exit 129' HUP
+
 # exec_row <more|last> <label> <need_gib> <child argv...>
 exec_row() {
     local pos=$1 label=$2 need=$3 keep=1
@@ -35,6 +50,7 @@ exec_row() {
     [ "$pos" = last ] && keep=0
     KEEP_OFFLINE=$keep OUT=$W/rows.jsonl EXEC_DEV=gpu TARGET=$IQ4 EXEC_LOG=$W/$label.log NEED_GIB=$need \
         "$D/run.sh" exec --label "$label" -- "$@" || { echo "ROW FAILED: $label (exit $?)" >&2; exit 1; }
+    if [ "$pos" = last ]; then offline=0; else offline=1; fi
 }
 
 # pos <index> <count>: last for the stage's final row
@@ -60,6 +76,14 @@ llama)
     chunks=${2:?chunks}
     shift 2
     [ $# -gt 0 ] || { echo "no builds" >&2; exit 7; }
+    for b; do # before the first row: a bad later build must not strand lemond after an earlier KEEP_OFFLINE row
+        case $b in
+        stock) : "${STOCK_BIN:?}" ;;
+        stock-hip) : "${STOCK_HIP_BIN:?}" ;;
+        gsq) : "${GSQ_BIN:?}" ;;
+        *) echo "unknown build: $b" >&2; exit 7 ;;
+        esac
+    done
     i=0
     for b in "$@"; do
         i=$((i + 1))
@@ -88,7 +112,7 @@ probe)
     esac
     export STRATA_CTX=${STRATA_CTX:-131072} CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
     unset EXTRA_ARGS
-    OUT=$W/rows.jsonl "$D/run.sh" "$preset" --label "$label" --do "$groups" "$@" || { echo "ROW FAILED: $label (exit $?)" >&2; exit 1; }
+    KEEP_OFFLINE=0 OUT=$W/rows.jsonl "$D/run.sh" "$preset" --label "$label" --do "$groups" "$@" || { echo "ROW FAILED: $label (exit $?)" >&2; exit 1; }
     ;;
 *)
     echo "usage: rows.sh kl <chunks> <arm>... | llama <chunks> <stock|stock-hip|gsq>... | probe <arm> <label> <groups> [args]" >&2

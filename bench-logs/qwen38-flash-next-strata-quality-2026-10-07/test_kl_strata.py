@@ -48,11 +48,13 @@ class Arms(unittest.TestCase):
         self.assertEqual(flags[:2], ["--prefill", "auto"])
         flags, _ = self.spec("fast-mtpq4")
         self.assertNotIn("--mtp-q4", flags)
+        flags, _ = self.spec("fast+kvf16@0")
+        self.assertEqual(flags[flags.index("--kv") + 1], "fp16")
         flags, _ = self.spec("def+mtpq4")
         self.assertEqual(flags[-2:], ["--mtp-q4", "all"])
 
     def test_rejects(self):
-        for bad in ("slow", "fast-nope", "fast-", "def+"):
+        for bad in ("slow", "fast-nope", "fast-", "def+", "def-pf_fused", "fast+mtpq4", "fast-kvf16"):
             with self.assertRaises(SystemExit):
                 self.spec(bad)
 

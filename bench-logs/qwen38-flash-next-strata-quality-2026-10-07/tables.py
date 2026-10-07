@@ -94,6 +94,9 @@ def rows(path, labels):
             for c in s["canaries"]:
                 print(f"| {c['t_s'] / 60:.0f} | {c['decode_tps']} | {c['prefill_tps']} | {len(c['errors'])} |")
             g, r, a, v = s["gtt_delta_bytes"], s["rss_kb"], s["rss_anon_kb"], s["mem_available_kb"]
+            if not (g and r and a and v):
+                print("\nno memory samples were recorded")
+                continue
             print(f"\nGTT delta first / last / max: {g['first'] / 2**30:.2f} / {g['last'] / 2**30:.2f} / {g['max'] / 2**30:.2f} GiB; "
                   f"engine RSS {mb(r['first'])} / {mb(r['last'])} / {mb(r['max'])} GiB (anon {mb(a['first'])} / {mb(a['last'])} / "
                   f"{mb(a['max'])}); MemAvailable {mb(v['first'])} / {mb(v['last'])} / min {mb(v['min'])} GiB")

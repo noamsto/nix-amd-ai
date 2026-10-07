@@ -194,7 +194,7 @@ MATH = ["A bag holds 3 red, 4 blue and 5 green marbles. Two are drawn without re
 
 
 def run_long(e, c, P, minutes=None):
-    minutes = float(minutes or os.environ.get("SOAK_MINUTES", "60"))
+    minutes = float(os.environ.get("SOAK_MINUTES", "60") if minutes is None else minutes)
     deadline = time.perf_counter() + minutes * 60
     t0 = time.perf_counter()
     samples, requests, canaries = [], [], []
@@ -401,8 +401,9 @@ def run_image(e, c, P):
     q = "Describe what is on this screen: which program, which file, and what the code on the left does."
     out = {"image_bytes": len(png), "vision_max_tokens": getattr(e.args, "vision_max_tokens", None)}
     # the text-only prompt's own token count, to take the image's tokens out of the image requests'
-    base, _ = guarded(post, P, e, {"messages": [{"role": "user", "content": f"# run x\n{q}"}], "max_tokens": 1,
-                                     "temperature": 0, "chat_template_kwargs": {"enable_thinking": False}})
+    base, _ = guarded(post, P, e, {"messages": [{"role": "user", "content": [
+        {"type": "text", "text": f"# run {uuid.uuid4()}"}, {"type": "text", "text": q}]}], "max_tokens": 1,
+        "temperature": 0, "chat_template_kwargs": {"enable_thinking": False}})
     text_tokens = base["prompt_tokens"] if base else None
     with EncodeWatch(P, e) as watch:
         # baseline: the text request alone, twice
@@ -410,7 +411,7 @@ def run_image(e, c, P):
         for _ in range(2):
             t = time.perf_counter()
             r = post(P, e, text_request(600))
-            out["text_alone"].append({"decode_tps": round(r["decode_tps"], 2),
+            out["text_alone"].append({"decode_tps": None if r["decode_tps"] is None else round(r["decode_tps"], 2),
                                       "first_8s_tps": rate_in(r["stamps"], r["completion_tokens"], r["ttft_s"], r["ttft_s"] + 8),
                                       "completion_tokens": r["completion_tokens"], "t0": t})
         # image alone, cold then the same image again (a new nonce line, so only the encoder's cache can hit)
@@ -428,7 +429,7 @@ def run_image(e, c, P):
                      "decode_tps": None if r1["decode_tps"] is None else round(r1["decode_tps"], 2), "answer": r1["text"][:160]},
             "repeat": {"ttft_s": round(r2["ttft_s"], 2), "wall_s": round(r2["wall_s"], 2), "encode_window": w2,
                        "decode_tps": None if r2["decode_tps"] is None else round(r2["decode_tps"], 2)},
-            "encode_cache_hit": w2 is None, "ttft_cold_minus_repeat_s": round(r1["ttft_s"] - r2["ttft_s"], 2)}
+            "encode_cache_hit": w1 is not None and w2 is None, "ttft_cold_minus_repeat_s": round(r1["ttft_s"] - r2["ttft_s"], 2)}
         # the text request decoding while a new image encodes
         out["concurrent"] = []
         for _ in range(2):
@@ -437,7 +438,10 @@ def run_image(e, c, P):
             t_text = time.perf_counter()
 
             def run_text():
-                holder["text"] = post(P, e, text_request(1200))
+                try:
+                    holder["text"] = post(P, e, text_request(1200))
+                except Exception as exc:  # noqa: BLE001 - re-raised on the main thread after the join
+                    holder["error"] = exc
 
             th = threading.Thread(target=run_text)
             th.start()
@@ -445,6 +449,8 @@ def run_image(e, c, P):
             t_img = time.perf_counter()
             ri = post(P, e, image_body(img, q, uuid.uuid4(), 64))
             th.join()
+            if "error" in holder:
+                raise holder["error"]
             rt = holder["text"]
             w = watch.window(t_img, t_img + ri["wall_s"])
             off = t_img - t_text  # the image's send time on the text request's clock
@@ -458,7 +464,7 @@ def run_image(e, c, P):
                        "text_tps_before": rate_in(rt["stamps"], rt["completion_tokens"], max(rt["ttft_s"], lo - 6), lo),
                        "text_tps_after": rate_in(rt["stamps"], rt["completion_tokens"], hi, hi + 6)}
             out["concurrent"].append({"image_ttft_s": round(ri["ttft_s"], 2), "image_wall_s": round(ri["wall_s"], 2),
-                                      "text_decode_tps": round(rt["decode_tps"], 2), "encode": enc,
+                                      "text_decode_tps": None if rt["decode_tps"] is None else round(rt["decode_tps"], 2), "encode": enc,
                                       "image_send_after_text_s": round(off, 1),
                                       "text_wall_s": round(rt["wall_s"], 1)})
         # the image first, a text request 3 s later: does the text wait for the encode?
@@ -469,7 +475,10 @@ def run_image(e, c, P):
             t_img = time.perf_counter()
 
             def run_image_req():
-                holder["img"] = post(P, e, image_body(img, q, uuid.uuid4(), 64))
+                try:
+                    holder["img"] = post(P, e, image_body(img, q, uuid.uuid4(), 64))
+                except Exception as exc:  # noqa: BLE001 - re-raised on the main thread after the join
+                    holder["error"] = exc
 
             th = threading.Thread(target=run_image_req)
             th.start()
@@ -477,10 +486,12 @@ def run_image(e, c, P):
             t_text = time.perf_counter()
             rt = post(P, e, text_request(600))
             th.join()
+            if "error" in holder:
+                raise holder["error"]
             ri = holder["img"]
             out["image_first"].append({
                 "image_ttft_s": round(ri["ttft_s"], 2), "text_sent_after_image_s": round(t_text - t_img, 1),
-                "text_ttft_s": round(rt["ttft_s"], 2), "text_decode_tps": round(rt["decode_tps"], 2),
+                "text_ttft_s": round(rt["ttft_s"], 2), "text_decode_tps": None if rt["decode_tps"] is None else round(rt["decode_tps"], 2),
                 "encode_window": watch.window(t_img, t_img + ri["wall_s"])})
     for r in out["text_alone"]:
         r.pop("t0", None)
