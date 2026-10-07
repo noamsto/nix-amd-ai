@@ -107,6 +107,7 @@
       };
     }
     .${cfg.strata.profile};
+  strataSampling = lib.filterAttrs (_: v: v != null) cfg.strata.sampling;
   strataSettings = {
     model = cfg.strata.model;
     context = cfg.strata.contextSize;
@@ -131,7 +132,7 @@
           ]
           ++ cfg.strata.extraArgs;
       }
-      // optionalAttrs (cfg.strata.sampling != {}) {sampling = cfg.strata.sampling;}
+      // optionalAttrs (strataSampling != {}) {sampling = strataSampling;}
       // optionalAttrs strataVision {
         vision = {
           exe = "${strataPkg}/bin/strata-vision";
@@ -920,26 +921,42 @@ in {
         '';
       };
 
-      sampling = mkOption {
-        type = types.attrsOf (types.either types.int types.float);
-        default = {
-          temperature = 0.6;
-          top_p = 0.95;
-          top_k = 20;
+      sampling = let
+        key = type: default: mkOption {
+          type = types.nullOr type;
+          inherit default;
         };
-        example = {
-          temperature = 0.7;
-          top_p = 0.8;
-          top_k = 20;
-          presence_penalty = 1.5;
+      in
+        mkOption {
+          type = types.submodule {
+            options = {
+              temperature = key types.numbers.nonnegative 0.6;
+              top_p = key (types.addCheck types.number (x: x > 0 && x <= 1)) 0.95;
+              top_k = key (types.ints.between 1 64) 20;
+              min_p = key (types.numbers.between 0 1) null;
+              presence_penalty = key types.numbers.nonnegative null;
+              frequency_penalty = key types.numbers.nonnegative null;
+              repetition_penalty = key types.numbers.positive null;
+              penalty_last_n = key types.ints.unsigned null;
+              seed = key types.ints.positive null;
+            };
+          };
+          default = {};
+          example = {
+            temperature = 0.7;
+            top_p = 0.8;
+            top_k = 20;
+            presence_penalty = 1.5;
+          };
+          description = ''
+            Sampling defaults for requests that send none (the run config's `sampling` block; strata-server decodes
+            greedily without it). A request's own fields always win, so `temperature = 0` stays greedy. strata-server
+            takes one set, not one per thinking mode; the defaults are Qwen's recommended thinking set (temperature
+            0.6, top_p 0.95, top_k 20), which matches how lemond serves the model (thinking on unless a request turns
+            it off). Each key is set on its own; `null` leaves a key to the engine, so all keys `null` restores greedy
+            decoding.
+          '';
         };
-        description = ''
-          Sampling defaults for requests that send none (the run config's `sampling` block; strata-server decodes
-          greedily without it). A request's own fields always win, so `temperature = 0` stays greedy. strata-server
-          takes one set, not one per thinking mode; the default is Qwen's recommended thinking set, which matches
-          how lemond serves the model (thinking on unless a request turns it off). `{}` restores greedy decoding.
-        '';
-      };
 
       vision = {
         enable = mkOption {

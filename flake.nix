@@ -755,7 +755,9 @@
               nativeBuildInputs = [pkgs.jq];
               CONFIG = strataEvalJson (strataEvalHost {});
               FAST_CONFIG = strataEvalJson (strataEvalHost {profile = "fast";});
-              GREEDY_CONFIG = strataEvalJson (strataEvalHost {sampling = inputs.nixpkgs.lib.mkForce {};});
+              TOPK_CONFIG = strataEvalJson (strataEvalHost {sampling.top_k = 40;});
+              TOPK_REJECTED = strataRejected {sampling.top_k = 65;};
+              GREEDY_CONFIG = strataEvalJson (strataEvalHost {sampling = {temperature = null; top_p = null; top_k = null;};});
               TOPLEVEL = builtins.unsafeDiscardStringContext (strataEvalHost {}).config.system.build.toplevel.drvPath;
               AUTO_REJECTED = strataRejected {expertCache = "auto";};
               EXTRA_REJECTED = strataRejected {extraArgs = ["--expert-cache" "auto"];};
@@ -772,9 +774,11 @@
               check "$CONFIG" '.config.vision.mmproj == "/var/lib/models/strata/mmproj.gguf"'
               check "$CONFIG" '.context == 131072'
               check "$CONFIG" '.config.sampling == {temperature: 0.6, top_p: 0.95, top_k: 20}'
+              check "$TOPK_CONFIG" '.config.sampling == {temperature: 0.6, top_p: 0.95, top_k: 40}'
               check "$GREEDY_CONFIG" '.config | has("sampling") | not'
               check "$FAST_CONFIG" '.config.args | index("--mtp-q4") != null'
               check "$FAST_CONFIG" '.config.env.STRATA_PF_FUSED == "1"'
+              [ "$TOPK_REJECTED" = 1 ] || { echo "sampling.top_k = 65 was accepted"; exit 1; }
               [ "$AUTO_REJECTED" = 1 ] || { echo "expertCache = auto was accepted"; exit 1; }
               [ "$EXTRA_REJECTED" = 1 ] || { echo "extraArgs --expert-cache was accepted"; exit 1; }
               [ "$MAXCTX_REJECTED" = 1 ] || { echo "extraArgs --max-context was accepted"; exit 1; }
