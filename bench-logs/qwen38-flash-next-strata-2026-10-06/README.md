@@ -58,7 +58,7 @@ B: decode 128K; C: correctness):
 
 | arm | engine flags | environment |
 | --- | --- | --- |
-| `def` (Strata defaults, MTP only) | `--prefill auto --spec 4 --spec-min-p 0.5 --kv int8 --mmap-experts --expert-cache 20000 --vram-reserve-mib 700 --vision` + `--mtp` (q2_0 draft layer) | `STRATA_HIPBLASLT_TUNING` (gfx1151 table) |
+| `def` (Strata defaults, MTP only) | `--prefill auto --spec 4 --spec-min-p 0.5 --kv int8 --mmap-experts --expert-profile <data/expert-profile.bin> --expert-cache 20000 --vram-reserve-mib 700 --vision` + `--mtp` (q2_0 draft layer) | `STRATA_HIPBLASLT_TUNING` (gfx1151 table) |
 | `defL` | `def` + `--lookup-chain 3` | same |
 | `fast` (maintainers' fast config, MTP only) | `--prefill 16384 --mtp-q4 all` instead of `--prefill auto`, rest as `def` | + `STRATA_PF_FUSED STRATA_PF_GEMM STRATA_HC_UPMIX STRATA_PA_FAST STRATA_HIP_WMMA STRATA_SELECT_WMMA STRATA_HC_Q8` = 1, `STRATA_PF_SWITCH_MIN_T=4096` |
 | `fastL` | `fast` + `--lookup-chain 3` | same |

@@ -26,7 +26,7 @@ run() {
 case ${1:-} in
 smoke)
     # one small gated load: proves the server, the chat-completions speed path, vision and the memory arithmetic
-    # SMOKE_EXTRA adds engine flags (e.g. --mmap-experts) to the preset's
+    # SMOKE_EXTRA adds engine flags to the preset's
     EXTRA_ARGS=${SMOKE_EXTRA:-} STRATA_CTX=8192 STRATA_EXPERT_CACHE=${SMOKE_EXPERT_CACHE:-2048} run last strata --label "${SMOKE_LABEL:-strata-smoke}" --quick --do toolcall,prefill4k,decode512,vision
     ;;
 arm)

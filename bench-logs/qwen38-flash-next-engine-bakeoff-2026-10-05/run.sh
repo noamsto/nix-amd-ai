@@ -156,7 +156,8 @@ strata | strata-fast)
     mode=strata
     NEED_GIB=${NEED_GIB:-95}
     target=$IQ4
-    printf -v profile '%q' "$STRATA_REPO/data/expert-profile.bin" # the flag string is shlex-split by probe.py
+    profile=$STRATA_REPO/data/expert-profile.bin
+    profile="'${profile//\'/\'\\\'\'}'" # single-quoted: the flag string is shlex-split by probe.py, which %q does not always survive
     # Strata's setup defaults (--prefill auto --spec 4 --spec-min-p 0.5, int8 KV above 8K context), lookup chain off,
     # with two changes for a unified-memory host shared with other work: --mmap-experts (no host arena; the experts sit
     # in the GPU cache and the page cache) and an explicit --expert-cache count instead of `auto`, which sizes from
