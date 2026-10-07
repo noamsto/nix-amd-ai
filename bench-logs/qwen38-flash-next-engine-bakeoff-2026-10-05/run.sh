@@ -59,6 +59,8 @@ reload() {
     trap '' INT TERM HUP QUIT # a signal must not kill the in-flight /load; ignored dispositions pass to curl
     [ "${KEEP_OFFLINE:-0}" = 1 ] && [ "$rc" = 0 ] && return
     has_model && return
+    local o
+    o=$(other_models) && [ -z "$o" ] || { echo "reload: skipped, lemond unreachable or holding other models" >&2; exit 6; }
     post load "{\"model_name\":\"$MODEL\"}" >&2 || echo "reload: POST /load failed" >&2
     echo >&2
     for ((i = 0; i < 60; i++)); do
