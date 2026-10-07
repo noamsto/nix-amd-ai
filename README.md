@@ -22,6 +22,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
+| `strata` | Qwen3.8-Flash-Next engine on TheRock ROCm 7.14.1, Strix Halo (`gfx1151`); opt-in lemond backend via `hardware.amd-npu.strata` ([section](#opt-in-strata-backend-strix-halo)) | Built from [Niko1221/Strata](https://github.com/Niko1221/Strata) |
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
@@ -422,6 +423,36 @@ hardware.amd-npu.llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;
 ```
 
 The default is the stock `llama-cpp-rocm`, so existing hosts are unchanged; `rocmGpuTargets` applies to either. On one Strix Halo (gfx1151) host the fork with `-lzm on-direct -ub 8192 -b 8192 --spec-draft-p-min 0.3 -ctk f16 -ctv f16` cut agent-replay time 35 % against stock Vulkan llama.cpp on Qwen3.8-Flash-Next (Vulkan ran at `-ub 2048`; [`bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06`](bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06)). Those flags are what was measured, not defaults the module sets. `-lzm` is fork-only: stock llama.cpp rejects it, so don't pass it to a model served by the stock backend.
+
+## Opt-in Strata backend (Strix Halo)
+
+[Strata](https://github.com/Niko1221/Strata) (pinned `82f46a8`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through lemonade's existing `ds4` recipe: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "DwarfStar4 (experimental)" recipe name. Measurements and the build are in [`bench-logs/qwen38-flash-next-strata-2026-10-06`](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md).
+
+```nix
+hardware.amd-npu = {
+  gpuTarget = "gfx1151";
+  strata = {
+    enable = true;
+    model = "/var/lib/models/…/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
+    pack = "…/pack";
+    mtp = "…/mtp/rt";
+    vision.mmproj = "…/mmproj-Qwen3.8-Flash-Next-BF16.gguf";
+    profile = "defaults"; # or "fast"
+  };
+};
+```
+
+The pack, the MTP draft and the mmproj are prepared once by hand; the bench README's "Reproduce" section has the steps. Other options: `contextSize` (131072), `expertCache` (20000), `vision.enable` (true, CPU encoder) and `extraArgs`. `expertCache` is always an explicit count passed with `--mmap-experts`; `auto` is rejected at evaluation because it sizes the cache from MemAvailable, which on a unified-memory machine is most of the RAM.
+
+`profile = "defaults"` is Strata's setup defaults. `"fast"` is the maintainers' fast configuration: it turns on bit-changing switches, and its quality has not been checked (no KL or perplexity). The bench README has the measured speed difference between the two, on halo only.
+
+**Costs.** An 8.9 GiB Nix closure (the pinned SDK), built with `-march=native` so the output is specific to the building host's CPU. It is `gfx1151` only and experimental upstream. CI does not build it, so enabling it compiles it locally.
+
+**Memory.** About 67 GiB of GTT at 131072 context on halo (bench README). lemond counts loaded models per slot, not memory, so it will load Strata next to another large model if a slot is free: keep one LLM slot (`lemonade.settings.max_loaded_models`) or unload the resident model first. If a load fails, lemond evicts every loaded model, pinned ones included, and retries once.
+
+**Timeout.** Enabling it sets lemond's `global_timeout` to 3600, because lemond's backend readiness wait uses it and 0 would mean no wait. That introduces a 1 h request cutoff where the module otherwise sets none; `lemonade.settings.global_timeout` still overrides it.
+
+Unloading the model or stopping lemond ends the engine's whole process group within lemond's stop window.
 
 ## GPU memory headroom
 

@@ -240,6 +240,7 @@
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
+            strata = pinned.callPackage ./pkgs/strata {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
@@ -347,7 +348,7 @@
           lemonade-headless = lemonade.override {withDesktopApp = false;};
           gaia = pkgs.callPackage ./pkgs/gaia {};
           vllm-rocm = pkgs.callPackage ./pkgs/vllm-rocm {};
-          # Bench-only engine (#257), not wired into the overlay or the NixOS module.
+          # Opt-in through `hardware.amd-npu.strata`; not built by CI.
           strata = pkgs.callPackage ./pkgs/strata {};
           lemond-unit = lemondUnit;
           ds4-server-unit = ds4ServerUnit;
@@ -444,6 +445,78 @@
               }
             ];
           }).config.systemd.units."ds4-server.service".unit;
+
+        # Option-on Strata host for the module-eval-strata check. `extra` is a
+        # module-system fragment merged into hardware.amd-npu.strata.
+        strataEvalHost = extra:
+          inputs.nixpkgs.lib.nixosSystem {
+            inherit system;
+            modules = [
+              inputs.self.nixosModules.default
+              fastFlowLMUnfreeConfig
+              {
+                boot.loader.grub.enable = false;
+                fileSystems."/" = {
+                  device = "/dev/sda1";
+                  fsType = "ext4";
+                };
+                hardware.amd-npu = {
+                  enable = true;
+                  enableLemonade = true;
+                  enableROCm = true;
+                  gpuTarget = "gfx1151";
+                  lemonade.user = "testuser";
+                  strata = {
+                    enable = true;
+                    model = "/var/lib/models/strata/model-00001-of-00003.gguf";
+                    pack = "/var/lib/models/strata/pack";
+                    mtp = "/var/lib/models/strata/mtp/rt";
+                    vision.mmproj = "/var/lib/models/strata/mmproj.gguf";
+                  };
+                };
+                users.users.testuser = {
+                  isNormalUser = true;
+                  extraGroups = ["video" "render"];
+                };
+              }
+              {hardware.amd-npu.strata = extra;}
+            ];
+          };
+
+        # Context-free, so the check never builds pkgs.strata or the host.
+        strataEvalJson = host:
+          builtins.unsafeDiscardStringContext
+          (builtins.toJSON host.config.hardware.amd-npu.strata.runConfig);
+        strataRejected = extra:
+          if (builtins.tryEval (strataEvalHost extra).config.system.build.toplevel.drvPath).success
+          then ""
+          else "1";
+
+        strataFakeServer = pkgs.writeShellScript "fake-strata-server" ''
+          set -eu
+          trap "" TERM
+          ${pkgs.jq}/bin/jq -cn '$ARGS.positional' --args -- "$@" > "$SEEN_DIR/argv.json"
+          while [ "$#" -gt 0 ]; do
+            if [ "$1" = --config ]; then cp "$2" "$SEEN_DIR/config.json"; fi
+            shift
+          done
+          if [ -n "''${LD_LIBRARY_PATH+x}" ]; then echo set; else echo unset; fi > "$SEEN_DIR/ld"
+          ${pkgs.bash}/bin/bash -c 'trap "" TERM; exec ${pkgs.coreutils}/bin/sleep 987654' &
+          echo "$!" > "$SEEN_DIR/child.pid"
+          wait
+        '';
+        strataTestShim =
+          pkgs.callPackage ./pkgs/strata/lemond-shim.nix {} {
+            server = "${strataFakeServer}";
+            settings = {
+              model = "/nonexistent/strata-test/model.gguf";
+              context = 131072;
+              config = {
+                exe = "x";
+                args = ["--expert-cache" "20000" "--mmap-experts"];
+              };
+            };
+          };
       in {
         packages =
           (
@@ -677,6 +750,120 @@
                   }
                 ];
               }).config.system.build.etc;
+
+            module-eval-strata = pkgs.runCommand "module-eval-strata" {
+              nativeBuildInputs = [pkgs.jq];
+              CONFIG = strataEvalJson (strataEvalHost {});
+              FAST_CONFIG = strataEvalJson (strataEvalHost {profile = "fast";});
+              TOPLEVEL = builtins.unsafeDiscardStringContext (strataEvalHost {}).config.system.build.toplevel.drvPath;
+              AUTO_REJECTED = strataRejected {expertCache = "auto";};
+              EXTRA_REJECTED = strataRejected {extraArgs = ["--expert-cache" "auto"];};
+              NO_MMPROJ_REJECTED = strataRejected {vision.mmproj = null;};
+            } ''
+              check() {
+                printf '%s' "$1" | jq -e "$2" >/dev/null \
+                  || { echo "FAILED: $2"; exit 1; }
+              }
+              check "$CONFIG" '.config.args | index("--mmap-experts") != null'
+              check "$CONFIG" '.config.args | index("--expert-cache") as $i | .[$i + 1] == "20000" and (.[$i + 1] | test("^[0-9]+$"))'
+              check "$CONFIG" '.config.args | index("--vision") != null'
+              check "$CONFIG" '.config.vision.mmproj == "/var/lib/models/strata/mmproj.gguf"'
+              check "$CONFIG" '.context == 131072'
+              check "$FAST_CONFIG" '.config.args | index("--mtp-q4") != null'
+              check "$FAST_CONFIG" '.config.env.STRATA_PF_FUSED == "1"'
+              [ "$AUTO_REJECTED" = 1 ] || { echo "expertCache = auto was accepted"; exit 1; }
+              [ "$EXTRA_REJECTED" = 1 ] || { echo "extraArgs --expert-cache was accepted"; exit 1; }
+              [ "$NO_MMPROJ_REJECTED" = 1 ] || { echo "vision without mmproj was accepted"; exit 1; }
+              [ -n "$TOPLEVEL" ] || { echo "option-on host did not evaluate"; exit 1; }
+              touch $out
+            '';
+
+            strata-shim = pkgs.runCommand "strata-shim" {
+              nativeBuildInputs = [pkgs.jq pkgs.procps pkgs.coreutils];
+            } ''
+              shim=${strataTestShim}/bin/strata-lemond-shim
+              model=/nonexistent/strata-test/model.gguf
+              fail() { echo "FAILED: $*"; exit 1; }
+
+              wait_for() {
+                for _ in $(seq 100); do
+                  [ -e "$1" ] && return 0
+                  sleep 0.1
+                done
+                return 1
+              }
+
+              # Anchored on the whole command line so the test shell's own does not match.
+              marker_alive() { pgrep -f '/sleep 987654$' >/dev/null; }
+
+              new_seen() {
+                SEEN_DIR="$TMPDIR/seen-$1"
+                export SEEN_DIR
+                mkdir -p "$SEEN_DIR"
+              }
+
+              # Model mismatch is refused before the server starts.
+              new_seen mismatch
+              rc=0
+              "$shim" -m /nonexistent/other.gguf --host 127.0.0.1 --port 1 || rc=$?
+              [ "$rc" = 2 ] || fail "model mismatch exited $rc, wanted 2"
+              [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started on model mismatch"
+
+              # A caller cannot override the module's expert cache.
+              new_seen cache
+              rc=0
+              "$shim" -m "$model" --host 127.0.0.1 --port 1 --expert-cache 5 || rc=$?
+              [ "$rc" = 2 ] || fail "--expert-cache exited $rc, wanted 2"
+              [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started with --expert-cache"
+
+              # Happy path, then SIGTERM.
+              new_seen happy
+              LD_LIBRARY_PATH=/x "$shim" -m "$model" --host 127.0.0.1 --port 1 \
+                -c 4096 --ssd-streaming --foo &
+              shim_pid=$!
+              wait_for "$SEEN_DIR/child.pid" || fail "server never spawned its child"
+              child=$(cat "$SEEN_DIR/child.pid")
+              for _ in $(seq 50); do marker_alive && break; sleep 0.1; done
+              marker_alive || fail "marker process is not running"
+
+              jq -e '.args | .[-3:] == ["--max-context", "4096", "--foo"]' \
+                "$SEEN_DIR/config.json" >/dev/null || fail "config args tail"
+              jq -e '.args | index("--ssd-streaming") == null' \
+                "$SEEN_DIR/config.json" >/dev/null || fail "--ssd-streaming leaked into config"
+              jq -e '.args | index("--expert-cache") as $i | .[$i + 1] == "20000"' \
+                "$SEEN_DIR/config.json" >/dev/null || fail "expert cache changed"
+              for pair in "--engine strata" "--host 127.0.0.1" "--port 1"; do
+                # shellcheck disable=SC2086
+                set -- $pair
+                jq -e --arg k "$1" --arg v "$2" 'index($k) as $i | .[$i + 1] == $v' \
+                  "$SEEN_DIR/argv.json" >/dev/null || fail "server argv lacks $pair"
+              done
+              [ "$(cat "$SEEN_DIR/ld")" = unset ] || fail "LD_LIBRARY_PATH reached the server"
+
+              start=$(date +%s%N)
+              kill -TERM "$shim_pid"
+              rc=0
+              wait "$shim_pid" || rc=$?
+              elapsed_ms=$((($(date +%s%N) - start) / 1000000))
+              echo "shim stopped in $elapsed_ms ms (exit $rc)"
+              [ "$rc" = 0 ] || fail "shim exited $rc after SIGTERM"
+              [ "$elapsed_ms" -lt 5000 ] || fail "shim took $elapsed_ms ms to stop"
+              ! kill -0 "$child" 2>/dev/null || fail "child $child survived the shim"
+              ! marker_alive || fail "marker process survived the shim"
+
+              # Without -c the configured context applies.
+              new_seen ctx
+              "$shim" -m "$model" --host 127.0.0.1 --port 1 &
+              shim_pid=$!
+              wait_for "$SEEN_DIR/child.pid" || fail "server never spawned its child"
+              jq -e '.args | .[-2:] == ["--max-context", "131072"]' \
+                "$SEEN_DIR/config.json" >/dev/null || fail "default context"
+              kill -TERM "$shim_pid"
+              wait "$shim_pid" || true
+              ! marker_alive || fail "marker process survived the second shim"
+
+              touch $out
+            '';
 
             # cacheDir must put both caches on the given root: HF_HOME gains the
             # /hf suffix (lemonade appends hub/ itself) and LEMONADE_CACHE_DIR the
