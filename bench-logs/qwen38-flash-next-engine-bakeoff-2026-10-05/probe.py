@@ -57,6 +57,17 @@ grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
 grid.WATCHED.update({"gufo", "strata"})
 
+DEFER = None
+
+
+def _on_signal(sig, _frame):
+    if isinstance(DEFER, list):
+        DEFER.append(sig)
+    elif sig == signal.SIGINT:
+        raise KeyboardInterrupt
+    else:
+        sys.exit(143)
+
 GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
@@ -702,11 +713,9 @@ def strata_server(a, log):
             raise
         finally:
             # A second signal (run.sh forwards its own TERM to this process) must not cut the teardown short:
-            # the engine is in its own session and only this wait keeps lemond from reloading over it. Handlers
-            # are replaced rather than masked because the sampler threads would still take a masked signal.
-            got = []
-            old = {s: signal.signal(s, lambda n, _frame: got.append(n))
-                   for s in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT)}
+            # the engine is in its own session and only this wait keeps lemond from reloading over it.
+            global DEFER
+            DEFER = got = []
             try:
                 stop_group(proc)
                 if a.evict_after:
@@ -714,8 +723,7 @@ def strata_server(a, log):
                     evict_files([os.path.realpath(p) for p in gguf_shards(a.target)])
                     a.cached_kb_after_evict = meminfo_kb("Cached")
             finally:
-                for sig, handler in old.items():
-                    signal.signal(sig, handler)
+                DEFER = None
             if got:
                 sys.exit(143)
 
@@ -1104,8 +1112,8 @@ def main():
             ap.error("concurrency is not wired for strata")
     elif "vision" in getattr(a, "do", "").split(","):
         ap.error("the vision group is only for the strata subcommand")
-    signal.signal(signal.SIGTERM, lambda *_: sys.exit(143))
-    signal.signal(signal.SIGHUP, lambda *_: sys.exit(143))
+    for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+        signal.signal(sig, _on_signal)
 
     if a.cmd == "wait-load":
         print(json.dumps(run_wait_load(a)))
