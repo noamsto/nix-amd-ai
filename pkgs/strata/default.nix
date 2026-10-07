@@ -102,7 +102,7 @@ in
       runHook postInstall
     '';
 
-    passthru = {inherit therock ggml;};
+    passthru = {inherit therock ggml python;};
 
     meta = {
       description = "Strata: Qwen3.8-Flash-Next inference engine with gfx1151 HIP kernels (pinned, ROCm 7.14.1)";

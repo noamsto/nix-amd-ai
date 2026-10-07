@@ -82,6 +82,70 @@
     optional cfg.enableNPU xrt-combined
     ++ optional cfg.enableFastFlowLM fastflowlmWrapped;
 
+  # Strata (Qwen3.8-Flash-Next) behind lemond's ds4 recipe. Referenced only
+  # under strata.enable, so an option-off host never forces pkgs.strata.
+  strataPkg = cfg.strata.package;
+  strataVision = cfg.strata.vision.enable;
+  strataProfileArgs =
+    {
+      defaults = ["--prefill" "auto" "--spec" "4" "--spec-min-p" "0.5"];
+      fast = ["--prefill" "16384" "--spec" "4" "--spec-min-p" "0.5" "--mtp-q4" "all"];
+    }
+    .${cfg.strata.profile};
+  strataProfileEnv =
+    {
+      defaults = {};
+      fast = {
+        STRATA_PF_FUSED = "1";
+        STRATA_PF_GEMM = "1";
+        STRATA_HC_UPMIX = "1";
+        STRATA_PA_FAST = "1";
+        STRATA_HIP_WMMA = "1";
+        STRATA_SELECT_WMMA = "1";
+        STRATA_HC_Q8 = "1";
+        STRATA_PF_SWITCH_MIN_T = "4096";
+      };
+    }
+    .${cfg.strata.profile};
+  strataSettings = {
+    model = cfg.strata.model;
+    context = cfg.strata.contextSize;
+    config =
+      {
+        exe = "${strataPkg}/bin/strata";
+        cwd = "${strataPkg}/share/strata";
+        tokenizer = "${cfg.strata.pack}/tokenizer";
+        model_name = cfg.strata.modelName;
+        backend = "hip";
+        env = strataProfileEnv;
+        args =
+          ["--pack" cfg.strata.pack "--native" cfg.strata.model "--mtp" cfg.strata.mtp]
+          ++ optional strataVision "--vision"
+          ++ strataProfileArgs
+          ++ [
+            "--kv" "int8"
+            "--mmap-experts"
+            "--expert-profile" "${strataPkg}/share/strata/data/expert-profile.bin"
+            "--expert-cache" (toString cfg.strata.expertCache)
+            "--vram-reserve-mib" "700"
+          ]
+          ++ cfg.strata.extraArgs;
+      }
+      // optionalAttrs strataVision {
+        vision = {
+          exe = "${strataPkg}/bin/strata-vision";
+          mmproj = cfg.strata.vision.mmproj;
+          model = cfg.strata.model;
+          max_tokens = 300;
+        };
+      };
+  };
+  strataServer = pkgs.callPackage ../pkgs/strata/lemond-server.nix {} strataPkg;
+  strataShim = pkgs.callPackage ../pkgs/strata/lemond-shim.nix {} {
+    server = "${strataServer}/bin/strata-server";
+    settings = strataSettings;
+  };
+
   # Stable /etc indirection for lemonade's backend binaries. v10.7.0 reads bin
   # paths only from config.json (it dropped the LEMONADE_*_BIN env→config
   # migration), and a cached config.json overrides our seed — so a raw
@@ -115,6 +179,9 @@
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableFastFlowLM) {
       "lemonade/backends/flm-npu".source = "${fastflowlmWrapped}/bin/${flmProgram}";
+    }
+    // optionalAttrs (cfg.enableLemonade && cfg.strata.enable) {
+      "lemonade/backends/ds4-rocm".source = "${strataShim}/bin/strata-lemond-shim";
     };
 
   # defaults.json seed that lemonade's get_defaults() merges over its packaged
@@ -126,9 +193,10 @@
       # 0 disables lemond's 300s request cutoff for llama.cpp (lemonade#1364).
       # But vLLM passes this same value as its startup-readiness timeout, where
       # 0 means "0 attempts" and the server never gets time to boot — so give it
-      # a large finite window instead. See noamsto/nix-amd-ai#63.
+      # a large finite window instead. See noamsto/nix-amd-ai#63. The ds4
+      # readiness wait has the same trap.
       global_timeout =
-        if cfg.enableVllm
+        if cfg.enableVllm || cfg.strata.enable
         then 3600
         else 0;
       llamacpp =
@@ -161,6 +229,9 @@
     }
     // optionalAttrs (cfg.enableROCm && cfg.enableVllm) {
       vllm.rocm_bin = lemonadeBackendBin "vllm-rocm";
+    }
+    // optionalAttrs cfg.strata.enable {
+      ds4.rocm_bin = lemonadeBackendBin "ds4-rocm";
     };
   lemonadeDefaultsFile =
     (pkgs.formats.json {}).generate "lemonade-defaults.json"
@@ -771,6 +842,112 @@ in {
       };
     };
 
+    strata = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Whether to serve Qwen3.8-Flash-Next through Strata behind lemond, via
+          lemonade's `ds4` recipe. gfx1151 only. Costs an 8.9 GiB closure built
+          with `-march=native`, so it is host-specific and not built by CI. See
+          the README section "Opt-in Strata backend (Strix Halo)" and
+          bench-logs/qwen38-flash-next-strata-2026-10-06/README.md.
+        '';
+      };
+
+      package = mkOption {
+        type = types.package;
+        default = pkgs.strata;
+        defaultText = lib.literalExpression "pkgs.strata";
+        description = "Strata package providing `strata`, `strata-server` and `strata-vision`.";
+      };
+
+      model = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "/var/lib/models/strata/model-00001-of-00003.gguf";
+        description = ''
+          First shard of the Flash-Next GGUF. A runtime path, deliberately a
+          string so it is not copied into the Nix store. Required when
+          `strata.enable` is set.
+        '';
+      };
+
+      pack = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "/var/lib/models/strata/pack";
+        description = "Strata `iq_pack` directory (runtime path). Required when `strata.enable` is set.";
+      };
+
+      mtp = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        example = "/var/lib/models/strata/mtp/rt";
+        description = "Strata MTP runtime directory (runtime path). Required when `strata.enable` is set.";
+      };
+
+      modelName = mkOption {
+        type = types.str;
+        default = "Qwen3.8-Flash-Next-Strata";
+        description = "Name the model is registered under in lemonade's `customModels`.";
+      };
+
+      profile = mkOption {
+        type = types.enum ["defaults" "fast"];
+        default = "defaults";
+        description = ''
+          Strata tuning profile. `fast` adds the prefill WMMA/fused kernels and
+          `--mtp-q4 all`; see the bench README for what each was measured to
+          buy on gfx1151.
+        '';
+      };
+
+      contextSize = mkOption {
+        type = types.ints.positive;
+        default = 131072;
+        description = "Context tokens passed as `--max-context`. lemond's `ctx_size` for the model overrides it per load.";
+      };
+
+      expertCache = mkOption {
+        type = types.ints.positive;
+        default = 20000;
+        description = ''
+          Expert cache size (`--expert-cache`), an explicit count and always
+          paired with `--mmap-experts`. Strata's `auto` sizes from MemAvailable,
+          which is unsafe on unified memory, so it is rejected.
+        '';
+      };
+
+      vision = {
+        enable = mkOption {
+          type = types.bool;
+          default = true;
+          description = "Serve image input through `strata-vision`. Requires `vision.mmproj`. Behind lemond, images must be sent as `data:` URLs.";
+        };
+
+        mmproj = mkOption {
+          type = types.nullOr types.str;
+          default = null;
+          example = "/var/lib/models/strata/mmproj.gguf";
+          description = "Path to the vision projector GGUF (runtime path).";
+        };
+      };
+
+      extraArgs = mkOption {
+        type = types.listOf types.str;
+        default = [];
+        description = "Extra arguments appended to the Strata command line. `--expert-cache` and `--max-context` are rejected; use `expertCache` and `contextSize`.";
+      };
+
+      runConfig = mkOption {
+        type = types.attrs;
+        internal = true;
+        readOnly = true;
+        description = "The settings baked into the lemond shim. Read by the flake checks.";
+      };
+    };
+
     gpuMemory = {
       ttmSizeGiB = mkOption {
         type = types.nullOr types.ints.positive;
@@ -844,7 +1021,47 @@ in {
           || cfg.gpuMemory.pagePoolSizeGiB <= cfg.gpuMemory.ttmSizeGiB;
         message = "hardware.amd-npu.gpuMemory.pagePoolSizeGiB must be <= ttmSizeGiB.";
       }
+      {
+        assertion = !cfg.strata.enable || cfg.enableLemonade;
+        message = "hardware.amd-npu.strata.enable requires enableLemonade = true (Strata is served through lemond's ds4 recipe).";
+      }
+      {
+        assertion = !cfg.strata.enable || cfg.gpuTarget == "gfx1151";
+        message = "hardware.amd-npu.strata.enable requires gpuTarget = \"gfx1151\" (Strata is measured and tuned for Strix Halo only).";
+      }
+      {
+        assertion = !cfg.strata.enable || (cfg.strata.model != null && cfg.strata.pack != null && cfg.strata.mtp != null);
+        message = "hardware.amd-npu.strata.enable requires strata.model, strata.pack and strata.mtp.";
+      }
+      {
+        assertion = !cfg.strata.enable || !cfg.strata.vision.enable || cfg.strata.vision.mmproj != null;
+        message = "hardware.amd-npu.strata.vision.enable requires strata.vision.mmproj (or set vision.enable = false).";
+      }
+      {
+        assertion =
+          !cfg.strata.enable
+          || !(any (a: a == "--expert-cache" || lib.hasPrefix "--expert-cache=" a) cfg.strata.extraArgs);
+        message = "hardware.amd-npu.strata.extraArgs must not contain --expert-cache; set strata.expertCache (an explicit count; Strata's `auto` is unsafe on unified memory).";
+      }
+      {
+        assertion =
+          !cfg.strata.enable
+          || !(any (a: a == "--max-context" || lib.hasPrefix "--max-context=" a) cfg.strata.extraArgs);
+        message = "hardware.amd-npu.strata.extraArgs must not contain --max-context; set strata.contextSize.";
+      }
     ];
+
+    hardware.amd-npu.lemonade.customModels = mkIf cfg.strata.enable {
+      ${cfg.strata.modelName} = {
+        checkpoint = cfg.strata.model;
+        source = "local_path";
+        recipe = "ds4";
+        labels = ["chat" "reasoning" "tool-calling"] ++ optional cfg.strata.vision.enable "vision";
+        recipe_options.ctx_size = cfg.strata.contextSize;
+      };
+    };
+
+    hardware.amd-npu.strata.runConfig = mkIf cfg.strata.enable strataSettings;
 
     warnings =
       optional
