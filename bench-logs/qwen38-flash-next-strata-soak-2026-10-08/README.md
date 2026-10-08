@@ -198,7 +198,9 @@ hence the nonzero acceptance).
 | gsq-depth256 | 256867 | 676 | 2.8 | - | - | 256907 | 78.5 |
 
 Median decode from 30K up over the stages that ran 256 tokens: Strata 39.5 (192K row) and 37.1 (256K row) tok/s, GSQHalo 30.1
-and 29.1, Strata without the MTP layer 30.0. Strata prefill is about 1,050 tok/s at 30-100K falling to 850 at 257K (GSQHalo 735
+and 29.1, Strata without the MTP layer 30.0. Prefill is new tokens over time to first token; on GSQHalo the fill requests ask for 64 tokens (llama-server buffers a tool
+call until it completes), so its time to first token includes up to about a second of decode, which matters only at the 8K stage.
+Strata prefill is about 1,050 tok/s at 30-100K falling to 850 at 257K (GSQHalo 735
 to 676); an agent turn on the cached prefix takes about 3 s to first token on both. Peak GTT: Strata 67.8 / 68.8 GiB at 192K /
 256K, GSQHalo 75.4 / 78.5.
 
