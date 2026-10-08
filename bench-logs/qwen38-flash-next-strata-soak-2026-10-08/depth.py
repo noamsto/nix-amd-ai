@@ -5,11 +5,13 @@ Strata and on llama-server, over /v1/chat/completions with thinking off.
   run_depth       one agent conversation grown stage by stage to the engine's context limit: at each depth the prefill rate
                   of the new tokens, a 1,500-token agent turn on the cached prefix, and the decode rate (MTP acceptance
                   where the server reports it)
-  run_twosession  two such conversations at ~limit-12K tokens each in two slots: does one session's prefill or request
-                  evict the other's cache, per-stream and aggregate decode concurrent and staggered, then a third session
+  run_twosession  two such conversations at limit-24K tokens each in two slots: does one session's prefill or request
+                  evict the other's cache, per-stream and combined decode concurrent and staggered, then a third session
 
 The text is the repo's own tracked files at a pinned commit, never repeated, so neither prompt lookup nor a prefix cache
 can answer from earlier text. A request that fails is recorded and ends the group: deeper stages would fail the same way.
+A decode rate is reported only for a request that ran to its token limit (`finish` length): one that ended as a tool call or a
+short answer says nothing about the sustained rate and carries `short: true` instead.
 """
 import subprocess
 import threading
@@ -21,10 +23,12 @@ SKIP_SUFFIXES = (".png", ".jpg", ".gif", ".lock", ".bin", ".jsonl", ".json", ".l
 STAGES = (8192, 32768, 65536, 98304, 131072, 163840, 196608, 229376, 262144)
 TURN_TOKENS = 1500
 FILL_TURN_MAX = 16000
-ESSAY = "Write a very long, detailed, multi-section essay about the documents above, at least 1500 words."
+ESSAY = ("Do not call any tool. Write a very long, detailed, multi-section essay in prose about the documents above, "
+         "at least 1500 words.")
 SESSION_HEADROOM = 24000  # a two-session fill leaves room for ~10 turns of 1,500 tokens and replies of up to 400
 FILL_TOLERANCE = 0.03  # a session fill stops within this fraction of its target
 HEADROOM = 5000  # the last stage stops this far under the limit: one turn, the essay and the template
+STAGGER_S = 3  # the second request of a staggered round arrives this long after the first
 
 
 class Source:
@@ -68,11 +72,17 @@ def acceptance(r):
     return round(t["draft_n_accepted"] / t["draft_n"], 4) if t.get("draft_n") else None
 
 
-def aggregate_tps(results):
-    """Tokens per second over the span in which any of the concurrent requests was generating."""
-    lo = min(r["ttft_s"] for r in results)
-    hi = max(r["ttft_s"] + r["gen_s"] for r in results)
-    return round(sum(r["completion_tokens"] for r in results) / (hi - lo), 2) if hi > lo else None
+def full_length(r):
+    """True for a request that ran to its token limit: only those say anything about the sustained decode rate."""
+    return r["finish_reason"] == "length"
+
+
+def aggregate_tps(timed):
+    """Tokens per second over the span in which any of the concurrent requests was generating. `timed` holds
+    (result, start_s) with start_s the request's send time on the round's clock, since ttft counts from each own send."""
+    lo = min(s + r["ttft_s"] for r, s in timed)
+    hi = max(s + r["ttft_s"] + r["gen_s"] for r, s in timed)
+    return round(sum(r["completion_tokens"] for r, _ in timed) / (hi - lo), 2) if hi > lo else None
 
 
 class Convo:
@@ -86,19 +96,19 @@ class Convo:
         self.chars = 0
 
     def add_turn(self, tokens, ask=None):
-        """A tool call and its result of unseen text; `ask` goes after the text, and a reply committed before this turn
-        gets a user message in front of the next call, as an agent's transcript would."""
+        """A tool call and its result of unseen text, then `ask` as the user's next message. A reply committed before
+        this turn gets a user message in front of the next call, as an agent's transcript would."""
         self.turns += 1
         if self.msgs[-1]["role"] == "assistant":
             self.msgs.append({"role": "user", "content": "Continue with the next file."})
         text = self.source.take(int(tokens * self.ratio))
         self.chars += len(text)
-        if ask:
-            text += f"\n\n{ask}"
         call = {"id": f"call_{self.turns}", "type": "function",
                 "function": {"name": "read_file", "arguments": f'{{"path": "chunk-{self.turns}.md"}}'}}
         self.msgs += [{"role": "assistant", "content": f"I'll read chunk-{self.turns}.md next.", "tool_calls": [call]},
                       {"role": "tool", "tool_call_id": call["id"], "content": text}]
+        if ask:
+            self.msgs.append({"role": "user", "content": ask})
 
     def commit(self, r):
         """Keep the model's reply in the transcript: the next request's prompt then extends what the server last held."""
@@ -112,20 +122,26 @@ class Convo:
             tokens -= step
 
     def body(self, P, e, max_tokens, essay=False, temperature=0):
+        """`essay` adds a throwaway user message: the next request's prompt will not contain it."""
         msgs = self.msgs + ([{"role": "user", "content": ESSAY}] if essay else [])
         return {"messages": msgs, "tools": self.tools, "max_tokens": max_tokens, "temperature": temperature,
                 "seed": 0, "cache_prompt": True, **P.thinking_off(e)}
 
 
-def summarize(P, r, prev_prompt=None):
-    """The fields every request of these groups reports. `new_tokens` is what the prefill had to read."""
+def summarize(P, r, long=False):
+    """The fields every request of these groups reports. `new_tokens` is what the prefill had to read, None when the
+    server does not say what it cached. With `long` the request was meant to run to its token limit: if it did not, it
+    reports `short: true` and no decode rate or acceptance."""
     cached = r["cached_tokens"]
-    new = r["prompt_tokens"] - (cached if cached is not None else (prev_prompt or 0))
+    new = None if cached is None else r["prompt_tokens"] - cached
     tps = P.decode_tps(r)
-    return {"prompt_tokens": r["prompt_tokens"], "cached_tokens": cached, "new_tokens": new,
-            "ttft_s": round(r["ttft_s"], 3), "prefill_tps": round(new / r["ttft_s"], 1) if new > 0 else None,
-            "completion_tokens": r["completion_tokens"], "decode_tps": None if tps is None else round(tps, 2),
-            "acceptance": acceptance(r), "finish": r["finish_reason"], "wall_s": round(r["wall_s"], 2)}
+    out = {"prompt_tokens": r["prompt_tokens"], "cached_tokens": cached, "new_tokens": new,
+           "ttft_s": round(r["ttft_s"], 3), "prefill_tps": round(new / r["ttft_s"], 1) if new and new > 0 else None,
+           "completion_tokens": r["completion_tokens"], "decode_tps": None if tps is None else round(tps, 2),
+           "acceptance": acceptance(r), "finish": r["finish_reason"], "wall_s": round(r["wall_s"], 2)}
+    if long and not full_length(r):
+        out.update(short=True, decode_tps=None, acceptance=None)
+    return out
 
 
 def fill_tokens(e):
@@ -138,20 +154,17 @@ def request(P, e, body):
     return P.stream(e, "/v1/chat/completions", body)
 
 
-def calibrate(P, e, c):
-    """Characters per token of this corpus through this engine's tokenizer, from the replay prompt alone."""
-    convo = Convo(c, Source(""), "calibrate", 1)
-    r = request(P, e, convo.body(P, e, fill_tokens(e)))
-    base = r["prompt_tokens"]
-    probe = Convo(c, Source(load_text(P)), "calibrate", 3.5)
-    probe.add_turn(8000)
-    r2 = request(P, e, probe.body(P, e, fill_tokens(e)))
-    ratio = probe.chars / (r2["prompt_tokens"] - base)
-    return base, ratio
-
-
 def load_text(P):
     return load_corpus(P.os.getcwd())  # run.sh runs probe.py from the repo root
+
+
+def calibrate(P, e, c, text):
+    """Characters per token of this corpus through this engine's tokenizer, from the replay prompt alone."""
+    base = request(P, e, Convo(c, Source(""), "calibrate", 1).body(P, e, fill_tokens(e)))["prompt_tokens"]
+    probe = Convo(c, Source(text), "calibrate", 3.5)
+    probe.add_turn(8000)
+    r2 = request(P, e, probe.body(P, e, fill_tokens(e)))
+    return base, probe.chars / (r2["prompt_tokens"] - base)
 
 
 def snap(P, e):
@@ -160,33 +173,44 @@ def snap(P, e):
 
 def limit_of(e):
     """Tokens one session can hold: strata's --max-context, or llama-server's -c split over its slots."""
-    return e.args.ctx // max(1, e.args.slots)
+    return e.args.ctx // (max(1, e.args.slots) if e.engine == "llama" else 1)
+
+
+def guarded(fn, e, c, P):
+    """A group's setup (corpus, calibration) failing is recorded as the group's error, not raised out of the row."""
+    try:
+        return fn(e, c, P)
+    except Exception as exc:  # noqa: BLE001 - a row keeps the groups that did run
+        return {"error": f"{type(exc).__name__}: {str(exc)[:300]}"}
 
 
 # ---- one session to the limit -----------------------------------------------------------------------------------
 
 def run_depth(e, c, P):
+    return guarded(depth_group, e, c, P)
+
+
+def depth_group(e, c, P):
     limit = limit_of(e)
-    base, ratio = calibrate(P, e, c)
-    convo = Convo(c, Source(load_text(P)), "depth", ratio)
+    text = load_text(P)
+    base, ratio = calibrate(P, e, c, text)
+    convo = Convo(c, Source(text), "depth", ratio)
     out = {"context_limit": limit, "calibrated_chars_per_token": round(ratio, 3), "base_prompt_tokens": base,
            "corpus_rev": CORPUS_REV, "stages": []}
-    prev = base
     depth = base
     for target in stage_targets(limit):
         stage = {"target": target}
         try:
             convo.add_tokens(target - depth)
             fill = request(P, e, convo.body(P, e, fill_tokens(e)))
-            stage["fill"] = summarize(P, fill, prev)
+            stage["fill"] = summarize(P, fill)
             convo.ratio = convo.chars / max(1, fill["prompt_tokens"] - base)  # refine on the measured count
             convo.add_turn(TURN_TOKENS)
             turn = request(P, e, convo.body(P, e, P.REPLAY_GEN))
-            stage["turn"] = summarize(P, turn, fill["prompt_tokens"])
+            stage["turn"] = summarize(P, turn)
             essay = request(P, e, convo.body(P, e, 256, essay=True))
-            stage["essay"] = summarize(P, essay, turn["prompt_tokens"])
-            prev = turn["prompt_tokens"]
-            depth = prev
+            stage["essay"] = summarize(P, essay, long=True)
+            depth = turn["prompt_tokens"]
             stage["mem"] = snap(P, e)
         except Exception as exc:  # noqa: BLE001 - a failed stage is the finding; deeper ones would fail alike
             stage["error"] = f"{type(exc).__name__}: {str(exc)[:300]}"
@@ -201,7 +225,7 @@ def run_depth(e, c, P):
 # ---- two sessions ------------------------------------------------------------------------------------------------
 
 def turn_request(P, e, convo, max_tokens, ask=None):
-    """One agent turn: new tool output (asking for a long reply when `ask` is set), the reply kept in the transcript."""
+    """One agent turn: new tool output, `ask` as the user's message, the reply kept in the transcript."""
     convo.add_turn(TURN_TOKENS, ask)
     r = request(P, e, convo.body(P, e, max_tokens))
     convo.commit(r)
@@ -209,14 +233,17 @@ def turn_request(P, e, convo, max_tokens, ask=None):
 
 
 def concurrent(P, e, jobs):
-    """Run each (convo, max_tokens, ask, delay_s) at once; raw results in order, errors kept as strings."""
+    """Run each (convo, max_tokens, ask, delay_s) at once. Results in order: (result, start_s) with start_s the send time
+    on the round's clock, or the error as a string."""
     results = [None] * len(jobs)
+    t_round = time.perf_counter()
 
     def go(i):
         convo, tokens, ask, delay = jobs[i]
         time.sleep(delay)
+        start = time.perf_counter() - t_round
         try:
-            results[i] = turn_request(P, e, convo, tokens, ask)
+            results[i] = (turn_request(P, e, convo, tokens, ask), start)
         except Exception as exc:  # noqa: BLE001 - recorded, the round continues
             results[i] = f"{type(exc).__name__}: {str(exc)[:300]}"
 
@@ -228,27 +255,35 @@ def concurrent(P, e, jobs):
     return results
 
 
-def round_row(P, results, prevs):
-    ok = [r for r in results if not isinstance(r, str)]
-    return {"streams": [r if isinstance(r, str) else summarize(P, r, p) for r, p in zip(results, prevs)],
-            "aggregate_tps": aggregate_tps(ok) if len(ok) == len(results) else None}
+def round_row(P, results, longs):
+    """Per-stream summaries, and the combined rate only when every stream ran to its limit (`longs` says which were meant
+    to): a stream that ended early would make the span and the token count say different things."""
+    ok = [x for x in results if not isinstance(x, str)]
+    streams = [x if isinstance(x, str) else {**summarize(P, x[0], long=lg), "start_s": round(x[1], 2)}
+               for x, lg in zip(results, longs)]
+    clean = len(ok) == len(results) and all(full_length(r) for (r, _), lg in zip(ok, longs) if lg)
+    return {"streams": streams, "combined_tps": aggregate_tps(ok) if clean and all(longs) else None}
 
 
 def run_twosession(e, c, P):
+    return guarded(twosession_group, e, c, P)
+
+
+def twosession_group(e, c, P):
     limit = limit_of(e)
     depth = limit - SESSION_HEADROOM
-    base, ratio = calibrate(P, e, c)
     text = load_text(P)
+    base, ratio = calibrate(P, e, c, text)
     a, b = Convo(c, Source(text, 0), "A", ratio), Convo(c, Source(text, len(text) // 2), "B", ratio)
-    out = {"context_limit": limit, "session_tokens": depth, "slots": e.args.slots, "calibrated_chars_per_token": round(ratio, 3),
+    out = {"context_limit": limit, "session_tokens": depth, "calibrated_chars_per_token": round(ratio, 3),
            "corpus_rev": CORPUS_REV}
     try:
-        out["slots_view"] = P.grid.http(e.port, "/slots", timeout=30)
+        view = P.grid.http(e.port, "/slots", timeout=30)
+        out["slots_seen"] = [{k: s.get(k) for k in ("id", "n_ctx")} for s in view]
     except Exception as exc:  # noqa: BLE001 - not every server has it
-        out["slots_view"] = f"{type(exc).__name__}"
-    prompt = {}
+        out["slots_seen"] = f"{type(exc).__name__}"
 
-    def fill(convo, key):
+    def fill(convo):
         """Grow to `depth` in measured steps: the corpus is denser in tokens further in than where the ratio was taken."""
         steps, cur = [], base
         while depth - cur > depth * FILL_TOLERANCE:
@@ -256,49 +291,41 @@ def run_twosession(e, c, P):
             convo.add_tokens(int(need * 0.9) if need > 20000 else need)
             r = request(P, e, convo.body(P, e, fill_tokens(e)))
             convo.commit(r)
-            steps.append(summarize(P, r, cur))
+            steps.append(summarize(P, r))
             convo.ratio = convo.chars / max(1, r["prompt_tokens"] - base)
             cur = r["prompt_tokens"]
-        prompt[key] = cur
         return steps
 
-    def seq_turn(convo, key, tokens, ask=None):
-        r = turn_request(P, e, convo, tokens, ask)
-        s = summarize(P, r, prompt[key])
-        prompt[key] = r["prompt_tokens"]
-        return s
+    def seq_turn(convo, tokens, ask=None):
+        return summarize(P, turn_request(P, e, convo, tokens, ask), long=ask == ESSAY)
 
     try:
-        out["prefill_A"] = fill(a, "A")
-        out["prefill_B"] = fill(b, "B")  # A idle in its slot
+        out["prefill_A"] = fill(a)
+        out["prefill_B"] = fill(b)  # A idle meanwhile
         out["mem_after_prefill"] = snap(P, e)
-        # the identical request again, B's then A's: a hit means the server still holds that session's tokens
+        # the last fill request again with its reply appended, B's then A's: a hit means the server still holds the session
         for key, convo in (("B", b), ("A", a)):
             r = request(P, e, convo.body(P, e, fill_tokens(e)))
-            out[f"repeat_{key}"] = summarize(P, r, prompt[key])
-        # A's cache after B's whole prefill, then B's cache after A's turn: sequential turns, one stream each
-        out["alone_A"] = seq_turn(a, "A", 256, ESSAY)
-        out["alone_B"] = seq_turn(b, "B", 256, ESSAY)
-        # the same again, now that each has just run: is a session's second turn a hit
-        out["alone_A_again"] = seq_turn(a, "A", 256, ESSAY)
+            out[f"repeat_{key}"] = summarize(P, r)
+        # one agent turn each in turn: A's cache after B's whole prefill and a repeat, then B's, then A's again
+        out["alone_A"] = seq_turn(a, 256, ESSAY)
+        out["alone_B"] = seq_turn(b, 256, ESSAY)
+        out["alone_A_again"] = seq_turn(a, 256, ESSAY)
         out["rounds"] = []
         for kind in ("concurrent", "concurrent", "staggered"):
-            before = [prompt["A"], prompt["B"]]
-            # staggered: A decodes a long essay, B's agent turn arrives 3 s in and wants a short answer
-            jobs = [(a, 400, ESSAY, 0), (b, 400, ESSAY, 0)] if kind == "concurrent" else [(a, 400, ESSAY, 0), (b, 64, None, 3)]
-            res = concurrent(P, e, jobs)
-            out["rounds"].append({"kind": kind, **round_row(P, res, before)})
-            for key, r in zip("AB", res):
-                if not isinstance(r, str):
-                    prompt[key] = r["prompt_tokens"]
+            # staggered: A decodes a long essay, B's agent turn arrives STAGGER_S in and wants a one-line answer
+            if kind == "concurrent":
+                jobs, longs = [(a, 400, ESSAY, 0), (b, 400, ESSAY, 0)], [True, True]
+            else:
+                jobs, longs = [(a, 400, ESSAY, 0), (b, 64, "Do not call any tool. Answer in one sentence.", STAGGER_S)], [True, False]
+            out["rounds"].append({"kind": kind, **round_row(P, concurrent(P, e, jobs), longs)})
         out["mem_after_rounds"] = snap(P, e)
         # a third session: does its prefill take a slot's cache from A or B?
         third = Convo(c, Source(text, len(text) // 4), "C", ratio)
         third.add_tokens(16000)
-        r = request(P, e, third.body(P, e, fill_tokens(e)))
-        out["third_prefill"] = summarize(P, r, base)
-        out["after_third_A"] = seq_turn(a, "A", 64)
-        out["after_third_B"] = seq_turn(b, "B", 64)
+        out["third_prefill"] = summarize(P, request(P, e, third.body(P, e, fill_tokens(e))))
+        out["after_third_A"] = seq_turn(a, 64)
+        out["after_third_B"] = seq_turn(b, 64)
         out["mem_end"] = snap(P, e)
     except Exception as exc:  # noqa: BLE001 - what ran is kept
         out["error"] = f"{type(exc).__name__}: {str(exc)[:300]}"

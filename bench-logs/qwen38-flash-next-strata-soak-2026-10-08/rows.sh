@@ -54,17 +54,22 @@ trap 'exit 143' TERM
 trap 'exit 130' INT
 trap 'exit 129' HUP
 
+strata_rows=0
 for row; do
     case $row in
-    soak | soak-batch | bigimage | longsoak | depth192 | depth256 | two128 | two128-nobatch | two128-mtp | two128-park | two256-park | nomtp-depth128 | gsq-depth192 | gsq-depth256 | gsq-two128) ;;
+    soak | soak-batch | longsoak | depth192 | depth256 | two128 | two128-nobatch | two128-mtp | two128-park | two256-park | nomtp-depth128) strata_rows=1 ;;
+    bigimage) strata_rows=1; : "${SCREENSHOT_PNG:?}" ;;
+    gsq-depth192 | gsq-depth256 | gsq-two128) : "${GSQ_BIN:?}" ;;
     *) echo "unknown row: $row" >&2; exit 7 ;;
     esac
 done
-: "${STRATA_PY:?}" "${STRATA_REPO:?}" "${STRATA_ENGINE:?}" "${STRATA_VISION_BIN:?}" "${STRATA_PACK:?}" "${STRATA_MTP_RT:?}"
-: "${STRATA_MMPROJ:?}" "${STRATA_EXPERT_CACHE:?}"
+if [ "$strata_rows" = 1 ]; then
+    : "${STRATA_PY:?}" "${STRATA_REPO:?}" "${STRATA_ENGINE:?}" "${STRATA_VISION_BIN:?}" "${STRATA_PACK:?}" "${STRATA_MTP_RT:?}"
+    : "${STRATA_MMPROJ:?}" "${STRATA_EXPERT_CACHE:?}"
+fi
 export OUT=$W/rows.jsonl CACHE CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
-unset EXTRA_ARGS LLAMA_CTX LLAMA_SLOTS
-mtp_rt=$STRATA_MTP_RT
+unset EXTRA_ARGS LLAMA_CTX LLAMA_SLOTS NEED_GIB FIT_CHECK_ONLY
+mtp_rt=${STRATA_MTP_RT:-}
 
 i=0
 for row; do
@@ -103,8 +108,10 @@ for row; do
     esac
     [ -z "$extra" ] || export EXTRA_ARGS=$extra
     echo "=== $row $(date +%T)" >&2
+    # offline before the call: a signal that ends this shell while run.sh keeps lemond unloaded must still restore it
+    offline=1
     KEEP_OFFLINE=$keep "$D/run.sh" "$preset" --label "s282-$row" --do "$groups" "${probe_args[@]}" ||
-        { echo "ROW FAILED: $row (exit $?)" >&2; exit 1; }
-    if [ "$keep" = 1 ]; then offline=1; else offline=0; fi
+        { rc=$?; echo "ROW FAILED: $row (exit $rc)" >&2; exit "$rc"; }
+    [ "$keep" = 1 ] || offline=0
     unset EXTRA_ARGS LLAMA_CTX LLAMA_SLOTS
 done

@@ -6,21 +6,21 @@ Nothing here transfers to gfx1150. Model: Qwen3.8-Flash-Next **UD-IQ4_XS** (unsl
 
 ## Verdict
 
-1. **Move the single-agent lane to Strata: yes, with the concurrency caveat below.** On one session it is faster than the
-   resident GSQHalo at every depth tried (prefill 1.3-1.4x, decode about +25-35 %), uses 7-10 GiB less GTT, accepts a
-   262144 context, and a 60-minute mixed soak had no errors, no engine restart and a flat canary.
-2. **Local agent lane: 1x256K, not 2x128K.** One Strata session at 256K decodes about 36-40 tok/s with an agent turn
-   on the cached prefix in about 3 s and 68.8 GiB peak GTT (35 GiB headroom). Two sessions at once do not scale on
-   either engine: Strata `--batch 2` yields about 15 tok/s combined (a single stream gets about 40), GSQHalo `-np 2`
-   about 30 combined (a single stream gets about 31), at 16 GiB GTT headroom. Two sessions *taking turns* work only if the
-   first one's cache survives (see 4).
-3. **60-minute soak: no correctness or stability problem.** 266 requests, 0 errors, 0 engine restarts, the canary's
-   temperature-0 decode at 38.6-40.0 tok/s (11 of 13 readings at 39.9-40.0) and prefill at 1,021-1,065 tok/s after the first reading (953), GTT constant.
-   One thing to watch: the engine's anonymous memory grew 1.3 GiB over the hour (1.26 to 2.55 GiB, max 2.86).
-4. **Cache affinity and the concurrent-decode collapse are separate problems.** Affinity: Strata keeps one resident
-   conversation (a second session's prefill evicts the first: 96 s to re-prefill 110K tokens); `--conversation-cache-mib 8192`
-   fixes that at 110K but did not hold at 238K. llama-server keeps both sessions by default. The collapse looks like
-   Strata's batch path: llama.cpp with two slots holds its combined rate level with one stream, Strata's falls to about 40 % of one.
+1. **Move the resident model to Strata: yes.** On one session it is faster than the resident GSQHalo at every depth tried
+   (prefill 1.3-1.4x, decode +27-31 % at 192K-256K), uses 7-10 GiB less GTT, accepts a 262144 context, and a 60-minute mixed
+   soak had no errors, no engine restart and no drift. With two sessions at once it is about twice as fast as GSQHalo `-np 2`
+   (21 + 18 against 9.5 + 9.8 tok/s at ~107K each) and 17.7 GiB lighter.
+2. **Local agent lane: 2x128K with `--batch 2` for two overlapping agents, 1x256K only for one agent that needs more than
+   ~128K.** Two sessions decoding at once each get about half of a single stream (21 + 18 tok/s vs ~40), so combined throughput
+   stays at ~89 % of one stream on Strata and ~86 % on GSQHalo: batching shares the engine, it does not add to it. Peak GTT
+   is 70.6 GiB for 2x128K (33 GiB headroom) and 68.8 GiB for 1x256K (35 GiB).
+3. **The catch is cache affinity, not speed.** Strata holds one resident conversation: when two sessions take turns, every
+   switch re-prefills the other session (96 s at 110K tokens, 245 s at 238K). `--conversation-cache-mib 8192` fixed it at 110K
+   (seen in a row run on the earlier version of the harness, below) and did not at 238K. llama-server keeps both sessions by default.
+4. **60-minute soak: no correctness or stability problem.** 266 requests, 0 errors, 0 engine restarts, the canary's
+   temperature-0 decode at 38.6-40.0 tok/s (11 of 13 readings at 39.9-40.0) and prefill at 1,021-1,065 tok/s after the first
+   reading (953), GTT constant. One thing to watch: the engine's anonymous memory grew 1.3 GiB over the hour (1.26 to 2.55 GiB,
+   max 2.86).
 
 ## Pins
 
@@ -44,8 +44,8 @@ Nothing here transfers to gfx1150. Model: Qwen3.8-Flash-Next **UD-IQ4_XS** (unsl
 
 ## Rows
 
-All rows ran; none was skipped, none needed a download. `peak GTT` is the maximum over the row (0.5 s sampling), `RSS HWM` the
-engine's VmHWM (mostly file-backed page cache of the experts), `anon RSS` its anonymous memory at the end.
+All rows ran; none was skipped for memory and none needed a download. `peak GTT` is the maximum over the row (0.5 s sampling),
+`RSS HWM` the engine's VmHWM (mostly file-backed page cache of the experts), `anon RSS` its anonymous memory at the end.
 
 | row | result | peak GTT GiB | RSS HWM GiB | anon RSS end GiB | load start | load max | ctx | errors | load s |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -54,21 +54,29 @@ engine's VmHWM (mostly file-backed page cache of the experts), `anon RSS` its an
 | bigimage | ran | 66.9 | 36.2 | 1.4 | 1.97 | 6.2 | 131072 | 0 | 40.1 |
 | depth192 | ran | 67.8 | 37.3 | 2.3 | 1.91 | 26.9 | 196608 | 0 | 42.1 |
 | depth256 | ran | 68.8 | 41.6 | 2.4 | 1.69 | 29.4 | 262144 | 0 | 42.1 |
-| two128 | ran | 70.6 | 44.8 | 2.7 | 0.36 | 34.1 | 131072 | 0 | 34.0 |
+| two128 | ran | 70.6 | 44.9 | 2.6 | 0.31 | 34.6 | 131072 | 0 | 46.1 |
 | two128-mtp | ran | 71.0 | 44.6 | 2.7 | 1.65 | 34.2 | 131072 | 0 | 38.0 |
 | gsq-depth192 | ran | 75.4 | 7.5 | 7.4 | 1.81 | 4.5 | 196608 | 0 | 26.0 |
 | gsq-depth256 | ran | 78.5 | 8.3 | 8.0 | 1.96 | 7.3 | 262144 | 0 | 29.0 |
-| gsq-two128 | ran | 88.3 | 16.9 | 13.7 | 1.84 | 12.8 | 262144 | 0 | 46.9 |
+| gsq-two128 | ran | 88.3 | 16.4 | 14.4 | 1.82 | 11.9 | 262144 | 0 | 44.3 |
 | longsoak | ran | 66.9 | 49.5 | 2.2 | 1.81 | 29.8 | 131072 | 0 | 40.1 |
 | two128-park | ran | 70.6 | 44.4 | 8.1 | 0.49 | 28.4 | 131072 | 0 | 32.0 |
 | two128-nobatch | ran | 66.9 | 49.0 | 2.6 | 1.73 | 37.1 | 131072 | 0 | 28.0 |
 | nomtp-depth128 | ran | 65.7 | 49.7 | 2.2 | 1.65 | 24.5 | 131072 | 0 | 26.0 |
-| two256-park | ran | 76.1 | 38.3 | 7.1 | 1.81 | 34.1 | 262144 | 0 | 34.0 |
+| two256-park | ran | 76.1 | 39.8 | 9.7 | 1.88 | 32.9 | 262144 | 0 | 58.1 |
 
 Rows are in `rows.sh`. `two128-nobatch` ran by accident when an edit to `rows.sh` made a running shell repeat its loop with no
-flags; it is kept as a control (one slot, two sessions in turn) and added to `rows.sh`. `ctx` for the GSQ two-session row is
-the total across its two slots. Rows were re-run after harness fixes (two-session fill sizing, llama prefill budget); the
-tables use each row's last run.
+flags; it is kept as a control (one slot, two sessions in turn). `ctx` for the GSQ two-session row is the total across its
+two slots.
+
+**Re-runs.** A review of this harness found that the first two-session runs asked for a long reply inside a tool result, so the
+model mostly answered with a 40-token tool call: their "concurrent decode" rates were not sustained decode, and an earlier draft
+of this README drew conclusions from them (a "collapse" to 15 tok/s combined) that were wrong. The group now asks for the essay
+as a separate user message, reports a decode rate only for a request that ran to its token limit, and times concurrent
+requests on one clock. `two128`, `gsq-two128` and `two256-park` were re-run with it. `two128-mtp`, `two128-park` and
+`two128-nobatch` were **not re-run (owner cut)**: their decode numbers are dropped, and only their cache cells (cached tokens
+and time to first token, which the short replies do not affect) are kept and marked. Depth rows keep every stage whose essay ran
+to 256 tokens; the stages that ended as tool calls show `-`.
 
 ### 1. #282 as written (Strata fast config)
 
@@ -93,8 +101,8 @@ decode, half tool-call), without and with `--batch 4` (all four slots came up at
 
 Without `--batch` the server serialises: four requests finish in 11.8 s, each stream at full speed but later ones queued
 (time to first token 1.5-8.9 s). With `--batch 4` the same four take 10.4 s (aggregate 29.6 vs 26.2 tok/s, +13 %) and each
-stream runs at 16-25 tok/s, +7.5 GiB peak GTT (74.4 vs 66.9). Two requests: 7.2 s batched vs 6.2 s serial. Batching buys
-little throughput and costs memory.
+stream runs at 16-25 tok/s, +7.5 GiB peak GTT (74.4 vs 66.9). Two requests: 7.2 s batched vs 6.2 s serial. These requests
+are 128-token answers and tool calls, so the rates are short-run; the sustained two-session rates are in section 3.
 
 **Image / text behind encode** (1,024-token screenshot, 185 KB PNG, `--vision-max-tokens 1024`, peak GTT 66.9 GiB):
 encode window 4.39 s cold (69 CPU-seconds), the same image again 1.7 s to first token (encoder cache hit); a text request
@@ -103,8 +111,8 @@ already decoding finished before the image reached the encoder (the server runs 
 #279 measured a 19.7 s encode of a similar image on v0.1.40.1; this build's 4.4 s was not diagnosed.
 
 **60-minute soak** (`SOAK_MINUTES=60`, thinking on, canary every 5 minutes, 30 s sampler; 266 requests: 81 replay turns, 104
-burst requests (52 pairs), 27 each of tool call, reasoning and 32K-context prompts; 0 errors, engine pid unchanged, 0 restarts, GTT
-66.9 GiB throughout, MemAvailable 45.6-47.4 GiB):
+burst requests (52 pairs), 27 each of tool call, reasoning and 32K-context prompts; 0 errors, engine pid unchanged, 0 restarts,
+GTT 66.9 GiB throughout, MemAvailable 45.6-47.4 GiB):
 
 | minute | requests | decode tok/s median |
 |---|---:|---:|
@@ -143,32 +151,31 @@ burst requests (52 pairs), 27 each of tool call, reasoning and 32K-context promp
 ### 2. Long context, one session (Strata int8 KV vs GSQHalo f16 KV)
 
 One agent conversation (the replay's system prompt and tools, then tool turns of unseen text) grown stage by stage to the end
-of the context. Per stage: the prefill rate of the tokens added (`fill`), an agent turn of 1,500 new tokens on the cached
-prefix (time to first token), and a 256-token essay (decode rate, MTP/draft acceptance). **The server accepts a 262144
-context** (Strata: one slot of 262144, the session reached 257K tokens; GSQHalo likewise). The decode column swings with the
-text the model writes (acceptance 0.45-0.6 on most stages, 0.87-1.0 on a few where the essay quoted the file), so read the
-typical value, not single stages: Strata about 36-42 tok/s, GSQHalo about 26-34, at every depth. `nomtp-depth128` is Strata
-without the MTP draft layer (suffix lookup stays on, hence the nonzero acceptance), the one-stream control for section 3.
+of the context. Per stage: the prefill rate of the tokens added, an agent turn of 1,500 new tokens on the cached prefix (time to
+first token), and a 256-token essay (decode rate, draft acceptance). **The server accepts a 262144 context** (Strata: one slot
+of 262144, the session reached 257K tokens; GSQHalo likewise). `-` in the decode column is a stage whose essay ended as a
+tool call, so it says nothing about decode. `nomtp-depth128` is Strata without the MTP draft layer (suffix lookup stays on,
+hence the nonzero acceptance).
 
-| row | depth (prompt tokens) | prefill tok/s | agent-turn ttft s | decode tok/s | MTP acceptance | turn cached tokens | GTT GiB |
+| row | depth (prompt tokens) | prefill tok/s | agent-turn ttft s | decode tok/s (essays run to 256 tokens) | draft acceptance | turn cached tokens | GTT GiB |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| depth192 | 8474 | 735 | 2.2 | 69.2 | 0.82 | 8467 | 67.8 |
+| depth192 | 8474 | 735 | 2.2 | - | - | 8467 | 67.8 |
 | depth192 | 29623 | 1069 | 2.9 | 41.8 | 0.51 | 29631 | 67.8 |
 | depth192 | 68140 | 1081 | 2.7 | 38.7 | 0.46 | 68149 | 67.8 |
 | depth192 | 105140 | 1057 | 2.6 | 39.5 | 0.45 | 105150 | 67.8 |
 | depth192 | 130461 | 992 | 3.1 | 39.5 | 0.49 | 130471 | 67.8 |
 | depth192 | 163490 | 940 | 3.0 | 41.6 | 0.53 | 163500 | 67.8 |
 | depth192 | 190096 | 926 | 2.7 | 38.0 | 0.50 | 190106 | 67.8 |
-| depth256 | 8479 | 738 | 2.0 | 54.2 | 0.65 | 8472 | 68.8 |
+| depth256 | 8479 | 738 | 2.0 | - | - | 8472 | 68.8 |
 | depth256 | 29594 | 1040 | 2.9 | 40.6 | 0.49 | 29603 | 68.8 |
 | depth256 | 68102 | 1076 | 2.8 | 37.5 | 0.44 | 68111 | 68.8 |
 | depth256 | 105117 | 1055 | 2.5 | 36.2 | 0.45 | 105127 | 68.8 |
 | depth256 | 130456 | 989 | 3.3 | 36.1 | 0.45 | 130466 | 68.8 |
-| depth256 | 163491 | 988 | 3.0 | 65.8 | 0.88 | 163501 | 68.8 |
+| depth256 | 163491 | 988 | 3.0 | - | - | 163501 | 68.8 |
 | depth256 | 194789 | 932 | 3.2 | 39.1 | 0.57 | 194799 | 68.8 |
 | depth256 | 227696 | 909 | 3.4 | 36.7 | 0.48 | 227706 | 68.8 |
-| depth256 | 256860 | 846 | 3.2 | 68.1 | 0.87 | 256870 | 68.8 |
-| nomtp-depth128 | 8479 | 760 | 2.0 | 48.2 | 0.94 | 8472 | 65.7 |
+| depth256 | 256860 | 846 | 3.2 | - | - | 256870 | 68.8 |
+| nomtp-depth128 | 8479 | 760 | 2.0 | - | - | 8472 | 65.7 |
 | nomtp-depth128 | 29593 | 1078 | 2.7 | 30.9 | 0.32 | 29600 | 65.7 |
 | nomtp-depth128 | 68100 | 1091 | 2.6 | 29.1 | 0.12 | 68107 | 65.7 |
 | nomtp-depth128 | 105121 | 1066 | 2.6 | 30.2 | 0.29 | 105128 | 65.7 |
@@ -180,128 +187,123 @@ without the MTP draft layer (suffix lookup stays on, hence the nonzero acceptanc
 | gsq-depth192 | 130447 | 715 | 3.1 | 30.6 | 0.55 | 130487 | 75.2 |
 | gsq-depth192 | 163499 | 718 | 2.9 | 27.6 | 0.47 | 163539 | 75.2 |
 | gsq-depth192 | 190093 | 704 | 2.6 | 31.3 | 0.60 | 190133 | 75.4 |
-| gsq-depth256 | 8482 | 612 | 2.5 | 50.8 | 0.97 | 8478 | 77.1 |
+| gsq-depth256 | 8482 | 612 | 2.5 | - | - | 8478 | 77.1 |
 | gsq-depth256 | 29534 | 734 | 2.9 | 28.6 | 0.45 | 29530 | 77.1 |
 | gsq-depth256 | 68099 | 730 | 2.9 | 27.8 | 0.51 | 68138 | 77.1 |
 | gsq-depth256 | 105120 | 719 | 2.6 | 34.2 | 0.65 | 105160 | 77.1 |
 | gsq-depth256 | 130446 | 709 | 3.1 | 32.0 | 0.61 | 130486 | 77.1 |
-| gsq-depth256 | 163500 | 713 | 2.9 | 43.6 | 1.00 | 163540 | 77.1 |
+| gsq-depth256 | 163500 | 713 | 2.9 | - | - | 163540 | 77.1 |
 | gsq-depth256 | 194786 | 702 | 3.1 | 29.7 | 0.55 | 194826 | 77.3 |
 | gsq-depth256 | 227689 | 695 | 3.2 | 27.3 | 0.49 | 227729 | 77.7 |
-| gsq-depth256 | 256867 | 676 | 2.8 | 42.4 | 0.91 | 256907 | 78.5 |
+| gsq-depth256 | 256867 | 676 | 2.8 | - | - | 256907 | 78.5 |
 
-Strata prefill is about 1,050 tok/s at 30-100K falling to 850 at 257K (GSQHalo 735 to 676); an agent turn on the cached prefix
-takes about 3 s to first token on both. Peak GTT: Strata 67.8 / 68.8 GiB at 192K / 256K, GSQHalo 75.4 / 78.5.
+Median decode from 30K up over the stages that ran 256 tokens: Strata 39.5 (192K row) and 37.1 (256K row) tok/s, GSQHalo 30.1
+and 29.1, Strata without the MTP layer 30.0. Strata prefill is about 1,050 tok/s at 30-100K falling to 850 at 257K (GSQHalo 735
+to 676); an agent turn on the cached prefix takes about 3 s to first token on both. Peak GTT: Strata 67.8 / 68.8 GiB at 192K /
+256K, GSQHalo 75.4 / 78.5.
 
 ### 3. Two sessions
 
 Two conversations filled to `limit - 24,000` tokens each (about 107K at 131072, about 238K at 262144), one after the other,
-then: the identical request again for B (just filled) and A (filled before B); one agent turn each in turn (A, B, A);
-three rounds of simultaneous turns; a third 26K-token session; then A and B again. Cells are cached/prompt tokens (time to
-first token).
+then: the last fill request again for B (just filled) and A (filled before B); one agent turn each in turn (A, B, A); three rounds
+of simultaneous turns; a third 26K-token session; then A and B again. Cells are cached/prompt tokens (time to first token).
 
-| row | repeat B (just filled) | repeat A (B filled after) | A turn | B turn | A after 3rd session | B after 3rd session |
-|---|---:|---:|---:|---:|---:|---:|
-| two128 | 106524/106548 (0.5 s) | 6362/110048 (96.1 s) | 110041/111397 (2.6 s) | 6362/108089 (95.5 s) | 115851/119092 (5.1 s) | 111284/114275 (4.7 s) |
-| two128-nobatch | 106494/106518 (0.7 s) | 6362/110027 (89.2 s) | 110020/111368 (2.6 s) | 6362/108056 (87.9 s) | 6362/119060 (100.3 s) | 6362/114297 (96.1 s) |
-| two128-mtp | 106451/106458 (0.5 s) | 6362/109990 (96.6 s) | 109983/111326 (2.5 s) | 6362/107987 (96.0 s) | 117571/119265 (3.4 s) | 112678/114193 (3.1 s) |
-| two128-park | 106457/106481 (1.6 s) | 109974/109998 (1.1 s) | 109991/111334 (2.8 s) | 106474/108021 (3.1 s) | 117590/119263 (2.9 s) | 112713/114221 (2.9 s) |
-| two256-park | 238527/238551 (1.2 s) | 6362/241116 (245.0 s) | 241109/243115 (4.3 s) | 6362/240348 (249.1 s) | 249659/250994 (4.2 s) | 245713/247415 (5.1 s) |
-| gsq-two128 | 106542/106556 (0.4 s) | 110048/110062 (1.0 s) | 110058/111416 (2.9 s) | 106552/108108 (4.1 s) | 6389/119107 (161.2 s) | 112544/114056 (4.1 s) |
+| row | harness | repeat B (just filled) | repeat A (B filled after) | A turn | B turn | A after 3rd session | B after 3rd session |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| two128 | re-run | 106496/106520 (0.7 s) | 6362/110023 (95.8 s) | 110016/111376 (2.6 s) | 6362/108070 (94.8 s) | 118815/120626 (3.4 s) | 113623/115143 (3.1 s) |
+| two128-nobatch | earlier harness (not re-run, owner cut) | 106494/106518 (0.7 s) | 6362/110027 (89.2 s) | 110020/111368 (2.6 s) | 6362/108056 (87.9 s) | 6362/119060 (100.3 s) | 6362/114297 (96.1 s) |
+| two128-mtp | earlier harness (not re-run, owner cut) | 106451/106458 (0.5 s) | 6362/109990 (96.6 s) | 109983/111326 (2.5 s) | 6362/107987 (96.0 s) | 117571/119265 (3.4 s) | 112678/114193 (3.1 s) |
+| two128-park | earlier harness (not re-run, owner cut) | 106457/106481 (1.6 s) | 109974/109998 (1.1 s) | 109991/111334 (2.8 s) | 106474/108021 (3.1 s) | 117590/119263 (2.9 s) | 112713/114221 (2.9 s) |
+| two256-park | re-run | 238528/238552 (1.2 s) | 6362/241113 (245.5 s) | 241106/243124 (4.3 s) | 6362/240359 (249.2 s) | 251149/252467 (3.2 s) | 246546/248247 (4.0 s) |
+| gsq-two128 | re-run | 106488/106502 (0.5 s) | 109997/110011 (1.0 s) | 110007/111370 (3.0 s) | 106498/108062 (4.4 s) | 6389/120723 (163.3 s) | 113625/115134 (4.2 s) |
 
 - **Strata evicts.** After B's prefill, A's next request found only the shared 6K system prompt cached and re-prefilled in 96 s
-  (89 s without `--batch`). Turn-by-turn alternation re-prefills every time. With both sessions already decoding in `--batch`
-  slots they stayed cached through a third session; without `--batch` the third session evicted both. `--batch-mtp` makes no
-  difference to affinity.
-- **`--conversation-cache-mib 8192` fixes it at 110K tokens**: A's prefix survived B (1.1 s), alternating turns took 2.8-3.1 s,
-  at the price of about +5.5 GiB of anonymous host memory (2.7 to 8.1 GiB). **At 238K it did not**: A re-prefilled 241K
-  tokens in 245 s, anonymous memory 7.1 GiB. A larger budget was not tested, so whether 8192 MiB is simply too small for two
-  238K sessions is unknown.
-- **GSQHalo holds both by default** (`--slot-prompt-similarity` 0.10, `--cache-ram` 8192 MiB, `--ctx-checkpoints` 32 all exist
-  in this build and were left at default): repeats hit in 0.4-1.0 s, alternating turns 2.9-4.1 s. A *third* session took the
-  least recently used slot and A re-prefilled in 161 s. No tuned llama row was run because the defaults already kept both.
+  at 107K and 245 s at 238K (89 s without `--batch`). Turn-by-turn alternation re-prefills every time. Once both sessions have
+  decoded together in `--batch` slots they stay cached through a third session; without `--batch` the third session evicted both.
+- **`--conversation-cache-mib 8192` fixes it at 110K tokens** (row `two128-park`, earlier harness): A's prefix survived B (1.1 s),
+  alternating turns took 2.8-3.1 s, at the price of about +5.5 GiB of anonymous host memory (2.7 to 8.1 GiB). **At 238K it did
+  not** (re-run): A re-prefilled 241K tokens in 245 s, anonymous memory 9.7 GiB. A larger budget was not tested, so whether
+  8192 MiB is simply too small for two 238K sessions is unknown.
+- **GSQHalo holds both by default** (`--slot-prompt-similarity` 0.10, `--cache-ram` 8192 MiB, `--ctx-checkpoints` 32 all exist in
+  this build and were left at default): repeats hit in 0.5-1.0 s, alternating turns 3.0-4.4 s. A *third* session took the least
+  recently used slot and A re-prefilled in 163 s. No tuned llama row was run because the defaults already kept both.
 
-Decode with both sessions generating at once (400-token replies). Only the second round, with both caches warm and both first
-tokens within 7 s, is clean: the first round carries a re-prefill and the staggered round a 3 s offset and a 64-token reply.
-Combined tok/s is tokens over the span from the first first-token to the last token.
+Decode with both sessions generating at once (400-token replies). Only the second round is clean: both caches are warm and
+both first tokens arrive within 20 s. The first round carries the re-prefill the eviction forces (ttft in the hundreds of
+seconds). In the staggered round A's essay may end before 400 tokens (`short reply`, no rate) and B asks for one sentence.
+Combined tok/s is tokens over the span from the first first-token to the last token, on one clock.
 
 | row | round | stream A: decode tok/s | stream B: decode tok/s | combined tok/s |
 |---|---:|---:|---:|---:|
-| two128 | concurrent | 2.4 (ttft 3.3 s) | 26.7 (ttft 103.8 s) | 0.8 |
-| two128 | concurrent | 20.0 (ttft 6.7 s) | 7.5 (ttft 3.3 s) | 15.1 |
-| two128 | staggered | 50.3 (ttft 2.9 s) | 83.3 (ttft 3.1 s) | 75.3 |
-| two128-nobatch | concurrent | 77.0 (ttft 191.3 s) | 46.0 (ttft 92.4 s) | 1.8 |
-| two128-nobatch | concurrent | 75.5 (ttft 191.1 s) | 53.7 (ttft 93.4 s) | 0.8 |
-| two128-nobatch | staggered | 78.9 (ttft 2.9 s) | 57.7 (ttft 94.7 s) | 0.2 |
-| two128-mtp | concurrent | 29.2 (ttft 206.3 s) | 2.8 (ttft 99.6 s) | 0.8 |
-| two128-mtp | concurrent | 25.9 (ttft 6.9 s) | 8.3 (ttft 3.5 s) | 16.6 |
-| two128-mtp | staggered | 1.8 (ttft 3.1 s) | 29.1 (ttft 109.4 s) | 0.7 |
-| two128-park | concurrent | 8.2 (ttft 3.2 s) | 22.9 (ttft 6.3 s) | 16.4 |
-| two128-park | concurrent | 19.3 (ttft 5.8 s) | 9.1 (ttft 2.9 s) | 11.8 |
-| two128-park | staggered | 8.7 (ttft 3.5 s) | 19.1 (ttft 3.7 s) | 11.4 |
-| two256-park | concurrent | 18.7 (ttft 252.2 s) | 6.5 (ttft 248.1 s) | 13.1 |
-| two256-park | concurrent | 9.4 (ttft 8.9 s) | 6.3 (ttft 5.1 s) | 8.2 |
-| two256-park | staggered | 5.7 (ttft 3.8 s) | 8.1 (ttft 6.6 s) | 7.4 |
-| gsq-two128 | concurrent | 2.7 (ttft 15.3 s) | 6.8 (ttft 15.3 s) | 9.1 |
-| gsq-two128 | concurrent | 12.6 (ttft 7.5 s) | 27.0 (ttft 7.7 s) | 29.7 |
-| gsq-two128 | staggered | 8.7 (ttft 4.6 s) | 12.8 (ttft 4.8 s) | 11.4 |
+| two128 | concurrent | 37.0 (ttft 220.0 s, 400 tok, length) | 6.5 (ttft 98.7 s, 400 tok, length) | 6.0 |
+| two128 | concurrent | 21.3 (ttft 7.1 s, 400 tok, length) | 17.8 (ttft 3.3 s, 400 tok, length) | 35.5 |
+| two128 | staggered | short reply (ttft 3.3 s, 249 tok, stop) | 19.7 (ttft 3.8 s, 64 tok, length) | - |
+| two128-nobatch | not re-run (owner cut) | - | - | - |
+| two128-mtp | not re-run (owner cut) | - | - | - |
+| two128-park | not re-run (owner cut) | - | - | - |
+| two256-park | concurrent | 18.9 (ttft 253.6 s, 400 tok, length) | 15.8 (ttft 249.3 s, 400 tok, length) | 31.5 |
+| two256-park | concurrent | 18.5 (ttft 9.9 s, 400 tok, length) | 15.2 (ttft 5.2 s, 400 tok, length) | 30.5 |
+| two256-park | staggered | 21.6 (ttft 5.3 s, 400 tok, length) | 5.9 (ttft 7.1 s, 11 tok, stop) | - |
+| gsq-two128 | concurrent | 8.7 (ttft 16.3 s, 400 tok, length) | 8.6 (ttft 16.3 s, 400 tok, length) | 17.2 |
+| gsq-two128 | concurrent | 9.5 (ttft 18.7 s, 400 tok, length) | 9.8 (ttft 18.7 s, 400 tok, length) | 19.0 |
+| gsq-two128 | staggered | short reply (ttft 7.7 s, 353 tok, stop) | 10.3 (ttft 4.9 s, 64 tok, length) | - |
 
-A single stream on the same engine at the same depth: Strata 38.8-41.0 (about 40), GSQHalo 28.2-37.0 (about 31).
+A single stream in the same row at the same depth: Strata `two128` 37.2-43.9 tok/s (about 40), Strata `two256-park` 33.6-38.4
+(about 37), GSQHalo `gsq-two128` 20.7-23.6 (about 22).
 
 | clean concurrent round | per stream tok/s | combined tok/s | peak GTT | combined vs one stream |
 | --- | --- | ---: | ---: | ---: |
-| Strata `--batch 2`, 2x107K | 20.0 / 7.5 | 15.1 | 70.6 GiB | 38 % |
-| Strata `--batch 2 --batch-mtp`, 2x107K | 25.9 / 8.3 | 16.6 | 71.0 GiB | 42 % |
-| Strata `--batch 2` + park, 2x107K | 19.3 / 9.1 | 11.9 | 70.6 GiB | 30 % |
-| Strata `--batch 2` + park, 2x238K | 9.4 / 6.3 | 8.3 | 76.1 GiB | 21 % |
-| GSQHalo `-np 2`, 2x107K | 12.6 / 27.0 | 29.7 | 88.3 GiB | 96 % |
+| Strata `--batch 2`, 2x107K | 21.3 / 17.8 | 35.5 | 70.6 GiB | 89 % |
+| GSQHalo `-np 2`, 2x107K | 9.5 / 9.8 | 19.0 | 88.3 GiB | 86 % |
+| Strata `--batch 2` + park, 2x238K | 18.5 / 15.2 | 30.5 | 76.1 GiB | 82 % |
 
-2x238K was accepted: both slots came up at 262144, no error, the memory gate did not trip (peak GTT 76.1 GiB of 104,
-MemAvailable about 33 GiB, 1.7 GiB of swap in use).
+2x238K was accepted: both slots came up at 262144, no error, the memory gate did not trip (peak GTT 76.1 GiB of 104; at the
+end MemAvailable 28.8 GiB, anonymous RSS 9.7 GiB, 1.7 GiB of swap in use).
 
-**Why the collapse.** MTP: Strata's help says plain `--batch` slots do not verify MTP drafts (that is `--batch-mtp`), and its
-server reports no draft counts for batch-slot requests, so acceptance is blank in the rounds and I could not measure it. It is
-not the main cause: `--batch-mtp` moved the combined rate only from 15.1 to 16.6. The one-stream control without the MTP draft
-layer decodes 29-31 tok/s at 30-125K, so even a no-MTP stream is twice the combined rate of two batched ones. Bandwidth:
-llama.cpp with two slots holds its combined rate level with one stream (29.7 vs about 31), which fits a decode bound by MoE
-expert reads (two streams read about the union of their experts), so batching should not be expected to *add* throughput here;
-Strata's batch path then loses most of that. This reads as a Strata batch-path cost; I did not profile it.
+**Batching and MTP.** Strata's help says plain `--batch` slots do not verify MTP drafts (that is `--batch-mtp`), and the server
+reports no draft counts for batch-slot requests, so acceptance is blank in the rounds. `--batch-mtp` was not re-run (owner cut),
+so its effect is not reported. What the rows do show: two batched streams together (35.5) run at 89 % of one MTP stream (~40) and
+1.2x the one-stream control without the MTP layer (30.0 in `nomtp-depth128`); llama.cpp's two slots hold 86 % of its one
+stream. Both engines keep combined throughput level with one stream, which fits a decode bound by MoE expert reads: batching
+shares that bandwidth between sessions instead of adding to it. I did not profile either engine.
 
 ## Recommendation
 
-**Should halo's resident Flash-Next move to Strata?** For one agent at a time, yes: measured faster at every depth (prefill
-1.3-1.4x, decode about +25-35 %), 7-10 GiB lighter, 256K accepted, a clean hour. Conditions: the lemond shim keeps sampling
-defaults (done, #284); a fresh screenshot blocks the queue for about 4 s; Strata serialises concurrent requests unless `--batch`
-is on, and with `--batch` loses most of its speed. If the lane must run two agents decoding at the same time, GSQHalo `-np 2`
-is the only measured option that keeps combined throughput, and it costs the most GTT.
+**Should halo's resident Flash-Next move to Strata?** Yes. Measured faster at every depth (prefill 1.3-1.4x, decode +27-31 %
+at 192K-256K), 7-10 GiB lighter for one session and 17.7 GiB lighter for two, 256K accepted, a clean hour. Conditions: the lemond
+shim keeps sampling defaults (done, #284); a fresh screenshot blocks the queue for about 4 s; without `--batch` Strata serialises
+concurrent requests and keeps one resident conversation, so two agents need `--batch 2` and, for turn-taking, a conversation cache.
 
 **Local agent lane: 1x256K or 2x128K (`--batch`)?**
 
-| | 1x256K, Strata | 2x128K, Strata `--batch 2` (+ park) | 2x128K, GSQHalo `-np 2` |
+| | 1x256K, Strata | 2x128K, Strata `--batch 2` | 2x128K, GSQHalo `-np 2` |
 | --- | --- | --- | --- |
-| per-session decode | 36-40 tok/s | 7-20 tok/s while both decode; about 40 one at a time | 13-27 tok/s while both decode; 28-37 alone |
-| combined decode | 36-40 | 15 (12 with park) | 30 |
+| decode per session | ~37-40 tok/s | 21 / 18 while both decode; ~40 when one is idle | 9.5 / 9.8 while both decode; ~22 alone |
+| combined decode | ~37-40 | 35.5 | 19.0 |
 | peak GTT (limit 104) | 68.8 GiB, **35 GiB headroom** | 70.6 GiB, 33 GiB | 88.3 GiB, **16 GiB** |
-| second session arrives | waits behind the first (serialised) | evicts the first's cache unless parked; parked: 3 s | both kept; a third evicts one (161 s) |
+| second session arrives | waits behind the first; every switch re-prefills | evicts the first's cache unless parked (park fixed it at 110K) | both kept; a third evicts one (163 s) |
 
-Take **1x256K**: it gives the longest sessions (the observed 131K compaction point moves out of reach), the highest per-session
-rate, and the most headroom for a second model or a build. If two agents must overlap, run them as separate turns on one Strata
-server with `--conversation-cache-mib` so a returning session costs about 3 s, not 96 s; do not rely on `--batch`. GSQHalo
-`-np 2` is the alternative if simultaneous decode matters more than the 16 GiB left for builds and a second model.
+For the observed workload (a session of ~30K to ~110K tokens that compacts at 131K) take **2x128K with `--batch 2` and
+`--conversation-cache-mib 8192`**: two agents each get ~20 tok/s while both decode and ~40 while the other waits, at the same memory as
+one 256K session. Take **1x256K** only for a single agent whose context really passes ~128K (it decodes at ~37-40 with an agent
+turn in about 3 s, and a second agent cannot share it without the 96-245 s switch cost). The parked-cache result at 110K comes
+from a row run on the earlier harness and was not re-run: confirm it with one `two128-park` row before relying on it.
 
-**Is 2x256K with cache tuning viable for two local agents?** No, on both counts. Memory fits (76.1 GiB peak, 27 GiB headroom,
-host MemAvailable about 33 GiB), but the cache did not survive (245 s to re-prefill 241K tokens after the other session's turn)
-and two simultaneous streams decode 9.4 + 6.3 tok/s, 8.3 combined, a fifth of one stream. A larger park budget might fix the
-cache; nothing measured fixes the decode.
+**Is 2x256K with cache tuning viable for two local agents?** For two agents that *decode at the same time*, yes on memory and
+throughput: 76.1 GiB peak (28 GiB headroom, host MemAvailable 28.8 GiB at the end), 18.5 + 15.2 tok/s, 30.5 combined. For two
+agents that *take turns*, not yet: the 8192 MiB cache did not hold a 238K session (245 s to re-prefill after the other's turn).
+A larger budget was not tried; each parked 238K session costs host RAM, and 28.8 GiB is what was left.
 
-**Any correctness or stability problem from the soak?** None found: no errors in 266 requests, no restart, canary without drift, every tool-call turn ended `tool_calls`. Watch item: anonymous memory +1.3 GiB over the hour (cache warm-up or a slow
-leak; one hour cannot tell). The loadavg of 17-30 during Strata rows is the engine's own threads, not a stall.
+**Any correctness or stability problem from the soak?** None found: no errors in 266 requests, no restart, canary without drift,
+every tool-call turn ended `tool_calls`. Watch item: anonymous memory +1.3 GiB over the hour (cache warm-up or a slow leak; one
+hour cannot tell). The loadavg of 17-30 during Strata rows is the engine's own threads, not a stall.
 
 ## Not measured
 
 - A park budget above 8192 MiB, `--conversation-cache-slots`, or llama `-np 3` / `--cache-ram` changes.
+- `--batch-mtp`, the parked cache at 110K, and the no-`--batch` control on the fixed harness (not re-run, owner cut).
 - Thinking-on decode at 256K; the real pi agents' reasoning share; more than one soak hour; behaviour after days.
-- MTP acceptance inside batch slots (the server does not report it); a Strata batch-path profile.
+- MTP acceptance inside batch slots (the server does not report it); a profile of either engine's batch path.
 - Strata with f16 KV at 256K; `--batch` above 4 slots; anything on gfx1150.
 - Whether the 4.4 s image encode (vs 19.7 s in #279) is the build, the image or the load.
 
@@ -317,8 +319,10 @@ $D/rows.sh list
 $D/rows.sh soak soak-batch bigimage depth192 depth256 nomtp-depth128 two128 two128-nobatch two128-mtp two128-park two256-park \
     gsq-depth192 gsq-depth256 gsq-two128 longsoak          # lemond is restored after the last
 python3 $D/tables.py "$W/rows.jsonl"                       # the tables above
-python3 $D/test_depth.py                                   # offline tests of depth.py
+python3 $D/test_depth.py                                   # offline tests of depth.py and tables.py
 ```
 
 `depth.py` adds the `depth` and `twosession` groups to `probe.py` (for both engines); `probe.py` also records the server's `/slots`,
-and `run.sh` takes `LLAMA_CTX` / `LLAMA_SLOTS`. The `soak`, `longsoak` and `bigimage` groups are #279's, run unchanged.
+and `run.sh` takes `LLAMA_CTX` / `LLAMA_SLOTS`. The `soak`, `longsoak` and `bigimage` groups are #279's, run unchanged. The depth
+rows ran with an earlier wording of the essay request that did not say "do not call any tool", which is why some stages ended as
+tool calls and read `-`; the current wording is in `depth.py`.
