@@ -238,6 +238,9 @@
           in {
             inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+            # The module's CPU backends link these; the consumer's copies would
+            # build against the pinned llama-cpp above and break on version skew.
+            inherit (pinned) whisper-cpp stable-diffusion-cpp;
             inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             strata = pinned.callPackage ./pkgs/strata {};
