@@ -10,7 +10,7 @@
 #     longsoak       SOAK_MINUTES (default 60) of mixed thinking-on requests, a canary every 5 minutes
 #     depth192       one agent session grown to the end of a 196,608-token context
 #     depth256       the same at 262,144
-#     two128         two sessions of ~119K tokens each, --batch 2
+#     two128         two sessions of ~107K tokens each (the 131,072 limit less 24K), --batch 2
 #     two128-nobatch the same without --batch: one slot, two sessions arriving in turn
 #     two128-mtp     the same with --batch 2 --batch-mtp
 #     two256-park    two sessions of ~238K tokens each at the 262,144 limit, --batch 2 --conversation-cache-mib 8192
