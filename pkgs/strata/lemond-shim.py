@@ -26,6 +26,18 @@ def die(msg):
     sys.exit(2)
 
 
+def check_prepared(settings):
+    # The declarative `strata-prepare` unit builds the pack and MTP runtime asynchronously; a load that races it
+    # gets a readable refusal instead of an engine that cannot open its pack.
+    prepare = settings.get("prepare")
+    if not prepare:
+        return
+    for label, key in (("pack", "pack"), ("MTP runtime", "mtp")):
+        path = prepare.get(key)
+        if path and not os.path.exists(path):
+            die(f"strata is not prepared: the {label} stamp {path} is missing; wait for strata-prepare.service to finish (systemctl status strata-prepare)")
+
+
 def parse_args(settings):
     p = argparse.ArgumentParser(allow_abbrev=False)
     p.add_argument("-m", "--model")
@@ -60,6 +72,7 @@ def reap(state, pid):
 def main():
     with open(SETTINGS) as f:
         settings = json.load(f)
+    check_prepared(settings)
     args, extra = parse_args(settings)
     ctx = args.ctx if args.ctx and args.ctx > 0 else settings["context"]
 

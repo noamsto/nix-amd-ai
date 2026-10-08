@@ -448,7 +448,7 @@
 
         # Option-on Strata host for the module-eval-strata check. `extra` is a
         # module-system fragment merged into hardware.amd-npu.strata.
-        strataEvalHost = extra:
+        strataEvalBase = strata: extra:
           inputs.nixpkgs.lib.nixosSystem {
             inherit system;
             modules = [
@@ -466,13 +466,7 @@
                   enableROCm = true;
                   gpuTarget = "gfx1151";
                   lemonade.user = "testuser";
-                  strata = {
-                    enable = true;
-                    model = "/var/lib/models/strata/model-00001-of-00003.gguf";
-                    pack = "/var/lib/models/strata/pack";
-                    mtp = "/var/lib/models/strata/mtp/rt";
-                    vision.mmproj = "/var/lib/models/strata/mmproj.gguf";
-                  };
+                  inherit strata;
                 };
                 users.users.testuser = {
                   isNormalUser = true;
@@ -482,6 +476,24 @@
               {hardware.amd-npu.strata = extra;}
             ];
           };
+        # Explicit paths: today's consumer shape.
+        strataEvalHost = extra:
+          strataEvalBase {
+            enable = true;
+            model = "/var/lib/models/strata/model-00001-of-00003.gguf";
+            pack = "/var/lib/models/strata/pack";
+            mtp = "/var/lib/models/strata/mtp/rt";
+            vision.mmproj = "/var/lib/models/strata/mmproj.gguf";
+          } extra;
+        # Only enable + model: everything else at the module defaults. The
+        # package is the stub so building this host's unit does not drag in the
+        # 8.9 GiB SDK (CI does not build pkgs.strata).
+        strataEvalHostAuto = extra:
+          strataEvalBase {
+            enable = true;
+            package = strataStub;
+            model = "/var/lib/models/strata/model-00001-of-00003.gguf";
+          } extra;
 
         # Context-free, so the check never builds pkgs.strata or the host.
         strataEvalJson = host:
@@ -489,6 +501,10 @@
           (builtins.toJSON host.config.hardware.amd-npu.strata.runConfig);
         strataRejected = extra:
           if (builtins.tryEval (strataEvalHost extra).config.system.build.toplevel.drvPath).success
+          then ""
+          else "1";
+        strataRejectedAuto = extra:
+          if (builtins.tryEval (strataEvalHostAuto extra).config.system.build.toplevel.drvPath).success
           then ""
           else "1";
 
@@ -517,6 +533,98 @@
               };
             };
           };
+        okStamp = name: pkgs.writeText name "ok";
+        mkShimWithPrepare = prepare:
+          pkgs.callPackage ./pkgs/strata/lemond-shim.nix {} {
+            server = "${strataFakeServer}";
+            settings = {
+              model = "/nonexistent/strata-test/model.gguf";
+              context = 131072;
+              config = {
+                exe = "x";
+                args = ["--expert-cache" "20000" "--mmap-experts"];
+              };
+              inherit prepare;
+            };
+          };
+        strataTestShimMissing = mkShimWithPrepare {
+          pack = "/nonexistent/pack.stamp";
+          mtp = "/nonexistent/mtp.stamp";
+        };
+        strataTestShimPrepared = mkShimWithPrepare {
+          pack = "${okStamp "pack.stamp"}";
+          mtp = "${okStamp "mtp.stamp"}";
+        };
+
+        # Stub Strata package for strata-prepare-vm. Its tools only record that
+        # they ran and create their output, so the staleness logic is exercised
+        # with no GPU and no network.
+        strataStubGgml = pkgs.runCommand "strata-stub-ggml" {} ''
+          mkdir -p $out/gguf-py
+          touch $out/gguf-py/__init__.py
+        '';
+        strataStub = pkgs.runCommand "strata-stub" {
+          version = "1";
+          passthru = {
+            python = pkgs.python3;
+            ggml = strataStubGgml;
+          };
+        } ''
+          mkdir -p $out/share/strata/tools $out/share/strata/data
+          marker=/var/lib/strata/marker
+          cat > $out/share/strata/tools/iq_pack.py <<PY
+          import argparse, os, pathlib
+          ap = argparse.ArgumentParser()
+          ap.add_argument("--gguf")
+          ap.add_argument("--out", required=True)
+          ap.add_argument("--compat-bf16", action="store_true")
+          a = ap.parse_args()
+          pathlib.Path(a.out).mkdir(parents=True, exist_ok=True)
+          (pathlib.Path(a.out) / "index.txt").write_text("stub")
+          with open("$marker", "a") as f:
+              f.write("iq_pack\n")
+          PY
+          cat > $out/share/strata/tools/mtp_fetch.py <<PY
+          import argparse, os, pathlib
+          ap = argparse.ArgumentParser()
+          ap.add_argument("cmd")
+          ap.add_argument("--out", required=True)
+          ap.add_argument("--only")
+          a = ap.parse_args()
+          pathlib.Path(a.out).mkdir(parents=True, exist_ok=True)
+          (pathlib.Path(a.out) / "manifest.json").write_text("stub")
+          with open("$marker", "a") as f:
+              f.write("mtp_fetch\n")
+          PY
+          cat > $out/share/strata/tools/mtp_pack.py <<PY
+          import argparse, os, pathlib
+          ap = argparse.ArgumentParser()
+          ap.add_argument("--src", required=True)
+          ap.add_argument("--experts")
+          ap.add_argument("--out", required=True)
+          a = ap.parse_args()
+          pathlib.Path(a.out).write_text("stub")
+          with open("$marker", "a") as f:
+              f.write("mtp_pack\n")
+          PY
+          cat > $out/share/strata/tools/mtp_rt.py <<PY
+          import argparse, os, pathlib
+          ap = argparse.ArgumentParser()
+          ap.add_argument("--gguf", required=True)
+          ap.add_argument("--out", required=True)
+          a = ap.parse_args()
+          pathlib.Path(a.out).mkdir(parents=True, exist_ok=True)
+          (pathlib.Path(a.out) / "dense.bin").write_text("stub")
+          with open("$marker", "a") as f:
+              f.write("mtp_rt\n")
+          PY
+          printf 'stub' > $out/share/strata/data/draft_vocab.bin
+        '';
+        strataPrepareStub = pkgs.callPackage ./pkgs/strata/prepare.nix {
+          strataPkg = strataStub;
+          strataRev = (import ./pkgs/strata/sources.nix).strata.rev;
+          ggmlRev = (import ./pkgs/strata/sources.nix).ggml.rev;
+        };
       in {
         packages =
           (
@@ -765,11 +873,21 @@
               MAXCTX_REJECTED = strataRejected {extraArgs = ["--max-context" "4096"];};
               DEFAULTS = (strataEvalHost {}).config.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
               CUSTOM_MODELS = builtins.toJSON (strataEvalHost {}).config.hardware.amd-npu.lemonade.customModels;
+              AUTO_CONFIG = strataEvalJson (strataEvalHostAuto {});
+              AUTO_UNIT = (strataEvalHostAuto {}).config.systemd.units."strata-prepare.service".unit;
+              EXPLICIT_PREPARE_UNIT =
+                if builtins.hasAttr "strata-prepare.service" (strataEvalHost {}).config.systemd.units
+                then "1"
+                else "0";
+              AUTO_PARTIAL_REJECTED = strataRejectedAuto {pack = "/var/lib/models/strata/pack";};
+              FORCED_MISMATCH_REJECTED = strataRejected {prepare.enable = true;};
+              PREP_OFF_CONFIG = strataEvalJson (strataEvalHost {prepare.enable = false;});
             } ''
               check() {
                 printf '%s' "$1" | jq -e "$2" >/dev/null \
                   || { echo "FAILED: $2"; exit 1; }
               }
+              check "$CONFIG" '.config.args | index("--pack") as $i | .[$i + 1] == "/var/lib/models/strata/pack"'
               check "$CONFIG" '.config.args | index("--mmap-experts") != null'
               check "$CONFIG" '.config.args | index("--expert-cache") as $i | .[$i + 1] == "20000" and (.[$i + 1] | test("^[0-9]+$"))'
               check "$CONFIG" '.config.args | index("--vision") != null'
@@ -797,6 +915,30 @@
                 || { echo "strata.rocm_bin missing from defaults"; exit 1; }
               printf '%s' "$CUSTOM_MODELS" | jq -e '."Qwen3.8-Flash-Next-Strata".recipe == "strata"' >/dev/null \
                 || { echo "custom model does not use the strata recipe"; exit 1; }
+
+              # Auto host (only enable + model): the defaults are the unit's
+              # outputs and the pinned mmproj, and strata-prepare is rendered.
+              check "$AUTO_CONFIG" '.config.args | index("--pack") as $i | .[$i + 1] == "/var/lib/strata/pack"'
+              check "$AUTO_CONFIG" '.config.args | index("--mtp") as $i | .[$i + 1] == "/var/lib/strata/mtp/rt"'
+              check "$AUTO_CONFIG" '.config.tokenizer == "/var/lib/strata/pack/tokenizer"'
+              check "$AUTO_CONFIG" '.config.vision.mmproj | endswith("mmproj-Qwen3.8-Flash-Next-BF16.gguf")'
+              check "$AUTO_CONFIG" '.prepare.pack == "/var/lib/strata/pack.stamp" and .prepare.mtp == "/var/lib/strata/mtp.stamp"'
+              grep -qF 'Type=oneshot' "$AUTO_UNIT"/strata-prepare.service \
+                || { echo "auto host has no oneshot strata-prepare"; exit 1; }
+              grep -qF 'StateDirectory=strata' "$AUTO_UNIT"/strata-prepare.service \
+                || { echo "strata-prepare lacks StateDirectory"; exit 1; }
+              grep -qF 'User=testuser' "$AUTO_UNIT"/strata-prepare.service \
+                || { echo "strata-prepare runs as the wrong user"; exit 1; }
+
+              # Explicit-path host: unchanged, no unit, no shim guard key.
+              check "$CONFIG" '.config.tokenizer == "/var/lib/models/strata/pack/tokenizer"'
+              check "$CONFIG" 'has("prepare") | not'
+              [ "$EXPLICIT_PREPARE_UNIT" = 0 ] || { echo "explicit-path host rendered strata-prepare"; exit 1; }
+
+              # The two silent-mismatch shapes are rejected.
+              [ "$AUTO_PARTIAL_REJECTED" = 1 ] || { echo "auto-mode partial override was accepted"; exit 1; }
+              [ "$FORCED_MISMATCH_REJECTED" = 1 ] || { echo "prepare.enable = true with explicit paths was accepted"; exit 1; }
+              check "$PREP_OFF_CONFIG" '.config.tokenizer == "/var/lib/models/strata/pack/tokenizer"'
               touch $out
             '';
 
@@ -939,6 +1081,107 @@
 
               touch $out
             '';
+
+            # The declarative prepare guard: a shim whose settings carry the
+            # `prepare` stamp paths refuses a load until both exist, and
+            # proceeds once they do.
+            strata-shim-prepare = pkgs.runCommand "strata-shim-prepare" {
+              nativeBuildInputs = [pkgs.jq pkgs.procps pkgs.coreutils];
+            } ''
+              fail() { echo "FAILED: $*"; exit 1; }
+              model=/nonexistent/strata-test/model.gguf
+
+              SEEN_DIR="$TMPDIR/seen-missing"
+              export SEEN_DIR
+              mkdir -p "$SEEN_DIR"
+              rc=0
+              ${strataTestShimMissing}/bin/strata-lemond-shim -m "$model" --host 127.0.0.1 --port 1 || rc=$?
+              [ "$rc" = 2 ] || fail "missing stamps exited $rc, wanted 2"
+              [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started without stamps"
+
+              SEEN_DIR="$TMPDIR/seen-prepared"
+              export SEEN_DIR
+              mkdir -p "$SEEN_DIR"
+              ${strataTestShimPrepared}/bin/strata-lemond-shim -m "$model" --host 127.0.0.1 --port 1 &
+              shim_pid=$!
+              for _ in $(seq 100); do [ -e "$SEEN_DIR/argv.json" ] && break; sleep 0.1; done
+              [ -e "$SEEN_DIR/argv.json" ] || fail "prepared shim never spawned the server"
+              kill -TERM "$shim_pid"
+              wait "$shim_pid" || true
+
+              touch $out
+            '';
+
+            # The prepare unit's staleness logic, with stub tools: first run
+            # builds both, a restart no-ops, a model change rebuilds only the
+            # pack, a pinned-revision change rebuilds both. No GPU, no network.
+            strata-prepare-vm =
+              (import inputs.nixpkgs {
+                inherit system;
+                overlays = [inputs.self.overlays.default];
+                config.allowUnfreePredicate = allowFastFlowLMUnfree;
+              })
+              .testers.runNixOSTest {
+                name = "strata-prepare";
+                nodes.machine = {pkgs, ...}: {
+                  imports = [./modules/amd-npu.nix];
+                  environment.systemPackages = [strataPrepareStub];
+                  systemd.tmpfiles.rules = [
+                    "d /var/lib/strata-model 0755 tester users -"
+                    "f /var/lib/strata-model/model-00001-of-00001.gguf 0644 tester users - -"
+                  ];
+                  hardware.amd-npu = {
+                    enable = true;
+                    enableNPU = false;
+                    enableFastFlowLM = false;
+                    enableROCm = false;
+                    enableVulkan = false;
+                    enableImageGen = false;
+                    gpuTarget = "gfx1151";
+                    lemonade = {
+                      user = "tester";
+                      autoStart = false;
+                    };
+                    strata = {
+                      enable = true;
+                      package = strataStub;
+                      model = "/var/lib/strata-model/model-00001-of-00001.gguf";
+                      vision.enable = false;
+                    };
+                  };
+                  users.users.tester = {
+                    isNormalUser = true;
+                    extraGroups = ["video" "render"];
+                  };
+                };
+                testScript = ''
+                  machine.wait_for_unit("multi-user.target")
+                  machine.wait_for_unit("strata-prepare.service")
+                  machine.succeed("test -f /var/lib/strata/pack/index.txt")
+                  machine.succeed("test -d /var/lib/strata/mtp/rt")
+                  machine.succeed("test -f /var/lib/strata/pack.stamp")
+                  machine.succeed("test -f /var/lib/strata/mtp.stamp")
+
+                  def marker():
+                      return int(machine.succeed("wc -l < /var/lib/strata/marker").strip())
+
+                  assert marker() == 4, marker()
+                  machine.succeed("systemctl restart strata-prepare.service")
+                  machine.wait_for_unit("strata-prepare.service")
+                  assert marker() == 4, marker()
+
+                  machine.succeed("truncate -s 2M /var/lib/strata-model/other-00001-of-00001.gguf")
+                  machine.succeed(
+                      "STRATA_MODEL=/var/lib/strata-model/other-00001-of-00001.gguf strata-prepare"
+                  )
+                  assert marker() == 5, marker()
+
+                  machine.succeed(
+                      "STRATA_MODEL=/var/lib/strata-model/model-00001-of-00001.gguf STRATA_ENGINE_REV=changed strata-prepare"
+                  )
+                  assert marker() == 9, marker()
+                '';
+              };
 
             # cacheDir must put both caches on the given root: HF_HOME gains the
             # /hf suffix (lemonade appends hub/ itself) and LEMONADE_CACHE_DIR the

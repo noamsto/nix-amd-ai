@@ -10,6 +10,15 @@
     rev = "3cf03257f219afbe7334045ff7c6a06ac68c627d";
     hash = "sha256-SRGoXa+4ACBCB3eaG9XFYhMN1i0FyPEy9Rrer+dFGYI=";
   };
+  # The vision projector the module fetches for `strata.vision.mmproj`. Strata's own setup pins the same repository
+  # revision and file; the SRI below is that file's SHA-256. A fixed output, since it is a plain 0.9 GiB download and
+  # small enough beside the engine closure to keep in the store.
+  mmproj = {
+    repo = "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF";
+    rev = "ed59f92082b1e93c0e96d60a8b11aab089b52f09";
+    file = "mmproj-Qwen3.8-Flash-Next-BF16.gguf";
+    hash = "sha256-sagiWXAoFqUzDXvXYHzZZ2sReA55/3NIwhED/zzkm9A=";
+  };
   therock = {
     version = "7.14.1";
     url = "https://repo.amd.com/rocm/tarball-multi-arch/therock-dist-linux-gfx1151-7.14.1.tar.gz";
