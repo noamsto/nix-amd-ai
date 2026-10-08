@@ -431,15 +431,17 @@ The default is the stock `llama-cpp-rocm`, so existing hosts are unchanged; `roc
 ```nix
 hardware.amd-npu = {
   gpuTarget = "gfx1151";
+  lemonade.cacheDir = "/var/lib/models";
   strata = {
     enable = true;
-    model = "/var/lib/models/…/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
     profile = "defaults"; # or "fast"
   };
 };
 ```
 
-With only `enable` and `model`, the module provisions the rest. `strata.prepare` renders a oneshot `strata-prepare` unit that builds `pack` and the MTP runtime in `/var/lib/strata` with the pinned Strata's own tools, and `vision.mmproj` defaults to a pinned `mmproj-Qwen3.8-Flash-Next-BF16.gguf` fixed-output fetch. Each derived output has a stamp recording the pinned Strata package (its tools and gguf-py) and its Strata/ggml revisions, the model path and the sibling shard sizes: an unchanged run is a no-op, a changed model path rebuilds the pack, and a Strata/ggml revision bump or a different `strata.package` rebuilds both (the pin bump leaves the literal `version` alone, so the stamps key on the pins, not the version). The pack tool is CPU-only and reads the shards in place. The shim refuses a load until both stamps exist, and the unit removes a stamp before rebuilding, so a load that races a rebuild gets a clear message instead of an engine that cannot open its pack.
+`model` defaults to the Flash-Next GGUF pinned in `pkgs/strata/sources.nix` (`unsloth/Qwen3.8-Flash-Next-GGUF`, quant chosen by `strata.quant`; `UD-IQ4_XS` is the only one packed and benched so far), read from lemond's Hugging Face cache under `lemonade.cacheDir`. It is the same checkpoint a llamacpp `customModels` entry pulls, so the shards are shared rather than downloaded twice. The default is pinned to one snapshot, though, and `lemonade pull` fetches the repository's current one; if the pinned snapshot is missing, `strata-prepare` fails and prints the `hf download --revision …` command that fills it in. Without `cacheDir`, or for a GGUF kept elsewhere, set `model` to the first shard's path.
+
+With only `enable` and a model, the module provisions the rest. `strata.prepare` renders a oneshot `strata-prepare` unit that builds `pack` and the MTP runtime in `/var/lib/strata` with the pinned Strata's own tools, and `vision.mmproj` defaults to a pinned `mmproj-Qwen3.8-Flash-Next-BF16.gguf` fixed-output fetch. Each derived output has a stamp recording the pinned Strata package (its tools and gguf-py) and its Strata/ggml revisions, the model path and the sibling shard sizes: an unchanged run is a no-op, a changed model path rebuilds the pack, and a Strata/ggml revision bump or a different `strata.package` rebuilds both (the pin bump leaves the literal `version` alone, so the stamps key on the pins, not the version). The pack tool is CPU-only and reads the shards in place. The shim refuses a load until both stamps exist, and the unit removes a stamp before rebuilding, so a load that races a rebuild gets a clear message instead of an engine that cannot open its pack.
 
 Setting `pack`, `mtp` and `vision.mmproj` explicitly keeps your own artifacts; the module then renders no unit and passes those paths through as before. `strata.prepare.enable` is `null` (the default: run the unit only when `pack` and `mtp` are at their defaults), `true` (force it on; then `pack`/`mtp` must stay at defaults) or `false` (disable it; then set both paths explicitly). `strata.prepare.user` defaults to `lemonade.user`, so the engine can read the outputs.
 

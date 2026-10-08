@@ -446,9 +446,10 @@
             ];
           }).config.systemd.units."ds4-server.service".unit;
 
-        # Option-on Strata host for the module-eval-strata check. `extra` is a
-        # module-system fragment merged into hardware.amd-npu.strata.
-        strataEvalBase = strata: extra:
+        # Option-on Strata host for the module-eval-strata check. `npu` is merged
+        # into hardware.amd-npu and `extra` into hardware.amd-npu.strata, both as
+        # module-system fragments.
+        strataEvalBase = npu: strata: extra:
           inputs.nixpkgs.lib.nixosSystem {
             inherit system;
             modules = [
@@ -473,12 +474,13 @@
                   extraGroups = ["video" "render"];
                 };
               }
+              {hardware.amd-npu = npu;}
               {hardware.amd-npu.strata = extra;}
             ];
           };
         # Explicit paths: today's consumer shape.
         strataEvalHost = extra:
-          strataEvalBase {
+          strataEvalBase {} {
             enable = true;
             model = "/var/lib/models/strata/model-00001-of-00003.gguf";
             pack = "/var/lib/models/strata/pack";
@@ -489,11 +491,17 @@
         # package is the stub so building this host's unit does not drag in the
         # 8.9 GiB SDK (CI does not build pkgs.strata).
         strataEvalHostAuto = extra:
-          strataEvalBase {
+          strataEvalBase {} {
             enable = true;
             package = strataStub;
             model = "/var/lib/models/strata/model-00001-of-00003.gguf";
           } extra;
+        # Only enable + lemonade.cacheDir: model defaults to the pinned snapshot.
+        strataEvalHostCached = npu:
+          strataEvalBase npu {
+            enable = true;
+            package = strataStub;
+          } {};
 
         # Context-free, so the check never builds pkgs.strata or the host.
         strataEvalJson = host:
@@ -886,6 +894,12 @@
               AUTO_PARTIAL_REJECTED = strataRejectedAuto {pack = "/var/lib/models/strata/pack";};
               FORCED_MISMATCH_REJECTED = strataRejected {prepare.enable = true;};
               PREP_OFF_CONFIG = strataEvalJson (strataEvalHost {prepare.enable = false;});
+              CACHED_CONFIG = strataEvalJson (strataEvalHostCached {lemonade.cacheDir = "/var/lib/models";});
+              CACHED_UNIT = (strataEvalHostCached {lemonade.cacheDir = "/var/lib/models";}).config.systemd.units."strata-prepare.service".unit;
+              UNCACHED_REJECTED =
+                if (builtins.tryEval (strataEvalHostCached {}).config.system.build.toplevel.drvPath).success
+                then ""
+                else "1";
             } ''
               check() {
                 printf '%s' "$1" | jq -e "$2" >/dev/null \
@@ -943,6 +957,15 @@
               [ "$AUTO_PARTIAL_REJECTED" = 1 ] || { echo "auto-mode partial override was accepted"; exit 1; }
               [ "$FORCED_MISMATCH_REJECTED" = 1 ] || { echo "prepare.enable = true with explicit paths was accepted"; exit 1; }
               check "$PREP_OFF_CONFIG" '.config.tokenizer == "/var/lib/models/strata/pack/tokenizer"'
+
+              # Cached host (only enable + cacheDir): model is the pinned
+              # snapshot in lemond's HF cache, and the unit carries the fetch hint.
+              check "$CACHED_CONFIG" '.model == "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf"'
+              grep -qF 'STRATA_MODEL_FETCH=' "$CACHED_UNIT"/strata-prepare.service \
+                || { echo "cached host's strata-prepare lacks the fetch hint"; exit 1; }
+              grep -qF 'STRATA_MODEL_FETCH=' "$AUTO_UNIT"/strata-prepare.service \
+                && { echo "explicit model got the pinned snapshot's fetch hint"; exit 1; }
+              [ "$UNCACHED_REJECTED" = 1 ] || { echo "no model and no cacheDir was accepted"; exit 1; }
               touch $out
             '';
 
@@ -1198,6 +1221,13 @@
                   machine.succeed(
                       "STRATA_MODEL=/var/lib/strata-model/model-00001-of-00001.gguf STRATA_ID=changed strata-prepare"
                   )
+                  assert marker() == 9, marker()
+
+                  out = machine.fail(
+                      "STRATA_MODEL=/var/lib/strata-model/missing-00001-of-00001.gguf"
+                      " STRATA_MODEL_FETCH=fetch-hint strata-prepare 2>&1"
+                  )
+                  assert "fetch-hint" in out, out
                   assert marker() == 9, marker()
                 '';
               };
