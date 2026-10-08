@@ -22,6 +22,9 @@ writeShellApplication {
 
     state=''${STRATA_STATE_DIR:-/var/lib/strata}
     model=''${STRATA_MODEL:?STRATA_MODEL is required}
+    # The package store path covers the tools and gguf-py the unit actually runs; the rev literals are the narrower
+    # pins. Both go in the stamp, so an override of `strata.package` at the same rev still rebuilds.
+    strata_id=''${STRATA_ID:-${strataPkg}}
     engine_rev=''${STRATA_ENGINE_REV:-${strataRev}}
     ggml_rev=''${STRATA_GGML_REV:-${ggmlRev}}
 
@@ -63,14 +66,17 @@ writeShellApplication {
       fi
     }
 
-    want_pack=$(printf 'engine=%s\nggml=%s\nmodel=%s\n' "$engine_rev" "$ggml_rev" "$model"; shard_lines)
-    want_mtp=$(printf 'engine=%s\nggml=%s\n' "$engine_rev" "$ggml_rev")
+    want_pack=$(printf 'id=%s\nengine=%s\nggml=%s\nmodel=%s\n' "$strata_id" "$engine_rev" "$ggml_rev" "$model"; shard_lines)
+    want_mtp=$(printf 'id=%s\nengine=%s\nggml=%s\n' "$strata_id" "$engine_rev" "$ggml_rev")
 
     mkdir -p "$state"
 
     if [ -d "$pack_dir" ] && [ -f "$pack_stamp" ] && [ "$(cat "$pack_stamp")" = "$want_pack" ]; then
       echo "strata-prepare: pack up to date"
     else
+      # Drop the stamp before the rebuild, so a load racing the unit is refused rather than handed a half-swapped or
+      # stale output. It is rewritten only after the new output is in place.
+      rm -f "$pack_stamp"
       echo "strata-prepare: building pack from $model"
       tmp_pack=$state/.prepare-pack.$$
       rm -rf "$tmp_pack"
@@ -87,6 +93,7 @@ writeShellApplication {
     if [ -d "$mtp_dir" ] && [ -f "$mtp_stamp" ] && [ "$(cat "$mtp_stamp")" = "$want_mtp" ]; then
       echo "strata-prepare: MTP runtime up to date"
     else
+      rm -f "$mtp_stamp"
       echo "strata-prepare: building MTP runtime"
       tmp_mtp=$state/.prepare-mtp.$$
       rm -rf "$tmp_mtp"

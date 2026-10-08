@@ -555,6 +555,10 @@
           pack = "${okStamp "pack.stamp"}";
           mtp = "${okStamp "mtp.stamp"}";
         };
+        strataTestShimOneStamp = mkShimWithPrepare {
+          pack = "${okStamp "pack.stamp"}";
+          mtp = "/nonexistent/mtp.stamp";
+        };
 
         # Stub Strata package for strata-prepare-vm. Its tools only record that
         # they ran and create their output, so the staleness logic is exercised
@@ -1099,6 +1103,15 @@
               [ "$rc" = 2 ] || fail "missing stamps exited $rc, wanted 2"
               [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started without stamps"
 
+              # A single missing stamp also refuses: the guard is per output.
+              SEEN_DIR="$TMPDIR/seen-onestamp"
+              export SEEN_DIR
+              mkdir -p "$SEEN_DIR"
+              rc=0
+              ${strataTestShimOneStamp}/bin/strata-lemond-shim -m "$model" --host 127.0.0.1 --port 1 || rc=$?
+              [ "$rc" = 2 ] || fail "one missing stamp exited $rc, wanted 2"
+              [ ! -e "$SEEN_DIR/argv.json" ] || fail "server started with one stamp missing"
+
               SEEN_DIR="$TMPDIR/seen-prepared"
               export SEEN_DIR
               mkdir -p "$SEEN_DIR"
@@ -1177,7 +1190,7 @@
                   assert marker() == 5, marker()
 
                   machine.succeed(
-                      "STRATA_MODEL=/var/lib/strata-model/model-00001-of-00001.gguf STRATA_ENGINE_REV=changed strata-prepare"
+                      "STRATA_MODEL=/var/lib/strata-model/model-00001-of-00001.gguf STRATA_ID=changed strata-prepare"
                   )
                   assert marker() == 9, marker()
                 '';
