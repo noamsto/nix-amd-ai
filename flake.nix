@@ -927,8 +927,8 @@
               check "$AUTO_CONFIG" '.config.tokenizer == "/var/lib/strata/pack/tokenizer"'
               check "$AUTO_CONFIG" '.config.vision.mmproj | endswith("mmproj-Qwen3.8-Flash-Next-BF16.gguf")'
               check "$AUTO_CONFIG" '.prepare.pack == "/var/lib/strata/pack.stamp" and .prepare.mtp == "/var/lib/strata/mtp.stamp"'
-              grep -qF 'Type=oneshot' "$AUTO_UNIT"/strata-prepare.service \
-                || { echo "auto host has no oneshot strata-prepare"; exit 1; }
+              grep -qF 'Type=exec' "$AUTO_UNIT"/strata-prepare.service \
+                || { echo "auto host's strata-prepare would block activation"; exit 1; }
               grep -qF 'StateDirectory=strata' "$AUTO_UNIT"/strata-prepare.service \
                 || { echo "strata-prepare lacks StateDirectory"; exit 1; }
               grep -qF 'User=testuser' "$AUTO_UNIT"/strata-prepare.service \
@@ -1168,8 +1168,14 @@
                   };
                 };
                 testScript = ''
+                  # Type=exec: active while it still builds, so wait for exited.
+                  def wait_prepared():
+                      machine.wait_until_succeeds(
+                          "test \"$(systemctl show -P SubState strata-prepare.service)\" = exited"
+                      )
+
                   machine.wait_for_unit("multi-user.target")
-                  machine.wait_for_unit("strata-prepare.service")
+                  wait_prepared()
                   machine.succeed("test -f /var/lib/strata/pack/index.txt")
                   machine.succeed("test -d /var/lib/strata/mtp/rt")
                   machine.succeed("test -f /var/lib/strata/pack.stamp")
@@ -1180,7 +1186,7 @@
 
                   assert marker() == 4, marker()
                   machine.succeed("systemctl restart strata-prepare.service")
-                  machine.wait_for_unit("strata-prepare.service")
+                  wait_prepared()
                   assert marker() == 4, marker()
 
                   machine.succeed("truncate -s 2M /var/lib/strata-model/other-00001-of-00001.gguf")
