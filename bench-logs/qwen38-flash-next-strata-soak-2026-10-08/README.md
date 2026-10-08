@@ -224,7 +224,7 @@ of simultaneous turns; a third 26K-token session; then A and B again. Cells are 
   decoded together in `--batch` slots they stay cached through a third session; without `--batch` the third session evicted both.
 - **`--conversation-cache-mib 8192` fixes it at 110K tokens** (row `two128-park`, earlier harness): A's prefix survived B (1.1 s),
   alternating turns took 2.8-3.1 s, at the price of about +5.5 GiB of anonymous host memory (2.7 to 8.1 GiB). **At 238K it did
-  not** (re-run): A re-prefilled 241K tokens in 245 s, anonymous memory 9.7 GiB. A larger budget was not tested, so whether
+  not** (re-run): A re-prefilled 241K tokens in 245 s, anonymous memory 9.7 GiB. A larger budget was not tested here (see the #290 sweep below), so whether
   8192 MiB is simply too small for two 238K sessions is unknown.
 - **GSQHalo holds both by default** (`--slot-prompt-similarity` 0.10, `--cache-ram` 8192 MiB, `--ctx-checkpoints` 32 all exist in
   this build and were left at default): repeats hit in 0.5-1.0 s, alternating turns 3.0-4.4 s. A *third* session took the least
@@ -294,7 +294,7 @@ from a row run on the earlier harness and was not re-run: confirm it with one `t
 **Is 2x256K with cache tuning viable for two local agents?** For two agents that *decode at the same time*, yes on memory and
 throughput: 76.1 GiB peak (28 GiB headroom, host MemAvailable 28.8 GiB at the end), 18.5 + 15.2 tok/s, 30.5 combined. For two
 agents that *take turns*, not yet: the 8192 MiB cache did not hold a 238K session (245 s to re-prefill after the other's turn).
-A larger budget was not tried; each parked 238K session costs host RAM, and 28.8 GiB is what was left.
+A larger budget was not tried in this section (the #290 sweep below did); each parked 238K session costs host RAM, and 28.8 GiB is what was left.
 
 **Any correctness or stability problem from the soak?** None found: no errors in 266 requests, no restart, canary without drift,
 every tool-call turn ended `tool_calls`. Watch item: anonymous memory +1.3 GiB over the hour (cache warm-up or a slow leak; one
@@ -302,12 +302,50 @@ hour cannot tell). The loadavg of 17-30 during Strata rows is the engine's own t
 
 ## Not measured
 
-- A park budget above 8192 MiB, `--conversation-cache-slots`, or llama `-np 3` / `--cache-ram` changes.
+- A park budget of 9216 or 16384 MiB, `--conversation-cache-slots`, or llama `-np 3` / `--cache-ram` changes.
 - `--batch-mtp`, the parked cache at 110K, and the no-`--batch` control on the fixed harness (not re-run, owner cut).
 - Thinking-on decode at 256K; the real pi agents' reasoning share; more than one soak hour; behaviour after days.
 - MTP acceptance inside batch slots (the server does not report it); a profile of either engine's batch path.
 - Strata with f16 KV at 256K; `--batch` above 4 slots; anything on gfx1150.
 - Whether the 4.4 s image encode (vs 19.7 s in #279) is the build, the image or the load.
+
+## Conversation-cache sweep for 2x256K (#290)
+
+**Answer: `--conversation-cache-mib 10240` is the smallest tested size that holds two ~238K sessions** (a repeat costs 1.3 s,
+not 245 s); 8192 does not (row `two256-park` above). Peak GTT 76.1 GiB (28 GiB under the 104 GiB limit); the parked cache
+lives in **host RAM**, not GPU memory (engine anonymous memory 1.2 GiB after load, 11.4 GiB at the end); host MemAvailable
+26.7 GiB and swap 1.9 GB (it was already 1.9 GB when the model finished loading, so the row did not grow it). The threshold is
+somewhere in (8192, 10240]; 9216 was not run.
+
+Same host (halo), same Strata v0.1.40.2 fast configuration and harness as above, 2026-10-08, one row at a time with lemond's
+resident model unloaded for the row and restored after it (health `ready` with the model loaded after the last row). Both rows:
+`--batch 2`, context 262144, two sessions filled to 238,144 tokens (the `two256-park` probe: fill A, fill B, repeat B, repeat A,
+alternate turns, a third session, then concurrent decode rounds). Row `two256-cache-<MiB>` is `rows.sh`'s new row name; the table below was assembled by hand from `rows.jsonl` (`tables.py` does not list these rows). 12288
+ran first and held both, so the sweep stopped there and 10240 was run below it; 16384 and 24576 were not needed.
+
+| cache MiB | repeat B (cached/prompt, TTFT) | repeat A, after B filled (cached/prompt, TTFT) | A turn, B turn, A again (TTFT) | A / B after a third session (TTFT) | peak GTT GiB | engine anon RSS end GiB | MemAvailable end GiB | swap used end GB |
+|---:|---|---|---|---|---:|---:|---:|---:|
+| 8192 (`two256-park`, above) | 238528/238552, 1.2 s | 6362/241113, **245.5 s** | 4.3 s, **249 s** (re-prefill), - | 3.2 s / 4.0 s | 76.1 | 9.7 | 28.8 | 1.8 |
+| 10240 | 238510/238534, 1.3 s | 241295/241319, 1.3 s | 4.1 s, 4.6 s, 4.2 s | 3.5 s / 3.9 s | 76.1 | 11.4 | 26.7 | 1.9 |
+| 12288 | 238542/238551, 0.8 s | 241057/241081, 1.5 s | 4.4 s, 4.5 s, 4.6 s | 3.3 s / 4.0 s | 76.1 | 14.1 | 23.4 | 1.5 |
+
+In the held rows every turn after the fill reuses 99 % of the prompt (the 4 s is the turn's own ~2K new tokens at ~450-500 tok/s
+prefill), and a 26K-token third session did not evict either (A and B turns stayed at 3-4 s). Peak GTT does not move with the cache size,
+confirming the cache is host memory: the price of a larger budget is MemAvailable (12288 left 3.3 GiB less than 10240), not GPU
+memory.
+
+Concurrent decode with full-length replies: 12288 gave 15.0 + 17.5 tok/s (29.9 combined), in line with `two256-park`'s 18.5 + 15.2 (above). The other
+concurrent rounds in both rows had one or both replies end before the length limit, and a reply that ended early has no decode
+rate here (the harness drops it); 10240's only full-length reply decoded at 18.9 tok/s. Read throughput from the 12288 round.
+
+**Is this safe as halo's resident default (10240 holds, 12288 suggested)?** On memory, yes with limited margin: GTT leaves 28 GiB, and MemAvailable ended at
+26.7 GiB with the cache full, but that is with nothing else running (no halo assistant, no build, no other GPU job; this was
+measured one bench at a time). The cache is host RAM that the resident model pins once both sessions are parked, so whatever
+the halo assistant, a Nix build or another GPU user needs must fit in about 26 GiB, and 12288 takes another ~2.7 GiB. Not measured:
+the same with those users running, any real agent session larger than 238K (a session near 262144 needs a proportionally larger
+budget; 12288 is the cheap margin for that), and 16384, the draft nix-config value, which has not been run and is expected (not measured) to cost more host
+RAM with nothing to gain at 238K. Suggest 12288 as the resident default (10240 holds, 12288 adds head-room for session growth), and cut to
+2x128K with the 8192 budget (which held at 110K) if the host RAM turns out to be needed.
 
 ## Reproduce
 
@@ -320,6 +358,7 @@ D=bench-logs/qwen38-flash-next-strata-soak-2026-10-08
 $D/rows.sh list
 $D/rows.sh soak soak-batch bigimage depth192 depth256 nomtp-depth128 two128 two128-nobatch two128-mtp two128-park two256-park \
     gsq-depth192 gsq-depth256 gsq-two128 longsoak          # lemond is restored after the last
+$D/rows.sh two256-cache-12288 two256-cache-10240   # #290's sweep (the 12288 row first)
 python3 $D/tables.py "$W/rows.jsonl"                       # the tables above
 python3 $D/test_depth.py                                   # offline tests of depth.py and tables.py
 ```

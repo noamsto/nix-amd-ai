@@ -14,6 +14,7 @@
 #     two128-nobatch the same without --batch: one slot, two sessions arriving in turn
 #     two128-mtp     the same with --batch 2 --batch-mtp
 #     two256-park    two sessions of ~238K tokens each at the 262,144 limit, --batch 2 --conversation-cache-mib 8192
+#     two256-cache-<MiB>  the same with the cache budget set to <MiB> (#290's sweep)
 #     nomtp-depth128 depth to a 131,072-token context with the MTP draft layer left out: the one-stream control for the batch rows
 #     two128-park    the same with --batch 2 --conversation-cache-mib 8192: sessions parked in RAM between requests
 #   GSQHalo llama.cpp with f16 KV as the resident lemond model runs it (run.sh gsq-hip):
@@ -58,6 +59,9 @@ strata_rows=0
 for row; do
     case $row in
     soak | soak-batch | longsoak | depth192 | depth256 | two128 | two128-nobatch | two128-mtp | two128-park | two256-park | nomtp-depth128) strata_rows=1 ;;
+    two256-cache-*)
+        [[ ${row#two256-cache-} =~ ^[1-9][0-9]*$ ]] || { echo "bad cache MiB in row: $row" >&2; exit 7; }
+        strata_rows=1 ;;
     bigimage) strata_rows=1; : "${SCREENSHOT_PNG:?}" ;;
     gsq-depth192 | gsq-depth256 | gsq-two128) : "${GSQ_BIN:?}" ;;
     *) echo "unknown row: $row" >&2; exit 7 ;;
@@ -91,6 +95,7 @@ for row; do
     two128-nobatch) groups=twosession ;;
     two128-mtp) groups=twosession extra='--batch 2 --batch-mtp' ;;
     two256-park) groups=twosession ctx=262144 extra='--batch 2 --conversation-cache-mib 8192' ;;
+    two256-cache-[0-9]*) groups=twosession ctx=262144 extra="--batch 2 --conversation-cache-mib ${row#two256-cache-}" ;;
     nomtp-depth128) groups=depth; unset STRATA_MTP_RT ;;
     two128-park) groups=twosession extra='--batch 2 --conversation-cache-mib 8192' ;;
     gsq-depth192) preset=gsq-hip groups=depth ctx=196608 ;;
