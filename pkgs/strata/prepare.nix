@@ -69,6 +69,14 @@ writeShellApplication {
     want_pack=$(printf 'id=%s\nengine=%s\nggml=%s\nmodel=%s\n' "$strata_id" "$engine_rev" "$ggml_rev" "$model"; shard_lines)
     want_mtp=$(printf 'id=%s\nengine=%s\nggml=%s\n' "$strata_id" "$engine_rev" "$ggml_rev")
 
+    if [ ! -e "$model" ]; then
+      echo "strata-prepare: $model does not exist" >&2
+      if [ -n "''${STRATA_MODEL_FETCH:-}" ]; then
+        echo "strata-prepare: fetch the pinned snapshot with: $STRATA_MODEL_FETCH" >&2
+      fi
+      exit 1
+    fi
+
     mkdir -p "$state"
 
     if [ -d "$pack_dir" ] && [ -f "$pack_stamp" ] && [ "$(cat "$pack_stamp")" = "$want_pack" ]; then

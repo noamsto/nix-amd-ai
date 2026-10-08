@@ -21,6 +21,14 @@
     url = "https://huggingface.co/${strataSources.mmproj.repo}/resolve/${strataSources.mmproj.rev}/${strataSources.mmproj.file}";
     hash = strataSources.mmproj.hash;
   };
+  # The pinned snapshot's path in lemond's Hugging Face cache, which only `lemonade.cacheDir` makes known at eval time.
+  strataModelSnapshot = with strataSources.model; "models--${lib.replaceStrings ["/"] ["--"] repo}/snapshots/${rev}";
+  strataModelDefault =
+    if cfg.lemonade.cacheDir == null
+    then null
+    else "${cfg.lemonade.cacheDir}/hf/hub/${strataModelSnapshot}/${strataSources.model.quants.${cfg.strata.quant}}";
+  strataModelFetch = with strataSources.model;
+    "hf download ${repo} --revision ${rev} --include '${dirOf quants.${cfg.strata.quant}}/*' --cache-dir ${cfg.lemonade.cacheDir}/hf/hub";
   strataPackExplicit = cfg.strata.pack != strataPackDefault;
   strataMtpExplicit = cfg.strata.mtp != strataMtpDefault;
   strataProvision =
@@ -937,14 +945,32 @@ in {
         };
       };
 
+      quant = mkOption {
+        type = types.enum (lib.attrNames strataSources.model.quants);
+        default = "UD-IQ4_XS";
+        description = ''
+          Quant of the pinned `${strataSources.model.repo}` snapshot that
+          `model` defaults to. Only quants packed and benched with Strata are
+          listed.
+        '';
+      };
+
       model = mkOption {
         type = types.nullOr types.str;
-        default = null;
+        default = strataModelDefault;
+        defaultText = lib.literalMD ''
+          the pinned `${strataSources.model.repo}` snapshot's `quant` shards in
+          lemond's Hugging Face cache (`''${lemonade.cacheDir}/hf/hub`), or
+          `null` when `lemonade.cacheDir` is unset
+        '';
         example = "/var/lib/models/strata/model-00001-of-00003.gguf";
         description = ''
           First shard of the Flash-Next GGUF. A runtime path, deliberately a
-          string so it is not copied into the Nix store. Required when
-          `strata.enable` is set.
+          string so it is not copied into the Nix store. The default reuses the
+          shards lemond keeps for the same checkpoint; `strata-prepare` fails
+          with the download command if that snapshot is missing. Set it
+          explicitly for a GGUF kept elsewhere, or when `lemonade.cacheDir` is
+          unset.
         '';
       };
 
@@ -1164,7 +1190,7 @@ in {
       }
       {
         assertion = !cfg.strata.enable || (cfg.strata.model != null && cfg.strata.pack != null && cfg.strata.mtp != null);
-        message = "hardware.amd-npu.strata.enable requires strata.model, strata.pack and strata.mtp.";
+        message = "hardware.amd-npu.strata.enable requires strata.model (set it, or set lemonade.cacheDir to use the pinned snapshot in lemond's cache), strata.pack and strata.mtp.";
       }
       {
         # The unit writes ${strataStateDir}, but the engine reads pack/mtp: a
@@ -1478,10 +1504,14 @@ in {
       after = ["network-online.target" "local-fs.target"];
       wants = ["network-online.target"];
       wantedBy = ["multi-user.target"];
-      environment = {
-        STRATA_MODEL = cfg.strata.model;
-        STRATA_STATE_DIR = strataStateDir;
-      };
+      environment =
+        {
+          STRATA_MODEL = cfg.strata.model;
+          STRATA_STATE_DIR = strataStateDir;
+        }
+        // optionalAttrs (strataModelDefault != null && cfg.strata.model == strataModelDefault) {
+          STRATA_MODEL_FETCH = strataModelFetch;
+        };
       serviceConfig = {
         Type = "exec";
         RemainAfterExit = true;
