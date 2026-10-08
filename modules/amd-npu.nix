@@ -8,7 +8,7 @@
   cfg = config.hardware.amd-npu;
 
   # Declarative Strata artifacts. `pack` and the MTP runtime derive from the runtime GGUF shards and a 4.9 GiB
-  # range-read download, so they are built by the oneshot `strata-prepare` unit outside the store; mmproj is a plain
+  # range-read download, so they are built by the `strata-prepare` unit outside the store; mmproj is a plain
   # 0.9 GiB download and is a fixed output. `strataProvision` is the module's decision to run that unit: an explicit
   # `true`/`false` wins, and `null` (auto) runs it only when `pack`/`mtp` are left at their default outputs, so a host
   # with explicit paths (today's only consumer) keeps its runConfig byte-for-byte and never downloads anything.
@@ -914,7 +914,7 @@ in {
           type = types.nullOr types.bool;
           default = null;
           description = ''
-            Whether to run the `strata-prepare` oneshot unit, which builds
+            Whether to run the `strata-prepare` unit, which builds
             `pack` and the MTP runtime from `model` in `/var/lib/strata`.
 
             `null` (the default) runs it only when `pack` and `mtp` are both
@@ -1463,11 +1463,16 @@ in {
     };
 
     # Strata's pack and MTP runtime derive from the runtime GGUF shards and a
-    # 4.9 GiB range-read download, so they cannot be store paths. This oneshot
+    # 4.9 GiB range-read download, so they cannot be store paths. This unit
     # builds them (or no-ops when the stamps match) into /var/lib/strata; the
     # shim refuses a load until the stamps exist, so nothing has to order lemond
     # after it and other backends are not delayed. Runs as the lemond user, so
     # the engine can read the outputs.
+    #
+    # exec, not oneshot: a oneshot's start job lasts until it exits, so
+    # `nixos-rebuild switch` would wait out the first download. RemainAfterExit
+    # keeps it active afterwards; a caller that needs the outputs waits for
+    # SubState=exited (still `running` while it builds).
     systemd.services.strata-prepare = mkIf strataProvision {
       description = "Prepare Strata pack and MTP runtime from strata.model";
       after = ["network-online.target" "local-fs.target"];
@@ -1478,13 +1483,11 @@ in {
         STRATA_STATE_DIR = strataStateDir;
       };
       serviceConfig = {
-        Type = "oneshot";
+        Type = "exec";
         RemainAfterExit = true;
         User = cfg.strata.prepare.user;
         StateDirectory = "strata";
         ExecStart = "${strataPrepare}/bin/strata-prepare";
-        # The first run downloads 4.9 GiB and reads ~100 GiB of GGUF shards.
-        TimeoutStartSec = "infinity";
       };
     };
   };
