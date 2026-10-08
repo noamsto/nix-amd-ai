@@ -76,7 +76,7 @@ def _on_signal(sig, _frame):
         sys.exit(143)
 
 GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks",
-          "soak", "longsoak", "bigimage", "quirks"]
+          "soak", "longsoak", "bigimage", "quirks", "depth", "twosession"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
 CONC_OFFSETS = (40000, 60000, 80000, 100000)
@@ -569,6 +569,12 @@ def g_soak(group, e, c, quick, minutes=None):
     soak = importlib.util.module_from_spec(soak_spec)
     soak_spec.loader.exec_module(soak)
     me = sys.modules[__name__]
+    if group in ("depth", "twosession"):
+        depth_spec = importlib.util.spec_from_file_location(
+            "depth", os.path.join(HERE, "..", "qwen38-flash-next-strata-soak-2026-10-08", "depth.py"))
+        depth = importlib.util.module_from_spec(depth_spec)
+        depth_spec.loader.exec_module(depth)
+        return depth.run_depth(e, c, me) if group == "depth" else depth.run_twosession(e, c, me)
     if group == "soak":
         return soak.run_short(e, c, me)
     if group == "longsoak":
@@ -839,6 +845,10 @@ def run_row(a, log):
             port=a.port, engine=a.cmd, model=grid.http(a.port, "/v1/models", timeout=30)["data"][0]["id"],
             pid=pid, gtt0=gtt0, vram0=vram0, args=a)
         row["mem_after_load"] = mem_snapshot(pid, gtt0, vram0)
+        try:  # the slots the server actually runs: strata may give fewer batch slots than asked
+            row["server_slots"] = json.dumps(grid.http(a.port, "/slots", timeout=30))[:600]
+        except (grid.RowError, OSError, ValueError, http.client.HTTPException) as exc:
+            row["server_slots"] = f"unavailable: {type(exc).__name__}"
         cpu0 = {"t": time.time(), "sys": cpu_ticks(), "eng": cpu_ticks(pid)}
         if "toolcall" in do:
             row["toolcall"] = g_toolcall(e, cache, a.quick)
@@ -858,10 +868,10 @@ def run_row(a, log):
             row["vision"] = g_vision(e, cache, a.quick)
         if "tasks" in do:
             row["tasks"] = g_tasks(e, cache, a.quick)
-        for group in ("soak", "quirks", "bigimage", "longsoak"):  # the hour-long one last, and no group costs another's result
+        for group in ("soak", "quirks", "bigimage", "depth", "twosession", "longsoak"):  # the hour-long one last, and no group costs another's result
             if group in do:
                 try:
-                    row[group] = g_soak(group, e, cache, a.quick, a.soak_minutes)
+                    row[group] = g_soak(group, e, cache, a.quick, getattr(a, "soak_minutes", None))
                 except (grid.RowError, OSError, KeyError, TypeError, ValueError, http.client.HTTPException) as exc:
                     row[group] = {"error": f"{type(exc).__name__}: {exc}"}
         try:  # a soak that saw the engine restart holds a stale pid here
@@ -892,7 +902,7 @@ def run_row(a, log):
 
 def strata_build(a):
     r = subprocess.run(["git", "-C", a.repo, "rev-parse", "HEAD"], capture_output=True, text=True)
-    return r.stdout.strip() if r.returncode == 0 else os.path.basename(a.engine_bin)
+    return r.stdout.strip() if r.returncode == 0 else os.path.realpath(a.engine_bin)  # a store path names the version
 
 
 def detok(port, ids):
