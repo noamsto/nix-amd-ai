@@ -19,12 +19,13 @@ class FakeP:
     """The slice of probe.py the groups use. Tokens are chars/4 plus a 700-token fixed part. Each of `slots` slots holds
     its last request; a request takes the slot sharing over half its prompt, else the least recently used. A request whose
     last message asks for an essay runs to its token limit; any other ends as a short tool call, as the real model did
-    (`always_long` makes every request run to its limit). `fail_after` raises once that many requests have been made."""
+    (`always_long` makes every request run to its limit; `short_essay=N` makes an essay request end with `stop` after N
+    tokens). `fail_after` raises once that many requests have been made."""
     REPLAY_GEN = 300
     os = os
 
-    def __init__(self, slots=1, always_long=False, fail_after=None):
-        self.slots, self.always_long, self.fail_after = slots, always_long, fail_after
+    def __init__(self, slots=1, always_long=False, fail_after=None, short_essay=None):
+        self.slots, self.always_long, self.fail_after, self.short_essay = slots, always_long, fail_after, short_essay
         self.held, self.calls, self.used = [[] for _ in range(slots)], [], [0] * slots
         self.lock = threading.Lock()
         self.grid = types.SimpleNamespace(http=lambda *_a, **_k: [{"id": i, "n_ctx": 1, "prompt": "x" * 9} for i in range(slots)])
@@ -68,6 +69,8 @@ class FakeP:
             self.calls.append((n, cached))
         long = self.always_long or d.ESSAY in msgs[-1]["content"]
         tokens, finish = (body["max_tokens"], "length") if long else (min(40, body["max_tokens"]), "tool_calls")
+        if long and self.short_essay:
+            tokens, finish = self.short_essay, "stop"
         return {"ttft_s": 1.0 + (n - cached) / 1000, "gen_s": 2.0, "wall_s": 3.0, "text": "a reply", "finish_reason": finish,
                 "prompt_tokens": n, "completion_tokens": tokens, "cached_tokens": cached,
                 "timings": {"draft_n": 10, "draft_n_accepted": 7}, "gufo": None}
@@ -111,6 +114,10 @@ class Pure(unittest.TestCase):
         self.assertEqual(d.aggregate_tps([(a, 0), (b, 0)]), 22.22)
         # b sent 3 s later: its window is 5..13 on the round's clock, so the span is 1..13
         self.assertEqual(d.aggregate_tps([(a, 0), (b, 3)]), round(200 / 12, 2))
+        # the delayed request has the earliest first token on its own clock but not on the round's: span 5..11, not 1..11
+        late = {"ttft_s": 1, "gen_s": 5, "completion_tokens": 60}
+        slow = {"ttft_s": 5, "gen_s": 1, "completion_tokens": 60}
+        self.assertEqual(d.aggregate_tps([(slow, 0), (late, 3)]), round(120 / 5, 2))
 
     def test_summarize_drops_the_rate_of_a_short_reply(self):
         r = {"prompt_tokens": 100, "cached_tokens": 90, "ttft_s": 1.0, "completion_tokens": 40, "gen_s": 1.0, "wall_s": 2.0,
@@ -120,7 +127,10 @@ class Pure(unittest.TestCase):
         self.assertIsNone(s["decode_tps"])
         self.assertIsNone(s["acceptance"])
         self.assertEqual((s["new_tokens"], s["prefill_tps"]), (10, 10.0))
-        self.assertIsNotNone(d.summarize(FakeP(), r)["decode_tps"])
+        plain = d.summarize(FakeP(), r)  # not meant to run long: no `short` flag, still no rate
+        self.assertNotIn("short", plain)
+        self.assertIsNone(plain["decode_tps"])
+        self.assertEqual(d.summarize(FakeP(), {**r, "finish_reason": "length"})["decode_tps"], 39.0)
 
     def test_summarize_does_not_guess_when_the_server_reports_no_cache(self):
         r = {"prompt_tokens": 100, "cached_tokens": None, "ttft_s": 1.0, "completion_tokens": 8, "gen_s": 1.0, "wall_s": 2.0,
@@ -150,7 +160,7 @@ class Groups(unittest.TestCase):
 
     def run_group(self, fn, ctx, slots=1, fake_slots=1, **fake):
         p = FakeP(fake_slots, **fake)
-        with mock.patch.object(d, "load_text", lambda _p: fake_corpus()):
+        with mock.patch.object(d, "load_text", lambda _p: fake_corpus()), mock.patch.object(d, "STAGGER_S", 0.2):
             return fn(engine(ctx, slots), self.c, p), p
 
     def test_depth_reaches_the_limit_and_reuses_the_prefix(self):
@@ -189,16 +199,31 @@ class Groups(unittest.TestCase):
         concurrent, staggered = out["rounds"][0], out["rounds"][2]
         self.assertAlmostEqual(concurrent["combined_tps"], 400.0, delta=1)
         self.assertIsNone(staggered["combined_tps"])  # B's answer is one line by design
-        self.assertAlmostEqual(staggered["streams"][1]["start_s"], d.STAGGER_S, delta=0.5)
+        self.assertAlmostEqual(staggered["streams"][1]["start_s"], 0.2, delta=0.15)
 
-    def test_short_replies_are_not_published_as_rates(self):
-        out, _ = self.run_group(d.run_twosession, 262144, fake_slots=2)  # nothing runs long except the essays
-        for rd in out["rounds"][:2]:
-            self.assertEqual(rd["streams"][0]["finish"], "length")
-        out, _ = self.run_group(d.run_depth, 131072)
-        self.assertTrue(all(not s["essay"].get("short") for s in out["stages"]))
-        out["stages"][0]["essay"].update(short=True, decode_tps=None, acceptance=None)
-        self.assertEqual(out["stages"][0]["essay"]["decode_tps"], None)
+    def test_a_depth_essay_that_ends_early_has_no_rate(self):
+        out, _ = self.run_group(d.run_depth, 131072, short_essay=30)
+        for st in out["stages"]:
+            self.assertTrue(st["essay"]["short"])
+            self.assertIsNone(st["essay"]["decode_tps"])
+            self.assertIsNone(st["essay"]["acceptance"])
+            self.assertIsNone(st["turn"]["decode_tps"])  # the agent turn ended as a short tool call
+
+    def test_a_round_with_a_short_stream_has_no_combined_rate_and_the_stream_says_so(self):
+        out, _ = self.run_group(d.run_twosession, 262144, fake_slots=2, short_essay=30)
+        for rd in out["rounds"]:
+            self.assertIsNone(rd["combined_tps"])
+        self.assertTrue(out["rounds"][0]["streams"][0]["short"])
+        self.assertIsNone(out["rounds"][0]["streams"][0]["decode_tps"])
+        self.assertIsNone(out["alone_A"]["decode_tps"])
+
+    def test_a_failed_stream_leaves_a_string_and_no_combined_rate(self):
+        ok = {"ttft_s": 1, "gen_s": 9, "completion_tokens": 100, "finish_reason": "length", "prompt_tokens": 5,
+              "cached_tokens": 0, "wall_s": 10, "timings": None}
+        row = d.round_row(FakeP(), [(ok, 0), "RuntimeError: boom"], [True, True])
+        self.assertEqual(row["streams"][1], "RuntimeError: boom")
+        self.assertIsNone(row["combined_tps"])
+        self.assertEqual(d.round_row(FakeP(), [(ok, 0), (ok, 0)], [True, True])["combined_tps"], 22.22)
 
     def test_third_session_thrashes_two_lru_slots(self):
         out, _ = self.run_group(d.run_twosession, 262144, fake_slots=2, always_long=True)
@@ -230,6 +255,23 @@ class Tables(unittest.TestCase):
         rows = self.rows()
         for name, fn in tb.SECTIONS.items():
             self.assertIsInstance(fn(rows), str, name)
+
+    def test_a_current_group_that_stopped_part_way_shows_its_error(self):
+        rows = {"two128": {"twosession": {"harness": 2, "prefill_A": [], "error": "RowError: boom"}}}
+        text = tb.two_table(rows)
+        self.assertIn("stopped: RowError: boom", text)
+        self.assertNotIn("earlier harness", text)
+
+    def test_old_rows_keep_cache_cells_and_lose_decode_numbers(self):
+        old = {"prefill_A": [], "repeat_A": {"cached_tokens": 1, "prompt_tokens": 2, "ttft_s": 0.5},
+               "rounds": [{"kind": "concurrent", "aggregate_tps": 9.0, "streams": []}]}
+        rows = {"two128-mtp": {"twosession": old}}
+        self.assertIn("earlier harness", tb.two_table(rows))
+        self.assertIn("not re-run (owner cut)", tb.two_rounds(rows))
+
+    def test_a_one_line_answer_is_never_shown_as_a_rate(self):
+        s = {"decode_tps": 5.9, "ttft_s": 1.0, "completion_tokens": 11, "finish": "stop"}
+        self.assertIn("short reply", tb.stream_cell(s))
 
     def test_error_text_cannot_break_a_row(self):
         text = tb.depth_table(self.rows())

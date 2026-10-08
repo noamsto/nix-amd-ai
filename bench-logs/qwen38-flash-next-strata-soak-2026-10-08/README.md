@@ -243,7 +243,7 @@ Combined tok/s is tokens over the span from the first first-token to the last to
 | two128-park | not re-run (owner cut) | - | - | - |
 | two256-park | concurrent | 18.9 (ttft 253.6 s, 400 tok, length) | 15.8 (ttft 249.3 s, 400 tok, length) | 31.5 |
 | two256-park | concurrent | 18.5 (ttft 9.9 s, 400 tok, length) | 15.2 (ttft 5.2 s, 400 tok, length) | 30.5 |
-| two256-park | staggered | 21.6 (ttft 5.3 s, 400 tok, length) | 5.9 (ttft 7.1 s, 11 tok, stop) | - |
+| two256-park | staggered | 21.6 (ttft 5.3 s, 400 tok, length) | short reply (ttft 7.1 s, 11 tok, stop) | - |
 | gsq-two128 | concurrent | 8.7 (ttft 16.3 s, 400 tok, length) | 8.6 (ttft 16.3 s, 400 tok, length) | 17.2 |
 | gsq-two128 | concurrent | 9.5 (ttft 18.7 s, 400 tok, length) | 9.8 (ttft 18.7 s, 400 tok, length) | 19.0 |
 | gsq-two128 | staggered | short reply (ttft 7.7 s, 353 tok, stop) | 10.3 (ttft 4.9 s, 64 tok, length) | - |

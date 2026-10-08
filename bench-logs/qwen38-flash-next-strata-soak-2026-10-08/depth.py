@@ -28,6 +28,7 @@ ESSAY = ("Do not call any tool. Write a very long, detailed, multi-section essay
 SESSION_HEADROOM = 24000  # a two-session fill leaves room for ~10 turns of 1,500 tokens and replies of up to 400
 FILL_TOLERANCE = 0.03  # a session fill stops within this fraction of its target
 HEADROOM = 5000  # the last stage stops this far under the limit: one turn, the essay and the template
+HARNESS = 2  # two-session groups written before this (replies often cut short) carry no `harness` key
 STAGGER_S = 3  # the second request of a staggered round arrives this long after the first
 
 
@@ -130,17 +131,18 @@ class Convo:
 
 def summarize(P, r, long=False):
     """The fields every request of these groups reports. `new_tokens` is what the prefill had to read, None when the
-    server does not say what it cached. With `long` the request was meant to run to its token limit: if it did not, it
-    reports `short: true` and no decode rate or acceptance."""
+    server does not say what it cached. A decode rate and acceptance are kept only for a request that ran to its token
+    limit; `long` marks a request that was meant to, and one that did not carries `short: true`."""
     cached = r["cached_tokens"]
     new = None if cached is None else r["prompt_tokens"] - cached
-    tps = P.decode_tps(r)
+    tps = P.decode_tps(r) if full_length(r) else None
     out = {"prompt_tokens": r["prompt_tokens"], "cached_tokens": cached, "new_tokens": new,
            "ttft_s": round(r["ttft_s"], 3), "prefill_tps": round(new / r["ttft_s"], 1) if new and new > 0 else None,
            "completion_tokens": r["completion_tokens"], "decode_tps": None if tps is None else round(tps, 2),
-           "acceptance": acceptance(r), "finish": r["finish_reason"], "wall_s": round(r["wall_s"], 2)}
+           "acceptance": acceptance(r) if full_length(r) else None, "finish": r["finish_reason"],
+           "wall_s": round(r["wall_s"], 2)}
     if long and not full_length(r):
-        out.update(short=True, decode_tps=None, acceptance=None)
+        out["short"] = True
     return out
 
 
@@ -256,13 +258,14 @@ def concurrent(P, e, jobs):
 
 
 def round_row(P, results, longs):
-    """Per-stream summaries, and the combined rate only when every stream ran to its limit (`longs` says which were meant
-    to): a stream that ended early would make the span and the token count say different things."""
+    """Per-stream summaries, and the combined rate only when every stream was meant to run to its limit (`longs`) and did:
+    one that ended early would make the span and the token count say different things. A round with a one-line stream, like
+    the staggered one, never gets a combined rate."""
     ok = [x for x in results if not isinstance(x, str)]
     streams = [x if isinstance(x, str) else {**summarize(P, x[0], long=lg), "start_s": round(x[1], 2)}
                for x, lg in zip(results, longs)]
-    clean = len(ok) == len(results) and all(full_length(r) for (r, _), lg in zip(ok, longs) if lg)
-    return {"streams": streams, "combined_tps": aggregate_tps(ok) if clean and all(longs) else None}
+    clean = all(longs) and len(ok) == len(results) and all(full_length(r) for r, _ in ok)
+    return {"streams": streams, "combined_tps": aggregate_tps(ok) if clean else None}
 
 
 def run_twosession(e, c, P):
@@ -275,8 +278,8 @@ def twosession_group(e, c, P):
     text = load_text(P)
     base, ratio = calibrate(P, e, c, text)
     a, b = Convo(c, Source(text, 0), "A", ratio), Convo(c, Source(text, len(text) // 2), "B", ratio)
-    out = {"context_limit": limit, "session_tokens": depth, "calibrated_chars_per_token": round(ratio, 3),
-           "corpus_rev": CORPUS_REV}
+    out = {"harness": HARNESS, "context_limit": limit, "session_tokens": depth,
+           "calibrated_chars_per_token": round(ratio, 3), "corpus_rev": CORPUS_REV}
     try:
         view = P.grid.http(e.port, "/slots", timeout=30)
         out["slots_seen"] = [{k: s.get(k) for k in ("id", "n_ctx")} for s in view]

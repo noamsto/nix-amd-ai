@@ -127,16 +127,17 @@ def depth_table(rows):
                 body.append([k, s["target"], "stopped: " + s.get("error", "?")[:80]] + [""] * 5)
                 continue
             dec, acc = valid_decode(es)
-            body.append([k, fill["prompt_tokens"], f(fill.get("prefill_tps"), 0), f(turn["ttft_s"]), f(dec), f(acc, 2),
+            body.append([k, fill["prompt_tokens"], f(fill.get("prefill_tps") if fill.get("cached_tokens") is not None else None, 0),
+                         f(turn["ttft_s"]), f(dec), f(acc, 2),
                          turn["cached_tokens"], gib((s.get("mem") or {}).get("gtt_delta_bytes"))])
     return table(["row", "depth (prompt tokens)", "prefill tok/s", "agent-turn ttft s", "decode tok/s (essays run to 256 tokens)",
                   "draft acceptance", "turn cached tokens", "GTT GiB"], body)
 
 
 def rerun(d):
-    """True for a two-session group written by the current harness (its rounds carry `combined_tps`); earlier ones ran with
-    replies that ended as short tool calls, so their cache cells stand but their decode numbers are not reported."""
-    return all("combined_tps" in x for x in d.get("rounds", [])) and bool(d.get("rounds"))
+    """True for a two-session group written by the current harness (it carries `harness`); earlier ones ran with replies
+    that ended as short tool calls, so their cache cells stand but their decode numbers are not reported."""
+    return "harness" in d
 
 
 def hit(s):
@@ -152,6 +153,9 @@ def two_table(rows):
         if failed(d, "prefill_A"):
             body.append([k, "group failed: " + d.get("error", "?")[:80]] + [""] * 6)
             continue
+        if "error" in d:
+            body.append([k, "stopped: " + d["error"][:80]] + [""] * 6)
+            continue
         body.append([k, "re-run" if rerun(d) else "earlier harness (not re-run, owner cut)", hit(d.get("repeat_B")),
                      hit(d.get("repeat_A")), hit(d.get("alone_A")), hit(d.get("alone_B")), hit(d.get("after_third_A")),
                      hit(d.get("after_third_B"))])
@@ -162,7 +166,7 @@ def two_table(rows):
 def stream_cell(s):
     if not isinstance(s, dict):
         return s
-    rate = "short reply" if s.get("short") or s.get("decode_tps") is None else f(s["decode_tps"])
+    rate = f(s["decode_tps"]) if s.get("finish") == "length" and s.get("decode_tps") is not None else "short reply"
     return f"{rate} (ttft {f(s['ttft_s'])} s, {s['completion_tokens']} tok, {s['finish']})"
 
 
