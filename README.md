@@ -434,21 +434,22 @@ hardware.amd-npu = {
   strata = {
     enable = true;
     model = "/var/lib/models/…/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
-    pack = "…/pack";
-    mtp = "…/mtp/rt";
-    vision.mmproj = "…/mmproj-Qwen3.8-Flash-Next-BF16.gguf";
     profile = "defaults"; # or "fast"
   };
 };
 ```
 
-The pack, the MTP draft and the mmproj are prepared once by hand; the bench README's "Reproduce" section has the steps. Other options: `sampling` (below), `contextSize` (131072), `expertCache` (20000), `vision.enable` (true, CPU encoder) and `extraArgs`. `expertCache` is always an explicit count passed with `--mmap-experts`; `auto` is rejected at evaluation because it sizes the cache from MemAvailable, which on a unified-memory machine is most of the RAM.
+With only `enable` and `model`, the module provisions the rest. `strata.prepare` renders a oneshot `strata-prepare` unit that builds `pack` and the MTP runtime in `/var/lib/strata` with the pinned Strata's own tools, and `vision.mmproj` defaults to a pinned `mmproj-Qwen3.8-Flash-Next-BF16.gguf` fixed-output fetch. Each derived output has a stamp recording the pinned Strata package (its tools and gguf-py) and its Strata/ggml revisions, the model path and the sibling shard sizes: an unchanged run is a no-op, a changed model path rebuilds the pack, and a Strata/ggml revision bump or a different `strata.package` rebuilds both (the pin bump leaves the literal `version` alone, so the stamps key on the pins, not the version). The pack tool is CPU-only and reads the shards in place. The shim refuses a load until both stamps exist, and the unit removes a stamp before rebuilding, so a load that races a rebuild gets a clear message instead of an engine that cannot open its pack.
+
+Setting `pack`, `mtp` and `vision.mmproj` explicitly keeps your own artifacts; the module then renders no unit and passes those paths through as before. `strata.prepare.enable` is `null` (the default: run the unit only when `pack` and `mtp` are at their defaults), `true` (force it on; then `pack`/`mtp` must stay at defaults) or `false` (disable it; then set both paths explicitly). `strata.prepare.user` defaults to `lemonade.user`, so the engine can read the outputs.
 
 `sampling` sets the decoding defaults for requests that send none: strata-server decodes greedily otherwise. The default is Qwen's recommended thinking set (`temperature` 0.6, `top_p` 0.95, `top_k` 20), because strata-server takes one set rather than one per thinking mode and lemond serves the model with thinking on. A request's own fields win, so `temperature: 0` stays greedy. For a non-thinking deployment set `temperature = 0.7; top_p = 0.8; top_k = 20; presence_penalty = 1.5;`; setting every key to `null` restores greedy. Keys merge individually, so `sampling.top_k = 40;` keeps the other defaults.
 
 `profile = "defaults"` is Strata's setup defaults. `"fast"` is the maintainers' fast configuration: it turns on bit-changing switches, and its quality has not been checked (no KL or perplexity). The bench README has the measured speed difference between the two, on halo only.
 
 **Costs.** An 8.9 GiB Nix closure (the pinned SDK), built with `-march=native` so the output is specific to the building host's CPU. It is `gfx1151` only and experimental upstream. CI does not build it, so enabling it compiles it locally.
+
+The `strata-prepare` pack step is CPU-only. Measured on halo on 2026-10-08 over the same UD-IQ4_XS shards: `iq_pack.py --compat-bf16` took 8 s wall and about 1.2 GiB peak RSS for a 1.4 GiB pack, reading the three GGUF shards in place. The MTP step is the slow part of the first run: 4.9 GiB of tensors downloaded (SHA-256-checked against the pinned checkpoint revision while upstream still serves it; a fallback to the repository's current files is not hash-checked), then a 0.8 GiB runtime directory. The raw tensors are removed after packing, so any MTP rebuild — a Strata/ggml revision bump or a different `strata.package` — re-downloads them; a model change rebuilds only the pack.
 
 **Memory.** About 67 GiB of GTT at 131072 context on halo (bench README). lemond counts loaded models per slot, not memory, so it will load Strata next to another large model if a slot is free: keep one LLM slot (`lemonade.settings.max_loaded_models`) or unload the resident model first. If a load fails, lemond evicts every loaded model, pinned ones included, and retries once.
 

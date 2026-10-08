@@ -7,6 +7,35 @@
   inherit (lib) mkEnableOption mkOption mkIf mkDefault types optionalString optional optionals optionalAttrs versionAtLeast concatStringsSep any;
   cfg = config.hardware.amd-npu;
 
+  # Declarative Strata artifacts. `pack` and the MTP runtime derive from the runtime GGUF shards and a 4.9 GiB
+  # range-read download, so they are built by the oneshot `strata-prepare` unit outside the store; mmproj is a plain
+  # 0.9 GiB download and is a fixed output. `strataProvision` is the module's decision to run that unit: an explicit
+  # `true`/`false` wins, and `null` (auto) runs it only when `pack`/`mtp` are left at their default outputs, so a host
+  # with explicit paths (today's only consumer) keeps its runConfig byte-for-byte and never downloads anything.
+  strataSources = import ../pkgs/strata/sources.nix;
+  strataStateDir = "/var/lib/strata";
+  strataPackDefault = "${strataStateDir}/pack";
+  strataMtpDefault = "${strataStateDir}/mtp/rt";
+  strataMmproj = pkgs.fetchurl {
+    name = strataSources.mmproj.file;
+    url = "https://huggingface.co/${strataSources.mmproj.repo}/resolve/${strataSources.mmproj.rev}/${strataSources.mmproj.file}";
+    hash = strataSources.mmproj.hash;
+  };
+  strataPackExplicit = cfg.strata.pack != strataPackDefault;
+  strataMtpExplicit = cfg.strata.mtp != strataMtpDefault;
+  strataProvision =
+    cfg.strata.enable
+    && (
+      if cfg.strata.prepare.enable != null
+      then cfg.strata.prepare.enable
+      else !strataPackExplicit && !strataMtpExplicit
+    );
+  strataPrepare = pkgs.callPackage ../pkgs/strata/prepare.nix {
+    strataPkg = cfg.strata.package;
+    strataRev = strataSources.strata.rev;
+    ggmlRev = strataSources.ggml.rev;
+  };
+
   # The Tauri desktop app is the only part of lemonade that pulls a Rust/npm
   # build (and a crates.io cargo-vendor fetch). Headless/server hosts can drop
   # it via withDesktopApp = false so `enableLemonade` doesn't drag in that
@@ -141,6 +170,13 @@
           max_tokens = 300;
         };
       };
+  }
+  // optionalAttrs strataProvision {
+    # The shim refuses a load until these stamps exist, so a load racing `strata-prepare` gets a clear message.
+    prepare = {
+      pack = "${strataStateDir}/pack.stamp";
+      mtp = "${strataStateDir}/mtp.stamp";
+    };
   };
   strataServer = pkgs.callPackage ../pkgs/strata/lemond-server.nix {} strataPkg;
   strataShim = pkgs.callPackage ../pkgs/strata/lemond-shim.nix {} {
@@ -873,6 +909,34 @@ in {
         description = "Strata package providing `strata`, `strata-server` and `strata-vision`.";
       };
 
+      prepare = {
+        enable = mkOption {
+          type = types.nullOr types.bool;
+          default = null;
+          description = ''
+            Whether to run the `strata-prepare` oneshot unit, which builds
+            `pack` and the MTP runtime from `model` in `/var/lib/strata`.
+
+            `null` (the default) runs it only when `pack` and `mtp` are both
+            left at their defaults; a host that sets either path explicitly
+            gets no unit, so existing explicit-path configurations are
+            unchanged. `true` forces it on (then `pack`/`mtp` must stay at
+            their defaults), `false` disables it (then set both paths
+            explicitly).
+          '';
+        };
+        user = mkOption {
+          type = types.str;
+          default = config.hardware.amd-npu.lemonade.user;
+          defaultText = lib.literalExpression "config.hardware.amd-npu.lemonade.user";
+          description = ''
+            User that runs `strata-prepare` and owns `/var/lib/strata`. The
+            engine runs as this same user under lemond, so it can read the
+            artifacts.
+          '';
+        };
+      };
+
       model = mkOption {
         type = types.nullOr types.str;
         default = null;
@@ -886,16 +950,32 @@ in {
 
       pack = mkOption {
         type = types.nullOr types.str;
-        default = null;
+        default =
+          if cfg.strata.prepare.enable == false
+          then null
+          else strataPackDefault;
+        defaultText = lib.literalExpression "\"\${strataStateDir}/pack\"";
         example = "/var/lib/models/strata/pack";
-        description = "Strata `iq_pack` directory (runtime path). Required when `strata.enable` is set.";
+        description = ''
+          Strata `iq_pack` directory (runtime path). Defaults to the
+          `strata-prepare` unit's output, unless `strata.prepare.enable` is
+          `false`. Set it explicitly to use a pack you built yourself.
+        '';
       };
 
       mtp = mkOption {
         type = types.nullOr types.str;
-        default = null;
+        default =
+          if cfg.strata.prepare.enable == false
+          then null
+          else strataMtpDefault;
+        defaultText = lib.literalExpression "\"\${strataStateDir}/mtp/rt\"";
         example = "/var/lib/models/strata/mtp/rt";
-        description = "Strata MTP runtime directory (runtime path). Required when `strata.enable` is set.";
+        description = ''
+          Strata MTP runtime directory (runtime path). Defaults to the
+          `strata-prepare` unit's output, unless `strata.prepare.enable` is
+          `false`. Set it explicitly to use an MTP runtime you built yourself.
+        '';
       };
 
       modelName = mkOption {
@@ -976,9 +1056,14 @@ in {
 
         mmproj = mkOption {
           type = types.nullOr types.str;
-          default = null;
+          default = "${strataMmproj}";
+          defaultText = lib.literalExpression "the pinned Qwen3.8-Flash-Next BF16 mmproj (fetchurl)";
           example = "/var/lib/models/strata/mmproj.gguf";
-          description = "Path to the vision projector GGUF (runtime path).";
+          description = ''
+            Path to the vision projector GGUF (runtime path). Defaults to the
+            pinned `mmproj-Qwen3.8-Flash-Next-BF16.gguf` fixed-output fetch;
+            set it to use a projector of your own (e.g. a Q8_0 one).
+          '';
         };
       };
 
@@ -1080,6 +1165,21 @@ in {
       {
         assertion = !cfg.strata.enable || (cfg.strata.model != null && cfg.strata.pack != null && cfg.strata.mtp != null);
         message = "hardware.amd-npu.strata.enable requires strata.model, strata.pack and strata.mtp.";
+      }
+      {
+        # The unit writes ${strataStateDir}, but the engine reads pack/mtp: a
+        # forced-on unit beside explicit paths, or an auto-mode partial
+        # override, would silently point one at a directory nothing builds.
+        assertion =
+          !cfg.strata.enable
+          || (
+            if cfg.strata.prepare.enable == false
+            then true
+            else if cfg.strata.prepare.enable == true
+            then !strataPackExplicit && !strataMtpExplicit
+            else strataPackExplicit == strataMtpExplicit
+          );
+        message = "hardware.amd-npu.strata: with strata.prepare.enable = true, strata.pack/strata.mtp must stay at their defaults (set prepare.enable = false to use your own paths). In the default mode, set either both or neither of strata.pack/strata.mtp; a partial override would leave the other pointing at a directory nothing provisions.";
       }
       {
         assertion = !cfg.strata.enable || !cfg.strata.vision.enable || cfg.strata.vision.mmproj != null;
@@ -1359,6 +1459,32 @@ in {
         TimeoutStopSec = mkDefault "30s";
         LimitMEMLOCK = "infinity";
         StateDirectory = "ds4";
+      };
+    };
+
+    # Strata's pack and MTP runtime derive from the runtime GGUF shards and a
+    # 4.9 GiB range-read download, so they cannot be store paths. This oneshot
+    # builds them (or no-ops when the stamps match) into /var/lib/strata; the
+    # shim refuses a load until the stamps exist, so nothing has to order lemond
+    # after it and other backends are not delayed. Runs as the lemond user, so
+    # the engine can read the outputs.
+    systemd.services.strata-prepare = mkIf strataProvision {
+      description = "Prepare Strata pack and MTP runtime from strata.model";
+      after = ["network-online.target" "local-fs.target"];
+      wants = ["network-online.target"];
+      wantedBy = ["multi-user.target"];
+      environment = {
+        STRATA_MODEL = cfg.strata.model;
+        STRATA_STATE_DIR = strataStateDir;
+      };
+      serviceConfig = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        User = cfg.strata.prepare.user;
+        StateDirectory = "strata";
+        ExecStart = "${strataPrepare}/bin/strata-prepare";
+        # The first run downloads 4.9 GiB and reads ~100 GiB of GGUF shards.
+        TimeoutStartSec = "infinity";
       };
     };
   };
