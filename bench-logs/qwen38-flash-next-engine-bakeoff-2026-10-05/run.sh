@@ -11,7 +11,8 @@
 # separated), STRATA_TUNING (hipBLASLt table), STRATA_CTX (default 131072).
 # Remaining args go to probe.py (e.g. --label vulkan-speed --do prefill4k,decode512). Each call is one probe
 # invocation. VULKAN_BIN / STOCK_BIN / STRIX_BIN / GSQ_BIN are required by the presets that use them. EXTRA_ARGS is
-# appended to a llama preset's server flags (e.g. EXTRA_ARGS="-ctk f16 -ctv f16"; later flags win).
+# appended to a llama preset's server flags (e.g. EXTRA_ARGS="-ctk f16 -ctv f16"; later flags win). LLAMA_CTX and
+# LLAMA_SLOTS set a llama preset's total -c and -np (llama-server splits -c over the slots).
 #
 # exec runs an arbitrary child behind the same gate and lemond handoff: `run.sh exec [probe.py args] -- cmd...`.
 # Env: OUT (row file), TARGET (model shard 1, sizes the floor), EXEC_DEV=gpu|cpu, EXEC_LOG (the child's stdout and
@@ -238,7 +239,11 @@ strata)
     [ "${KEEP_OFFLINE:-0}" = 1 ] || args+=(--evict-after) # last row of a stage: lemond reloads next, with a clean page cache
     ;;
 exec) args=(exec --target "$target" --dev "$EXEC_DEV" --child-log "$EXEC_LOG" --label exec) ;;
-*) args=(llama --server "$bin" --target "$target" --draft "$draft" --extra "$flags") ;;
+*)
+    args=(llama --server "$bin" --target "$target" --draft "$draft" --extra "$flags")
+    [ -z "${LLAMA_CTX:-}" ] || args+=(--ctx "$LLAMA_CTX")
+    [ -z "${LLAMA_SLOTS:-}" ] || args+=(--slots "$LLAMA_SLOTS")
+    ;;
 esac
 case $preset in *-hlb) args+=(--env HIP_LAUNCH_BLOCKING=1) ;; esac
 if [ "$mode" = corpus ]; then

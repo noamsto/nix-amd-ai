@@ -21,7 +21,7 @@ lemond unloaded for the row and restored after; every row's `load_flag` is false
    six prefill switches changes nothing. `HC_Q8` reads the hyper-connection projections from the GGUF's own Q8_0 instead
    of the pack's BF16 rounding, which Strata's docs name as the cause of a 6–9 % perplexity gap, so it moves quality the
    good way. The prefill switches could not be tested (below).
-3. **Soak: deferred.** The owner trimmed the bench; the soak, concurrency and long-soak rows will run on whichever engine
+3. **Soak: deferred** (run in [`qwen38-flash-next-strata-soak-2026-10-08`](../qwen38-flash-next-strata-soak-2026-10-08/)). The owner trimmed the bench; the soak, concurrency and long-soak rows will run on whichever engine
    is chosen (acceptance item waived by the dispatcher). The harness for them is in this directory and was exercised
    only by the image and quirks groups.
 4. **Vision: a 1,000-token screenshot costs 19.7 s of CPU encode, once, and the server queues behind it.** Cold time to
