@@ -24,4 +24,29 @@ def download(url):
 
 server.Vision.load = staticmethod(load)
 server.Vision.download = staticmethod(download)
+
+# Strata counts the tokens written while thinking and reports them on the Responses API, but openai_chunks' usage
+# leaves them out, so chat clients see no reasoning tokens. openai_collect returns the final chunk's usage, so this
+# covers streaming and non-streaming alike.
+assert hasattr(server, "openai_chunks")
+_openai_chunks = server.openai_chunks
+
+
+def openai_chunks(svc, req, ids, thinking, tools, max_new, cancel, run=None, force=None):
+    reasoning = [0]
+    source = run if run is not None else svc.run(ids, thinking, tools, max_new, req, cancel, force=force)
+
+    def tap():
+        for kind, x in source:
+            if kind == "done":
+                reasoning[0] = x.get("reasoning_tokens") or 0
+            yield kind, x
+
+    for c in _openai_chunks(svc, req, ids, thinking, tools, max_new, cancel, run=tap(), force=force):
+        if c and c.get("usage") and reasoning[0]:
+            c["usage"]["completion_tokens_details"] = {"reasoning_tokens": reasoning[0]}
+        yield c
+
+
+server.openai_chunks = openai_chunks
 sys.exit(server.main())

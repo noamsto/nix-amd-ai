@@ -991,6 +991,27 @@
                       return b"downloaded"
 
 
+              def openai_chunks(svc, req, ids, thinking, tools, max_new, cancel, run=None, force=None):
+                  for kind, x in run if run is not None else svc.run(ids, thinking, tools, max_new, req, cancel, force=force):
+                      if kind == "done":
+                          yield {"choices": [{"delta": {}, "finish_reason": "stop"}],
+                                 "usage": {"completion_tokens": x["completion_tokens"]}}
+
+
+              class Svc:
+                  def __init__(self, reasoning):
+                      self.reasoning = reasoning
+
+                  def run(self, ids, thinking, tools, max_new, req, cancel, force=None):
+                      yield "event", "text"
+                      yield "done", {"completion_tokens": 50, "reasoning_tokens": self.reasoning}
+
+
+              def usage_of(svc, run=None):
+                  chunks = list(openai_chunks(svc, {}, [], True, None, 0, None, run=run))
+                  return chunks[-1]["usage"]
+
+
               def refused(call, arg):
                   try:
                       call(arg)
@@ -1012,6 +1033,18 @@
                   ):
                       if not refused(call, arg):
                           return 1
+                  if usage_of(Svc(20)) != {"completion_tokens": 50, "completion_tokens_details": {"reasoning_tokens": 20}}:
+                      print("reasoning_tokens missing from usage")
+                      return 1
+                  if usage_of(Svc(20), run=Svc(7).run(None, True, None, 0, {}, None)) != {
+                      "completion_tokens": 50,
+                      "completion_tokens_details": {"reasoning_tokens": 7},
+                  }:
+                      print("reasoning_tokens ignored for a supplied run iterator")
+                      return 1
+                  if usage_of(Svc(0)) != {"completion_tokens": 50}:
+                      print("thinking-off usage changed")
+                      return 1
                   with open(os.environ["RESULT"], "w") as f:
                       f.write("ok")
                   return 0
