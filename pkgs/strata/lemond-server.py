@@ -27,8 +27,7 @@ server.Vision.download = staticmethod(download)
 
 # Strata counts the tokens written while thinking and reports them on the Responses API, but openai_chunks' usage
 # leaves them out, so chat clients see no reasoning tokens. openai_collect returns the final chunk's usage, so this
-# covers streaming and non-streaming alike.
-assert hasattr(server, "openai_chunks")
+# covers streaming and non-streaming alike. With MCP rounds, Strata keeps only the last round's count.
 _openai_chunks = server.openai_chunks
 
 
