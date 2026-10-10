@@ -295,3 +295,18 @@ func TestSplitBackends(t *testing.T) {
 		}
 	}
 }
+
+func TestParseFlags_mtpDraftNMaxRejectsNonPositive(t *testing.T) {
+	for _, v := range []string{"0", "-1"} {
+		_, err := parseFlags([]string{"benchmark", "--mtp-ab", "M", "--mtp-draft-n-max", v, "--no-tui"})
+		if err == nil {
+			t.Errorf("--mtp-draft-n-max %s should be rejected", v)
+		} else if !strings.Contains(err.Error(), "--mtp-draft-n-max") {
+			t.Errorf("--mtp-draft-n-max %s: unexpected error: %v", v, err)
+		}
+	}
+	o, err := parseFlags([]string{"benchmark", "--mtp-ab", "M", "--mtp-draft-n-max", "1", "--no-tui"})
+	if err != nil || o.MTPDraftNMax != 1 {
+		t.Errorf("--mtp-draft-n-max 1: got %d, err %v", o.MTPDraftNMax, err)
+	}
+}

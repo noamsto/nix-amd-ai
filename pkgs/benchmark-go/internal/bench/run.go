@@ -462,6 +462,43 @@ func resolveCtxSize(ctx int) int {
 	return ctx
 }
 
+// mtpResidentBytes is the bytes both models occupy once loaded: the target
+// gguf plus the external draft head when draft is non-empty. A missing or
+// empty gguf counts as zero (the size is only a guardrail input); a draft that
+// is missing or a directory is an error.
+func mtpResidentBytes(gguf, draft string) (uint64, error) {
+	var total uint64
+	if fi, err := os.Stat(gguf); err == nil && fi.Size() > 0 {
+		total = uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above; a file size is never negative here
+	}
+	if draft == "" {
+		return total, nil
+	}
+	fi, err := os.Stat(draft)
+	if err != nil || fi.IsDir() {
+		return 0, fmt.Errorf("MTP draft model %q not found", draft)
+	}
+	if fi.Size() > 0 {
+		total += uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above
+	}
+	return total, nil
+}
+
+// mtpStartError maps a llama-server start failure for one spec arm. Without an
+// external draft head, an "mtp" mention on the draft-mtp arm means the target
+// model carries no MTP tensors. With --mtp-draft the draft path and server log
+// lines contain "mtp" regardless of cause, so the failure is reported as is.
+func mtpStartError(o MTPABOpts, backend, specType string, startErr error) error {
+	if specType == "draft-mtp" && o.DraftModelPath == "" &&
+		strings.Contains(strings.ToLower(startErr.Error()), "mtp") {
+		return fmt.Errorf(
+			"%w: model %q rejected --spec-type draft-mtp (pick an MTP-labeled model): %w",
+			ErrNoMTPHead, o.ModelID, startErr,
+		)
+	}
+	return fmt.Errorf("[%s] spec=%s server start: %w", backend, specType, startErr)
+}
+
 // RunMTPAB runs an MTP-on / MTP-off A/B across the given backends,
 // spawning llama-server twice per backend.
 // ctx cancellation stops the sweep at the next backend/spec boundary;
@@ -484,22 +521,12 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			o.ModelID, o.ModelID,
 		)
 	}
-	if o.DraftModelPath != "" {
-		if fi, statErr := os.Stat(o.DraftModelPath); statErr != nil || fi.IsDir() {
-			return nil, fmt.Errorf("MTP draft model %q not found", o.DraftModelPath)
-		}
-	}
 
 	// Model file size (plus the draft head, when present) + the GPU-memory
 	// probe drive the pre-spawn guardrail below: both models are resident.
-	var modelBytes uint64
-	if fi, statErr := os.Stat(gguf); statErr == nil && fi.Size() > 0 {
-		modelBytes = uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above; a file size is never negative here
-	}
-	if o.DraftModelPath != "" {
-		if fi, statErr := os.Stat(o.DraftModelPath); statErr == nil && fi.Size() > 0 {
-			modelBytes += uint64(fi.Size()) //nolint:gosec // guarded by fi.Size() > 0 above
-		}
+	modelBytes, err := mtpResidentBytes(gguf, o.DraftModelPath)
+	if err != nil {
+		return nil, err
 	}
 	memFree := o.GPUMemFree
 	if memFree == nil {
@@ -599,14 +626,7 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 				srv := NewLlamaServer(argv, port)
 				srv.LogW = o.LogW
 				if startErr := srv.Start(); startErr != nil {
-					msg := startErr.Error()
-					if specType == "draft-mtp" && strings.Contains(strings.ToLower(msg), "mtp") {
-						return nil, fmt.Errorf(
-							"%w: model %q rejected --spec-type draft-mtp (pick an MTP-labeled model)",
-							ErrNoMTPHead, o.ModelID,
-						)
-					}
-					return nil, fmt.Errorf("[%s] spec=%s server start: %w", backend, specType, startErr)
+					return nil, mtpStartError(o, backend, specType, startErr)
 				}
 				defer func() { _ = srv.Stop() }()
 
