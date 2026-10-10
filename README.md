@@ -881,6 +881,9 @@ Tracked upstream as [lemonade-sdk/lemonade#1364](https://github.com/lemonade-sdk
 - **ROCm for large-prompt workloads.** Its ~15 % faster prefill shaves 10k-token prompts from ~33 s (Vulkan) to ~28 s — just enough to land under most clients' silence timeout. Coding agents like Claude Code and opencode fall in this bucket.
 - **[pi](https://github.com/badlogic/pi-mono)** (Hugging Face's recommended local coding agent — see the [official docs](https://huggingface.co/docs/hub/en/agents-local)) is the best fit for this hardware. Its prompt is a fraction of Claude Code's and it's designed around llama.cpp-served local models.
 - **Claude Code / opencode** are usable — strip down MCP servers, skills, and plugins to shrink the startup prompt, and prefer ROCm while #1364 is unresolved.
+- **Set an explicit output cap for thinking-on models.** With thinking on, reasoning tokens count against the client's output cap. A turn that reasons long ends with `finish_reason: "length"` mid-answer or mid-tool-call; the agent sees a truncated turn and nothing reports a server error. For pi, set `maxTokens` in `models.json` (pi defaults a custom model to 16,384 when unset). Qwen's guidance is 32,768 for general use; 32k–64k leaves headroom without letting a runaway turn hold a slot for long.
+- **Field data (one Strix Halo host, Strata recipe through lemond, two concurrent pi sessions):** over 5,369 turns, output tokens were p50 316 / p95 2,823 / p99 6,775, and one turn hit exactly 16,384 — pi's default cap, not a server limit. The tail is rare but costs the whole turn. These numbers are specific to that host and workload.
+- The Strata recipe does not currently report `reasoning_tokens` (#299), so a client cannot see how much of the cap thinking used.
 
 ## Validation
 
