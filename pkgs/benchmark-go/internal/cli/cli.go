@@ -117,6 +117,10 @@ func parseFlags(args []string) (opts, error) {
 		}
 	}
 
+	if o.MTPDraftNMax < 1 {
+		return opts{}, fmt.Errorf("--mtp-draft-n-max: invalid value %d; expected an integer >= 1", o.MTPDraftNMax)
+	}
+
 	return o, nil
 }
 
