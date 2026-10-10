@@ -54,21 +54,21 @@ on this part stands; what changed at the time was that it rested on a few
 percent of throughput rather than on ROCm being wrong.
 
 **The patch showed no prefill blow-up.** ROCm prefill sat 5% behind Vulkan, in
-the same range as the gfx1150 tables in the README. Note there is no meaningful
+the same range as the gfx1150 tables in [performance.md](performance.md). Note there is no meaningful
 "before" to difference against: pre-patch throughput was the speed of a backend
 computing garbage, so it is not a baseline. ROCm's prefill variance was ~13x
 Vulkan's (±33.74 vs ±2.60), which is worth remembering before leaning on a
 single ROCm prefill figure.
 
-Different model and host from the README's benchmark tables, so this was
+Different model and host from the benchmark tables in [performance.md](performance.md), so this was
 recorded here rather than substituted into them.
 
 ## Follow-ups this opens
 
 - **Re-measure the ROCm benchmarks.** Partly done — "Post-fix throughput" above
   covers a 4B `llama-bench` run on a patched gfx1151 build, and shows no prefill
-  regression. Still open: the `NPU 1B + iGPU ROCm 7B concurrently` row in the
-  README (measured on the *other* Halo host, ASUS ROG Flow Z13, kernel 7.1.0, so
+  regression. Still open: the `NPU 1B + iGPU ROCm 7B concurrently` row in
+  performance.md (measured on the *other* Halo host, ASUS ROG Flow Z13, kernel 7.1.0, so
   it needs that machine and the NPU workload to redo), and the gfx1150 tables,
   whose ROCm rows were measured through the old path — see below.
 - **Check gfx1150.** *Done — it is affected too. See the next section.*
@@ -111,7 +111,7 @@ llama.cpp pin (b11382) is past that revert, so the local patch is gone.
 (see "## b11207 re-measurement (unpatched)" below); the widened-patch numbers
 above remain the last measurement taken for gfx1150.
 
-**Consequence for the README benchmarks.** The `Large: Gemma-4-26B-A4B` and
+**Consequence for the benchmarks in [performance.md](performance.md).** The `Large: Gemma-4-26B-A4B` and
 `Qwen3.5-9B` tables are gfx1150 and their ROCm rows were measured through the
 broken path — real throughput, but for a backend returning garbage. They are
 annotated in place rather than deleted, since the Vulkan and FLM rows are
