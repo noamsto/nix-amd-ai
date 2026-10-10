@@ -16,17 +16,20 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `llvm-aie` | Peano AI Engine LLVM/Clang backend (`clang`, `lld`, `llc`) | Built from a [Xilinx/llvm-aie](https://github.com/Xilinx/llvm-aie) nightly wheel |
 | `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
 | `lemonade-headless` | `lemonade` without the Tauri desktop shell — what `lemonade.desktopApp.enable = false` selects, cached so headless hosts substitute it | `lemonade.override { withDesktopApp = false; }` |
+| `llama-cpp` | CPU llama.cpp backend, at the pinned build (b11382) | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-rocm-gsqhalo` | `llama-cpp-rocm` built from the GSQHalo.cpp fork, opt-in via `llamaCppRocmPackage` | Built from [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) |
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
+| `stable-diffusion-cpp-vulkan` | Vulkan-accelerated stable-diffusion.cpp backend, wrapped to use its own RADV driver | `pkgs.stable-diffusion-cpp.override { vulkanSupport = true; }` |
+| `vllm-rocm` | Experimental vLLM ROCm backend, relocated from a prebuilt bundle; opt-in via `enableVllm` (see [the module flags](#why-the-module-flags-matter-on-nixos)) | Repackaged from the [lemonade-sdk/vllm-rocm](https://github.com/lemonade-sdk/vllm-rocm) prebuilt |
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
 | `strata` | Qwen3.8-Flash-Next engine on TheRock ROCm 7.14.1, Strix Halo (`gfx1151`); opt-in lemond backend via `hardware.amd-npu.strata` ([section](#opt-in-strata-backend-strix-halo)) | Built from [Niko1221/Strata](https://github.com/Niko1221/Strata) |
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
-CPU backends for llamacpp / whispercpp / sd-cpp use vanilla nixpkgs packages (`pkgs.llama-cpp`, `pkgs.whisper-cpp`, `pkgs.stable-diffusion-cpp`) and are wired automatically when `enableLemonade = true`. The GPU backends track nixpkgs too; the `mtp` recipe — built-in MTP support added by lemonade [#1944](https://github.com/lemonade-sdk/lemonade/pull/1944) — fires on any nixpkgs llama.cpp past `b9175`. llama.cpp is pinned to **b11382**, which carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
+CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants are built from this flake's pin, **b11382** (the opt-in GSQHalo fork aside); only `whisper-cpp` and `stable-diffusion-cpp` are the pinned nixpkgs builds. b11382 carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 
 The `lemonade` package composes three derivations:
 
@@ -194,7 +197,7 @@ hardware.amd-npu = {
 
 ### Why the module flags matter on NixOS
 
-The lemonade source build deliberately doesn't bundle backend `llama-server` / `whisper-server` / `sd-server` binaries — it expects host-provided paths. The module exports the matching env vars from the `lemond` service `Environment` and the user session, then lemonade migrates them into `~/.config/lemonade/config.json`:
+The lemonade source build deliberately doesn't bundle backend `llama-server` / `whisper-server` / `sd-server` binaries — it expects host-provided paths. The module seeds a `defaults.json` carrying those paths (plus `global_timeout` and flash-attn) that lemonade merges over its packaged defaults, via the `LEMONADE_DEFAULTS_PATH` patch below. Lemonade v10.7.0 removed the env-var migration into `~/.config/lemonade/config.json` that this replaced:
 
 | Flag | What gets wired |
 |---|---|
@@ -216,21 +219,21 @@ It's off by default and adds a ~7.6 GB closure with no binary-cache substituter.
 
 Validated on gfx1150 (standalone and through lemonade's OpenAI API). The
 `gfx1151` (Strix Halo) target builds and its `vllm-server` launches — torch and
-vLLM import cleanly, so the packaging carries over — but no gfx1151 kernel has
-run, because there is no Halo host to run it on. On gfx1150 our benchmarks
+vLLM import cleanly, so the packaging carries over. On a Strix Halo host, a
+standalone `vllm-server` run of `facebook/opt-125m` on `gfx1151` returned a
+coherent completion (2026-09-05, not through lemonade); a larger model
+(Qwen3.5-9B) has not been run yet, see `docs/halo-bringup-checklist.md`. On gfx1150 our benchmarks
 still put Vulkan ahead of ROCm and vLLM's batching doesn't help single-user
 workloads, so `enableVllm` mainly matters on gfx1151 (where the
 Vulkan-fills-VRAM-first freeze on X11 makes the ROCm path worthwhile) or for
 vLLM-specific features.
 
-Vanilla v10.5.0 ignores these env vars on NixOS for several reasons that this flake patches in-tree (see `pkgs/lemonade/default.nix:postPatch`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
+Vanilla lemonade doesn't fit NixOS, so this flake patches it in-tree (see `pkgs/lemonade/default.nix` and `pkgs/lemonade/patches/`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
 
-- `install_backend` short-circuits on `find_external_backend_binary` *before* the `no_fetch_executables` throw and the rocm-stable / TheRock runtime fetches, so user-supplied `*_bin` paths actually skip the entire download flow.
-- The Linux ROCm `LD_LIBRARY_PATH` block is gated on the same check, so a nix-store `llama-server` keeps its RPATH-resolved libs instead of being shadowed by `~/.cache/lemonade/bin/.../lib`.
-- `is_ggml_hip_plugin_available()` honors `LEMONADE_GGML_HIP_PATH` so the `system` llamacpp recipe stops being permanently `unsupported` on NixOS.
-- `LEMONADE_WHISPERCPP_VULKAN_BIN` is added to the env-var migration table (upstream only mapped CPU/NPU for whispercpp).
-- `ConfigFile::get_defaults` honors `LEMONADE_DEFAULTS_PATH`, so the module can seed backend bin paths from a store path instead of the hardcoded `/usr/share/lemonade/defaults.json` that NixOS can't populate (v10.7.0 dropped the env→config migration this replaced).
+- `ConfigFile::get_defaults` honors `LEMONADE_DEFAULTS_PATH`, so the module can seed backend bin paths from a store path instead of the hardcoded `/usr/share/lemonade/defaults.json` that NixOS can't populate.
 - The download SSE handler treats `sink.write` failure as a transient client disconnect rather than a cancel signal, so a backgrounded Tauri window doesn't kill an in-flight multi-GB download.
+- `will_install_therock()` returns false, so lemonade never fetches its TheRock ROCm runtime, whose libraries would shadow the Nix-built backends' own ([#57](https://github.com/noamsto/nix-amd-ai/issues/57)).
+- `strata-recipe.patch` adds a native `strata` recipe that starts the Strata shim backend ([#285](https://github.com/noamsto/nix-amd-ai/issues/285)).
 
 If `lemonade backends` reports a backend as `installed` but benchmarks report <5 t/s decode on a small model, you're on CPU — check that the matching `enable*` option is set and the host has been rebuilt.
 
@@ -447,7 +450,7 @@ Setting `pack`, `mtp` and `vision.mmproj` explicitly keeps your own artifacts; t
 
 `sampling` sets the decoding defaults for requests that send none: strata-server decodes greedily otherwise. The default is Qwen's recommended thinking set (`temperature` 0.6, `top_p` 0.95, `top_k` 20), because strata-server takes one set rather than one per thinking mode and lemond serves the model with thinking on. A request's own fields win, so `temperature: 0` stays greedy. For a non-thinking deployment set `temperature = 0.7; top_p = 0.8; top_k = 20; presence_penalty = 1.5;`; setting every key to `null` restores greedy. Keys merge individually, so `sampling.top_k = 40;` keeps the other defaults.
 
-`profile = "defaults"` is Strata's setup defaults. `"fast"` is the maintainers' fast configuration: it turns on bit-changing switches, and its quality has not been checked (no KL or perplexity). The bench README has the measured speed difference between the two, on halo only.
+`profile = "defaults"` is Strata's setup defaults. `"fast"` is the maintainers' fast configuration: it turns on bit-changing switches. Its quality was measured on one Strix Halo host (gfx1151, Qwen3.8-Flash-Next UD-IQ4_XS) against a Q8_0 reference: mean KLD 0.0897 for `fast` versus 0.0920 for `defaults`, so `fast` was not worse there ([`bench-logs/qwen38-flash-next-strata-quality-2026-10-07`](bench-logs/qwen38-flash-next-strata-quality-2026-10-07/)). The same bench README has the measured speed difference between the two, on that host only.
 
 **Costs.** An 8.9 GiB Nix closure (the pinned SDK), built with `-march=native` so the output is specific to the building host's CPU. It is `gfx1151` only and experimental upstream. CI does not build it, so enabling it compiles it locally.
 
@@ -873,14 +876,13 @@ Coding agents (Claude Code, opencode) ship large system prompts — 10k+ tokens 
 [Error] (WrappedServer) Streaming request failed: ...
 ```
 
-Tracked upstream as [lemonade-sdk/lemonade#1364](https://github.com/lemonade-sdk/lemonade/issues/1364). Until that lands, this module sets `LEMONADE_GLOBAL_TIMEOUT=0` on the `lemond` service to disable its own 300 s upstream cap, which covers the variant where lemonade gives up on llama-server. The downstream client timeout remains a separate problem — best addressed by shortening the prompt or choosing a leaner agent.
+Tracked upstream as [lemonade-sdk/lemonade#1364](https://github.com/lemonade-sdk/lemonade/issues/1364). Until that lands, this module sets `global_timeout` to 0 in the `defaults.json` it seeds for lemond (3600 with `enableVllm`) to disable its own 300 s upstream cap, which covers the variant where lemonade gives up on llama-server. The downstream client timeout remains a separate problem — best addressed by shortening the prompt or choosing a leaner agent.
 
 **Practical guidance:**
 
 - **Vulkan for short-prompt workloads.** Decode is ~26 % faster than ROCm; safe for chat UIs and ad-hoc prompts that stay roughly under 10k tokens, where prompt processing finishes well before the ~30 s client cutoff.
-- **ROCm for large-prompt workloads.** Its ~15 % faster prefill shaves 10k-token prompts from ~33 s (Vulkan) to ~28 s — just enough to land under most clients' silence timeout. Coding agents like Claude Code and opencode fall in this bucket.
 - **[pi](https://github.com/badlogic/pi-mono)** (Hugging Face's recommended local coding agent — see the [official docs](https://huggingface.co/docs/hub/en/agents-local)) is the best fit for this hardware. Its prompt is a fraction of Claude Code's and it's designed around llama.cpp-served local models.
-- **Claude Code / opencode** are usable — strip down MCP servers, skills, and plugins to shrink the startup prompt, and prefer ROCm while #1364 is unresolved.
+- **Claude Code / opencode** are usable — strip down MCP servers, skills, and plugins to shrink the startup prompt.
 - **Set an explicit output cap for thinking-on models.** With thinking on, reasoning tokens count against the client's output cap. A turn that reasons long ends with `finish_reason: "length"` mid-answer or mid-tool-call; the agent sees a truncated turn and nothing reports a server error. For pi, set `maxTokens` in `models.json` (pi defaults a custom model to 16,384 when unset). Qwen's guidance is 32,768 for general use; 32k–64k leaves headroom without letting a runaway turn hold a slot for long.
 - **Field data (one Strix Halo host, Strata recipe through lemond, two concurrent pi sessions):** over 5,369 turns, output tokens were p50 316 / p95 2,823 / p99 6,775, and one turn hit exactly 16,384 — pi's default cap, not a server limit. The tail is rare but costs the whole turn. These numbers are specific to that host and workload.
 - The Strata recipe does not currently report `reasoning_tokens` (#299), so a client cannot see how much of the cap thinking used.
@@ -893,19 +895,20 @@ You can verify that backends are correctly wired by running:
 lemonade backends
 ```
 
-All AMD-applicable recipes should report `installed` (kokoro is intentionally skipped — Rust port, narrower use case):
+All AMD-applicable recipes should report `installed` (kokoro is intentionally skipped — Rust port, narrower use case). Illustrative output, not a captured run; versions follow the pins in this flake (`pkgs/fastflowlm`, llama.cpp b11382 for the Vulkan and ROCm rows, the pinned nixpkgs whisper.cpp and stable-diffusion.cpp), and the `strata` row appears only with `hardware.amd-npu.strata.enable`:
 
 ```
 Recipe              Backend     Status          Message/Version
-flm                 npu         installed       v0.9.40
-llamacpp            cpu         installed       b8983
-                    rocm        installed       b8770
+flm                 npu         installed       <fastflowlm pin>
+llamacpp            cpu         installed       <lemonade's bundled value>
+                    rocm        installed       b11382
                     system      installed       -
-                    vulkan      installed       b8770
-sd-cpp              cpu         installed       master-558-8afbeb6
-                    rocm        installed       master-558-8afbeb6
-whispercpp          cpu         installed       v1.8.4
-                    vulkan      installed       v1.8.4
+                    vulkan      installed       b11382
+sd-cpp              cpu         installed       <sd.cpp pin>
+                    rocm        installed       <sd.cpp pin>
+whispercpp          cpu         installed       <whisper.cpp pin>
+                    vulkan      installed       <whisper.cpp pin>
+strata              rocm        installed       -
 ```
 
 Quick image-gen smoke test:
@@ -948,5 +951,5 @@ provisional.
 
 ## CI
 
-- **Build**: All packages built and cached on every push to `main`
+- **Build**: On every push to `main` and every pull request, CI builds and caches the core packages (lemonade, the NPU stack, `ds4`, the ROCm backends) and the flake checks; every other package, including `strata` and `vllm-rocm`, is only evaluated, so enabling those compiles them locally
 - **Update**: Weekly check for upstream releases, auto-creates PR with version bumps
