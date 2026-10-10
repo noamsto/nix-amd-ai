@@ -32,7 +32,8 @@
 # path, signals and configuration errors included (KEEP_OFFLINE=1 skips the reload after a probe that exited 0, so a
 # later call can continue offline; the last one must not set it). Relative OUT and CACHE resolve against the
 # caller's cwd.
-# Exit: 0 ok, 1 row error (probe printed a JSON row), 2 foreign benchmark busy, 3 memory gate, 4 paused on host
+# Exit: 0 ok, 1 row error (probe printed a JSON row), 2 foreign benchmark busy (also: another bench holds the signal file,
+# refused before lemond is contacted), 3 memory gate, 4 paused on host
 # load, 5 does not fit, 6 lemond failure (unreachable, other models loaded, reload failed, still loaded),
 # 7 configuration or usage error, 129/130/131/143 signalled (HUP/INT/QUIT/TERM).
 set -u
@@ -45,6 +46,15 @@ child=
 SIGNAL_FILE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
 # shellcheck disable=SC2329 # invoked by the EXIT trap and reload()
 signal_clear() { [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" != "$$" ] || rm -f "$SIGNAL_FILE"; }
+
+# Another bench holding the file has deliberately unloaded lemond for its own GPU row. Refuse before the EXIT trap
+# exists: reload() on any exit path would load the resident model beside that row. A dead or unparsable pid is stale.
+holder=$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)
+# kill -0 fails on EPERM too, which still means alive; /proc distinguishes it from ESRCH
+if [[ $holder =~ ^[1-9][0-9]*$ ]] && [ "$holder" != "$$" ] && { kill -0 "$holder" 2>/dev/null || [ -d "/proc/$holder" ]; }; then
+    echo "refusing: another bench holds $SIGNAL_FILE (pid $holder, row: $(sed -n 2p "$SIGNAL_FILE" 2>/dev/null)); lemond untouched" >&2
+    exit 2
+fi
 
 post() { curl -fsS -X POST "$LEMOND/$1" -H 'Content-Type: application/json' -d "$2"; }
 # 0 loaded, 1 cleanly absent, 2 unreachable or unparseable
