@@ -82,5 +82,8 @@ func TestMTPStartError(t *testing.T) {
 		if errors.Is(err, ErrNoMTPHead) {
 			t.Errorf("none arm must not map to ErrNoMTPHead: %v", err)
 		}
+		if !errors.Is(err, cause) {
+			t.Errorf("startErr not wrapped: %v", err)
+		}
 	})
 }

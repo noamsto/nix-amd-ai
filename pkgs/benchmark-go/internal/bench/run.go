@@ -521,11 +521,6 @@ func RunMTPAB(ctx context.Context, o MTPABOpts) ([]MTPABResult, error) {
 			o.ModelID, o.ModelID,
 		)
 	}
-	if o.DraftModelPath != "" {
-		if fi, statErr := os.Stat(o.DraftModelPath); statErr != nil || fi.IsDir() {
-			return nil, fmt.Errorf("MTP draft model %q not found", o.DraftModelPath)
-		}
-	}
 
 	// Model file size (plus the draft head, when present) + the GPU-memory
 	// probe drive the pre-spawn guardrail below: both models are resident.
