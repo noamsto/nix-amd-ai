@@ -342,6 +342,7 @@ Pick `ttmSizeGiB` by the largest model you actually intend to load, and don't se
 | ~120 | Models of 75 GiB+. The OS margin gets thin, but the alternative is a kernel fallback or a failed load. |
 
 `ttmSizeGiB` alone sets the ceiling (the arithmetic is exact), so don't also set `amdgpu.gttsize`; `pagePoolSizeGiB` is unmeasured. The measurements, the `gttsize` warning and the `pagePoolSizeGiB` discussion are in [docs/gpu-memory.md](docs/gpu-memory.md). Halo measurements contributed by [@expelledboy](https://github.com/expelledboy) (#42).
+
 ## Opt-in engines
 
 ### Opt-in Strata backend (Strix Halo)
@@ -371,7 +372,7 @@ hardware.amd-npu = {
 
 ### Opt-in GSQHalo.cpp ROCm backend
 
-`pkgs.llama-cpp-rocm-gsqhalo` is [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) (`5fc881b`) built through this flake's `llama-cpp-rocm`. Opt in with `hardware.amd-npu.llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;`; the default is the stock `llama-cpp-rocm`, and `rocmGpuTargets` applies to either. On one Strix Halo (gfx1151) host it cut agent-replay time 35 % against stock Vulkan llama.cpp on Qwen3.8-Flash-Next with f16 KV and the flags in the [tuning bench](bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06/README.md) (flags measured, not module defaults; `-lzm` is fork-only and stock llama.cpp rejects it). The [Strata soak bench](bench-logs/qwen38-flash-next-strata-soak-2026-10-08/README.md) concluded Strata is the preferred Flash-Next engine.
+`pkgs.llama-cpp-rocm-gsqhalo` is [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) (`5fc881b`) built through this flake's `llama-cpp-rocm`. Opt in with `hardware.amd-npu.llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;`; the default is the stock `llama-cpp-rocm`, and `rocmGpuTargets` applies to either. On one Strix Halo (gfx1151) host it cut agent-replay time 35 % against stock Vulkan llama.cpp on Qwen3.8-Flash-Next with f16 KV and the flags in the [tuning bench](bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06/README.md) (flags measured, not module defaults; `-lzm` is fork-only and stock llama.cpp rejects it). The [Strata soak bench](bench-logs/qwen38-flash-next-strata-soak-2026-10-08/README.md) concluded, on one Strix Halo (gfx1151) host, that Strata is the preferred Flash-Next engine.
 
 ### Opt-in vLLM ROCm backend
 
@@ -419,6 +420,7 @@ hardware.amd-npu = {
 ```
 
 `systemctl start ds4-server` then stops lemond, and `systemctl start lemond` stops ds4. Both default to the previous behaviour (every server autostarts, nothing conflicts); turn this on only where the models genuinely don't fit together. The measured thrash and the open question of why both servers died are in [docs/gpu-memory.md](docs/gpu-memory.md).
+
 ### flm-compatible runtimes
 
 `hardware.amd-npu.fastflowlm.package` (default `pkgs.fastflowlm`) selects the runtime that `enableFastFlowLM` installs and lemonade drives. The module wraps it with the XRT `LD_LIBRARY_PATH`, links its main program (`meta.mainProgram`, which need not be `flm`) at `/etc/lemonade/backends/flm-npu`, and seeds `flm.npu_bin = "/etc/lemonade/backends/flm-npu"`. Lemonade resolves FLM through `flm.npu_bin` first (or the `LEMONADE_FLM_NPU_BIN` environment variable), and only then looks for a literal `flm` on `PATH`. A path-valued `npu_bin` also drops lemonade's expected-version check, so the `backend_versions.json` pin to `pkgs.fastflowlm` does not flag another runtime as needing an update.
