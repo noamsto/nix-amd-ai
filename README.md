@@ -20,6 +20,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-rocm-gsqhalo` | `llama-cpp-rocm` built from the GSQHalo.cpp fork, opt-in via `llamaCppRocmPackage` | Built from [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) |
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
+| `llama-cpp-vulkan-unsloth` | `llama-cpp-vulkan` built from the Unsloth llama.cpp fork (`6bd1192`), opt-in via `llamaCppVulkanPackage` | Built from [unslothai/llama.cpp](https://github.com/unslothai/llama.cpp) |
 | `whisper-cpp-vulkan` | Vulkan-accelerated whisper.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | `pkgs.whisper-cpp.override { vulkanSupport = true; }` |
 | `stable-diffusion-cpp-rocm` | ROCm-accelerated stable-diffusion.cpp backend | `pkgs.stable-diffusion-cpp.override { rocmSupport = true; }` |
 | `stable-diffusion-cpp-vulkan` | Vulkan-accelerated stable-diffusion.cpp backend, wrapped to use its own RADV driver | `pkgs.stable-diffusion-cpp.override { vulkanSupport = true; }` |
@@ -373,6 +374,14 @@ hardware.amd-npu = {
 ### Opt-in GSQHalo.cpp ROCm backend
 
 `pkgs.llama-cpp-rocm-gsqhalo` is [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) (`5fc881b`) built through this flake's `llama-cpp-rocm`. Opt in with `hardware.amd-npu.llamaCppRocmPackage = pkgs.llama-cpp-rocm-gsqhalo;`; the default is the stock `llama-cpp-rocm`, and `rocmGpuTargets` applies to either. On one Strix Halo (gfx1151) host it cut agent-replay time 35 % against stock Vulkan llama.cpp on Qwen3.8-Flash-Next with f16 KV and the flags in the [tuning bench](bench-logs/qwen38-flash-next-gsq-tuning-2026-10-06/README.md) (flags measured, not module defaults; `-lzm` is fork-only and stock llama.cpp rejects it). The [Strata soak bench](bench-logs/qwen38-flash-next-strata-soak-2026-10-08/README.md) concluded, on one Strix Halo (gfx1151) host, that Strata is the preferred Flash-Next engine.
+
+### Opt-in Unsloth llama.cpp fork (Vulkan)
+
+`pkgs.llama-cpp-vulkan-unsloth` is [unslothai/llama.cpp](https://github.com/unslothai/llama.cpp) (`6bd1192`) built through this flake's `llama-cpp-vulkan`. Opt in with `hardware.amd-npu.llamaCppVulkanPackage = pkgs.llama-cpp-vulkan-unsloth;`; the default is the stock `llama-cpp-vulkan`. It is the fork Unsloth's Qwen3.8-Flash-Next GGUF was built against, so it can serve that model's vision projector (mmproj) and MTP head. Setup reported by [@rabejens](https://github.com/rabejens) (#259).
+
+- **Verified here:** the package builds, `llama-server --version` reports commit `6bd1192`, the stock `patches`/UI-flag overrides apply to the fork unchanged, and the `module-eval-vulkan-unsloth` check passes (the option selects the fork; the default stays stock). No model was loaded: not run on a GPU.
+- **Reported by the user:** with the fork on a nixpkgs `llama-cpp` overlay, a plain `lemonade pull` of the model shows vision, and an image request worked end to end through an agent.
+- **Not measured:** decode speed, the GTT cost of the projector, and the MTP gain on this fork. The [smoke test](bench-logs/qwen38-flash-next-unsloth-vision-smoke-2026-10-11/README.md) checks vision and tool calls only.
 
 ### Opt-in vLLM ROCm backend
 

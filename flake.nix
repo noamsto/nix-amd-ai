@@ -157,6 +157,37 @@
           old.cmakeFlags;
       });
 
+    # unslothai/llama.cpp, the fork Unsloth built its Qwen3.8-Flash-Next GGUF
+    # against: it loads the vision projector (mmproj) and the MTP head that
+    # stock b11382 does not handle. A source swap on the base llama-cpp, before
+    # `.override {vulkanSupport = true;}`. Opt-in via
+    # `hardware.amd-npu.llamaCppVulkanPackage`.
+    llamaCppUnsloth = pkgs: pkg: let
+      rev = "6bd11928460964c8719efb242d385856f378db92";
+      shortRev = builtins.substring 0 7 rev;
+    in
+      pkg.overrideAttrs (old: {
+        version = "unsloth-${shortRev}";
+        __intentionallyOverridingVersion = true;
+        src = pkgs.fetchFromGitHub {
+          owner = "unslothai";
+          repo = "llama.cpp";
+          inherit rev;
+          hash = "sha256-VTCxxGQo8uazhdQkEN7OJU3F//VjRkb9kki/IP9ZXj8=";
+        };
+        # The fork has no upstream build number; `--version` reports the rev.
+        cmakeFlags =
+          builtins.map (
+            flag:
+              if pkgs.lib.hasPrefix "-DLLAMA_BUILD_NUMBER:STRING=" flag
+              then "-DLLAMA_BUILD_NUMBER:STRING=0"
+              else if pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=" flag
+              then "-DLLAMA_BUILD_COMMIT:STRING=${shortRev}"
+              else flag
+          )
+          old.cmakeFlags;
+      });
+
     # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
     # upgrade response (missing the empty CRLF after the last header) for
     # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
@@ -225,6 +256,7 @@
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
+            llama-cpp-vulkan-unsloth = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned ((llamaCppUnsloth pinned llama-cpp-base).override {vulkanSupport = true;}));
             llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
               llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
             });
@@ -236,7 +268,7 @@
             };
             stable-diffusion-cpp-vulkan = withOwnVulkanDriver pinned (pinned.stable-diffusion-cpp.override {vulkanSupport = true;});
           in {
-            inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
+            inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             # The module's CPU backends link these; the consumer's copies would
             # build against the pinned llama-cpp above and break on version skew.
@@ -323,6 +355,7 @@
           llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;}));
+          llama-cpp-vulkan-unsloth = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs ((llamaCppUnsloth pkgs llama-cpp-base).override {vulkanSupport = true;}));
           llama-cpp-rocm = llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
             llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
           });
@@ -341,7 +374,7 @@
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
         in {
-          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets lemonade;
+          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets lemonade;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
           inherit mlir-aie llvm-aie openflowlm;
           ds4 = pkgs.callPackage ./pkgs/ds4 {};
@@ -873,6 +906,57 @@
                   }
                 ];
               }).config.system.build.etc;
+
+            module-eval-vulkan-unsloth = let
+              vulkanBackend = extra:
+                builtins.unsafeDiscardStringContext
+                (inputs.nixpkgs.lib.nixosSystem {
+                  inherit system;
+                  modules = [
+                    inputs.self.nixosModules.default
+                    fastFlowLMUnfreeConfig
+                    {
+                      boot.loader.grub.enable = false;
+                      fileSystems."/" = {
+                        device = "/dev/sda1";
+                        fsType = "ext4";
+                      };
+                      hardware.amd-npu =
+                        {
+                          enable = true;
+                          enableFastFlowLM = true;
+                          enableLemonade = true;
+                          enableVulkan = true;
+                          lemonade.user = "testuser";
+                        }
+                        // extra;
+                      users.users.testuser = {
+                        isNormalUser = true;
+                        extraGroups = ["video" "render"];
+                      };
+                    }
+                  ];
+                }).config.environment.etc."lemonade/backends/llamacpp-vulkan".source;
+              unsloth = builtins.unsafeDiscardStringContext "${inputs.self.packages.${system}.llama-cpp-vulkan-unsloth}";
+              stock = builtins.unsafeDiscardStringContext "${inputs.self.packages.${system}.llama-cpp-vulkan}";
+              optedIn = vulkanBackend {llamaCppVulkanPackage = inputs.self.packages.${system}.llama-cpp-vulkan-unsloth;};
+              default = vulkanBackend {};
+            in
+              pkgs.runCommand "module-eval-vulkan-unsloth" {
+                inherit unsloth stock optedIn default;
+              } ''
+                case "$optedIn" in
+                  "$unsloth"/*) ;;
+                  *) echo "opted-in llamacpp-vulkan backend is '$optedIn', expected under '$unsloth'"; exit 1 ;;
+                esac
+                case "$default" in
+                  "$stock"/*) ;;
+                  *) echo "default llamacpp-vulkan backend is '$default', expected under '$stock'"; exit 1 ;;
+                esac
+                [ "$unsloth" != "$stock" ] \
+                  || { echo "unsloth and stock llama-cpp-vulkan are the same store path"; exit 1; }
+                touch $out
+              '';
 
             module-eval-strata = pkgs.runCommand "module-eval-strata" {
               nativeBuildInputs = [pkgs.jq];

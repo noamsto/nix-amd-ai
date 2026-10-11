@@ -217,7 +217,7 @@
       "lemonade/backends/vllm-rocm".source = "${vllmPkg}/bin/vllm-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableVulkan) {
-      "lemonade/backends/llamacpp-vulkan".source = "${pkgs.llama-cpp-vulkan}/bin/llama-server";
+      "lemonade/backends/llamacpp-vulkan".source = "${cfg.llamaCppVulkanPackage}/bin/llama-server";
       "lemonade/backends/whispercpp-vulkan".source = "${pkgs.whisper-cpp-vulkan}/bin/whisper-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableVulkan && cfg.enableImageGen) {
@@ -536,6 +536,23 @@ in {
         pass them per model.
         `rocmGpuTargets` applies to whichever package is chosen; it must be a
         llama-cpp-rocm build that accepts `.override {llama-cpp = ...;}`.
+      '';
+    };
+
+    llamaCppVulkanPackage = mkOption {
+      type = types.package;
+      default = pkgs.llama-cpp-vulkan;
+      defaultText = lib.literalExpression "pkgs.llama-cpp-vulkan";
+      example = lib.literalExpression "pkgs.llama-cpp-vulkan-unsloth";
+      description = ''
+        The llama.cpp Vulkan build behind `/etc/lemonade/backends/llamacpp-vulkan`.
+        Set it to `pkgs.llama-cpp-vulkan-unsloth` to serve llama.cpp Vulkan
+        models with the unslothai/llama.cpp fork, which Unsloth built its
+        Qwen3.8-Flash-Next GGUF against: it gives that model vision (the
+        mmproj projector) and loads its MTP head. Decode speed and the GTT
+        cost of the projector are unmeasured here. A user reported it working
+        on a nixpkgs llama-cpp overlay; it has not been measured on this
+        flake's build.
       '';
     };
 
