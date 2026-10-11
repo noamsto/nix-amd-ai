@@ -158,9 +158,9 @@
       });
 
     # unslothai/llama.cpp, the fork Unsloth built its Qwen3.8-Flash-Next GGUF
-    # against; reported (#259) to serve that model's vision projector (mmproj)
-    # and MTP head, which is not verified here. A source swap on the base llama-cpp, before
-    # `.override {vulkanSupport = true;}`. Opt-in via
+    # against; a user reports it serves that model's vision projector (mmproj)
+    # and MTP head, which is not verified here. A source swap on the base
+    # llama-cpp, before `.override {vulkanSupport = true;}`. Opt-in via
     # `hardware.amd-npu.llamaCppVulkanPackage`.
     llamaCppUnsloth = pkgs: pkg: let
       rev = "6bd11928460964c8719efb242d385856f378db92";
