@@ -548,8 +548,8 @@ in {
         The llama.cpp Vulkan build behind `/etc/lemonade/backends/llamacpp-vulkan`.
         Set it to `pkgs.llama-cpp-vulkan-unsloth` to serve llama.cpp Vulkan
         models with the unslothai/llama.cpp fork, which Unsloth built its
-        Qwen3.8-Flash-Next GGUF against: it gives that model vision (the
-        mmproj projector) and loads its MTP head. Decode speed and the GTT
+        Qwen3.8-Flash-Next GGUF against. A user reported (#259) that it gives
+        that model vision (the mmproj projector) and serves its MTP head. Decode speed and the GTT
         cost of the projector are unmeasured here. A user reported it working
         on a nixpkgs llama-cpp overlay; it has not been measured on this
         flake's build.

@@ -377,7 +377,7 @@ hardware.amd-npu = {
 
 ### Opt-in Unsloth llama.cpp fork (Vulkan)
 
-`pkgs.llama-cpp-vulkan-unsloth` is [unslothai/llama.cpp](https://github.com/unslothai/llama.cpp) (`6bd1192`) built through this flake's `llama-cpp-vulkan`. Opt in with `hardware.amd-npu.llamaCppVulkanPackage = pkgs.llama-cpp-vulkan-unsloth;`; the default is the stock `llama-cpp-vulkan`. It is the fork Unsloth's Qwen3.8-Flash-Next GGUF was built against, so it can serve that model's vision projector (mmproj) and MTP head. Setup reported by [@rabejens](https://github.com/rabejens) (#259).
+`pkgs.llama-cpp-vulkan-unsloth` is [unslothai/llama.cpp](https://github.com/unslothai/llama.cpp) (`6bd1192`) built through this flake's `llama-cpp-vulkan`. Opt in with `hardware.amd-npu.llamaCppVulkanPackage = pkgs.llama-cpp-vulkan-unsloth;`; the default is the stock `llama-cpp-vulkan`. It is the fork Unsloth's Qwen3.8-Flash-Next GGUF was built against; it is reported to serve that model's vision projector (mmproj) and MTP head, which is not verified here. Setup reported by [@rabejens](https://github.com/rabejens) (#259).
 
 - **Verified here:** the package builds, `llama-server --version` reports commit `6bd1192`, the stock `patches`/UI-flag overrides apply to the fork unchanged, and the `module-eval-vulkan-unsloth` check passes (the option selects the fork; the default stays stock). No model was loaded: not run on a GPU.
 - **Reported by the user:** with the fork on a nixpkgs `llama-cpp` overlay, a plain `lemonade pull` of the model shows vision, and an image request worked end to end through an agent.
