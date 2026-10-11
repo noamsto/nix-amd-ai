@@ -2,7 +2,7 @@
 
 `smoke-test.sh` checks that `llama-cpp-vulkan-unsloth`, serving Qwen3.8-Flash-Next with its vision projector, answers a known-answer image prompt and still returns tool calls. No results are recorded here: the script has not been run.
 
-Run it on a Strix Halo (gfx1151) host with the model already loaded and served by an OpenAI-compatible endpoint:
+Run it on a Strix Halo (gfx1151) host with the model registered as in the [README example](../../README.md#opt-in-unsloth-llamacpp-fork-vulkan) and already loaded and served by an OpenAI-compatible endpoint:
 
 ```fish
 MODEL=<model id> BASE_URL=http://localhost:13305/api/v1 ./smoke-test.sh

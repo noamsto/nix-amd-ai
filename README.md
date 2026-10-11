@@ -380,8 +380,18 @@ hardware.amd-npu = {
 `pkgs.llama-cpp-vulkan-unsloth` is [unslothai/llama.cpp](https://github.com/unslothai/llama.cpp) (`6bd1192`) built through this flake's `llama-cpp-vulkan`. Opt in with `hardware.amd-npu.llamaCppVulkanPackage = pkgs.llama-cpp-vulkan-unsloth;`; the default is the stock `llama-cpp-vulkan`. It is the fork Unsloth's Qwen3.8-Flash-Next GGUF was built against; it is reported to serve that model's vision projector (mmproj) and MTP head, which is not verified here. Setup reported by [@rabejens](https://github.com/rabejens) (#259).
 
 - **Verified here:** the package builds, `llama-server --version` reports commit `6bd1192`, the stock `patches`/UI-flag overrides apply to the fork unchanged, and the `module-eval-vulkan-unsloth` check passes (the option selects the fork; the default stays stock). No model was loaded: not run on a GPU.
-- **Reported by the user:** with the fork on a nixpkgs `llama-cpp` overlay, a plain `lemonade pull` of the model shows vision, and an image request worked end to end through an agent.
+- **Reported by the user:** with the fork on a nixpkgs `llama-cpp` overlay, a plain `lemonade pull` of the Hugging Face checkpoint (Lemonade's registry in this pin has no Flash-Next entry) shows vision, and an image request worked end to end through an agent.
 - **Not measured:** decode speed, the GTT cost of the projector, and the MTP gain on this fork. The [smoke test](bench-logs/qwen38-flash-next-unsloth-vision-smoke-2026-10-11/README.md) checks vision and tool calls only.
+
+To try it, register the Unsloth checkpoints (a command written from Lemonade's `lemonade pull` syntax and the repository's file names; not run here) and pass the resulting id as `MODEL` to the [smoke test](bench-logs/qwen38-flash-next-unsloth-vision-smoke-2026-10-11/README.md). The quant the reporter used is not recorded; `UD-IQ4_XS` is the one benched in this repo:
+
+```fish
+lemonade pull user.Qwen3.8-Flash-Next-Unsloth \
+    --checkpoint main unsloth/Qwen3.8-Flash-Next-GGUF:UD-IQ4_XS \
+    --checkpoint draft unsloth/Qwen3.8-Flash-Next-GGUF:MTP/mtp-Qwen3.8-Flash-Next-Q8_0.gguf \
+    --checkpoint mmproj unsloth/Qwen3.8-Flash-Next-GGUF:mmproj-F16.gguf \
+    --recipe llamacpp --label vision --label tool-calling --label mtp
+```
 
 ### Opt-in vLLM ROCm backend
 
