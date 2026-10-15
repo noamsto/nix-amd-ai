@@ -538,6 +538,13 @@
             enable = true;
             package = strataStub;
           } {};
+        # Same, with the second quant: its snapshot comes from another repository.
+        strataEvalHostCachedIq3s = npu:
+          strataEvalBase npu {
+            enable = true;
+            package = strataStub;
+            quant = "GSQ-RCO-IQ3_S";
+          } {};
 
         # Context-free, so the check never builds pkgs.strata or the host.
         strataEvalJson = host:
@@ -983,6 +990,8 @@
               PREP_OFF_CONFIG = strataEvalJson (strataEvalHost {prepare.enable = false;});
               CACHED_CONFIG = strataEvalJson (strataEvalHostCached {lemonade.cacheDir = "/var/lib/models";});
               CACHED_UNIT = (strataEvalHostCached {lemonade.cacheDir = "/var/lib/models";}).config.systemd.units."strata-prepare.service".unit;
+              IQ3S_CONFIG = strataEvalJson (strataEvalHostCachedIq3s {lemonade.cacheDir = "/var/lib/models";});
+              IQ3S_UNIT = (strataEvalHostCachedIq3s {lemonade.cacheDir = "/var/lib/models";}).config.systemd.units."strata-prepare.service".unit;
               UNCACHED_REJECTED =
                 if (builtins.tryEval (strataEvalHostCached {}).config.system.build.toplevel.drvPath).success
                 then ""
@@ -1050,6 +1059,9 @@
               check "$CACHED_CONFIG" '.model == "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf"'
               grep -qF 'STRATA_MODEL_FETCH=' "$CACHED_UNIT"/strata-prepare.service \
                 || { echo "cached host's strata-prepare lacks the fetch hint"; exit 1; }
+              check "$IQ3S_CONFIG" '.model == "/var/lib/models/hf/hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"'
+              grep -qF -- '--revision ed59f92082b1e93c0e96d60a8b11aab089b52f09' "$IQ3S_UNIT"/strata-prepare.service \
+                || { echo "IQ3_S host's fetch hint lacks its own revision"; exit 1; }
               grep -qF 'STRATA_MODEL_FETCH=' "$AUTO_UNIT"/strata-prepare.service \
                 && { echo "explicit model got the pinned snapshot's fetch hint"; exit 1; }
               [ "$UNCACHED_REJECTED" = 1 ] || { echo "no model and no cacheDir was accepted"; exit 1; }

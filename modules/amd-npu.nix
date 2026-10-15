@@ -21,14 +21,16 @@
     url = "https://huggingface.co/${strataSources.mmproj.repo}/resolve/${strataSources.mmproj.rev}/${strataSources.mmproj.file}";
     hash = strataSources.mmproj.hash;
   };
-  # The pinned snapshot's path in lemond's Hugging Face cache, which only `lemonade.cacheDir` makes known at eval time.
-  strataModelSnapshot = with strataSources.model; "models--${lib.replaceStrings ["/"] ["--"] repo}/snapshots/${rev}";
+  # The selected quant's snapshot path in lemond's Hugging Face cache, which only `lemonade.cacheDir` makes known at
+  # eval time.
+  strataQuant = strataSources.model.quants.${cfg.strata.quant};
+  strataModelSnapshot = "models--${lib.replaceStrings ["/"] ["--"] strataQuant.repo}/snapshots/${strataQuant.rev}";
   strataModelDefault =
     if cfg.lemonade.cacheDir == null
     then null
-    else "${cfg.lemonade.cacheDir}/hf/hub/${strataModelSnapshot}/${strataSources.model.quants.${cfg.strata.quant}}";
-  strataModelFetch = with strataSources.model;
-    "hf download ${repo} --revision ${rev} --include '${dirOf quants.${cfg.strata.quant}}/*' --cache-dir ${cfg.lemonade.cacheDir}/hf/hub";
+    else "${cfg.lemonade.cacheDir}/hf/hub/${strataModelSnapshot}/${strataQuant.file}";
+  strataModelFetch = with strataQuant;
+    "hf download ${repo} --revision ${rev} --include '${dirOf file}/*' --cache-dir ${cfg.lemonade.cacheDir}/hf/hub";
   strataPackExplicit = cfg.strata.pack != strataPackDefault;
   strataMtpExplicit = cfg.strata.mtp != strataMtpDefault;
   strataProvision =
@@ -966,9 +968,13 @@ in {
         type = types.enum (lib.attrNames strataSources.model.quants);
         default = "UD-IQ4_XS";
         description = ''
-          Quant of the pinned `${strataSources.model.repo}` snapshot that
-          `model` defaults to. Only quants packed and benched with Strata are
-          listed.
+          Quant whose pinned Hugging Face snapshot `model` defaults to
+          (`${strataSources.model.quants."UD-IQ4_XS".repo}` for `UD-IQ4_XS`,
+          `${strataSources.model.quants."GSQ-RCO-IQ3_S".repo}` for
+          `GSQ-RCO-IQ3_S`). Only files Strata's setup lists as runnable are
+          offered. `UD-IQ4_XS` is the one benched on Strata. `GSQ-RCO-IQ3_S`
+          is upstream's recommended size since 0.1.44 (needs 64 GB RAM) and
+          has not been benched on Strix Halo (gfx1151).
         '';
       };
 
@@ -976,7 +982,7 @@ in {
         type = types.nullOr types.str;
         default = strataModelDefault;
         defaultText = lib.literalMD ''
-          the pinned `${strataSources.model.repo}` snapshot's `quant` shards in
+          the pinned snapshot's `quant` shards in
           lemond's Hugging Face cache (`''${lemonade.cacheDir}/hf/hub`), or
           `null` when `lemonade.cacheDir` is unset
         '';

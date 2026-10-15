@@ -3,20 +3,29 @@
 # names (passed as STRATA_GGML_DIR so the build is offline), and the TheRock ROCm tarball its docs/STRIX_HALO.md names.
 {
   strata = {
-    rev = "e8ca9afd03d839d4f8dbbe82dffce7f8a3bafd7a";
-    hash = "sha256-NCOHJF8L32g67h8S4XY9uOABAKEoqapGqYLUEoiVHME=";
+    rev = "296b59d2f73c8f04a805df29c2fa97655adace78";
+    hash = "sha256-Jfo2uldtyXW8Y/wQxA7WcYwtmzCGAOaXgnlMSo7K9LE=";
   };
   ggml = {
     rev = "3cf03257f219afbe7334045ff7c6a06ac68c627d";
     hash = "sha256-SRGoXa+4ACBCB3eaG9XFYhMN1i0FyPEy9Rrer+dFGYI=";
   };
-  # The Flash-Next GGUF `strata.model` defaults to: a snapshot inside lemond's Hugging Face cache, never copied into
-  # the store (the experts are read from the shards in place). Each quant is one `strata.quant` value; only quants
-  # that have been packed and benched with Strata belong here.
-  model = {
-    repo = "unsloth/Qwen3.8-Flash-Next-GGUF";
-    rev = "38bb39ee97821de2c9009abb7e93950eec396e66";
-    quants."UD-IQ4_XS" = "UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
+  # The Flash-Next GGUFs `strata.model` defaults to: a snapshot inside lemond's Hugging Face cache, never copied into
+  # the store (the experts are read from the shards in place). Each quant is one `strata.quant` value with its own
+  # repository snapshot and first shard; only files Strata's setup.py lists as runnable (SUPPORTED_GGUFS) belong here.
+  # UD-IQ4_XS is the one benched on Strata. GSQ-RCO-IQ3_S is upstream's recommended size since 0.1.44 (64 GB RAM) and
+  # has not been benched on Strix Halo (gfx1151).
+  model.quants = {
+    "UD-IQ4_XS" = {
+      repo = "unsloth/Qwen3.8-Flash-Next-GGUF";
+      rev = "38bb39ee97821de2c9009abb7e93950eec396e66";
+      file = "UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf";
+    };
+    "GSQ-RCO-IQ3_S" = {
+      repo = "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF";
+      rev = "ed59f92082b1e93c0e96d60a8b11aab089b52f09";
+      file = "IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf";
+    };
   };
   # The vision projector the module fetches for `strata.vision.mmproj`. Strata's own setup pins the same repository
   # revision and file; the SRI below is that file's SHA-256. A fixed output, since it is a plain 0.9 GiB download and
