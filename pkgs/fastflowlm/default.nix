@@ -22,13 +22,13 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.7";
+  version = "1.0.9";
 
   src = fetchFromGitHub {
     owner = "ROCm";
     repo = "FastFlowLM";
     rev = "v${finalAttrs.version}";
-    hash = "sha256-e3vKPLLQcx5u09jsdiDZ83os8iWKuXAjx5X/uZFOq/o=";
+    hash = "sha256-IzZTwdZHB2PsG6fTLxiiOy0K6b8DdXfP7aQYp2LxduQ=";
     fetchSubmodules = true;
   };
 
