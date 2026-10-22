@@ -7,8 +7,11 @@
 # model):
 #
 #   #205  a bare tag (no ":size") whose size map is an empty object reads
-#         end().key() (undefined behavior); a non-object size map throws
-#         invalid_iterator and is answered 400.
+#         end().key() (undefined behavior) on 1.0.6; a non-object size map
+#         throws invalid_iterator and is answered 400. From 1.0.9
+#         apply_support_filter erases an empty family at startup, so its bare
+#         tag is simply unknown: new mode expects 400 model_not_found there,
+#         not 500 model_load_failed.
 #   #204  an entry with a missing or non-array `files` for a model not on disk:
 #         get_missing_files() swallows the type_error and reports nothing
 #         missing, so the load reaches LM_Config::_load_json's exit(1) and the
@@ -20,6 +23,7 @@
 # before the failing request and again after it.
 #
 #   empty-size-map    models["gemma4-it"] = {}          request "gemma4-it"
+#                     (new mode: 400 model_not_found)
 #   array-size-map    models["gemma4-it"] = [<e4b>]     request "gemma4-it"
 #   missing-files     e2b entry without `files`         request "gemma4-it:e2b"
 #   nonarray-files    e2b entry with a string `files`   request "gemma4-it:e2b"
@@ -186,11 +190,19 @@ json_eq() {
   [[ "$a" == "$b" ]]
 }
 
-# run_case <label> <expr> <requested-model> <base-outcome>
+# not_found_body <model> -- the body for a model this build's list does not
+# have (the family was dropped at startup, so the tag is unsupported).
+not_found_body() {
+  local model=$1
+  jq -cn --arg m "$model" '{error:{message:("model \u0027" + $m + "\u0027 is not in this build\u0027s model list"),type:"invalid_request_error",param:"model",code:"model_not_found"}}'
+}
+
+# run_case <label> <expr> <requested-model> <base-outcome> [new-outcome]
 # base-outcome: "400" (HTTP 400 invalid_request_error) or "dead" (the server
-# exited). new mode always expects 500 + the model_load_failed body.
+# exited). new-outcome: "500" (default; 500 + the model_load_failed body) or
+# "not-found" (400 + the model_not_found body).
 run_case() {
-  local label=$1 expr=$2 model=$3 base_outcome=$4
+  local label=$1 expr=$2 model=$3 base_outcome=$4 new_outcome=${5:-500}
   echo "== case $label ($mode) =="
   local list="$outdir/model_list.$label.json"
   scratch_model "$list" "$expr"
@@ -199,7 +211,13 @@ run_case() {
     if ps_lists_llama; then record "$label/loaded" PASS; else record "$label/loaded" FAIL "llama3.2:1b not listed before the request: $last_body"; fi
 
     req POST /v1/chat/completions '{"model":"'"$model"'","messages":[{"role":"user","content":"Say hi"}],"stream":false,"max_tokens":8}'
-    if [[ "$mode" == new ]]; then
+    if [[ "$mode" == new && "$new_outcome" == not-found ]]; then
+      if [[ "$last_code" == 400 ]] && json_eq "$last_body" "$(not_found_body "$model")"; then
+        record "$label/status" PASS
+      else
+        record "$label/status" FAIL "expected HTTP 400 + model_not_found, got HTTP $last_code: $last_body"
+      fi
+    elif [[ "$mode" == new ]]; then
       if [[ "$last_code" == 500 ]] && json_eq "$last_body" "$(load_failed_body "$model")"; then
         record "$label/status" PASS
       else
@@ -230,14 +248,14 @@ run_case() {
     fi
 
     echo "-- [ERROR] ensure_model_loaded line --"
-    grep -E '\[ERROR\].*(malformed model-list entry|Failed to load model|handle_openai_chat_completion)' "$outdir/server-$label.log" || echo "(none found)"
+    grep -E '\[ERROR\].*(malformed model-list entry|Failed to load model|unknown model|handle_openai_chat_completion)' "$outdir/server-$label.log" || echo "(none found)"
   else
     record "$label/startup" FAIL "server did not become ready"
   fi
   stop_server
 }
 
-run_case empty-size-map 'd["models"]["gemma4-it"] = {}' 'gemma4-it' crash-or-400
+run_case empty-size-map 'd["models"]["gemma4-it"] = {}' 'gemma4-it' crash-or-400 not-found
 run_case array-size-map 'd["models"]["gemma4-it"] = [d["models"]["gemma4-it"]["e4b"]]' 'gemma4-it' 400
 run_case missing-files 'd["models"]["gemma4-it"]["e2b"].pop("files")' 'gemma4-it:e2b' dead
 run_case nonarray-files 'd["models"]["gemma4-it"]["e2b"]["files"] = "not-an-array"' 'gemma4-it:e2b' dead

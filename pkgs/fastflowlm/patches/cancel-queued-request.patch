@@ -2,7 +2,7 @@ diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel
 index 765b170f..49c5bd08 100644
 --- a/src/common/AutoModel/automodel.cpp
 +++ b/src/common/AutoModel/automodel.cpp
-@@ -349,6 +349,16 @@ void AutoModel::_shared_validate_capacity(std::size_t rendered_tokens,
+@@ -349,6 +349,16 @@
  bool AutoModel::_shared_insert(chat_meta_info_t& meta_info, std::vector<int>& tokens, std::function<bool()> is_cancelled, void* payload, int first_len_run, std::optional<int> requested_max_new_tokens) {
      this->_shared_validate_capacity(tokens.size(), requested_max_new_tokens);
  
@@ -23,7 +23,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 index da31c7da..8fb857d6 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -185,6 +185,20 @@ int NPUAccessManager::get_active_npu_requests() {
+@@ -185,6 +185,20 @@
      return g_npu_active_requests.load();
  }
  
@@ -44,25 +44,43 @@ index da31c7da..8fb857d6 100644
  ///@brief HttpSession class implementation
  ///@param socket the socket
  ///@param server the server
-@@ -619,9 +633,15 @@ void WebServer::register_active_request(const std::string& request_id, std::shar
+@@ -612,16 +626,31 @@
+ ///@brief register active request
+ ///@param request_id the request ID
+ ///@param token the cancellation token
+-void WebServer::register_active_request(const std::string& request_id, std::shared_ptr<CancellationToken> token) {
++///@return the token this one replaced under the same id, or null if none
++std::shared_ptr<CancellationToken> WebServer::register_active_request(const std::string& request_id, std::shared_ptr<CancellationToken> token) {
+     std::lock_guard<std::mutex> lock(active_requests_mutex_);
+-    active_requests_[request_id] = token;
++    auto& slot = active_requests_[request_id];
++    std::shared_ptr<CancellationToken> previous = std::move(slot);
++    slot = std::move(token);
++    return previous;
+ }
  
  ///@brief unregister active request
  ///@param request_id the request ID
 -void WebServer::unregister_active_request(const std::string& request_id) {
-+void WebServer::unregister_active_request(const std::string& request_id, const std::shared_ptr<CancellationToken>& token) {
++///@param token the request's own token
++///@param restore the token this request replaced when it registered, put back in its slot
++void WebServer::unregister_active_request(const std::string& request_id, const std::shared_ptr<CancellationToken>& token,
++                                          std::shared_ptr<CancellationToken> restore) {
      std::lock_guard<std::mutex> lock(active_requests_mutex_);
 -    active_requests_.erase(request_id);
 +    auto it = active_requests_.find(request_id);
 +    // Drop the entry only if it is still this request's. A cancel erases the
 +    // slot, and the id can be re-used by a later request before this one
 +    // finishes; erasing by key alone would take that new request's slot.
-+    if (it != active_requests_.end() && it->second == token) {
-+        active_requests_.erase(it);
-+    }
++    if (it == active_requests_.end() || it->second != token) return;
++    // A request that never ran hands the slot back to the one it displaced,
++    // so that one stays reachable by /api/cancel.
++    if (restore) it->second = std::move(restore);
++    else active_requests_.erase(it);
  }
  
  ///@brief cancel request
-@@ -729,15 +749,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -729,15 +758,15 @@
      header_print("LOG", "Target: " << req.target());
      header_print("LOG", "Version: " << req.version());
      header_print("LOG", "Keep-Alive: " << req.keep_alive());
@@ -81,7 +99,7 @@ index da31c7da..8fb857d6 100644
                  is_json = true;
              }
              else if (content_type.find("multipart/form-data") != std::string::npos) {
-@@ -764,71 +784,38 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -764,71 +793,38 @@
      // Decide if this handler needs exclusive NPU access.
      bool needs_npu = requires_npu_access(std::string(req.method_string()), std::string(req.target()));
  
@@ -175,7 +193,7 @@ index da31c7da..8fb857d6 100644
  
          // catch is_deferred
          auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
-@@ -859,7 +846,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -859,7 +855,7 @@
              response_ref.set(http::field::content_type, "application/json");
              response_ref.prepare_payload();
              cancellation_token->complete();
@@ -184,7 +202,7 @@ index da31c7da..8fb857d6 100644
  
              if (is_deferred && session) {
                  session->write_response_from_callback();
-@@ -875,7 +862,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -875,7 +871,7 @@
                  session->write_streaming_response(data, is_final);
              }
              if (is_final) {
@@ -193,7 +211,7 @@ index da31c7da..8fb857d6 100644
              }
          };
  
-@@ -888,7 +875,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -888,7 +884,7 @@
              // application/json) -- refuse it like the parse failure above,
              // not the generic 500 below.
              cancellation_token->complete();
@@ -202,7 +220,7 @@ index da31c7da..8fb857d6 100644
  
              res_ref.result(http::status::bad_request);
              res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
-@@ -901,7 +888,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -901,7 +897,7 @@
          }
          catch (const std::exception& e) {
              cancellation_token->complete();
@@ -211,7 +229,7 @@ index da31c7da..8fb857d6 100644
  
              res_ref.result(http::status::internal_server_error);
              header_print("ERROR", "Handler exception: " + std::string(e.what()));
-@@ -915,7 +902,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -915,7 +911,7 @@
          }
          catch (...) {
              cancellation_token->complete();
@@ -220,7 +238,7 @@ index da31c7da..8fb857d6 100644
  
              res_ref.result(http::status::internal_server_error);
              res_ref.body() = safe_dump(json{ {"error", "Unknown handler exception"} });
-@@ -931,8 +918,32 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -931,8 +927,38 @@
  
      // --- Logic to run or queue the task ---
  
@@ -228,10 +246,16 @@ index da31c7da..8fb857d6 100644
 +    // time, so a cancel can reach the request while it waits in the NPU queue.
 +    // The disconnect monitor starts here too, which keeps #201's
 +    // disconnect-cancels-while-queued working from the moment of accept.
++    struct Prepared {
++        std::shared_ptr<CancellationToken> token;
++        std::string id;
++        std::shared_ptr<CancellationToken> previous;  // token this one displaced, if any
++    };
 +    auto prepare = [&]() {
 +        auto cancellation_token = std::make_shared<CancellationToken>(session);
 +        if (session) session->set_cancellation_token(cancellation_token);
 +        std::string request_id;
++        std::shared_ptr<CancellationToken> previous;
 +        if (cancel_route) {
 +            // /api/cancel's body request_id names the target, not this request;
 +            // the cancel request keeps its own random id and is never
@@ -242,24 +266,24 @@ index da31c7da..8fb857d6 100644
 +            request_id = request_json.contains("request_id")
 +                ? request_json["request_id"].get<std::string>()
 +                : random_request_id();
-+            if (!defer_registration) register_active_request(request_id, cancellation_token);
++            if (!defer_registration) previous = register_active_request(request_id, cancellation_token);
 +        }
-+        return std::make_pair(cancellation_token, request_id);
++        return Prepared{cancellation_token, request_id, previous};
 +    };
 +
      if (!needs_npu) {
 -        process_task(false); //  return false
-+        const auto [cancellation_token, request_id] = prepare();
++        const auto [cancellation_token, request_id, previous] = prepare();
 +        process_task(false, cancellation_token, request_id); //  return false
          return false;
      }
  
-@@ -940,13 +951,19 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -940,13 +966,20 @@
          if (needs_npu) {
              header_print("🟢 ", "NPU Locked!");
          }
 -        process_task(false); //  return false
-+        const auto [cancellation_token, request_id] = prepare();
++        const auto [cancellation_token, request_id, previous] = prepare();
 +        process_task(false, cancellation_token, request_id); //  return false
          return false;
      }
@@ -267,12 +291,13 @@ index da31c7da..8fb857d6 100644
 -    if (!npu_request_coordinator_.try_enqueue([this, process_task]() {
 -            process_task(true);
 +    // Registered before it is enqueued, so a cancel can reach the request
-+    // while it waits; a full queue unregisters it again below.
-+    const auto [cancellation_token, request_id] = prepare();
++    // while it waits. A request with the same id may still be running; if the
++    // queue is full, its token is restored to the slot below.
++    const auto [cancellation_token, request_id, previous] = prepare();
 +    if (!npu_request_coordinator_.try_enqueue([this, process_task, cancellation_token, request_id]() {
 +            process_task(true, cancellation_token, request_id);
          })) {
-+        unregister_active_request(request_id, cancellation_token);
++        unregister_active_request(request_id, cancellation_token, previous);
 +        cancellation_token->complete();
          res.result(http::status::service_unavailable);
          res.body() = safe_dump(json{
@@ -281,12 +306,15 @@ diff --git a/src/server/server.hpp b/src/server/server.hpp
 index c037f47d..0a9074bb 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -211,7 +211,7 @@ public:
+@@ -210,8 +210,9 @@
+                        std::shared_ptr<HttpSession> session);
  
      // Request tracking methods
-     void register_active_request(const std::string& request_id, std::shared_ptr<CancellationToken> token);
+-    void register_active_request(const std::string& request_id, std::shared_ptr<CancellationToken> token);
 -    void unregister_active_request(const std::string& request_id);
-+    void unregister_active_request(const std::string& request_id, const std::shared_ptr<CancellationToken>& token);
++    std::shared_ptr<CancellationToken> register_active_request(const std::string& request_id, std::shared_ptr<CancellationToken> token);
++    void unregister_active_request(const std::string& request_id, const std::shared_ptr<CancellationToken>& token,
++                                   std::shared_ptr<CancellationToken> restore = nullptr);
      bool cancel_request(const std::string& request_id);
      
      // Statistics

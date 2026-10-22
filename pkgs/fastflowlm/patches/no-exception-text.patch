@@ -1,3 +1,21 @@
+diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/modeling_phi4.cpp
+--- a/src/common/AutoModel/modeling_phi4.cpp
++++ b/src/common/AutoModel/modeling_phi4.cpp
+@@ -103,11 +103,10 @@
+ void Phi4::fail_inference(const std::string& detail) {
+     const bool poisoned = backend_ && backend_->poisoned();
+     _shared_after_inference_failure(poisoned);
+-    std::string message = poisoned
++    if (!detail.empty()) header_print("ERROR", "Phi4 inference failed: " << detail);
++    throw ModelRequestError(500, true, poisoned
+         ? "Inference failed; unload/reload is required because the model is poisoned"
+-        : "Inference failed; the current conversation was cleared";
+-    if (!detail.empty()) message += " (" + detail + ")";
+-    throw ModelRequestError(500, true, message);
++        : "Inference failed; the current conversation was cleared");
+ }
+ 
+ bool Phi4::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input,
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 index 7187f709..c4f754fd 100644
 --- a/src/server/rest_handler.cpp

@@ -1,0 +1,859 @@
+diff -u a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel.cpp
+--- a/src/common/AutoModel/automodel.cpp
++++ b/src/common/AutoModel/automodel.cpp
+@@ -320,16 +320,6 @@
+     this->enable_preemption = enable_preemption;
+ }
+ 
+-std::string AutoModel::generate_with_prompt(
+-    chat_meta_info_t& meta_info,
+-    lm_uniform_input_t& input,
+-    int length_limit,
+-    std::ostream& os,
+-    std::function<bool()> is_cancelled) {
+-    if (!insert(meta_info, input, is_cancelled)) return {};
+-    return generate(meta_info, length_limit, os, std::move(is_cancelled));
+-}
+-
+ void AutoModel::_shared_validate_capacity(std::size_t rendered_tokens,
+                                           std::optional<int> requested) const {
+     if (!this->backend_ || this->backend_->max_decode_length() == 0) return;
+diff -u a/src/common/AutoModel/modeling_gemma3.cpp b/src/common/AutoModel/modeling_gemma3.cpp
+--- a/src/common/AutoModel/modeling_gemma3.cpp
++++ b/src/common/AutoModel/modeling_gemma3.cpp
+@@ -267,11 +267,11 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Gemma3::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Gemma3::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ 
+diff -u a/src/common/AutoModel/modeling_gemma3_text.cpp b/src/common/AutoModel/modeling_gemma3_text.cpp
+--- a/src/common/AutoModel/modeling_gemma3_text.cpp
++++ b/src/common/AutoModel/modeling_gemma3_text.cpp
+@@ -73,9 +73,9 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Gemma3_Text_Only::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Gemma3_Text_Only::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+\ No newline at end of file
+diff -u a/src/common/AutoModel/modeling_gemma4_12b.cpp b/src/common/AutoModel/modeling_gemma4_12b.cpp
+--- a/src/common/AutoModel/modeling_gemma4_12b.cpp
++++ b/src/common/AutoModel/modeling_gemma4_12b.cpp
+@@ -1014,14 +1014,14 @@
+ 
+ }
+ 
+-std::string Gemma4_12B::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Gemma4_12B::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     if (this->enable_think) {
+         os << "<think>\n" << std::flush;
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff -u a/src/common/AutoModel/modeling_gemma4e.cpp b/src/common/AutoModel/modeling_gemma4e.cpp
+--- a/src/common/AutoModel/modeling_gemma4e.cpp
++++ b/src/common/AutoModel/modeling_gemma4e.cpp
+@@ -640,11 +640,11 @@
+     return result;
+ }
+ 
+-std::string Gemma4e_Flash::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Gemma4e_Flash::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ void Gemma4e::load_model(std::string model_path, json model_info, int default_context_length, bool enable_preemption, const std::string& backend) {
+@@ -1170,8 +1170,8 @@
+     return result;
+ }
+ 
+-std::string Gemma4e::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Gemma4e::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     if (this->enable_think) {
+@@ -1181,7 +1181,7 @@
+     int checkpoint_idx = this->lm_engine->checkpoint();
+     int restore_idx = this->lm_engine->restore();
+     header_print_r("FLM", "Checkpoint before generation: " << checkpoint_idx << ", restore point: " << restore_idx << ", user context length: " << this->token_history.size());
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff -u a/src/common/AutoModel/modeling_gpt_oss.cpp b/src/common/AutoModel/modeling_gpt_oss.cpp
+--- a/src/common/AutoModel/modeling_gpt_oss.cpp
++++ b/src/common/AutoModel/modeling_gpt_oss.cpp
+@@ -282,13 +282,13 @@
+ // }
+ */
+ 
+-std::string GPT_OSS::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string GPT_OSS::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     os << "<|start|>" << std::flush;
+     os << "assistant" << std::flush;
+-    std::string result = this->_shared_generate(meta_info, length_limit, os);
++    std::string result = this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+     os << "<|end|>" << std::flush;
+     return "<|start|>assistant" + result + "<|end|>";
+ }
+diff -u a/src/common/AutoModel/modeling_hunyuan.cpp b/src/common/AutoModel/modeling_hunyuan.cpp
+--- a/src/common/AutoModel/modeling_hunyuan.cpp
++++ b/src/common/AutoModel/modeling_hunyuan.cpp
+@@ -240,9 +240,9 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Hunyuan::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Hunyuan::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+diff -u a/src/common/AutoModel/modeling_lfm2.cpp b/src/common/AutoModel/modeling_lfm2.cpp
+--- a/src/common/AutoModel/modeling_lfm2.cpp
++++ b/src/common/AutoModel/modeling_lfm2.cpp
+@@ -77,11 +77,11 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string LFM2::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string LFM2::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ StreamResult LFM2::parse_stream_content(const std::string content) {
+@@ -435,11 +435,11 @@
+     return result;
+ }
+ 
+-std::string LFM2_5_TK::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string LFM2_5_TK::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ NonStreamResult LFM2_5_TK::parse_nstream_content(const std::string response_text) {
+diff -u a/src/common/AutoModel/modeling_llama3.cpp b/src/common/AutoModel/modeling_llama3.cpp
+--- a/src/common/AutoModel/modeling_llama3.cpp
++++ b/src/common/AutoModel/modeling_llama3.cpp
+@@ -71,11 +71,11 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Llama3::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Llama3::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ /************              DeepSeek_r1_8b family            **************/
+@@ -230,11 +230,11 @@
+     return result;
+ }
+ 
+-std::string DeepSeek_r1_8b::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string DeepSeek_r1_8b::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ NonStreamResult DeepSeek_r1_8b::parse_nstream_content(const std::string response_text) {
+diff -u a/src/common/AutoModel/modeling_minicpm_v.cpp b/src/common/AutoModel/modeling_minicpm_v.cpp
+--- a/src/common/AutoModel/modeling_minicpm_v.cpp
++++ b/src/common/AutoModel/modeling_minicpm_v.cpp
+@@ -397,13 +397,13 @@
+     return result;
+ }
+ 
+-std::string MiniCPM_V::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string MiniCPM_V::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     // Not _shared_generate: insert() held back the think prefix, which only
+     // decode() knows to feed.
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff -u a/src/common/AutoModel/modeling_nanbeige.cpp b/src/common/AutoModel/modeling_nanbeige.cpp
+--- a/src/common/AutoModel/modeling_nanbeige.cpp
++++ b/src/common/AutoModel/modeling_nanbeige.cpp
+@@ -173,8 +173,8 @@
+     return result;
+ }
+ 
+-std::string Nanbeige::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Nanbeige::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     std::vector<int> sampled_tokens;
+@@ -207,6 +207,15 @@
+         return result;
+     }
+     while (this->total_tokens < this->MAX_L){
++        if (is_cancelled()) {
++            reason = CANCEL_DETECTED;
++            // reset stream content
++            buffer_.clear();
++            current_mode_ = StreamEventType::CONTENT;
++            tool_name_.clear();
++            is_in_tool_block_ = false;
++            break;
++        }
+         this->profiler_list[DECODING_TIME].start();
+         buffer<bf16> y = this->lm_engine->forward(last_sampled_token);
+         this->profiler_list[DECODING_TIME].stop(1);
+diff -u a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/modeling_phi4.cpp
+--- a/src/common/AutoModel/modeling_phi4.cpp
++++ b/src/common/AutoModel/modeling_phi4.cpp
+@@ -159,7 +159,8 @@
+ std::string Phi4::generate_with_prompt(chat_meta_info_t& meta_info,
+                                        lm_uniform_input_t& input,
+                                        int length_limit,
+-                                       std::ostream& os) {
+-    if (!insert(meta_info, input)) return {};
+-    return generate(meta_info, length_limit, os);
++                                       std::ostream& os,
++                                       std::function<bool()> is_cancelled) {
++    if (!insert(meta_info, input, is_cancelled)) return {};
++    return generate(meta_info, length_limit, os, is_cancelled);
+ }
+diff -u a/src/common/AutoModel/modeling_qwen2.cpp b/src/common/AutoModel/modeling_qwen2.cpp
+--- a/src/common/AutoModel/modeling_qwen2.cpp
++++ b/src/common/AutoModel/modeling_qwen2.cpp
+@@ -72,9 +72,9 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Qwen2::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen2::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+diff -u a/src/common/AutoModel/modeling_qwen2vl.cpp b/src/common/AutoModel/modeling_qwen2vl.cpp
+--- a/src/common/AutoModel/modeling_qwen2vl.cpp
++++ b/src/common/AutoModel/modeling_qwen2vl.cpp
+@@ -290,9 +290,9 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Qwen2VL::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen2VL::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+diff -u a/src/common/AutoModel/modeling_qwen3_5_omni.cpp b/src/common/AutoModel/modeling_qwen3_5_omni.cpp
+--- a/src/common/AutoModel/modeling_qwen3_5_omni.cpp
++++ b/src/common/AutoModel/modeling_qwen3_5_omni.cpp
+@@ -681,12 +681,12 @@
+     return result;
+ }
+ 
+-std::string Qwen3_5_Omni::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_5_Omni::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     header_print("FLM", "Prompt inserted, starting generation...");
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ buffer<bf16> Qwen3_5_Omni::say(std::string wav_out_path) {
+diff -u a/src/common/AutoModel/modeling_qwen3_5vl.cpp b/src/common/AutoModel/modeling_qwen3_5vl.cpp
+--- a/src/common/AutoModel/modeling_qwen3_5vl.cpp
++++ b/src/common/AutoModel/modeling_qwen3_5vl.cpp
+@@ -431,8 +431,8 @@
+     return result;
+ }
+ 
+-std::string Qwen3_5VL::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_5VL::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     header_print("FLM", "Prompt inserted, starting generation...");
+@@ -442,7 +442,7 @@
+     if (this->enable_think) {
+         os << "<think>\n" << std::flush;
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff -u a/src/common/AutoModel/modeling_qwen3_6_moe.cpp b/src/common/AutoModel/modeling_qwen3_6_moe.cpp
+--- a/src/common/AutoModel/modeling_qwen3_6_moe.cpp
++++ b/src/common/AutoModel/modeling_qwen3_6_moe.cpp
+@@ -432,8 +432,8 @@
+     return result;
+ }
+ 
+-std::string Qwen3_6_MOE::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_6_MOE::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     header_print("FLM", "Prompt inserted, starting generation...");
+@@ -444,7 +444,7 @@
+     if (this->enable_think) {
+         os << "<think>\n" << std::flush;
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff -u a/src/common/AutoModel/modeling_qwen3_8mtp.cpp b/src/common/AutoModel/modeling_qwen3_8mtp.cpp
+--- a/src/common/AutoModel/modeling_qwen3_8mtp.cpp
++++ b/src/common/AutoModel/modeling_qwen3_8mtp.cpp
+@@ -610,15 +610,15 @@
+     }
+ }
+ 
+-std::string Qwen3_8MTP::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_8MTP::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+     header_print("FLM", "Prompt inserted, starting generation...");
+     if (this->enable_think) {
+         os << "<think>\n" << std::flush;
+     }
+-    return this->_speculative_generate(meta_info, length_limit, os);
++    return this->_speculative_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+diff -u a/src/common/AutoModel/modeling_qwen3.cpp b/src/common/AutoModel/modeling_qwen3.cpp
+--- a/src/common/AutoModel/modeling_qwen3.cpp
++++ b/src/common/AutoModel/modeling_qwen3.cpp
+@@ -246,11 +246,11 @@
+     return result;
+ }
+ 
+-std::string Qwen3::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ static void qwen3_parse_tool_blocks(const std::string& response_text, NonStreamResult& result) {
+@@ -400,11 +400,11 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Qwen3_IT::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_IT::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+@@ -649,11 +649,11 @@
+     return result;
+ }
+ 
+-std::string Qwen3_TK::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3_TK::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ NonStreamResult Qwen3_TK::parse_nstream_content(const std::string response_text) {
+@@ -838,11 +838,11 @@
+     return result;
+ }
+ 
+-std::string DeepSeek_r1_0528_8b::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string DeepSeek_r1_0528_8b::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ NonStreamResult DeepSeek_r1_0528_8b::parse_nstream_content(const std::string response_text) {
+diff -u a/src/common/AutoModel/modeling_qwen3vl.cpp b/src/common/AutoModel/modeling_qwen3vl.cpp
+--- a/src/common/AutoModel/modeling_qwen3vl.cpp
++++ b/src/common/AutoModel/modeling_qwen3vl.cpp
+@@ -289,11 +289,11 @@
+     return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+-std::string Qwen3VL::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3VL::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->_shared_generate(meta_info, length_limit, os);
++    return this->_shared_generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ // Non-stream
+@@ -653,21 +653,21 @@
+     return result;
+ }
+ 
+-std::string Qwen3VL_Flash::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3VL_Flash::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ 
+ /************              Qwen3VL_Thinking            **************/
+ 
+-std::string Qwen3VL_Thinking::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os) {
+-    if (!this->insert(meta_info, input)) {
++std::string Qwen3VL_Thinking::generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os, std::function<bool()> is_cancelled) {
++    if (!this->insert(meta_info, input, is_cancelled)) {
+         return "";
+     }
+-    return this->generate(meta_info, length_limit, os);
++    return this->generate(meta_info, length_limit, os, is_cancelled);
+ }
+ 
+ 
+diff -u a/src/create_new_model.md b/src/create_new_model.md
+--- a/src/create_new_model.md
++++ b/src/create_new_model.md
+@@ -81,7 +81,7 @@
+ ```cpp
+ bool insert(chat_meta_info_t&, lm_uniform_input_t&, std::function<bool()>) override;
+ std::string generate(chat_meta_info_t&, int, std::ostream&, std::function<bool()>) override;
+-std::string generate_with_prompt(chat_meta_info_t&, lm_uniform_input_t&, int, std::ostream&) override;
++std::string generate_with_prompt(chat_meta_info_t&, lm_uniform_input_t&, int, std::ostream&, std::function<bool()>) override;
+ std::string apply_chat_template(nlohmann::ordered_json& messages,
+                                 nlohmann::ordered_json tools) override;
+ ```
+diff -u a/src/include/AutoModel/automodel.hpp b/src/include/AutoModel/automodel.hpp
+--- a/src/include/AutoModel/automodel.hpp
++++ b/src/include/AutoModel/automodel.hpp
+@@ -516,13 +516,7 @@
+ 	virtual bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) = 0;
+ 
+ 	/// \brief Generate the tokens with prompt
+-	virtual std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) = 0;
+-	std::string generate_with_prompt(
+-		chat_meta_info_t& meta_info,
+-		lm_uniform_input_t& input,
+-		int length_limit,
+-		std::ostream& os,
+-		std::function<bool()> is_cancelled);
++	virtual std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) = 0;
+ 
+ 	/// \brief Configure a parameter with type-erased value
+ 	/// \param parameter_name the name of the parameter
+diff -u a/src/include/AutoModel/modeling_gemma3.hpp b/src/include/AutoModel/modeling_gemma3.hpp
+--- a/src/include/AutoModel/modeling_gemma3.hpp
++++ b/src/include/AutoModel/modeling_gemma3.hpp
+@@ -33,7 +33,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     bool check_using_checkpint() {
+ 		return false;
+diff -u a/src/include/AutoModel/modeling_gemma3_text.hpp b/src/include/AutoModel/modeling_gemma3_text.hpp
+--- a/src/include/AutoModel/modeling_gemma3_text.hpp
++++ b/src/include/AutoModel/modeling_gemma3_text.hpp
+@@ -35,7 +35,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     bool check_using_checkpint() {
+ 		return false;
+diff -u a/src/include/AutoModel/modeling_gemma4_12b.hpp b/src/include/AutoModel/modeling_gemma4_12b.hpp
+--- a/src/include/AutoModel/modeling_gemma4_12b.hpp
++++ b/src/include/AutoModel/modeling_gemma4_12b.hpp
+@@ -104,7 +104,7 @@
+     void load_model(std::string model_path, json model_inf, int default_context_length = -1, bool enable_preemption = false, const std::string& backend = "") override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text) override;
+     StreamResult parse_stream_content(const std::string content) override;
+diff -u a/src/include/AutoModel/modeling_gemma4e.hpp b/src/include/AutoModel/modeling_gemma4e.hpp
+--- a/src/include/AutoModel/modeling_gemma4e.hpp
++++ b/src/include/AutoModel/modeling_gemma4e.hpp
+@@ -124,7 +124,7 @@
+     void load_model(std::string model_path, json model_inf, int default_context_length = -1, bool enable_preemption = false, const std::string& backend = "") override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+@@ -246,7 +246,7 @@
+ 
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+ 
+     /// \brief Apply the chat template without tools — gemma4e_flash does not
+     ///        support tool calling, so the tools argument is always dropped.
+diff -u a/src/include/AutoModel/modeling_gpt_oss.hpp b/src/include/AutoModel/modeling_gpt_oss.hpp
+--- a/src/include/AutoModel/modeling_gpt_oss.hpp
++++ b/src/include/AutoModel/modeling_gpt_oss.hpp
+@@ -39,7 +39,7 @@
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     int _sample_in_tool(buffer<bf16>& logits);
+     std::vector<int> get_to_functions_tokens();
+     std::vector<int> get_function_name_tokens();
+diff -u a/src/include/AutoModel/modeling_hunyuan.hpp b/src/include/AutoModel/modeling_hunyuan.hpp
+--- a/src/include/AutoModel/modeling_hunyuan.hpp
++++ b/src/include/AutoModel/modeling_hunyuan.hpp
+@@ -52,7 +52,7 @@
+     void load_model(std::string model_path, json model_info, int default_context_length = -1, bool enable_preemption = false, const std::string& backend = "") override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     chat_template_type_t get_chat_template_type() override;
+ 
+diff -u a/src/include/AutoModel/modeling_lfm2.hpp b/src/include/AutoModel/modeling_lfm2.hpp
+--- a/src/include/AutoModel/modeling_lfm2.hpp
++++ b/src/include/AutoModel/modeling_lfm2.hpp
+@@ -30,7 +30,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     StreamResult parse_stream_content(const std::string content);
+     bool check_using_checkpint() {
+@@ -62,7 +62,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_llama3.hpp b/src/include/AutoModel/modeling_llama3.hpp
+--- a/src/include/AutoModel/modeling_llama3.hpp
++++ b/src/include/AutoModel/modeling_llama3.hpp
+@@ -20,7 +20,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     bool check_using_checkpint() {
+ 		return false;
+@@ -45,7 +45,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_minicpm_v.hpp b/src/include/AutoModel/modeling_minicpm_v.hpp
+--- a/src/include/AutoModel/modeling_minicpm_v.hpp
++++ b/src/include/AutoModel/modeling_minicpm_v.hpp
+@@ -63,7 +63,7 @@
+     void load_model(std::string model_path, json model_inf, int default_context_length = -1, bool enable_preemption = false, const std::string& backend = "") override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text) override;
+     StreamResult parse_stream_content(const std::string content) override;
+diff -u a/src/include/AutoModel/modeling_nanbeige.hpp b/src/include/AutoModel/modeling_nanbeige.hpp
+--- a/src/include/AutoModel/modeling_nanbeige.hpp
++++ b/src/include/AutoModel/modeling_nanbeige.hpp
+@@ -22,7 +22,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_phi4.hpp b/src/include/AutoModel/modeling_phi4.hpp
+--- a/src/include/AutoModel/modeling_phi4.hpp
++++ b/src/include/AutoModel/modeling_phi4.hpp
+@@ -48,7 +48,8 @@
+     std::string generate_with_prompt(chat_meta_info_t& meta_info,
+                                      lm_uniform_input_t& input,
+                                      int length_limit,
+-                                     std::ostream& os = std::cout) override;
++                                     std::ostream& os = std::cout,
++                                     std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages,
+                                     nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+ 
+diff -u a/src/include/AutoModel/modeling_qwen2.hpp b/src/include/AutoModel/modeling_qwen2.hpp
+--- a/src/include/AutoModel/modeling_qwen2.hpp
++++ b/src/include/AutoModel/modeling_qwen2.hpp
+@@ -23,7 +23,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     bool check_using_checkpint() {
+ 		return false;
+diff -u a/src/include/AutoModel/modeling_qwen2vl.hpp b/src/include/AutoModel/modeling_qwen2vl.hpp
+--- a/src/include/AutoModel/modeling_qwen2vl.hpp
++++ b/src/include/AutoModel/modeling_qwen2vl.hpp
+@@ -49,7 +49,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     bool check_using_checkpint() {
+ 		return false;
+diff -u a/src/include/AutoModel/modeling_qwen3_5_omni.hpp b/src/include/AutoModel/modeling_qwen3_5_omni.hpp
+--- a/src/include/AutoModel/modeling_qwen3_5_omni.hpp
++++ b/src/include/AutoModel/modeling_qwen3_5_omni.hpp
+@@ -44,7 +44,7 @@
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+ 
+     /// \brief insert() followed by generate().
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+ 
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_qwen3_5vl.hpp b/src/include/AutoModel/modeling_qwen3_5vl.hpp
+--- a/src/include/AutoModel/modeling_qwen3_5vl.hpp
++++ b/src/include/AutoModel/modeling_qwen3_5vl.hpp
+@@ -56,7 +56,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_qwen3_6_moe.hpp b/src/include/AutoModel/modeling_qwen3_6_moe.hpp
+--- a/src/include/AutoModel/modeling_qwen3_6_moe.hpp
++++ b/src/include/AutoModel/modeling_qwen3_6_moe.hpp
+@@ -56,7 +56,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_qwen3_8mtp.hpp b/src/include/AutoModel/modeling_qwen3_8mtp.hpp
+--- a/src/include/AutoModel/modeling_qwen3_8mtp.hpp
++++ b/src/include/AutoModel/modeling_qwen3_8mtp.hpp
+@@ -148,7 +148,7 @@
+     void load_model(std::string model_path, json model_inf, int default_context_length = -1, bool enable_preemption = false, const std::string& backend = "") override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_qwen3.hpp b/src/include/AutoModel/modeling_qwen3.hpp
+--- a/src/include/AutoModel/modeling_qwen3.hpp
++++ b/src/include/AutoModel/modeling_qwen3.hpp
+@@ -34,7 +34,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+@@ -96,7 +96,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+@@ -129,7 +129,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+@@ -154,7 +154,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+diff -u a/src/include/AutoModel/modeling_qwen3vl.hpp b/src/include/AutoModel/modeling_qwen3vl.hpp
+--- a/src/include/AutoModel/modeling_qwen3vl.hpp
++++ b/src/include/AutoModel/modeling_qwen3vl.hpp
+@@ -81,7 +81,7 @@
+     //void toggle_enable_think() override;
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string apply_chat_template(nlohmann::ordered_json& messages, nlohmann::ordered_json tools = nlohmann::ordered_json::object()) override;
+     NonStreamResult parse_nstream_content(const std::string response_text);
+     StreamResult parse_stream_content(const std::string content);
+@@ -192,7 +192,7 @@
+ 
+     bool insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled = [] { return false; }) override;
+     std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++    std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+ 
+     /// \brief Apply the chat template without tools — qwen3vl_flash does not
+     ///        support tool calling, so the tools argument is always dropped.
+@@ -223,5 +223,5 @@
+     
+         }
+         std::string generate(chat_meta_info_t& meta_info, int length_limit, std::ostream& os, std::function<bool()> is_cancelled = [] { return false; }) override;
+-        std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout) override;
++        std::string generate_with_prompt(chat_meta_info_t& meta_info, lm_uniform_input_t& input, int length_limit, std::ostream& os = std::cout, std::function<bool()> is_cancelled = [] { return false; }) override;
+     };
+diff -u a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -1228,6 +1228,17 @@
+                 this->auto_chat_engine->clear_context();
+                 return;
+             }
++            if (response_text.empty() && meta_info.generated_tokens == 0 &&
++                (meta_info.stop_reason == CANCEL_DETECTED || (cancellation_token && cancellation_token->cancelled()))) {
++                meta_info.stop_reason = CANCEL_DETECTED;
++                header_print("❌ ", "Prefill Cancelled!");
++                send_response(json::object());
++                this->auto_chat_engine->clear_context();
++                return;
++            }
++            if (meta_info.stop_reason == CANCEL_DETECTED) {
++                header_print("❌ ", "Generation Cancelled!");
++            }
+             //std::string response_text = chat_engine->generate_with_prompt(meta_info, prompts, length_limit, std::cout, payload);
+             auto total_end_time = time_utils::now();
+             meta_info.total_duration = (uint64_t)time_utils::duration_ns(total_start_time, total_end_time).first;

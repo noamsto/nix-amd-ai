@@ -2,7 +2,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 index fd9d4bc5..7187f709 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -63,6 +63,34 @@ static json require_field(const json& request, const char* field, RequiredFieldT
+@@ -63,6 +63,38 @@
      return json();
  }
  
@@ -25,6 +25,10 @@ index fd9d4bc5..7187f709 100644
 +                            "last load failed). Name a model in the request's 'model' field, or "
 +                            "start flm serve with a model tag."},
 +                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}};
++        case RestHandler::ModelLoad::UnknownBackend:
++            return json{{"error", {
++                {"message", "the requested backend is not available for model '" + model + "'"},
++                {"type", "invalid_request_error"}, {"param", "backend"}, {"code", "invalid_value"}}}};
 +        case RestHandler::ModelLoad::LoadFailed:
 +        default:
 +            return json{{"error", {
@@ -37,7 +41,7 @@ index fd9d4bc5..7187f709 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -404,8 +432,9 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -404,8 +436,9 @@
              header_print("Warning", "Default model tag '" << default_model_tag << "' is not supported. Falling back to 'llama3.2:1b'.");
              this->default_model_tag = "llama3.2:1b";
          }
@@ -48,7 +52,7 @@ index fd9d4bc5..7187f709 100644
          }
      }
      else {
-@@ -420,71 +449,128 @@ RestHandler::~RestHandler() = default;
+@@ -420,71 +453,138 @@
  
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
@@ -135,6 +139,16 @@ index fd9d4bc5..7187f709 100644
 +        return ModelLoad::LoadFailed;
 +    }
 +
++    // Also before the unload below: load_model() would reject a backend the
++    // family lacks only after the serving model was already evicted. Only the
++    // per-request value is checked; --backend is validated when it is loaded.
++    if (!request_backend.empty() &&
++        !flm::backend::BackendRegistry::instance().has(family, request_backend)) {
++        header_print("ERROR", "backend '" + request_backend + "' is not available for model '" +
++                              ensure_tag + "' -- refusing; '" + current_model_tag + "' stays loaded");
++        return ModelLoad::UnknownBackend;
++    }
++
 +    std::this_thread::sleep_for(std::chrono::milliseconds(500));
 +    if (auto_chat_engine != nullptr) {
 +        auto_chat_engine.reset();
@@ -190,12 +204,12 @@ index fd9d4bc5..7187f709 100644
 -            // what frees the hardware context.
              this->current_model_tag = "model-faker";
 -            return false;
-+            return ModelLoad::LoadFailed;
-         }
+-        }
 -        
 -        if (this->prefill_chunk_len == -1) {
 -            this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
--        }
++            return ModelLoad::LoadFailed;
+         }
 -        current_model_tag = ensure_tag;
 -        current_backend = requested_backend;
 +    auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
@@ -213,12 +227,12 @@ index fd9d4bc5..7187f709 100644
 +        // what frees the hardware context.
 +        this->current_model_tag = "model-faker";
 +        return ModelLoad::LoadFailed;
-+    }
+     }
+-    return true;
 +
 +    if (this->prefill_chunk_len == -1) {
 +        this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
-     }
--    return true;
++    }
 +    current_model_tag = ensure_tag;
 +    current_backend = requested_backend;
 +    return ModelLoad::Ok;
@@ -228,7 +242,7 @@ index fd9d4bc5..7187f709 100644
  ///@brief Ensure the asr model is loaded
  ///@param model_tag the model tag
  void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
-@@ -729,9 +815,8 @@ void RestHandler::handle_generate(const json& request,
+@@ -729,9 +829,8 @@
          int length_limit = request.value("max_tokens", 4096);
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
@@ -240,7 +254,7 @@ index fd9d4bc5..7187f709 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -852,13 +937,12 @@ void RestHandler::handle_chat(const json& request,
+@@ -852,13 +951,12 @@
          int length_limit = options.value("num_predict", 4096);
  
          auto load_start_time = time_utils::now();
@@ -257,7 +271,7 @@ index fd9d4bc5..7187f709 100644
          configure_chat_engine_parameters(options, request);
  
          // messages = normalize_messages(messages);
-@@ -965,6 +1049,17 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -965,6 +1063,17 @@
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -275,7 +289,7 @@ index fd9d4bc5..7187f709 100644
          if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
              send_response(err);
              return;
-@@ -978,6 +1073,24 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -978,6 +1087,24 @@
              return;
          }
          std::string model = request["model"].get<std::string>();
@@ -300,7 +314,7 @@ index fd9d4bc5..7187f709 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1222,9 +1335,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1222,9 +1349,8 @@
          }
  
          auto load_start_time = time_utils::now();
@@ -312,7 +326,7 @@ index fd9d4bc5..7187f709 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1279,7 +1391,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1279,7 +1405,7 @@
              }
          }
  
@@ -321,7 +335,7 @@ index fd9d4bc5..7187f709 100644
              current_messages = convert_tool_responses_gemma4(current_messages);
          }
  
-@@ -1538,16 +1650,10 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -1538,16 +1664,10 @@
          bool stream = request.value("stream", false);
          json options = request.value("options", json::object());
  
@@ -344,18 +358,18 @@ diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
 index 83730a98..5307a842 100644
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
-@@ -34,6 +34,10 @@ using StreamResponseCallback = std::function<void(const json&, bool)>; // data,
+@@ -34,6 +34,10 @@
  
  class RestHandler {
  public:
 +    // Unknown / NotChatModel / NoModel are the client's mistake and answer 400;
 +    // LoadFailed is ours and answers 500.
-+    enum class ModelLoad { Ok, Unknown, NotChatModel, NoModel, LoadFailed };
++    enum class ModelLoad { Ok, Unknown, NotChatModel, NoModel, LoadFailed, UnknownBackend };
 +
      RestHandler(model_list& models, ModelDownloader& downloader, program_args_t& args,
                  flm_rt::device* npu_device);
      ~RestHandler();
-@@ -109,8 +113,8 @@ public:
+@@ -109,8 +113,8 @@
          std::shared_ptr<CancellationToken> cancellation_token = nullptr);
  
  private:
@@ -370,7 +384,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 index e0fda448..7685c5fc 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -728,12 +728,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -728,12 +728,15 @@
  
              // `code` can be a STRING ("missing_required_parameter",
              // "invalid_value") or absent entirely; only a numeric code is

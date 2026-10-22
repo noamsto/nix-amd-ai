@@ -67,11 +67,22 @@ loaded.
 /api/ps` before and after. The probe and server logs are not committed; rerun
 `probes.sh`.
 
-`new` mode expects 500 `model_load_failed` and `llama3.2:1b` still listed.
+`new` mode expects 500 `model_load_failed` and `llama3.2:1b` still listed,
+except `empty-size-map` (see below).
+
+**1.0.9 note.** From FastFlowLM 1.0.9, `apply_support_filter` erases a family
+with an empty size map at startup, so the bare tag `gemma4-it` is no longer a
+supported model: `empty-size-map` answers 400 `model_not_found` (`model
+'gemma4-it' is not in this build's model list`, `invalid_request_error`, param
+`model`) instead of 500 `model_load_failed`; the server stays up and
+`llama3.2:1b` is still listed. `probes.sh` takes this as the case's new-mode
+expectation. That expectation was derived from the source, not re-run on
+hardware; the table below is the 1.0.6 measurement. `array-size-map` is
+unchanged (the filter keeps it and the patch throws, so 500).
 
 | Case | Request | Expected | Red build | Green build | `llama3.2:1b` listed after |
 | --- | --- | --- | --- | --- | --- |
-| `empty-size-map` (`models["gemma4-it"] = {}`) | `gemma4-it` | 500 `model_load_failed` | **server died** (HTTP 000) | 500 `model_load_failed` | yes |
+| `empty-size-map` (`models["gemma4-it"] = {}`) | `gemma4-it` | 500 `model_load_failed` (1.0.9: 400 `model_not_found`) | **server died** (HTTP 000) | 500 `model_load_failed` (1.0.9: 400 `model_not_found`) | yes |
 | `array-size-map` (size map replaced by a one-element array) | `gemma4-it` | 500 `model_load_failed` | **400** `Invalid request` | 500 `model_load_failed` | yes |
 | `missing-files` (`e2b` without `files`) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
 | `nonarray-files` (`e2b` with a string `files`) | `gemma4-it:e2b` | 500 `model_load_failed` | **no answer**, 30s timeout (HTTP 000) | 500 `model_load_failed` | yes |
@@ -85,7 +96,9 @@ iterators` for `array-size-map`, and `Error checking missing files:
 [json.exception.type_error.302] type must be array, but is null` followed by
 `Failed to open file: …/Gemma4-E2B-IT-NPU2` for the `files` cases. The green
 build logs `model 'gemma4-it' has a malformed model-list entry: model
-'gemma4-it' has no size variants` for the size-map cases and `model
+'gemma4-it' has no size variants` for the `array-size-map` case (under 1.0.9
+the `empty-size-map` case logs nothing from `ensure_model_loaded` beyond the
+refusal `unknown model ... refusing`) and `model
 'gemma4-it:e2b' has a malformed model-list entry:` followed by `missing or
 empty 'files' array`, `non-string entry in 'files'`, or `'files' does not
 list config.json` for the `files` cases.
