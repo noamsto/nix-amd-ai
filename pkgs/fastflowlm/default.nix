@@ -103,10 +103,12 @@ stdenv.mkDerivation (finalAttrs: {
   #     answered any exception 400 invalid_request_error, so a decode-time
   #     NPU/runtime fault was reported as a non-retryable client error. The
   #     catch now answers 400 only while meta_info.prompt_tokens is still 0
-  #     (template/prefill) and 500 server_error after. The insert()+generate()
-  #     split the other handlers use was not taken because it would change
-  #     the answer for Qwen3.5 and Qwen3.6-MoE (their generate_with_prompt
-  #     forces think tokens) and GPT-OSS (generate_with_prompt adds the
+  #     (template/prefill) and 500 server_error after. v1.0.9 moved this
+  #     route onto the insert()+generate() split the other handlers use,
+  #     which the patch keeps: Qwen3, Qwen3.5 and Qwen3.6-MoE insert() holds
+  #     back the tail of the generation prompt for generate() to feed, so the
+  #     per-model generate_with_prompt() overrides are not a safe route to
+  #     call (GPT-OSS content no longer carries the
   #     <|start|>assistant...<|end|> wrapper).
   #   - stream-chat-generate.patch (#187): streaming /api/chat ran insert()
   #     twice and never generate(), so every streaming /api/chat request
@@ -164,9 +166,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     /api/chat and /v1/completions never passed the request's
   #     cancellation predicate to insert()/generate(), so a client that
   #     disconnected left flm serve decoding to its token limit. v1.0.9 passes
-  #     the predicate in them, but non-streaming /api/chat does not reach the
-  #     per-model code with it (cancel-chat-nonstream.patch). The patch
-  #     keeps the rest: a cancelled prefill ends the request the way a
+  #     the predicate in all of them, including non-streaming /api/chat. The
+  #     patch keeps the rest: a cancelled prefill ends the request the way a
   #     cancelled decode does -- finalising the stream (or answering {} on the
   #     non-streaming branches) instead of "Max length reached" -- and, like
   #     /v1/chat/completions, resets the token only on the streaming branches
@@ -304,13 +305,10 @@ stdenv.mkDerivation (finalAttrs: {
   #     existing catch turns it into a clean CLI error and exit 1; and the
   #     optional startup loads log the fault, drop ASR/embeddings and keep
   #     serving chat models instead of aborting startup.
-  #   - cancel-chat-nonstream.patch: v1.0.9's non-streaming /api/chat calls
-  #     the non-virtual 5-arg AutoModel::generate_with_prompt(), which runs
-  #     insert()+generate() and skips every model's own generate_with_prompt
-  #     override (GPT-OSS wrapper tokens, Qwen3.5/3.6 forced think, ...), and
-  #     answers content "" on a cancel before the first token. The patch
-  #     makes the per-model virtual carry the predicate again and answers {}
-  #     like /api/generate and /v1/completions.
+  #   - cancel-chat-nonstream.patch: v1.0.9's non-streaming /api/chat answers
+  #     200 with content "" when the request is cancelled before the first
+  #     token, while /api/generate and /v1/completions answer {} (see
+  #     cancel-client-disconnect.patch). The patch answers {} here too.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -326,8 +324,8 @@ stdenv.mkDerivation (finalAttrs: {
   # client error, ignoring a prefill cancel in Qwen3_5_Omni::insert and in the
   # /api/generate, /api/chat and /v1/completions handlers, erasing a cancel
   # that lands before a streaming handler starts, exiting on a
-  # model_list.json entry with no `files`, ignoring the predicate and the
-  # per-model path in non-streaming /api/chat, and
+  # model_list.json entry with no `files`, answering a pre-token cancel of
+  # non-streaming /api/chat with an empty completion, and
   # /api/cancel cancelling itself instead of its target; and leaving a
   # truncated stream instead of an error when a streaming insert()/generate()
   # fails after the first chunk (this repo's #199), and racing libc's shared

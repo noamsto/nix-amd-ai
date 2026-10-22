@@ -103,10 +103,13 @@ refusal `unknown model ... refusing`) and `model
 empty 'files' array`, `non-string entry in 'files'`, or `'files' does not
 list config.json` for the `files` cases.
 
-The oracle is sensitive to the bug: `probes.sh` in `new` mode against the red
-build fails exactly the seven `*/status` checks plus
+On 1.0.6 the oracle was sensitive to the bug: `probes.sh` in `new` mode against
+the red build failed exactly the seven `*/status` checks plus
 `empty-size-map/not-evicted` (13 passed, 8 failed); against the green build it
-is 21 passed, 0 failed.
+was 21 passed, 0 failed. On 1.0.9 `empty-size-map` passes against both builds
+(the family is dropped at startup), so only six `*/status` checks go red
+(derived from the source, not re-measured) and only `array-size-map` still
+exercises the #205 throw.
 
 ## Consumer regression
 

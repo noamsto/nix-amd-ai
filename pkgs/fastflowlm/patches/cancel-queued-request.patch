@@ -74,8 +74,8 @@ index da31c7da..8fb857d6 100644
 +    // finishes; erasing by key alone would take that new request's slot.
 +    if (it == active_requests_.end() || it->second != token) return;
 +    // A request that never ran hands the slot back to the one it displaced,
-+    // so that one stays reachable by /api/cancel.
-+    if (restore) it->second = std::move(restore);
++    // so that one stays reachable by /api/cancel, unless it finished meanwhile.
++    if (restore && !restore->is_completed.load()) it->second = std::move(restore);
 +    else active_requests_.erase(it);
  }
  
