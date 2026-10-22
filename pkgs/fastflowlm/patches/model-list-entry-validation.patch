@@ -1,31 +1,26 @@
 diff --git a/src/include/model_list.hpp b/src/include/model_list.hpp
-index 7ea11e5..b578824 100644
+index eedc38bc..10afc032 100644
 --- a/src/include/model_list.hpp
 +++ b/src/include/model_list.hpp
-@@ -125,7 +125,17 @@ class model_list {
-             if (new_tag.find(':') == std::string::npos) {
-                 // get the first size in the subset
-                 std::string model_type = new_tag;
--                std::string model_size = this->config["models"][model_type].begin().key();
-+                // A bare tag whose size map is missing, not an object, or empty
-+                // has no first size: begin() is end(), and .key() on it is
-+                // undefined behavior, while a non-object map throws
-+                // invalid_iterator. Neither is a tag this method can resolve, so
-+                // refuse it as a malformed entry instead.
-+                const auto& model_map = this->config.at("models");
-+                auto subset = model_map.find(model_type);
-+                if (subset == model_map.end() || !subset->is_object() || subset->empty()) {
+@@ -177,6 +177,13 @@ class model_list {
+                 if (!models.contains(model_type) || models.at(model_type).empty()) {
+                     return new_tag;
+                 }
++                // A size map that is not an object (a string, an array) has no
++                // first size either, and .key() on its begin() throws
++                // invalid_iterator or is undefined behavior; refuse it as a
++                // malformed entry.
++                if (!models.at(model_type).is_object()) {
 +                    throw std::runtime_error("model '" + model_type + "' has no size variants");
 +                }
-+                std::string model_size = subset->begin().key();
+                 // get the first size in the subset
+                 std::string model_size = models.at(model_type).begin().key();
                  new_tag = model_type + ":" + model_size;
-             }
-             return new_tag;
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 5bf1621..90cd23d 100644
+index dd334599..0b463996 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -556,7 +556,15 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -569,7 +569,15 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
      // rectify_model_tag() indexes config by type: only safe for a supported tag.
      std::string ensure_tag = supported_models.cut_tag(model_tag);
      if (supported_models.is_model_supported(ensure_tag)) {
@@ -42,7 +37,7 @@ index 5bf1621..90cd23d 100644
      }
      // "model-faker" is the sentinel for `flm serve` started without a chat model,
      // and the handlers default `model` to current_model_tag -- so a request naming
-@@ -589,6 +597,30 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -606,6 +614,30 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
      try {
          auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
          family = info["details"]["family"];

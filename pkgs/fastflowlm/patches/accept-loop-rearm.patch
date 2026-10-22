@@ -1,8 +1,8 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 4248cbb..1990624 100644
+index 92b8eca8..245eda25 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -212,13 +212,22 @@ HttpSession::HttpSession(tcp::socket socket, WebServer& server)
+@@ -175,13 +175,22 @@ HttpSession::HttpSession(tcp::socket socket, WebServer& server)
      : socket_(std::move(socket))
      , server_(server)
      , is_streaming_(false) {
@@ -28,7 +28,7 @@ index 4248cbb..1990624 100644
  }
  
  ///@brief start
-@@ -635,9 +644,19 @@ void WebServer::do_accept() {
+@@ -598,9 +607,19 @@ void WebServer::do_accept() {
                      // Increment connection counter
                      active_connections_.fetch_add(1);
                      

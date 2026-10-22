@@ -1,8 +1,8 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 1990624..1a006e9 100644
+index b79ee486..ca736527 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -245,6 +245,37 @@ void HttpSession::release_slot() {
+@@ -223,6 +223,37 @@ void HttpSession::release_slot() {
      }
  }
  
@@ -40,7 +40,7 @@ index 1990624..1a006e9 100644
  ///@brief close connection
  void HttpSession::close_connection() {
      boost::system::error_code ec;
-@@ -349,9 +380,15 @@ void HttpSession::handle_request(bool cors) {
+@@ -327,9 +358,15 @@ void HttpSession::handle_request(bool cors) {
      if (!is_streaming_ && !deferred) {
          write_response();
      } else if (is_streaming_ && !deferred && !slot_released_.load()) {
@@ -60,10 +60,10 @@ index 1990624..1a006e9 100644
          // For streaming responses, we need to handle connection cleanup differently
          // The connection will be closed when streaming ends
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index 7e94db1..cef7a74 100644
+index d8f4519b..c037f47d 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -192,6 +192,7 @@ private:
+@@ -271,6 +271,7 @@ private:
      void send_chunk_data(const json& data, bool is_final);
      void start_client_disconnect_monitor(std::shared_ptr<CancellationToken> token);
      void release_slot();

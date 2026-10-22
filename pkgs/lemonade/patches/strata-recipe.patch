@@ -10,7 +10,7 @@
      "acestep|acestep"
 --- a/src/cpp/include/lemon/backends/strata/strata.h	1970-01-01 02:00:00.000000000 +0200
 +++ b/src/cpp/include/lemon/backends/strata/strata.h	2026-10-07 21:21:54.721212418 +0300
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,49 @@
 +#pragma once
 +
 +#include "lemon/backends/backend_descriptor.h"
@@ -39,12 +39,11 @@
 +         "Custom arguments to pass to the Strata shim", "Strata Options"},
 +    },
 +    /*support*/ {
-+        {"rocm", {"linux"}, {{"amd_gpu", {"gfx1151"}}}, "Strata shim for AMD Strix Halo"},
++        {"rocm", BackendTier::Experimental, BackendFormat::Native, {"linux"}, {{"amd_gpu", {"gfx1151"}}}, "Strata shim for AMD Strix Halo"},
 +    },
 +    /*supported_modes*/ {"chat"},
 +    /*required_checkpoints*/ {"main"},
 +    /*default_capabilities*/ {},
-+    /*experimental*/    true,
 +    /*web_display_name*/ "",
 +    /*rocm_channels*/   {},  // single rocm artifact, no stable/nightly channels
 +    /*exposes_prometheus_metrics*/ false,
@@ -63,7 +62,7 @@
 +}  // namespace lemon
 --- a/src/cpp/include/lemon/backends/strata/strata_server.h	1970-01-01 02:00:00.000000000 +0200
 +++ b/src/cpp/include/lemon/backends/strata/strata_server.h	2026-10-07 21:21:54.721212418 +0300
-@@ -0,0 +1,40 @@
+@@ -0,0 +1,38 @@
 +#pragma once
 +
 +#include "lemon/wrapped_server.h"
@@ -84,11 +83,9 @@
 +    static InstallParams get_install_params(const std::string& backend, const std::string& version);
 +    StrataServer(const std::string& log_level, ModelManager* model_manager,
 +                 BackendManager* backend_manager);
-+    ~StrataServer() override;
 +
 +    void load(const std::string& model_name, const ModelInfo& model_info,
 +              const RecipeOptions& options, bool do_not_upgrade = false) override;
-+    void unload() override;
 +
 +    json chat_completion(const json& request) override;
 +    json completion(const json& request) override;
@@ -106,7 +103,7 @@
 +}  // namespace lemon
 --- a/src/cpp/server/backends/strata/strata_server.cpp	1970-01-01 02:00:00.000000000 +0200
 +++ b/src/cpp/server/backends/strata/strata_server.cpp	2026-10-07 21:39:16.155123188 +0300
-@@ -0,0 +1,178 @@
+@@ -0,0 +1,161 @@
 +#include "lemon/backends/strata/strata_server.h"
 +#include "lemon/backends/strata/strata.h"
 +#include "lemon/backends/backend_registry.h"
@@ -115,7 +112,6 @@
 +#include "lemon/model_manager.h"
 +#include "lemon/utils/custom_args.h"
 +#include "lemon/utils/http_client.h"
-+#include "lemon/utils/process_manager.h"
 +#include <lemon/utils/aixlog.hpp>
 +#include <filesystem>
 +#include <set>
@@ -164,10 +160,6 @@
 +StrataServer::StrataServer(const std::string& log_level, ModelManager* model_manager,
 +                           BackendManager* backend_manager)
 +    : WrappedServer("strata-lemond-shim", log_level, model_manager, backend_manager) {
-+}
-+
-+StrataServer::~StrataServer() {
-+    unload();
 +}
 +
 +void StrataServer::load(const std::string& model_name, const ModelInfo& model_info,
@@ -230,29 +222,17 @@
 +    LOG(INFO, "Strata") << "Starting strata-lemond-shim (" << executable << ") for " << gguf_path
 +                        << " on port " << port_ << std::endl;
 +
-+    const bool inherit_output = (log_level_ == "info") || (log_level_ == "debug");
-+    set_process_handle(
-+        ProcessManager::start_process(executable, args, "", inherit_output, true),
-+        executable, args);
-+
++    ServerCommand command;
++    command.program = executable;
++    command.args = std::move(args);
++    command.port = port_;
 +    // The shim binds its port only after the engine has loaded the model, so
 +    // first reachability means ready. /v1/models is the cheapest always-on route.
-+    if (!wait_for_ready("/v1/models", kStrataReadinessTimeoutSeconds)) {
-+        const ProcessHandle handle = consume_process_handle_for_cleanup();
-+        if (has_process_handle(handle)) {
-+            ProcessManager::stop_process(handle);
-+        }
-+        throw std::runtime_error("strata-lemond-shim failed to start within timeout");
-+    }
-+}
++    command.ready_endpoint = "/v1/models";
 +
-+void StrataServer::unload() {
-+    stop_backend_watchdog();
-+    const ProcessHandle handle = consume_process_handle_for_cleanup();
-+    if (has_process_handle(handle)) {
-+        LOG(INFO, "Strata") << "Stopping strata-lemond-shim" << std::endl;
-+        ProcessManager::stop_process(handle);
-+    }
++    const bool inherit_output = (log_level_ == "info") || (log_level_ == "debug");
++    start_server(std::make_unique<NativeProcess>(ProcessOutput{inherit_output, true}), command,
++                 kStrataReadinessTimeoutSeconds);
 +}
 +
 +json StrataServer::chat_completion(const json& request) {

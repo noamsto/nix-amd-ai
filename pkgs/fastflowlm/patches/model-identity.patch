@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 6500795..111bdc1 100644
+index fd9d4bc5..7187f709 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -48,6 +48,34 @@ static json require_field(const json& request, const char* field, RequiredFieldT
+@@ -63,6 +63,34 @@ static json require_field(const json& request, const char* field, RequiredFieldT
      return json();
  }
  
@@ -37,7 +37,7 @@ index 6500795..111bdc1 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -389,8 +417,9 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -404,8 +432,9 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
              header_print("Warning", "Default model tag '" << default_model_tag << "' is not supported. Falling back to 'llama3.2:1b'.");
              this->default_model_tag = "llama3.2:1b";
          }
@@ -48,18 +48,26 @@ index 6500795..111bdc1 100644
          }
      }
      else {
-@@ -405,47 +434,115 @@ RestHandler::~RestHandler() = default;
+@@ -420,71 +449,128 @@ RestHandler::~RestHandler() = default;
  
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
--bool RestHandler::ensure_model_loaded(const std::string& model_tag) {
--    std::string ensure_tag = model_tag;
--    if (current_model_tag != ensure_tag) {
--        std::this_thread::sleep_for(std::chrono::milliseconds(500));
--        if (auto_chat_engine != nullptr) {
--            auto_chat_engine.reset();
+-bool RestHandler::ensure_model_loaded(const std::string& model_tag,
+-                                      const std::string& request_backend) {
+-    // Refuse a name the catalog does not have before anything resolves it;
+-    // an unknown name used to load a substitute model (and on aie_next could
+-    // end the process). Checked after rectify_model_tag, as get_model_info
+-    // does, so "Ollama/<tag>" and bare family names still resolve.
+-    // "model-faker" means no model was chosen.
+-    if (model_tag != "model-faker" &&
+-        !supported_models.is_model_supported(
+-            supported_models.rectify_model_tag(model_tag))) {
+-        header_print_r("ERROR", "Model tag '" << model_tag
+-            << "' is not supported. Please check with `flm list`.");
+-        return false;
 +///@param model_field_present whether the request actually carried a "model" key
-+RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model_tag, bool model_field_present) {
++RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model_tag, bool model_field_present,
++                                                        const std::string& request_backend) {
 +    // current_model_tag holds the rectified tag, so a prefixed ("Ollama/x:1b") or
 +    // bare ("x") spelling of the loaded model must be normalised to compare equal.
 +    // rectify_model_tag() indexes config by type: only safe for a supported tag.
@@ -75,11 +83,22 @@ index 6500795..111bdc1 100644
 +            header_print("ERROR", "request set 'model' to '" + ensure_tag +
 +                                  "', which is not a model name -- refusing");
 +            return ModelLoad::Unknown;
-         }
--        std::pair<std::string, std::unique_ptr<AutoModel>> auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
++        }
 +        return auto_chat_engine ? ModelLoad::Ok : ModelLoad::NoModel;
-+    }
-+    if (ensure_tag == current_model_tag && auto_chat_engine) {
+     }
+-
+     // A per-request "backend" overrides --backend; either one differing from
+     // what is loaded forces a reload, exactly as a different model tag does.
+     const std::string requested_backend =
+         request_backend.empty() ? this->backend : request_backend;
+-    std::string ensure_tag = model_tag;
+-    if (current_model_tag != ensure_tag || current_backend != requested_backend) {
+-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+-        if (auto_chat_engine != nullptr) {
+-            auto_chat_engine.reset();
+-        }
+-        std::pair<std::string, std::unique_ptr<AutoModel>> auto_model = get_auto_model(ensure_tag, this->supported_models, this->npu_device_inst);
++    if (ensure_tag == current_model_tag && current_backend == requested_backend && auto_chat_engine) {
 +        return ModelLoad::Ok;
 +    }
 +    // Checked BEFORE anything is unloaded: a request for a model that does not
@@ -110,7 +129,7 @@ index 6500795..111bdc1 100644
 +        return ModelLoad::NotChatModel;
 +    }
 +
-+    if (downloader.is_model_downloaded(ensure_tag) == ModelDownloader::ModelStatus::Incompatible) {
++    if (downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true) == ModelDownloader::ModelStatus::Incompatible) {
 +        header_print("ERROR", "model '" + ensure_tag + "' is not compatible with this version of FastFlowLM -- refusing; '" +
 +                              current_model_tag + "' stays loaded");
 +        return ModelLoad::LoadFailed;
@@ -124,11 +143,11 @@ index 6500795..111bdc1 100644
 +    // a family the build does not know is the same server-side config fault.
 +    std::pair<std::string, std::unique_ptr<AutoModel>> auto_model;
 +    try {
-+        auto_model = get_auto_model(ensure_tag, this->supported_models, &this->npu_device_inst);
++        auto_model = get_auto_model(ensure_tag, this->supported_models, this->npu_device_inst);
          auto_chat_engine = std::move(auto_model.second);
          auto_chat_engine->set_server_mode(true);
          ensure_tag = auto_model.first;
--        switch (downloader.is_model_downloaded(ensure_tag)) {
+-        switch (downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true)) {
 -            case ModelDownloader::ModelStatus::Ready:
 -                break;
 -            case ModelDownloader::ModelStatus::Outdated:
@@ -141,7 +160,9 @@ index 6500795..111bdc1 100644
 -        auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
 -        auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
 -        try {
--            auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption);
+-            const auto load_started = std::chrono::steady_clock::now();
+-            auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption, requested_backend);
+-            report_load_time(load_started);
 -        }
 -        catch (const std::exception& e) {
 -            header_print("ERROR", "Failed to load model: " + std::string(e.what()));
@@ -149,12 +170,13 @@ index 6500795..111bdc1 100644
 +    catch (const std::exception& e) {
 +        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
 +        this->auto_chat_engine.reset();
-+        this->npu_device_inst.reset();
-+        this->npu_device_inst = flm_rt::device(0);
++        // The device is owned by main() and shared with every engine, so it
++        // is deliberately left alone here; releasing the failed engine is
++        // what frees the hardware context.
 +        this->current_model_tag = "model-faker";
 +        return ModelLoad::LoadFailed;
 +    }
-+    switch (downloader.is_model_downloaded(ensure_tag)) {
++    switch (downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true)) {
 +        case ModelDownloader::ModelStatus::Ready:
 +            break;
 +        case ModelDownloader::ModelStatus::Outdated:
@@ -163,8 +185,9 @@ index 6500795..111bdc1 100644
 +            break;
 +        case ModelDownloader::ModelStatus::Incompatible:
              this->auto_chat_engine.reset();
--            this->npu_device_inst.reset();
--            this->npu_device_inst = flm_rt::device(0);
+-            // The device is owned by main() and shared with every engine, so it
+-            // is deliberately left alone here; releasing the failed engine is
+-            // what frees the hardware context.
              this->current_model_tag = "model-faker";
 -            return false;
 +            return ModelLoad::LoadFailed;
@@ -174,16 +197,20 @@ index 6500795..111bdc1 100644
 -            this->prefill_chunk_len = model_info["max_prefill_len"].get<int>();;
 -        }
 -        current_model_tag = ensure_tag;
+-        current_backend = requested_backend;
 +    auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
 +    auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
 +    try {
-+        auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption);
++        const auto load_started = std::chrono::steady_clock::now();
++        auto_chat_engine->load_model(supported_models.get_model_path(new_ensure_tag), model_info, ctx_length, preemption, requested_backend);
++        report_load_time(load_started);
 +    }
 +    catch (const std::exception& e) {
 +        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
 +        this->auto_chat_engine.reset();
-+        this->npu_device_inst.reset();
-+        this->npu_device_inst = flm_rt::device(0);
++        // The device is owned by main() and shared with every engine, so it
++        // is deliberately left alone here; releasing the failed engine is
++        // what frees the hardware context.
 +        this->current_model_tag = "model-faker";
 +        return ModelLoad::LoadFailed;
 +    }
@@ -193,30 +220,34 @@ index 6500795..111bdc1 100644
      }
 -    return true;
 +    current_model_tag = ensure_tag;
++    current_backend = requested_backend;
 +    return ModelLoad::Ok;
  }
  
++
  ///@brief Ensure the asr model is loaded
-@@ -691,9 +788,8 @@ void RestHandler::handle_generate(const json& request,
+ ///@param model_tag the model tag
+ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
+@@ -729,9 +815,8 @@ void RestHandler::handle_generate(const json& request,
          int length_limit = request.value("max_tokens", 4096);
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
--        if (!ensure_model_loaded(model)) {
+-        if (!ensure_model_loaded(model, request_backend)) {
 -            json error_response = {{"error", "Failed to load " + model + " model!"}};
 -            send_response(error_response);
-+        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model")); why != ModelLoad::Ok) {
++        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model"), request_backend); why != ModelLoad::Ok) {
 +            send_response(model_error(why, model));
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -808,13 +904,12 @@ void RestHandler::handle_chat(const json& request,
+@@ -852,13 +937,12 @@ void RestHandler::handle_chat(const json& request,
          int length_limit = options.value("num_predict", 4096);
  
          auto load_start_time = time_utils::now();
--        if (!ensure_model_loaded(model)) {
+-        if (!ensure_model_loaded(model, request_backend)) {
 -            json error_response = {{"error", "Failed to load " + model + " model!"}};
 -            send_response(error_response);
-+        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model")); why != ModelLoad::Ok) {
++        if (const ModelLoad why = ensure_model_loaded(model, request.contains("model"), request_backend); why != ModelLoad::Ok) {
 +            send_response(model_error(why, model));
              return;
          }
@@ -226,7 +257,7 @@ index 6500795..111bdc1 100644
          configure_chat_engine_parameters(options, request);
  
          // messages = normalize_messages(messages);
-@@ -919,6 +1014,17 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -965,6 +1049,17 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -244,7 +275,7 @@ index 6500795..111bdc1 100644
          if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
              send_response(err);
              return;
-@@ -932,6 +1038,24 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -978,6 +1073,24 @@ void RestHandler::handle_embeddings(const json& request,
              return;
          }
          std::string model = request["model"].get<std::string>();
@@ -269,7 +300,7 @@ index 6500795..111bdc1 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1176,9 +1300,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1222,9 +1335,8 @@ void RestHandler::handle_openai_chat_completion(const json& request,
          }
  
          auto load_start_time = time_utils::now();
@@ -281,7 +312,7 @@ index 6500795..111bdc1 100644
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1233,7 +1356,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1279,7 +1391,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
              }
          }
  
@@ -290,7 +321,7 @@ index 6500795..111bdc1 100644
              current_messages = convert_tool_responses_gemma4(current_messages);
          }
  
-@@ -1472,16 +1595,10 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -1538,16 +1650,10 @@ void RestHandler::handle_openai_completion(const json& request,
          bool stream = request.value("stream", false);
          json options = request.value("options", json::object());
  
@@ -310,7 +341,7 @@ index 6500795..111bdc1 100644
          }
  
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
-index 69256de..b904bf8 100644
+index 83730a98..5307a842 100644
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
 @@ -34,6 +34,10 @@ using StreamResponseCallback = std::function<void(const json&, bool)>; // data,
@@ -321,23 +352,25 @@ index 69256de..b904bf8 100644
 +    // LoadFailed is ours and answers 500.
 +    enum class ModelLoad { Ok, Unknown, NotChatModel, NoModel, LoadFailed };
 +
-     RestHandler(model_list& models, ModelDownloader& downloader, program_args_t& args);
+     RestHandler(model_list& models, ModelDownloader& downloader, program_args_t& args,
+                 flm_rt::device* npu_device);
      ~RestHandler();
- 
-@@ -108,7 +112,7 @@ public:
+@@ -109,8 +113,8 @@ public:
          std::shared_ptr<CancellationToken> cancellation_token = nullptr);
  
  private:
--    bool ensure_model_loaded(const std::string& model_tag);
-+    ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false);
+-    bool ensure_model_loaded(const std::string& model_tag,
+-                             const std::string& request_backend = "");
++    ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false,
++                                  const std::string& request_backend = "");
      void ensure_asr_model_loaded(const std::string& model_tag);
      void ensure_embed_model_loaded(const std::string& model_tag);
      void configure_chat_engine_parameters(const json& options, const json& request);
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 2c7d363..d0c4176 100644
+index e0fda448..7685c5fc 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -792,12 +792,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -728,12 +728,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
  
              // `code` can be a STRING ("missing_required_parameter",
              // "invalid_value") or absent entirely; only a numeric code is

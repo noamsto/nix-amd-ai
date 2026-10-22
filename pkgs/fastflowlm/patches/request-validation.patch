@@ -1,8 +1,10 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 8fc9180d..fd9d4bc5 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -20,6 +20,34 @@
- #include <random>
- #include "server.hpp"
+@@ -35,6 +35,34 @@ json ExceptionResponse(const std::exception& error) {
+ }
+ }
  
 +// request["field"] on a const json& is undefined behavior when the key is
 +// missing (JSON_ASSERT is compiled out in release builds): it segfaults or
@@ -35,7 +37,7 @@
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -600,7 +628,11 @@
+@@ -646,7 +674,11 @@ void RestHandler::handle_show(const json& request,
      std::function<void(const json&)> send_response,
      StreamResponseCallback send_streaming_response) {
      try {
@@ -48,7 +50,7 @@
          json info = {
              {"modelfile", ""},
              {"parameters", ""},
-@@ -638,7 +670,11 @@
+@@ -684,7 +716,11 @@ void RestHandler::handle_generate(const json& request,
                                   StreamResponseCallback send_streaming_response,
                                   std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -60,8 +62,8 @@
 +        std::string prompt = request["prompt"].get<std::string>();
          bool stream = request.value("stream", true);
          std::string model = request.value("model", current_model_tag);
-         json options = request.value("options", json::object());
-@@ -752,6 +788,10 @@
+         const std::string request_backend = request.value("backend", std::string());
+@@ -804,6 +840,10 @@ void RestHandler::handle_chat(const json& request,
                               StreamResponseCallback send_streaming_response,
                               std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -72,7 +74,7 @@
          nlohmann::ordered_json messages = request["messages"];
          bool stream = request.value("stream", false);
          std::string model = request.value("model", current_model_tag);
-@@ -870,7 +910,19 @@
+@@ -925,7 +965,19 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -93,7 +95,7 @@
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1090,6 +1142,10 @@
+@@ -1145,6 +1197,10 @@ void RestHandler::handle_openai_chat_completion(const json& request,
                                                 std::shared_ptr<CancellationToken> cancellation_token) {
      static std::string model_used_for_last_message = "model-faker";
      try {
@@ -104,7 +106,7 @@
          // Extract OpenAI-style parameters
          json current_messages = request["messages"];
          std::string model = request.value("model", current_model_tag);
-@@ -1364,8 +1420,12 @@
+@@ -1471,8 +1527,12 @@ void RestHandler::handle_openai_completion(const json& request,
      StreamResponseCallback send_streaming_response,
      std::shared_ptr<CancellationToken> cancellation_token) {
      try {

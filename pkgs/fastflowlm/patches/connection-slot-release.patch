@@ -1,8 +1,8 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 31c3c1c..4248cbb 100644
+index f9d5a9f1..92b8eca8 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -226,6 +226,16 @@ void HttpSession::start(bool cors) {
+@@ -189,6 +189,16 @@ void HttpSession::start(bool cors) {
      read_request(cors);
  }
  
@@ -19,7 +19,7 @@ index 31c3c1c..4248cbb 100644
  ///@brief close connection
  void HttpSession::close_connection() {
      boost::system::error_code ec;
-@@ -237,7 +247,7 @@ void HttpSession::close_connection() {
+@@ -200,7 +210,7 @@ void HttpSession::close_connection() {
          header_print("🔒 ", "TCP connection closing - Remote endpoint unavailable");
      }
      socket_.shutdown(tcp::socket::shutdown_both, ec);
@@ -28,7 +28,7 @@ index 31c3c1c..4248cbb 100644
  }
  
  ///@brief read request
-@@ -278,7 +288,7 @@ void HttpSession::read_request(bool cors) {
+@@ -241,7 +251,7 @@ void HttpSession::read_request(bool cors) {
              } catch (...) {
                  header_print("🔒 ", "TCP connection closed - Remote endpoint unavailable");
              }
@@ -37,7 +37,7 @@ index 31c3c1c..4248cbb 100644
          });
  }
  
-@@ -304,6 +314,7 @@ void HttpSession::handle_request(bool cors) {
+@@ -267,6 +277,7 @@ void HttpSession::handle_request(bool cors) {
          http::async_write(socket_, *options_res,
              [self, cors, options_res](beast::error_code ec, std::size_t) {
                  if (ec) {
@@ -45,7 +45,7 @@ index 31c3c1c..4248cbb 100644
                      return;
                  }
                  // waiting the true response
-@@ -328,6 +339,10 @@ void HttpSession::handle_request(bool cors) {
+@@ -291,6 +302,10 @@ void HttpSession::handle_request(bool cors) {
  
      if (!is_streaming_ && !deferred) {
          write_response();
@@ -56,7 +56,7 @@ index 31c3c1c..4248cbb 100644
      } else {
          // For streaming responses, we need to handle connection cleanup differently
          // The connection will be closed when streaming ends
-@@ -366,8 +381,7 @@ void HttpSession::write_response() {
+@@ -329,8 +344,7 @@ void HttpSession::write_response() {
      http::async_write(socket_, res_,
          [self](beast::error_code ec, std::size_t) {
              self->socket_.shutdown(tcp::socket::shutdown_both, ec);
@@ -66,7 +66,7 @@ index 31c3c1c..4248cbb 100644
              try {
                  header_print("🔒 ", "TCP connection closed - Remote: " + self->socket_.remote_endpoint().address().to_string() + ":" + std::to_string(self->socket_.remote_endpoint().port()));
              }
-@@ -452,7 +466,10 @@ void HttpSession::write_streaming_response(const json& data, bool is_final) {
+@@ -415,7 +429,10 @@ void HttpSession::write_streaming_response(const json& data, bool is_final) {
          // Send headers synchronously
          boost::system::error_code ec;
          net::write(socket_, net::buffer(headers), ec);
@@ -78,7 +78,7 @@ index 31c3c1c..4248cbb 100644
      }
      
      // Send this chunk immediately
-@@ -505,8 +522,9 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
+@@ -468,8 +485,9 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
              cancellation_token_->cancel(); 
          }
  
@@ -90,7 +90,7 @@ index 31c3c1c..4248cbb 100644
  
          boost::system::error_code ignore_ec;
          socket_.close(ignore_ec);
-@@ -519,8 +537,7 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
+@@ -482,8 +500,7 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
          net::write(socket_, net::buffer(final_chunk), ec);
          header_print("🔒 ", "Closing TCP connection (streaming, non-keep-alive)");
          socket_.shutdown(tcp::socket::shutdown_both, ec);
@@ -101,10 +101,10 @@ index 31c3c1c..4248cbb 100644
  }
  
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index 910c588..7e94db1 100644
+index 0483c1b6..d8f4519b 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -191,6 +191,7 @@ private:
+@@ -270,6 +270,7 @@ private:
      void write_response();
      void send_chunk_data(const json& data, bool is_final);
      void start_client_disconnect_monitor(std::shared_ptr<CancellationToken> token);
@@ -112,7 +112,7 @@ index 910c588..7e94db1 100644
      
      ///@brief socket
      tcp::socket socket_;
-@@ -207,6 +208,8 @@ private:
+@@ -286,6 +287,8 @@ private:
      ///@brief stream buffer
      std::shared_ptr<streaming_buf> stream_buf_;
      std::shared_ptr<CancellationToken> cancellation_token_;

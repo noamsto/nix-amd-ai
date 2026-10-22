@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 1990624..cc5ea7f 100644
+index 1c15cf38..b79ee486 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -13,6 +13,8 @@
@@ -28,10 +28,10 @@ index 1990624..cc5ea7f 100644
 +    return id;
 +}
 +
- // Releases the NPU lock exactly once per held acquisition, regardless of
- // which exit path process_task takes, including an exception that escapes
- // every catch in process_task uncaught (WebServer::start() wraps ioc.run()
-@@ -814,13 +829,13 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+ // NPU Access Manager implementation
+ bool NPUAccessManager::try_acquire_npu_access() {
+     std::lock_guard<std::mutex> lock(g_npu_access_mutex);
+@@ -765,13 +780,13 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              return;
          }
  

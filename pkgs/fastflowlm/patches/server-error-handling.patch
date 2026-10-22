@@ -1,6 +1,8 @@
+diff --git a/src/server/server.cpp b/src/server/server.cpp
+index 471010b6..e0fda448 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -129,6 +129,38 @@
+@@ -129,6 +129,16 @@ void brief_print_message_response(nlohmann::json request) {
  
  }
  
@@ -14,32 +16,10 @@
 +    return j.dump(-1, ' ', false, json::error_handler_t::replace);
 +}
 +
-+// Releases the NPU lock exactly once per held acquisition, regardless of
-+// which exit path process_task takes, including an exception that escapes
-+// every catch in process_task uncaught (WebServer::start() wraps ioc.run()
-+// in a try/catch per I/O thread, so that doesn't crash the process, but it
-+// skips a manually-placed release call and wedges the NPU the same way).
-+// Takes a closure rather than a WebServer* + method, since this struct is
-+// not a member or friend of WebServer and process_next_npu_request() is
-+// private.
-+struct NpuReleaseGuard {
-+    std::function<void()> release_fn;
-+    bool needs_npu;
-+    std::atomic<bool> released{false};
-+    NpuReleaseGuard(std::function<void()> release_fn, bool needs_npu)
-+        : release_fn(std::move(release_fn)), needs_npu(needs_npu) {}
-+    void release() {
-+        if (needs_npu && !released.exchange(true)) {
-+            release_fn();
-+        }
-+    }
-+    ~NpuReleaseGuard() { release(); }
-+};
-+
  // NPU Access Manager implementation
  bool NPUAccessManager::try_acquire_npu_access() {
      std::lock_guard<std::mutex> lock(g_npu_access_mutex);
-@@ -440,8 +472,12 @@
+@@ -427,8 +437,12 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
              chunk_content = data_str;
          }
      } else {
@@ -54,7 +34,7 @@
      }
      
      // std::cout << "Chunk: " << chunk_content;
-@@ -667,7 +703,7 @@
+@@ -632,7 +646,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
      if (it == routes.end()) {
          // No route: respond 404 synchronously.
          res.result(http::status::not_found);
@@ -63,19 +43,7 @@
          res.set(http::field::content_type, is_json ? "application/json" : "multipart/form-data");
          res.prepare_payload();
          return false; 
-@@ -685,35 +721,59 @@
-         auto& req_ref = *req_ptr;
-         auto& res_ref = *res_ptr;
- 
-+        // Constructed only once process_task actually runs (not in
-+        // handle_request above), so it never fires for the queue-full 503
-+        // path, which returns before process_task is ever called.
-+        auto npu_guard = std::make_shared<NpuReleaseGuard>(
-+            [this] { this->process_next_npu_request(); }, needs_npu);
-+
-         // Parse JSON request body
-         json request_json;
-         try {
+@@ -659,14 +673,14 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              if (!req_ref.body().empty()) {
                  if(is_json)
                      request_json = json::parse(req_ref.body());
@@ -92,16 +60,7 @@
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-             // Only write from callback when deferred
-             if (is_deferred && session) session->write_response_from_callback();
- 
--            if (needs_npu) {
--                this->process_next_npu_request();
--            }
-+            npu_guard->release();
-             return;
-         }
- 
+@@ -678,6 +692,24 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          auto cancellation_token = std::make_shared<CancellationToken>(session);
          session->set_cancellation_token(cancellation_token);
  
@@ -120,22 +79,19 @@
 +            res_ref.prepare_payload();
 +
 +            if (is_deferred && session) session->write_response_from_callback();
-+
-+            npu_guard->release();
 +            return;
 +        }
 +
          std::string request_id;
          if (request_json.contains("request_id")) {
              request_id = request_json["request_id"];
-@@ -725,41 +785,42 @@
+@@ -689,25 +721,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
  
          register_active_request(request_id, cancellation_token);
  
 -        // catch is_deferred 
--        auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
 +        // catch is_deferred
-+        auto send_response = [res_ptr, session, this, request_id, npu_guard, is_deferred, cancellation_token](const json& response_data) {
+         auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
              auto& response_ref = *res_ptr;
              http::status status = http::status::ok;
  
@@ -146,6 +102,8 @@
 -
 -                if (code == 400) {
 -                    status = http::status::bad_request;
+-                } else if (code == 500) {
+-                    status = http::status::internal_server_error;
 +            // `code` can be a STRING ("missing_required_parameter",
 +            // "invalid_value") or absent entirely; only a numeric code is
 +            // trusted, anything else defaults to 400.
@@ -158,9 +116,6 @@
 +                if (code >= 400 && code <= 599) {
 +                    status = static_cast<http::status>(code);
                  }
--                //else if () {
--
--                //}
              }
  
              response_ref.result(status);
@@ -171,34 +126,7 @@
              response_ref.set(http::field::content_type, "application/json");
              response_ref.prepare_payload();
              cancellation_token->complete();
-             unregister_active_request(request_id);
- 
--            if (needs_npu) {
--                this->process_next_npu_request();
--            }
-+            npu_guard->release();
- 
-             if (is_deferred && session) {
-                 session->write_response_from_callback();
-             }
-         };
- 
--        auto send_streaming_response = [session, this, request_id, needs_npu, cancellation_token](const json& data, bool is_final) {
-+        auto send_streaming_response = [session, this, request_id, npu_guard, cancellation_token](const json& data, bool is_final) {
-             if (is_final) {
-                 cancellation_token->complete();
-             }
-@@ -770,27 +831,42 @@
-             if (is_final) {
-                 unregister_active_request(request_id);
- 
--                if (needs_npu) {
--                    this->process_next_npu_request();
--                }
-+                npu_guard->release();
-             }
-         };
- 
+@@ -734,12 +770,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          try {
              it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
          }
@@ -215,8 +143,6 @@
 +            res_ref.set(http::field::content_type, "application/json");
 +            res_ref.prepare_payload();
 +
-+            npu_guard->release();
-+
 +            if (is_deferred && session) {
 +                session->write_response_from_callback();
 +            }
@@ -231,14 +157,7 @@
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
--            if (needs_npu) {
--                this->process_next_npu_request();
--            }
-+            npu_guard->release();
- 
-             if (is_deferred && session) {
-                 session->write_response_from_callback();
-@@ -801,13 +877,11 @@
+@@ -752,7 +805,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              unregister_active_request(request_id);
  
              res_ref.result(http::status::internal_server_error);
@@ -247,20 +166,15 @@
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
--            if (needs_npu) {
--                this->process_next_npu_request();
--            }
-+            npu_guard->release();
- 
-             if (is_deferred && session) {
-                 session->write_response_from_callback();
-@@ -836,9 +910,9 @@
- 
-     if (npu_request_queue_.size() >= max_npu_queue_) {
+@@ -782,11 +835,11 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             process_task(true);
+         })) {
          res.result(http::status::service_unavailable);
 -        res.body() = json{
 +        res.body() = safe_dump(json{
-             {"error", "NPU is in use and request queue is full (limit: " + std::to_string(max_npu_queue_) + "). Please try again later."}
+             {"error", "NPU is in use and request queue is full (limit: " +
+                 std::to_string(npu_request_coordinator_.capacity()) +
+                 "). Please try again later."}
 -        }.dump();
 +        });
          res.set(http::field::content_type, "application/json");

@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 2aed49d..a03414f 100644
+index 8e8c9725..5145f804 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -533,6 +533,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -545,6 +545,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
  ///@return the rest handler
  RestHandler::~RestHandler() = default;
  
@@ -23,7 +23,7 @@ index 2aed49d..a03414f 100644
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
  ///@param model_field_present whether the request actually carried a "model" key
-@@ -592,6 +606,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -609,6 +623,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
          return ModelLoad::LoadFailed;
      }
  
@@ -31,15 +31,15 @@ index 2aed49d..a03414f 100644
      std::this_thread::sleep_for(std::chrono::milliseconds(500));
      if (auto_chat_engine != nullptr) {
          auto_chat_engine.reset();
-@@ -642,6 +657,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -663,6 +678,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
          return ModelLoad::LoadFailed;
      }
  
 +    publish_serving_chat_tag(ensure_tag);
      current_model_tag = ensure_tag;
+     current_backend = requested_backend;
      return ModelLoad::Ok;
- }
-@@ -1337,14 +1353,16 @@ void RestHandler::handle_ps(const json& request,
+@@ -1375,14 +1391,16 @@ void RestHandler::handle_ps(const json& request,
          std::string expires_at = expires_ss.str();
          
          json models = json::array();
@@ -64,7 +64,7 @@ index 2aed49d..a03414f 100644
                  {"details", model_info["details"]},
                  {"expires_at", expires_at},
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
-index b904bf8..fdc305b 100644
+index 5307a842..fe88fcad 100644
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
 @@ -22,6 +22,7 @@
@@ -75,16 +75,16 @@ index b904bf8..fdc305b 100644
  #include "prompt_cache.hpp"
  
  using json = nlohmann::ordered_json;
-@@ -113,6 +114,8 @@ public:
- 
+@@ -115,6 +116,8 @@ public:
  private:
-     ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false);
+     ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false,
+                                   const std::string& request_backend = "");
 +    void publish_serving_chat_tag(std::string tag);
 +    std::string serving_chat_tag_snapshot() const;
      void ensure_asr_model_loaded(const std::string& model_tag);
      void ensure_embed_model_loaded(const std::string& model_tag);
      void configure_chat_engine_parameters(const json& options, const json& request);
-@@ -128,6 +131,11 @@ private:
+@@ -132,6 +135,11 @@ private:
      model_list& supported_models;
      ModelDownloader& downloader;
      std::string current_model_tag;
@@ -96,59 +96,15 @@ index b904bf8..fdc305b 100644
      std::string default_model_tag;
      bool modelscope;
      bool asr;
-diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 1d903c5..31c3c1c 100644
---- a/src/server/server.cpp
-+++ b/src/server/server.cpp
-@@ -197,6 +197,8 @@ bool requires_npu_access(const std::string& method, const std::string& path) {
-         return path == "/api/generate" || 
-                path == "/api/chat" || 
-                path == "/v1/chat/completions" ||
-+               path == "/v1/completions" ||
-+               path == "/api/embeddings" ||
-                path == "/v1/audio/transcriptions" ||
-                path == "/v1/embeddings";
-     }
-@@ -788,7 +790,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
-         register_active_request(request_id, cancellation_token);
+diff --git a/src/server/server.hpp b/src/server/server.hpp
+index 8d3d39d4..0483c1b6 100644
+--- a/src/server/server.hpp
++++ b/src/server/server.hpp
+@@ -52,6 +52,7 @@ inline bool requires_npu_access(const std::string& method, const std::string& pa
+     if (method != "POST") return false;
+     return path == "/api/generate" || path == "/api/chat" ||
+            path == "/v1/chat/completions" || path == "/v1/completions" ||
++           path == "/api/embeddings" ||
+            path == "/v1/audio/transcriptions" || path == "/v1/embeddings";
+ }
  
-         // catch is_deferred
--        auto send_response = [res_ptr, session, this, request_id, npu_guard, is_deferred, cancellation_token](const json& response_data) {
-+        auto send_response = [res_ptr, session, this, request_id, is_deferred, cancellation_token](const json& response_data) {
-             auto& response_ref = *res_ptr;
-             http::status status = http::status::ok;
- 
-@@ -818,14 +820,12 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
-             cancellation_token->complete();
-             unregister_active_request(request_id);
- 
--            npu_guard->release();
--
-             if (is_deferred && session) {
-                 session->write_response_from_callback();
-             }
-         };
- 
--        auto send_streaming_response = [session, this, request_id, npu_guard, cancellation_token](const json& data, bool is_final) {
-+        auto send_streaming_response = [session, this, request_id, cancellation_token](const json& data, bool is_final) {
-             if (is_final) {
-                 cancellation_token->complete();
-             }
-@@ -835,13 +835,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
-             }
-             if (is_final) {
-                 unregister_active_request(request_id);
--
--                npu_guard->release();
-             }
-         };
- 
-         try {
-             it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
-+            // Released only once the handler returns: handlers keep using the
-+            // chat engine after sending (clear_context, prompt_cache.reset),
-+            // and the next NPU request may swap it.
-+            npu_guard->release();
-         }
-         catch (const json::parse_error& e) {
-             // A route handler's own redundant json::parse(req.body()) throws
