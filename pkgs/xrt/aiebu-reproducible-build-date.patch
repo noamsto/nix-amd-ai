@@ -1,0 +1,35 @@
+diff --git a/src/runtime_src/core/common/aiebu/cmake/version.cmake b/src/runtime_src/core/common/aiebu/cmake/version.cmake
+index a266e83..1ed862e 100644
+--- a/src/runtime_src/core/common/aiebu/cmake/version.cmake
++++ b/src/runtime_src/core/common/aiebu/cmake/version.cmake
+@@ -96,15 +96,21 @@ string(REPLACE "\n" "," AIEBU_MODIFIED_FILES "${AIEBU_MODIFIED_FILES}")
+ 
+ endif(DEFINED ENV{DK_ROOT})
+ 
+-# Get the build date RFC format
+-execute_process(
+-  COMMAND date -R
+-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
+-  OUTPUT_VARIABLE AIEBU_DATE_RFC
+-  OUTPUT_STRIP_TRAILING_WHITESPACE
+-)
+-
+-string(TIMESTAMP AIEBU_DATE "%Y-%m-%d %H:%M:%S")
++# Upstream builds must be reproducible, matching the XRT_UPSTREAM handling in
++# XRT's own CMake/version.cmake. AIEBU_UPSTREAM is already propagated from
++# XRT_UPSTREAM by runtime_src/core/common/CMakeLists.txt, but the build date
++# was left unguarded, which makes libaiebu.a differ between identical builds.
++if (NOT AIEBU_UPSTREAM)
++  # Get the build date RFC format
++  execute_process(
++    COMMAND date -R
++    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
++    OUTPUT_VARIABLE AIEBU_DATE_RFC
++    OUTPUT_STRIP_TRAILING_WHITESPACE
++  )
++
++  string(TIMESTAMP AIEBU_DATE "%Y-%m-%d %H:%M:%S")
++endif()
+ 
+ set(AIEBU_BOOST_VERSION_STRING "${Boost_VERSION_STRING}")
+ set(AIEBU_CXX_COMPILER_ID "${CMAKE_CXX_COMPILER_ID}")

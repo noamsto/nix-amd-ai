@@ -37,6 +37,19 @@ stdenv.mkDerivation rec {
     fetchSubmodules = true;
   };
 
+  patches = [
+    # Make the /etc/os-release based distro detection overridable, so
+    # LINUX_FLAVOR and LINUX_VERSION can be passed in below. Without it both
+    # end up empty in the sandbox, which is a hard error in the unquoted
+    # `if (${LINUX_FLAVOR} ...)` conditions the build uses.
+    # https://github.com/Xilinx/XRT/pull/10071
+    ./allow-overriding-distro-detection.patch
+    # Honour AIEBU_UPSTREAM for the build date, which upstream guards for XRT
+    # itself but forgot for the bundled aiebu submodule.
+    # https://github.com/Xilinx/aiebu/pull/388
+    ./aiebu-reproducible-build-date.patch
+  ];
+
   # Python with packages needed by spec_tool.py during build
   pythonWithPackages = python312.withPackages (ps: [
     ps.pyyaml
@@ -89,6 +102,8 @@ stdenv.mkDerivation rec {
     # XRT_UPSTREAM_DEBIAN enables XRT_UPSTREAM which propagates to AIEBU_UPSTREAM
     # This disables static linking in aiebu tools
     "-DXRT_UPSTREAM_DEBIAN=ON"
+    "-DLINUX_FLAVOR=nixos"
+    "-DLINUX_VERSION=${lib.versions.majorMinor lib.version}"
     # Override install dirs to relative paths to prevent aiebu cmake path issues
     "-DCMAKE_INSTALL_LIBDIR=lib"
     "-DCMAKE_INSTALL_BINDIR=bin"
@@ -99,51 +114,18 @@ stdenv.mkDerivation rec {
     "-DPython3_INCLUDE_DIR=${pythonWithPackages}/include/python3.12"
     "-DPython3_LIBRARY=${pythonWithPackages}/lib/libpython3.12.so"
     "-DPYTHON_EXECUTABLE=${pythonWithPackages}/bin/python3"
+    # aiebu's test/CMakeLists.txt guards its cmake-test behind AIEBU_SUBMODULE
+    # ("Whomever added this test, please make it work when AIEBU is built as a
+    # submodule from XRT"), but nothing in the XRT tree ever sets it, so the
+    # test is registered anyway and fails for want of a staging area. This is
+    # exactly the submodule build that guard is meant to cover.
+    "-DAIEBU_SUBMODULE=ON"
   ];
 
   postPatch = ''
     # Fix Python3 detection — /usr/bin/python3 doesn't exist in the Nix sandbox
     substituteInPlace src/python/pybind11/CMakeLists.txt \
       --replace-quiet '/usr/bin/python3' "${pythonWithPackages}/bin/python3" || true
-
-    # Remove kernel module references
-    substituteInPlace src/CMakeLists.txt \
-      --replace-quiet 'add_subdirectory(runtime_src/core/pcie/driver)' '#add_subdirectory(runtime_src/core/pcie/driver)' || true
-
-    # Fix hardcoded /usr/src DKMS install path
-    for f in src/CMake/version.cmake src/CMake/dkms.cmake src/CMake/dkms-edge.cmake; do
-      if [ -f "$f" ]; then
-        sed -i 's|/usr/src/xrt-|''${CMAKE_INSTALL_PREFIX}/share/xrt-dkms-src/xrt-|g' "$f"
-      fi
-    done
-    if [ -f src/CMake/dkms-aws.cmake ]; then
-      sed -i 's|/usr/src/xrt-aws-|''${CMAKE_INSTALL_PREFIX}/share/xrt-dkms-src/xrt-aws-|g' src/CMake/dkms-aws.cmake
-    fi
-
-    # Fix hardcoded /usr/local/bin install paths for xbflash tools
-    for f in src/runtime_src/core/tools/xbflash2/CMakeLists.txt src/runtime_src/core/pcie/tools/xbflash.qspi/CMakeLists.txt; do
-      if [ -f "$f" ]; then
-        sed -i 's|"/usr/local/bin"|"''${CMAKE_INSTALL_PREFIX}/bin"|g' "$f"
-      fi
-    done
-
-    # Fix /etc/OpenCL/vendors path for OpenCL ICD registration
-    if [ -f src/CMake/icd.cmake ]; then
-      sed -i 's|/etc/OpenCL/vendors|''${CMAKE_INSTALL_PREFIX}/etc/OpenCL/vendors|g' src/CMake/icd.cmake
-    fi
-
-    # Fix hardcoded /opt/xilinx/xrt in config_reader
-    substituteInPlace src/runtime_src/core/common/config_reader.cpp \
-      --replace-quiet '/opt/xilinx/xrt' '${placeholder "out"}/opt/xilinx/xrt' || true
-
-    # Fake /etc/os-release for the build
-    mkdir -p $TMPDIR/etc
-    echo 'ID=nixos' > $TMPDIR/etc/os-release
-    echo 'VERSION_ID="25.11"' >> $TMPDIR/etc/os-release
-
-    # Patch CMake scripts that try to read /etc/os-release
-    find . -name "*.cmake" -o -name "CMakeLists.txt" | xargs sed -i \
-      -e 's|/etc/os-release|'$TMPDIR'/etc/os-release|g' || true
 
     # Disable -Werror globally
     find . -name "CMakeLists.txt" -exec sed -i 's/-Werror//g' {} \; || true
@@ -181,6 +163,36 @@ STUBCMAKE
     # Fix shebangs for Python scripts
     patchShebangs --build src/runtime_src/core/common/aiebu/specification/
     patchShebangs --build src/runtime_src/core/common/aiebu/src/python/ || true
+    patchShebangs --build src/runtime_src/core/common/aiebu/test/
+  '';
+
+  # Most install destinations are relative to CMAKE_INSTALL_PREFIX already;
+  # only these three are absolute paths that would escape $out. Each rule is
+  # anchored on the opening quote, or on the } of the "$ENV{DESTDIR}/usr/..."
+  # paths the RPATH fixup after an install checks: rewriting only the former
+  # installs xbflash2 but skips its fixup, leaving a /build RPATH. Anchoring
+  # also keeps a rule from rewriting a destination an earlier rule has already
+  # redirected, and leaves the prefix-relative destinations untouched.
+  preInstall = ''
+    find . -name cmake_install.cmake -exec sed -i \
+      -e 's|\(["}]\)/usr/src|\1'"$out"'/opt/xilinx/xrt/share/xrt-dkms-src|g' \
+      -e 's|\(["}]\)/usr/local|\1'"$out"'/opt/xilinx/xrt|g' \
+      -e 's|\(["}]\)/etc/OpenCL|\1'"$out"'/opt/xilinx/xrt/etc/OpenCL|g' \
+      {} \;
+  '';
+
+  doCheck = true;
+
+  # Only the aiebu suite: it runs aiebu-asm over .asm fixtures and compares
+  # against checked-in .gold files, needing nothing but the build tree. XRT's
+  # own tests are not run - they want a staging install to source setup.sh
+  # from, python and the openssl CLI, and real hardware for xrt-smi/xbmgmt2.
+  checkPhase = ''
+    runHook preCheck
+    # The suite's python tools load libelf through ctypes.CDLL("libelf.so").
+    export LD_LIBRARY_PATH=${lib.getLib elfutils}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
+    ctest --test-dir runtime_src/core/common/aiebu --output-on-failure
+    runHook postCheck
   '';
 
   postInstall = ''
