@@ -5,6 +5,7 @@
   cmake,
   ninja,
   pkg-config,
+  jq,
   boost,
   curl,
   fftw,
@@ -18,16 +19,20 @@
   rustc,
   rustPlatform,
   autoPatchelfHook,
+  versionCheckHook,
   xrt,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
   version = "1.0.9";
 
+  __structuredAttrs = true;
+  strictDeps = true;
+
   src = fetchFromGitHub {
     owner = "ROCm";
     repo = "FastFlowLM";
-    rev = "v${finalAttrs.version}";
+    tag = "v${finalAttrs.version}";
     hash = "sha256-IzZTwdZHB2PsG6fTLxiiOy0K6b8DdXfP7aQYp2LxduQ=";
     fetchSubmodules = true;
   };
@@ -370,6 +375,7 @@ stdenv.mkDerivation (finalAttrs: {
 
   nativeBuildInputs = [
     cmake
+    jq
     ninja
     pkg-config
     cargo
@@ -397,39 +403,48 @@ stdenv.mkDerivation (finalAttrs: {
     cp ${./Cargo.lock} third_party/tokenizers-cpp/rust/Cargo.lock
   '';
 
-  dontUseCmakeConfigure = true;
+  # The source root stays at the top of the checkout for cargoRoot and the
+  # patches; the CMake project is in src/.
+  cmakeDir = "../src";
 
-  configurePhase = ''
-    runHook preConfigure
-    cmake -S src -B src/build \
-      -GNinja \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DFLM_VERSION="${finalAttrs.version}" \
-      -DNPU_VERSION="32.0.203.304" \
-      "-DXRT_INCLUDE_DIR=${xrt}/opt/xilinx/xrt/include" \
-      "-DXRT_LIB_DIR=${xrt}/opt/xilinx/xrt/lib" \
-      -DCMAKE_INSTALL_PREFIX=$out \
-      -DCMAKE_XCLBIN_PREFIX=$out/share/flm
-    runHook postConfigure
+  # XRT is found through its pkg-config file, so no XRT_INCLUDE_DIR/XRT_LIB_DIR.
+  cmakeFlags = [
+    (lib.cmakeFeature "FLM_VERSION" finalAttrs.version)
+    (lib.cmakeFeature "CMAKE_XCLBIN_PREFIX" "${placeholder "out"}/share/flm")
+    # The cmake setup hook passes these as absolute paths, but CMakeLists.txt
+    # joins CMAKE_INSTALL_LIBDIR onto $ORIGIN/.. for flm's RPATH. Single output,
+    # so the relative forms are equivalent.
+    # See https://github.com/NixOS/nixpkgs/issues/144170
+    (lib.cmakeFeature "CMAKE_INSTALL_BINDIR" "bin")
+    (lib.cmakeFeature "CMAKE_INSTALL_LIBDIR" "lib")
+  ];
+
+  # NPU_VERSION is the minimum AMD NPU driver version, kept in
+  # src/CMakePresets.json upstream. Currently only used on Windows.
+  preConfigure = ''
+    cmakeFlagsArray+=(
+      "-DNPU_VERSION=$(jq -er '
+        .configurePresets[]
+        | select(.name == "common-default")
+        | .cacheVariables.NPU_VERSION
+      ' src/CMakePresets.json)"
+    )
   '';
 
-  buildPhase = ''
-    runHook preBuild
-    ninja -C src/build
-    runHook postBuild
-  '';
-
-  installPhase = ''
-    runHook preInstall
-    ninja -C src/build install
-    runHook postInstall
-  '';
+  nativeInstallCheckInputs = [
+    versionCheckHook
+  ];
+  doInstallCheck = true;
 
   meta = {
     description = "NPU-optimized LLM runtime for AMD Ryzen AI";
     homepage = "https://github.com/ROCm/FastFlowLM";
+    changelog = "https://github.com/ROCm/FastFlowLM/releases/tag/${finalAttrs.src.tag}";
     # Source is MIT; the NPU kernels in share/flm are proprietary (see TERMS.md).
     license = [lib.licenses.mit lib.licenses.unfree];
+    # The prebuilt engine libraries (src/lib/xrt/*.so) are host code; the
+    # xclbins are NPU firmware.
+    sourceProvenance = with lib.sourceTypes; [fromSource binaryNativeCode binaryFirmware];
     platforms = ["x86_64-linux"];
     mainProgram = "flm";
   };
