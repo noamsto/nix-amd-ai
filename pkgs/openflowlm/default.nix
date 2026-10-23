@@ -117,7 +117,6 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   preConfigure = ''
-    export PKG_CONFIG_PATH="${xrt}/opt/xilinx/xrt/lib/pkgconfig''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
     # Upstream's OFLM_BUILD_KERNELS=ON exports into src/xclbins for
     # cmake --install to ship next to the tree's closed sets.
     cp -r ${finalAttrs.passthru.kernels}/xclbins/. src/xclbins/

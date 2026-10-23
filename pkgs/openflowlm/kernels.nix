@@ -37,7 +37,7 @@ let
     export HOME=$TMPDIR/home
     mkdir -p $HOME/.npu/cache
     export PEANO_INSTALL_DIR=${llvm-aie}
-    export PATH=${xrt}/opt/xilinx/xrt/bin:$PATH
+    export PATH=${xrt}/bin:$PATH
 
     # The tree tracks FastFlowLM's closed sets under src/xclbins; clearing it
     # leaves each derivation holding only the sets it generates.

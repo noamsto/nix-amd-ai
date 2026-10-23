@@ -88,8 +88,6 @@ stdenv.mkDerivation rec {
   cmakeDir = "../src";
 
   cmakeFlags = [
-    "-DCMAKE_INSTALL_PREFIX=${placeholder "out"}/opt/xilinx/xrt"
-    "-DXRT_INSTALL_PREFIX=${placeholder "out"}/opt/xilinx/xrt"
     "-DCMAKE_BUILD_TYPE=Release"
     "-DDISABLE_WERROR=ON"
     # abseil (via protobuf) requires C++20 <compare>; XRT defaults to 17
@@ -104,7 +102,11 @@ stdenv.mkDerivation rec {
     "-DXRT_UPSTREAM_DEBIAN=ON"
     "-DLINUX_FLAVOR=nixos"
     "-DLINUX_VERSION=${lib.versions.majorMinor lib.version}"
-    # Override install dirs to relative paths to prevent aiebu cmake path issues
+    # CMake/xrtVariables.cmake joins these onto XRT_INSTALL_DIR ("."), and
+    # xrt.pc.in joins CMAKE_INSTALL_LIBDIR onto ''${prefix}. The cmake setup
+    # hook passes them as absolute paths, which would nest the whole install
+    # tree under $out/$out and produce a bogus libdir in xrt.pc.
+    # See https://github.com/NixOS/nixpkgs/issues/144170
     "-DCMAKE_INSTALL_LIBDIR=lib"
     "-DCMAKE_INSTALL_BINDIR=bin"
     "-DCMAKE_INSTALL_INCLUDEDIR=include"
@@ -175,9 +177,9 @@ STUBCMAKE
   # redirected, and leaves the prefix-relative destinations untouched.
   preInstall = ''
     find . -name cmake_install.cmake -exec sed -i \
-      -e 's|\(["}]\)/usr/src|\1'"$out"'/opt/xilinx/xrt/share/xrt-dkms-src|g' \
-      -e 's|\(["}]\)/usr/local|\1'"$out"'/opt/xilinx/xrt|g' \
-      -e 's|\(["}]\)/etc/OpenCL|\1'"$out"'/opt/xilinx/xrt/etc/OpenCL|g' \
+      -e 's|\(["}]\)/usr/src|\1'"$out"'/share/xrt-dkms-src|g' \
+      -e 's|\(["}]\)/usr/local|\1'"$out"'|g' \
+      -e 's|\(["}]\)/etc/OpenCL|\1'"$out"'/etc/OpenCL|g' \
       {} \;
   '';
 
@@ -193,36 +195,6 @@ STUBCMAKE
     export LD_LIBRARY_PATH=${lib.getLib elfutils}/lib''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     ctest --test-dir runtime_src/core/common/aiebu --output-on-failure
     runHook postCheck
-  '';
-
-  postInstall = ''
-    # Create convenience symlinks at top level
-    mkdir -p $out/bin $out/lib $out/include
-
-    for bin in $out/opt/xilinx/xrt/bin/*; do
-      ln -sf $bin $out/bin/
-    done
-
-    for lib in $out/opt/xilinx/xrt/lib/*.so*; do
-      ln -sf $lib $out/lib/
-    done
-
-    cp $out/opt/xilinx/xrt/setup.sh $out/ || true
-
-    # Create pkg-config file
-    mkdir -p $out/lib/pkgconfig
-    cat > $out/lib/pkgconfig/xrt.pc << EOF
-    prefix=$out/opt/xilinx/xrt
-    exec_prefix=\''${prefix}
-    libdir=\''${exec_prefix}/lib
-    includedir=\''${prefix}/include
-
-    Name: XRT
-    Description: Xilinx Runtime for AMD NPU
-    Version: ${version}
-    Libs: -L\''${libdir} -lxrt_coreutil
-    Cflags: -I\''${includedir}
-    EOF
   '';
 
   meta = with lib; {

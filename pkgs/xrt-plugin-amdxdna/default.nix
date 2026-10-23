@@ -58,7 +58,7 @@ in
       "-DCMAKE_BUILD_TYPE=Release"
       "-DXRT_VERSION_STRING=${pluginVersion}"
       # Point to XRT installation for libraries
-      "-DXRT_INSTALL_DIR=${xrt}/opt/xilinx/xrt"
+      "-DXRT_INSTALL_DIR=${xrt}"
       # Point to XRT source for internal headers
       "-DXRT_SOURCE_DIR=${xrtSrc}/src"
     ];
@@ -116,7 +116,7 @@ in
     set(XRT_SOVERSION 2)
 
     # Package installation directories
-    set(XDNA_PKG_LIB_DIR "opt/xilinx/xrt/lib")
+    set(XDNA_PKG_LIB_DIR "lib")
     set(XDNA_COMPONENT "xdna")
     set(XDNA_BIN_DIR "''${CMAKE_BINARY_DIR}/bin")
 
@@ -125,22 +125,10 @@ in
     '';
 
     postInstall = ''
-      # Ensure plugin library is in XRT's expected location
-      mkdir -p $out/opt/xilinx/xrt/lib
-      if [ -d $out/opt/xilinx/lib ]; then
-        mv $out/opt/xilinx/lib/* $out/opt/xilinx/xrt/lib/ || true
-      fi
-
-      # Create top-level symlinks
-      mkdir -p $out/lib
-      for lib in $out/opt/xilinx/xrt/lib/*.so*; do
-        ln -sf $lib $out/lib/ 2>/dev/null || true
-      done
-
       # Create pkg-config file
       mkdir -p $out/lib/pkgconfig
       cat > $out/lib/pkgconfig/xrt-amdxdna.pc << EOF
-      prefix=$out/opt/xilinx/xrt
+      prefix=$out
       exec_prefix=\''${prefix}
       libdir=\''${exec_prefix}/lib
       includedir=\''${prefix}/include

@@ -85,13 +85,11 @@
     optionalString (cfg.gpuMemory.pagePoolSizeGiB != null)
     " page_pool_size=${toString (gttPages cfg.gpuMemory.pagePoolSizeGiB)}";
 
-  xrtPrefix = "${pkgs.xrt}/opt/xilinx/xrt";
-
   xrt-combined = pkgs.runCommand "xrt-combined" {} ''
     mkdir -p $out
-    cp -rs ${xrtPrefix}/* $out/
+    cp -rs ${pkgs.xrt}/* $out/
     chmod -R u+w $out/lib
-    ln -sf ${pkgs.xrt-plugin-amdxdna}/opt/xilinx/xrt/lib/libxrt_driver_xdna* $out/lib/
+    ln -sf ${pkgs.xrt-plugin-amdxdna}/lib/libxrt_driver_xdna* $out/lib/
   '';
 
   # flm resolves the amdxdna plugin (libxrt_driver_xdna.so.2) next to wherever
