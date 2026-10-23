@@ -87,34 +87,15 @@
 
   inherit (pkgs) xrt-combined;
 
-  # flm resolves the amdxdna plugin (libxrt_driver_xdna.so.2) next to wherever
-  # its own libxrt_core loaded from, not via $XILINX_XRT. pkgs.fastflowlm and
-  # pkgs.openflowlm link against xrt-combined and find it on their own; this
-  # wrapper is for a fastflowlm.package built against plain xrt, whose RPATH
-  # points at xrt's own lib/, which lacks the plugin. Wrapped rather than
-  # session-wide: nix binaries carry RUNPATH, which glibc searches after
-  # LD_LIBRARY_PATH, so a session-wide var would override library resolution
-  # for every dynamically linked process in the session, not just flm's. #148.
-  flmProgram = baseNameOf (lib.getExe cfg.fastflowlm.package);
-  fastflowlmWrapped = pkgs.symlinkJoin {
-    name = "fastflowlm-wrapped";
-    paths = [cfg.fastflowlm.package];
-    nativeBuildInputs = [pkgs.makeWrapper];
-    postBuild = ''
-      wrapProgram $out/bin/${flmProgram} --prefix LD_LIBRARY_PATH : ${xrt-combined}/lib
-    '';
-  };
-
-  # Only xrt-combined, which is built from the same pinned nixpkgs as the
-  # backends. Never add the host's `pkgs.rocmPackages` (the consumer's nixpkgs)
-  # here: LD_LIBRARY_PATH outranks RUNPATH, so it shadows the backends' own clr,
-  # and a newer host glibc makes it unloadable (#215). The ROCm backends find
-  # their own clr via RUNPATH.
-  ldLibraryPath = optionalString cfg.enableNPU "${xrt-combined}/lib";
+  # XRT looks for the amdxdna plugin next to the libxrt_coreutil it was loaded
+  # from, so pkgs.fastflowlm and pkgs.openflowlm link against xrt-combined and
+  # need no LD_LIBRARY_PATH: no wrapper, and nothing set on lemond, whose
+  # other backends would inherit it (#148, #215).
+  flmExe = lib.getExe cfg.fastflowlm.package;
 
   pathList =
     optional cfg.enableNPU xrt-combined
-    ++ optional cfg.enableFastFlowLM fastflowlmWrapped;
+    ++ optional cfg.enableFastFlowLM cfg.fastflowlm.package;
 
   # Strata (Qwen3.8-Flash-Next) behind lemond's native strata recipe. Referenced
   # only under strata.enable, so an option-off host never forces pkgs.strata.
@@ -221,7 +202,7 @@
       "lemonade/backends/sdcpp-vulkan".source = "${pkgs.stable-diffusion-cpp-vulkan}/bin/sd-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableFastFlowLM) {
-      "lemonade/backends/flm-npu".source = "${fastflowlmWrapped}/bin/${flmProgram}";
+      "lemonade/backends/flm-npu".source = flmExe;
     }
     // optionalAttrs (cfg.enableLemonade && cfg.strata.enable) {
       "lemonade/backends/strata-rocm".source = "${strataShim}/bin/strata-lemond-shim";
@@ -448,6 +429,11 @@ in {
         lemonade as `flm.npu_bin`. Its `meta.mainProgram` must be set and need not
         be called `flm`. `pkgs.openflowlm` (OpenFlowLM-Next's `oflm`) has also
         been tested on hardware; see the README's OpenFlowLM-Next section.
+
+        It must link against `pkgs.xrt-combined`, not `pkgs.xrt`: XRT loads the
+        NPU driver plugin from next to its own libraries, and plain `xrt` has
+        none, so a runtime built against it sees no NPU. The module does not set
+        `LD_LIBRARY_PATH` to make up for it.
       '';
     };
 
@@ -1357,7 +1343,7 @@ in {
         pkgs.lshw
       ]
       ++ optional cfg.enableNPU xrt-combined
-      ++ optional cfg.enableFastFlowLM fastflowlmWrapped
+      ++ optional cfg.enableFastFlowLM cfg.fastflowlm.package
       ++ optional cfg.enableLemonade lemonadePackage
       ++ optional cfg.enableROCm pkgs.rocmPackages.clr;
 
@@ -1400,9 +1386,6 @@ in {
         // optionalAttrs cfg.enableNPU {
           XILINX_XRT = "${xrt-combined}";
           XRT_PATH = "${xrt-combined}";
-        }
-        // optionalAttrs (ldLibraryPath != "") {
-          LD_LIBRARY_PATH = ldLibraryPath;
         }
         // optionalAttrs cfg.enableROCm {
           LEMONADE_GGML_HIP_PATH = "${llamaCppRocm}/lib/libggml-hip.so";

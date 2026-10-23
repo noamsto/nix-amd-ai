@@ -10,7 +10,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 |---------|-------------|--------|
 | `xrt` | Xilinx Runtime for AMD NPU | Built from [Xilinx/XRT](https://github.com/Xilinx/XRT) |
 | `xrt-plugin-amdxdna` | XDNA userspace driver plugin | Built from [amd/xdna-driver](https://github.com/amd/xdna-driver) branch `1.9` |
-| `xrt-combined` | `xrt` with `xrt-plugin-amdxdna` next to its libraries, which is where XRT looks for the plugin; `fastflowlm` and `openflowlm` link against it, so they find the NPU without the module's wrapper | `symlinkJoin` of the two |
+| `xrt-combined` | `xrt` with `xrt-plugin-amdxdna` next to its libraries, which is where XRT looks for the plugin; `fastflowlm` and `openflowlm` link against it, so they find the NPU on their own | `symlinkJoin` of the two |
 | `fastflowlm` | NPU-optimized LLM runtime | Built from [FastFlowLM](https://github.com/FastFlowLM/FastFlowLM) |
 | `openflowlm` | [OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) (`oflm`), the open-kernel fork of FastFlowLM; its open NPU kernels are built from source in the Nix sandbox | Built from [Atomic-Germ/OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) at a pinned commit (no releases yet) |
 | `mlir-aie` | MLIR-based AI Engine compiler toolchain (`aiecc`, `aie-opt`, `aie-translate`, `bootgen`) | Built from the [Xilinx/mlir-aie](https://github.com/Xilinx/mlir-aie) 1.4.2 wheel |
@@ -443,7 +443,7 @@ hardware.amd-npu = {
 
 ### flm-compatible runtimes
 
-`hardware.amd-npu.fastflowlm.package` (default `pkgs.fastflowlm`) selects the runtime that `enableFastFlowLM` installs and lemonade drives. The module wraps it with the XRT `LD_LIBRARY_PATH`, links its main program (`meta.mainProgram`, which need not be `flm`) at `/etc/lemonade/backends/flm-npu`, and seeds `flm.npu_bin = "/etc/lemonade/backends/flm-npu"`. Lemonade resolves FLM through `flm.npu_bin` first (or the `LEMONADE_FLM_NPU_BIN` environment variable), and only then looks for a literal `flm` on `PATH`. A path-valued `npu_bin` also drops lemonade's expected-version check, so the `backend_versions.json` pin to `pkgs.fastflowlm` does not flag another runtime as needing an update.
+`hardware.amd-npu.fastflowlm.package` (default `pkgs.fastflowlm`) selects the runtime that `enableFastFlowLM` installs and lemonade drives. It must link against `pkgs.xrt-combined` (both `pkgs.fastflowlm` and `pkgs.openflowlm` do): XRT loads the NPU driver plugin from next to its own libraries, and the module sets no `LD_LIBRARY_PATH` to make up for a runtime built against plain `pkgs.xrt`. The module links its main program (`meta.mainProgram`, which need not be `flm`) at `/etc/lemonade/backends/flm-npu`, and seeds `flm.npu_bin = "/etc/lemonade/backends/flm-npu"`. Lemonade resolves FLM through `flm.npu_bin` first (or the `LEMONADE_FLM_NPU_BIN` environment variable), and only then looks for a literal `flm` on `PATH`. A path-valued `npu_bin` also drops lemonade's expected-version check, so the `backend_versions.json` pin to `pkgs.fastflowlm` does not flag another runtime as needing an update.
 
 `flm.flm_bin` is **not** a config key: `lemonade config set flm.flm_bin ...` is accepted silently and has no effect. Use `flm.npu_bin`.
 

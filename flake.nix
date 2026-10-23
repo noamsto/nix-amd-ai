@@ -1531,7 +1531,7 @@
                 touch $out
               '';
 
-            # fastflowlm.package feeds both the wrapped system package and
+            # fastflowlm.package feeds both the system package and
             # lemonade's flm.npu_bin (via the stable /etc symlink). Eval-only: the
             # asserted strings are store paths whose contexts are discarded so the
             # check never builds fastflowlm or the XRT closure.
@@ -1563,6 +1563,9 @@
                 }).config;
               stub = pkgs.writeShellScriptBin "oflm" "exit 0" // {meta.mainProgram = "oflm";};
               flmNpu = c: builtins.unsafeDiscardStringContext c.environment.etc."lemonade/backends/flm-npu".source;
+              # Linked directly, not through a wrapper: the packages find the
+              # NPU plugin via xrt-combined (pkgs/xrt-combined).
+              exeOf = c: builtins.unsafeDiscardStringContext (inputs.nixpkgs.lib.getExe c.hardware.amd-npu.fastflowlm.package);
               defaultsOf = c: c.systemd.services.lemond.environment.LEMONADE_DEFAULTS_PATH;
               def = mkSys {};
               swapped = mkSys {hardware.amd-npu.fastflowlm.package = stub;};
@@ -1574,6 +1577,9 @@
                 defaultBin = flmNpu def;
                 swappedBin = flmNpu swapped;
                 realBin = flmNpu real;
+                defaultExe = exeOf def;
+                swappedExe = exeOf swapped;
+                realExe = exeOf real;
                 defaultDefaults = defaultsOf def;
                 swappedDefaults = defaultsOf swapped;
                 realDefaults = defaultsOf real;
@@ -1582,9 +1588,12 @@
                 realLemondNoUpdate = real.systemd.services.lemond.environment.OFLM_DISABLE_UPDATE_CHECK or "";
                 realSessionNoUpdate = real.environment.sessionVariables.OFLM_DISABLE_UPDATE_CHECK or "";
               } ''
-                case "$defaultBin" in *-fastflowlm-wrapped/bin/flm) ;; *) echo "default: $defaultBin" >&2; exit 1 ;; esac
-                case "$swappedBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "swapped: $swappedBin" >&2; exit 1 ;; esac
-                case "$realBin" in *-fastflowlm-wrapped/bin/oflm) ;; *) echo "real: $realBin" >&2; exit 1 ;; esac
+                [ "$defaultBin" = "$defaultExe" ] && case "$defaultBin" in *-fastflowlm-*/bin/flm) ;; *) false ;; esac \
+                  || { echo "default: $defaultBin" >&2; exit 1; }
+                [ "$swappedBin" = "$swappedExe" ] && case "$swappedBin" in */bin/oflm) ;; *) false ;; esac \
+                  || { echo "swapped: $swappedBin" >&2; exit 1; }
+                [ "$realBin" = "$realExe" ] && case "$realBin" in *-openflowlm-*/bin/oflm) ;; *) false ;; esac \
+                  || { echo "real: $realBin" >&2; exit 1; }
                 for f in "$defaultDefaults" "$swappedDefaults" "$realDefaults"; do
                   jq -e '.flm.npu_bin == "/etc/lemonade/backends/flm-npu"' "$f" >/dev/null
                   jq -e '.flm.prefer_system == true' "$f" >/dev/null
@@ -2260,8 +2269,10 @@
                 touch $out
               '';
 
-            # An allowlist, not a blacklist: lemond's LD_LIBRARY_PATH is exactly
-            # xrt-combined/lib or unset, so no host library dir can return (#215).
+            # lemond sets no LD_LIBRARY_PATH, NPU or not: the NPU runtimes find
+            # the plugin through xrt-combined on their RUNPATH, and anything set
+            # here would reach every backend lemond spawns, where a host library
+            # dir shadows the pinned ones (#215).
             module-eval-lemond-ld-library-path = let
               mkEnv = extra:
                 (inputs.nixpkgs.lib.nixosSystem {
@@ -2301,15 +2312,14 @@
                 enableROCm = true;
                 enableVulkan = true;
               };
-              actual = builtins.unsafeDiscardStringContext (withNpu.LD_LIBRARY_PATH or "<unset>");
-              expected = builtins.unsafeDiscardStringContext (withNpu.XILINX_XRT + "/lib");
+              npuLd = builtins.unsafeDiscardStringContext (withNpu.LD_LIBRARY_PATH or "<unset>");
               noNpuLd = builtins.unsafeDiscardStringContext (noNpu.LD_LIBRARY_PATH or "<unset>");
             in
               pkgs.runCommand "module-eval-lemond-ld-library-path" {
-                inherit actual expected noNpuLd;
+                inherit npuLd noNpuLd;
               } ''
-                [ "$actual" = "$expected" ] \
-                  || { echo "lemond LD_LIBRARY_PATH is '$actual', expected '$expected'"; exit 1; }
+                [ "$npuLd" = "<unset>" ] \
+                  || { echo "lemond LD_LIBRARY_PATH is '$npuLd' with the NPU, expected unset"; exit 1; }
                 [ "$noNpuLd" = "<unset>" ] \
                   || { echo "lemond LD_LIBRARY_PATH is '$noNpuLd' without the NPU, expected unset"; exit 1; }
                 touch $out
