@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 0467b614..f79470a2 100644
+index 1a8c9d3..b95eaa7 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -173,8 +173,8 @@ static TaskPolicy task_policy(bool supports_prompts, bool declares_names, bool t
+@@ -192,8 +192,8 @@ static TaskPolicy task_policy(bool supports_prompts, bool declares_names, bool t
  
  // e.what() can quote the request's own bytes and nlohmann's type-system
  // internals, so it goes to the server log, never into the response body.
@@ -13,7 +13,7 @@ index 0467b614..f79470a2 100644
  // rejecting the conversation throws a plain std::runtime_error.
  // Elsewhere a json::exception almost always means a request field had a
  // shape a handler didn't expect; anything else is a server fault.
-@@ -1090,11 +1090,15 @@ void RestHandler::handle_chat(const json& request,
+@@ -1117,11 +1117,15 @@ void RestHandler::handle_chat(const json& request,
              //std::string response_text = auto_chat_engine->generate_with_prompt(meta_info, uniformed_input, length_limit, std::cout);
              std::string response_text;
              try {

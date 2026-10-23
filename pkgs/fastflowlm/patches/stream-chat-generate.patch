@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index f79470a2..8e8c9725 100644
+index b95eaa7..22d2bbd 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1071,7 +1071,7 @@ void RestHandler::handle_chat(const json& request,
+@@ -1098,7 +1098,7 @@ void RestHandler::handle_chat(const json& request,
                  auto_chat_engine->generate(meta_info, length_limit, ostream,
                      [&] { return cancellation_token && cancellation_token->cancelled(); });
              } catch (const std::exception& e) {

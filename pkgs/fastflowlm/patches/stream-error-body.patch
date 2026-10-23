@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index b79ee486..ca736527 100644
+index 37d01b4..be5f13a 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -223,6 +223,37 @@ void HttpSession::release_slot() {
@@ -60,7 +60,7 @@ index b79ee486..ca736527 100644
          // For streaming responses, we need to handle connection cleanup differently
          // The connection will be closed when streaming ends
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index d8f4519b..c037f47d 100644
+index d8f4519..c037f47 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
 @@ -271,6 +271,7 @@ private:

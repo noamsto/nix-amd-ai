@@ -1,10 +1,10 @@
 diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel.cpp
-index 765b170f..49c5bd08 100644
+index e5cc893..58bc903 100644
 --- a/src/common/AutoModel/automodel.cpp
 +++ b/src/common/AutoModel/automodel.cpp
-@@ -349,6 +349,16 @@
- bool AutoModel::_shared_insert(chat_meta_info_t& meta_info, std::vector<int>& tokens, std::function<bool()> is_cancelled, void* payload, int first_len_run, std::optional<int> requested_max_new_tokens) {
-     this->_shared_validate_capacity(tokens.size(), requested_max_new_tokens);
+@@ -396,6 +396,16 @@ bool AutoModel::_shared_insert(chat_meta_info_t& meta_info, std::vector<int>& to
+ 
+     this->_begin_turn(meta_info, tokens);
  
 +    // A request cancelled before it reached here (POST /api/cancel while it
 +    // waited in the NPU queue, or a client that left) must not prefill, sample
@@ -20,10 +20,10 @@ index 765b170f..49c5bd08 100644
      // header_print("DEBUG", "Current token history: ");
      // for (size_t i = 0; i < this->token_history.size(); i++) {
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index da31c7da..8fb857d6 100644
+index 9289c8e..caaa125 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -185,6 +185,20 @@
+@@ -185,6 +185,20 @@ int NPUAccessManager::get_active_npu_requests() {
      return g_npu_active_requests.load();
  }
  
@@ -44,7 +44,7 @@ index da31c7da..8fb857d6 100644
  ///@brief HttpSession class implementation
  ///@param socket the socket
  ///@param server the server
-@@ -612,16 +626,31 @@
+@@ -612,16 +626,31 @@ void WebServer::stop() {
  ///@brief register active request
  ///@param request_id the request ID
  ///@param token the cancellation token
@@ -80,7 +80,7 @@ index da31c7da..8fb857d6 100644
  }
  
  ///@brief cancel request
-@@ -729,15 +758,15 @@
+@@ -729,15 +758,15 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
      header_print("LOG", "Target: " << req.target());
      header_print("LOG", "Version: " << req.version());
      header_print("LOG", "Keep-Alive: " << req.keep_alive());
@@ -99,7 +99,7 @@ index da31c7da..8fb857d6 100644
                  is_json = true;
              }
              else if (content_type.find("multipart/form-data") != std::string::npos) {
-@@ -764,71 +793,38 @@
+@@ -764,71 +793,38 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
      // Decide if this handler needs exclusive NPU access.
      bool needs_npu = requires_npu_access(std::string(req.method_string()), std::string(req.target()));
  
@@ -193,8 +193,8 @@ index da31c7da..8fb857d6 100644
  
          // catch is_deferred
          auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
-@@ -859,7 +855,7 @@
-             response_ref.set(http::field::content_type, "application/json");
+@@ -866,7 +862,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+             }
              response_ref.prepare_payload();
              cancellation_token->complete();
 -            unregister_active_request(request_id);
@@ -202,7 +202,7 @@ index da31c7da..8fb857d6 100644
  
              if (is_deferred && session) {
                  session->write_response_from_callback();
-@@ -875,7 +871,7 @@
+@@ -882,7 +878,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
                  session->write_streaming_response(data, is_final);
              }
              if (is_final) {
@@ -211,7 +211,7 @@ index da31c7da..8fb857d6 100644
              }
          };
  
-@@ -888,7 +884,7 @@
+@@ -895,7 +891,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              // application/json) -- refuse it like the parse failure above,
              // not the generic 500 below.
              cancellation_token->complete();
@@ -220,7 +220,7 @@ index da31c7da..8fb857d6 100644
  
              res_ref.result(http::status::bad_request);
              res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
-@@ -901,7 +897,7 @@
+@@ -908,7 +904,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          }
          catch (const std::exception& e) {
              cancellation_token->complete();
@@ -229,7 +229,7 @@ index da31c7da..8fb857d6 100644
  
              res_ref.result(http::status::internal_server_error);
              header_print("ERROR", "Handler exception: " + std::string(e.what()));
-@@ -915,7 +911,7 @@
+@@ -922,7 +918,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          }
          catch (...) {
              cancellation_token->complete();
@@ -238,7 +238,7 @@ index da31c7da..8fb857d6 100644
  
              res_ref.result(http::status::internal_server_error);
              res_ref.body() = safe_dump(json{ {"error", "Unknown handler exception"} });
-@@ -931,8 +927,38 @@
+@@ -938,8 +934,38 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
  
      // --- Logic to run or queue the task ---
  
@@ -278,7 +278,7 @@ index da31c7da..8fb857d6 100644
          return false;
      }
  
-@@ -940,13 +966,20 @@
+@@ -947,13 +973,20 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          if (needs_npu) {
              header_print("🟢 ", "NPU Locked!");
          }
@@ -303,10 +303,10 @@ index da31c7da..8fb857d6 100644
          res.body() = safe_dump(json{
              {"error", "NPU is in use and request queue is full (limit: " +
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index c037f47d..0a9074bb 100644
+index c037f47..d6839a3 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -210,8 +210,9 @@
+@@ -210,8 +210,9 @@ public:
                         std::shared_ptr<HttpSession> session);
  
      // Request tracking methods

@@ -1,7 +1,8 @@
-diff -u a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index 47272eb..d4fe281 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1228,6 +1228,17 @@
+@@ -1233,6 +1233,17 @@ void RestHandler::handle_chat(const json& request,
                  this->auto_chat_engine->clear_context();
                  return;
              }
@@ -16,6 +17,6 @@ diff -u a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 +            if (meta_info.stop_reason == CANCEL_DETECTED) {
 +                header_print("❌ ", "Generation Cancelled!");
 +            }
+             // A character the generation stopped partway through can never be finished
+             response_text.resize(response_text.size() - incomplete_utf8_tail(response_text));
              //std::string response_text = chat_engine->generate_with_prompt(meta_info, prompts, length_limit, std::cout, payload);
-             auto total_end_time = time_utils::now();
-             meta_info.total_duration = (uint64_t)time_utils::duration_ns(total_start_time, total_end_time).first;

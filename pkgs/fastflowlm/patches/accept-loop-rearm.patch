@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 92b8eca8..245eda25 100644
+index 08e0821..db1a51e 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -175,13 +175,22 @@ HttpSession::HttpSession(tcp::socket socket, WebServer& server)

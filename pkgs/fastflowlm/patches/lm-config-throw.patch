@@ -1,5 +1,5 @@
 diff --git a/src/include/lm_config.hpp b/src/include/lm_config.hpp
-index 570ace5e..60e0f2b3 100644
+index 570ace5..60e0f2b 100644
 --- a/src/include/lm_config.hpp
 +++ b/src/include/lm_config.hpp
 @@ -11,6 +11,7 @@
@@ -21,48 +21,10 @@ index 570ace5e..60e0f2b3 100644
              // read the json file as a string
              std::string json_str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 68b2a72c..a46475fd 100644
+index 8bf907a..47272eb 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -689,18 +689,26 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
-         this->current_model_tag = "model-faker";
-         return ModelLoad::LoadFailed;
-     }
--    switch (downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true)) {
--        case ModelDownloader::ModelStatus::Ready:
--            break;
--        case ModelDownloader::ModelStatus::Outdated:
--        case ModelDownloader::ModelStatus::Missing:
--            downloader.pull_model(ensure_tag, this->modelscope);
--            break;
--        case ModelDownloader::ModelStatus::Incompatible:
--            this->auto_chat_engine.reset();
--            this->current_model_tag = "model-faker";
--            return ModelLoad::LoadFailed;
-+    try {
-+        switch (downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true)) {
-+            case ModelDownloader::ModelStatus::Ready:
-+                break;
-+            case ModelDownloader::ModelStatus::Outdated:
-+            case ModelDownloader::ModelStatus::Missing:
-+                downloader.pull_model(ensure_tag, this->modelscope);
-+                break;
-+            case ModelDownloader::ModelStatus::Incompatible:
-+                this->auto_chat_engine.reset();
-+                this->current_model_tag = "model-faker";
-+                return ModelLoad::LoadFailed;
-         }
-+    }
-+    catch (const std::exception& e) {
-+        header_print("ERROR", "model '" + ensure_tag + "' could not be checked: " + std::string(e.what()));
-+        this->auto_chat_engine.reset();
-+        this->current_model_tag = "model-faker";
-+        return ModelLoad::LoadFailed;
-+    }
-     try {
-         auto [new_ensure_tag, model_info] = supported_models.get_model_info(ensure_tag);
-         auto_chat_engine->configure_parameter("img_pre_resize", this->img_pre_resize);
-@@ -733,27 +741,35 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -776,27 +776,35 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
  void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
      std::string ensure_tag = model_tag;
@@ -115,7 +77,7 @@ index 68b2a72c..a46475fd 100644
      }
  #else
      throw std::runtime_error("ASR models are not supported in this build");
-@@ -765,28 +781,34 @@ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
+@@ -808,28 +816,34 @@ void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
  void RestHandler::ensure_embed_model_loaded(const std::string& model_tag) {
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
      std::string ensure_tag = model_tag;

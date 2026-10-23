@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 8fc9180d..fd9d4bc5 100644
+index 5fae794..dffe75a 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -35,6 +35,34 @@ json ExceptionResponse(const std::exception& error) {
+@@ -50,6 +50,34 @@ T value_or(const json& request, const char* key, T fallback) {
  }
  }
  
@@ -37,7 +37,7 @@ index 8fc9180d..fd9d4bc5 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -646,7 +674,11 @@ void RestHandler::handle_show(const json& request,
+@@ -681,7 +709,11 @@ void RestHandler::handle_show(const json& request,
      std::function<void(const json&)> send_response,
      StreamResponseCallback send_streaming_response) {
      try {
@@ -50,7 +50,7 @@ index 8fc9180d..fd9d4bc5 100644
          json info = {
              {"modelfile", ""},
              {"parameters", ""},
-@@ -684,7 +716,11 @@ void RestHandler::handle_generate(const json& request,
+@@ -719,7 +751,11 @@ void RestHandler::handle_generate(const json& request,
                                   StreamResponseCallback send_streaming_response,
                                   std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -63,7 +63,7 @@ index 8fc9180d..fd9d4bc5 100644
          bool stream = request.value("stream", true);
          std::string model = request.value("model", current_model_tag);
          const std::string request_backend = request.value("backend", std::string());
-@@ -804,6 +840,10 @@ void RestHandler::handle_chat(const json& request,
+@@ -839,6 +875,10 @@ void RestHandler::handle_chat(const json& request,
                               StreamResponseCallback send_streaming_response,
                               std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -74,7 +74,7 @@ index 8fc9180d..fd9d4bc5 100644
          nlohmann::ordered_json messages = request["messages"];
          bool stream = request.value("stream", false);
          std::string model = request.value("model", current_model_tag);
-@@ -925,7 +965,19 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -962,7 +1002,19 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -95,9 +95,9 @@ index 8fc9180d..fd9d4bc5 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1145,6 +1197,10 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1181,6 +1233,10 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+                                                StreamResponseCallback send_streaming_response,
                                                 std::shared_ptr<CancellationToken> cancellation_token) {
-     static std::string model_used_for_last_message = "model-faker";
      try {
 +        if (json err = require_field(request, "messages", RequiredFieldType::Array); !err.is_null()) {
 +            send_response(err);
@@ -105,8 +105,8 @@ index 8fc9180d..fd9d4bc5 100644
 +        }
          // Extract OpenAI-style parameters
          json current_messages = request["messages"];
-         std::string model = request.value("model", current_model_tag);
-@@ -1471,8 +1527,12 @@ void RestHandler::handle_openai_completion(const json& request,
+         std::string model = value_or(request, "model", current_model_tag);
+@@ -1593,8 +1649,12 @@ void RestHandler::handle_openai_completion(const json& request,
      StreamResponseCallback send_streaming_response,
      std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -118,5 +118,5 @@ index 8fc9180d..fd9d4bc5 100644
 -        std::string prompt = request["prompt"];
 +        std::string prompt = request["prompt"].get<std::string>();
          std::string model = request.value("model", current_model_tag);
+         const std::string request_backend = request.value("backend", std::string());
          std::string reasoning_effort = request.value("reasoning_effort", "medium");
-         bool stream = request.value("stream", false);

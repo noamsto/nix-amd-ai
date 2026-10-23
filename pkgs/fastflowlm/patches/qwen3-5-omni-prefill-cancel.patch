@@ -1,8 +1,8 @@
 diff --git a/src/common/AutoModel/modeling_qwen3_5_omni.cpp b/src/common/AutoModel/modeling_qwen3_5_omni.cpp
-index bccee9c3..28199803 100644
+index bf4e364..30397bb 100644
 --- a/src/common/AutoModel/modeling_qwen3_5_omni.cpp
 +++ b/src/common/AutoModel/modeling_qwen3_5_omni.cpp
-@@ -558,6 +558,10 @@ bool Qwen3_5_Omni::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input
+@@ -555,6 +555,10 @@ bool Qwen3_5_Omni::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input
      meta_info.cached_prompt_tokens = static_cast<int>(skip_count);
      meta_info.prompt_tokens = static_cast<int>(skip_count + tokens.size());
  

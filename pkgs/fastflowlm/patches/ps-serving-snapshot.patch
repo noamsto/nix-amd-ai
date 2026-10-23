@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 8e8c9725..5145f804 100644
+index 22d2bbd..8894bad 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -545,6 +545,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -584,6 +584,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
  ///@return the rest handler
  RestHandler::~RestHandler() = default;
  
@@ -23,23 +23,23 @@ index 8e8c9725..5145f804 100644
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
  ///@param model_field_present whether the request actually carried a "model" key
-@@ -609,6 +623,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
-         return ModelLoad::LoadFailed;
+@@ -658,6 +672,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         return ModelLoad::UnknownBackend;
      }
  
 +    publish_serving_chat_tag("");
      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-     if (auto_chat_engine != nullptr) {
-         auto_chat_engine.reset();
-@@ -663,6 +678,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
-         return ModelLoad::LoadFailed;
+     // The old model is released before the new one is built, so from here
+     // on nothing is loaded until the load below succeeds. Record that now:
+@@ -703,6 +718,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+         this->auto_chat_engine = std::move(engine);
+         this->current_model_tag = loaded_tag;
+         this->current_backend = requested_backend;
++        publish_serving_chat_tag(loaded_tag);
      }
- 
-+    publish_serving_chat_tag(ensure_tag);
-     current_model_tag = ensure_tag;
-     current_backend = requested_backend;
-     return ModelLoad::Ok;
-@@ -1375,14 +1391,16 @@ void RestHandler::handle_ps(const json& request,
+     catch (const std::exception& e) {
+         header_print("ERROR", "Failed to load model: " + std::string(e.what()));
+@@ -1404,14 +1420,16 @@ void RestHandler::handle_ps(const json& request,
          std::string expires_at = expires_ss.str();
          
          json models = json::array();
@@ -64,10 +64,10 @@ index 8e8c9725..5145f804 100644
                  {"details", model_info["details"]},
                  {"expires_at", expires_at},
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
-index 5307a842..fe88fcad 100644
+index 5c0ac66..3ed8dd8 100644
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
-@@ -22,6 +22,7 @@
+@@ -25,6 +25,7 @@
  #include <string>
  #include <memory>
  #include <functional>
@@ -75,7 +75,7 @@ index 5307a842..fe88fcad 100644
  #include "prompt_cache.hpp"
  
  using json = nlohmann::ordered_json;
-@@ -115,6 +116,8 @@ public:
+@@ -118,6 +119,8 @@ public:
  private:
      ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false,
                                    const std::string& request_backend = "");
@@ -84,7 +84,7 @@ index 5307a842..fe88fcad 100644
      void ensure_asr_model_loaded(const std::string& model_tag);
      void ensure_embed_model_loaded(const std::string& model_tag);
      void configure_chat_engine_parameters(const json& options, const json& request);
-@@ -132,6 +135,11 @@ private:
+@@ -137,6 +140,11 @@ private:
      model_list& supported_models;
      ModelDownloader& downloader;
      std::string current_model_tag;
@@ -97,7 +97,7 @@ index 5307a842..fe88fcad 100644
      bool modelscope;
      bool asr;
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index 8d3d39d4..0483c1b6 100644
+index 8d3d39d..0483c1b 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
 @@ -52,6 +52,7 @@ inline bool requires_npu_access(const std::string& method, const std::string& pa

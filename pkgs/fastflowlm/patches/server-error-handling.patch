@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 471010b6..e0fda448 100644
+index 7c99881..7cd04b2 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -129,6 +129,16 @@ void brief_print_message_response(nlohmann::json request) {
@@ -85,7 +85,7 @@ index 471010b6..e0fda448 100644
          std::string request_id;
          if (request_json.contains("request_id")) {
              request_id = request_json["request_id"];
-@@ -689,25 +721,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -689,20 +721,22 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
  
          register_active_request(request_id, cancellation_token);
  
@@ -118,15 +118,18 @@ index 471010b6..e0fda448 100644
                  }
              }
  
-             response_ref.result(status);
--            response_ref.body() = response_data.dump();
-+            // response_data can be a handler's own {"error": e.what()} body,
-+            // and e.what() is not guaranteed valid UTF-8.
-+            response_ref.body() = safe_dump(response_data);
-             response_ref.set(http::field::content_type, "application/json");
+@@ -713,7 +747,9 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+                 response_ref.set(http::field::content_type, "text/plain; charset=utf-8");
+             }
+             else {
+-                response_ref.body() = response_data.dump();
++                // response_data can be a handler's own {"error": e.what()} body,
++                // and e.what() is not guaranteed valid UTF-8.
++                response_ref.body() = safe_dump(response_data);
+                 response_ref.set(http::field::content_type, "application/json");
+             }
              response_ref.prepare_payload();
-             cancellation_token->complete();
-@@ -734,12 +770,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -741,12 +777,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          try {
              it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
          }
@@ -157,7 +160,7 @@ index 471010b6..e0fda448 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -752,7 +805,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -759,7 +812,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              unregister_active_request(request_id);
  
              res_ref.result(http::status::internal_server_error);
@@ -166,7 +169,7 @@ index 471010b6..e0fda448 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -782,11 +835,11 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -789,11 +842,11 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              process_task(true);
          })) {
          res.result(http::status::service_unavailable);

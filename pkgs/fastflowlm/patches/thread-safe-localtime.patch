@@ -1,5 +1,5 @@
 diff --git a/src/include/minja/chat-template.hpp b/src/include/minja/chat-template.hpp
-index 2cb3eca9..1f2ae7a7 100644
+index 2cb3eca..1f2ae7a 100644
 --- a/src/include/minja/chat-template.hpp
 +++ b/src/include/minja/chat-template.hpp
 @@ -511,7 +511,8 @@ class chat_template {
@@ -13,10 +13,10 @@ index 2cb3eca9..1f2ae7a7 100644
                  ss << std::put_time(&local_time, format.c_str());
                  return ss.str();
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 0b463996..68b2a72c 100644
+index 894d3b3..8bf907a 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1440,19 +1440,21 @@ void RestHandler::handle_ps(const json& request,
+@@ -1469,19 +1469,21 @@ void RestHandler::handle_ps(const json& request,
          auto expires_tp = std::chrono::system_clock::from_time_t(expires_time_t);
          auto fractional_seconds = std::chrono::duration_cast<std::chrono::microseconds>(expires_time - expires_tp).count();
          
@@ -49,7 +49,7 @@ index 0b463996..68b2a72c 100644
          
          // Format timezone offset
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index ca736527..da31c7da 100644
+index be5f13a..9289c8e 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -28,8 +28,10 @@ std::atomic<int> g_npu_active_requests{0};

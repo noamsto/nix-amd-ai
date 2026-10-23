@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 245eda25..1c15cf38 100644
+index db1a51e..920a907 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -623,7 +623,24 @@ void WebServer::do_accept() {
