@@ -249,10 +249,12 @@
           else let
             libwebsockets = libwebsocketsOverride pinned;
             xrt = pinned.callPackage ./pkgs/xrt {};
-            fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt;};
+            xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
+            xrt-combined = pinned.callPackage ./pkgs/xrt-combined {inherit xrt xrt-plugin-amdxdna;};
+            fastflowlm = pinned.callPackage ./pkgs/fastflowlm {inherit xrt-combined;};
             llvm-aie = pinned.callPackage ./pkgs/llvm-aie {};
             mlir-aie = pinned.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
-            openflowlm = pinned.callPackage ./pkgs/openflowlm {inherit xrt mlir-aie llvm-aie;};
+            openflowlm = pinned.callPackage ./pkgs/openflowlm {inherit xrt xrt-combined mlir-aie llvm-aie;};
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
@@ -268,7 +270,7 @@
             };
             stable-diffusion-cpp-vulkan = withOwnVulkanDriver pinned (pinned.stable-diffusion-cpp.override {vulkanSupport = true;});
           in {
-            inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
+            inherit xrt xrt-plugin-amdxdna xrt-combined fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
             # The module's CPU backends link these; the consumer's copies would
             # build against the pinned llama-cpp above and break on version skew.
@@ -276,7 +278,6 @@
             inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             strata = pinned.callPackage ./pkgs/strata {};
-            xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             lemonade = pinned.callPackage ./pkgs/lemonade {
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
               inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
@@ -348,10 +349,12 @@
         # AMD NPU/XRT/ROCm/Vulkan stack — Linux + AMD-hardware only.
         linuxPackages = let
           xrt = pkgs.callPackage ./pkgs/xrt {};
-          fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt;};
+          xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
+          xrt-combined = pkgs.callPackage ./pkgs/xrt-combined {inherit xrt xrt-plugin-amdxdna;};
+          fastflowlm = pkgs.callPackage ./pkgs/fastflowlm {inherit xrt-combined;};
           llvm-aie = pkgs.callPackage ./pkgs/llvm-aie {};
           mlir-aie = pkgs.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
-          openflowlm = pkgs.callPackage ./pkgs/openflowlm {inherit xrt mlir-aie llvm-aie;};
+          openflowlm = pkgs.callPackage ./pkgs/openflowlm {inherit xrt xrt-combined mlir-aie llvm-aie;};
           llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;}));
@@ -374,11 +377,10 @@
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
         in {
-          inherit xrt fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets lemonade;
+          inherit xrt xrt-plugin-amdxdna xrt-combined fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets lemonade;
           inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
           inherit mlir-aie llvm-aie openflowlm;
           ds4 = pkgs.callPackage ./pkgs/ds4 {};
-          xrt-plugin-amdxdna = pkgs.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
           # What `hardware.amd-npu.lemonade.desktopApp.enable = false` selects;
           # built here so headless hosts substitute it rather than compile it.
           lemonade-headless = lemonade.override {withDesktopApp = false;};
@@ -697,6 +699,20 @@
           if isLinux
           then {
             benchmark-go-gate = benchmarkGate;
+            # xrt-plugin-amdxdna compiles the shim against xrt.src's internal
+            # headers and xrt-combined loads it into pkgs.xrt's libxrt_core,
+            # while xdna-driver pins its own XRT as the xrt submodule. Bumping
+            # one without the other would build the plugin against a different
+            # XRT than the one it runs in.
+            xrt-plugin-xrt-revision =
+              pkgs.runCommand "xrt-plugin-xrt-revision" {
+                PLUGIN_XRT = "${linuxPackages.xrt-plugin-amdxdna.src}/xrt";
+                XRT = linuxPackages.xrt.src;
+              } ''
+                diff -rq "$PLUGIN_XRT" "$XRT" \
+                  || { echo "amd/xdna-driver's xrt submodule differs from pkgs/xrt's source; bump them together"; exit 1; }
+                touch $out
+              '';
             # Smoke checks for the IRON toolchain packages: prove the CLI tools
             # run, the Python module imports with the package on PYTHONPATH, and
             # the Peano clang still carries the AIE targets. No NPU needed.

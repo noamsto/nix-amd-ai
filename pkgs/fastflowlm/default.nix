@@ -20,7 +20,9 @@
   rustPlatform,
   autoPatchelfHook,
   versionCheckHook,
-  xrt,
+  # Not plain xrt: the plugin has to sit next to the libxrt_coreutil flm
+  # loads, see pkgs/xrt-combined.
+  xrt-combined,
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
@@ -410,7 +412,7 @@ stdenv.mkDerivation (finalAttrs: {
     libuuid
     libvorbis
     stdenv.cc.cc.lib
-    xrt
+    xrt-combined
   ];
 
   postPatch = ''

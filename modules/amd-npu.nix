@@ -85,19 +85,16 @@
     optionalString (cfg.gpuMemory.pagePoolSizeGiB != null)
     " page_pool_size=${toString (gttPages cfg.gpuMemory.pagePoolSizeGiB)}";
 
-  xrt-combined = pkgs.runCommand "xrt-combined" {} ''
-    mkdir -p $out
-    cp -rs ${pkgs.xrt}/* $out/
-    chmod -R u+w $out/lib
-    ln -sf ${pkgs.xrt-plugin-amdxdna}/lib/libxrt_driver_xdna* $out/lib/
-  '';
+  inherit (pkgs) xrt-combined;
 
   # flm resolves the amdxdna plugin (libxrt_driver_xdna.so.2) next to wherever
-  # its own libxrt_core loaded from, not via $XILINX_XRT — plain RPATH points
-  # at xrt's own lib/, which lacks the plugin. Wrapped rather than session-wide:
-  # nix binaries carry RUNPATH, which glibc searches after LD_LIBRARY_PATH, so
-  # a session-wide var would override library resolution for every dynamically
-  # linked process in the session, not just flm's. #148.
+  # its own libxrt_core loaded from, not via $XILINX_XRT. pkgs.fastflowlm and
+  # pkgs.openflowlm link against xrt-combined and find it on their own; this
+  # wrapper is for a fastflowlm.package built against plain xrt, whose RPATH
+  # points at xrt's own lib/, which lacks the plugin. Wrapped rather than
+  # session-wide: nix binaries carry RUNPATH, which glibc searches after
+  # LD_LIBRARY_PATH, so a session-wide var would override library resolution
+  # for every dynamically linked process in the session, not just flm's. #148.
   flmProgram = baseNameOf (lib.getExe cfg.fastflowlm.package);
   fastflowlmWrapped = pkgs.symlinkJoin {
     name = "fastflowlm-wrapped";

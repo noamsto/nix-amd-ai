@@ -10,6 +10,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 |---------|-------------|--------|
 | `xrt` | Xilinx Runtime for AMD NPU | Built from [Xilinx/XRT](https://github.com/Xilinx/XRT) |
 | `xrt-plugin-amdxdna` | XDNA userspace driver plugin | Built from [amd/xdna-driver](https://github.com/amd/xdna-driver) branch `1.9` |
+| `xrt-combined` | `xrt` with `xrt-plugin-amdxdna` next to its libraries, which is where XRT looks for the plugin; `fastflowlm` and `openflowlm` link against it, so they find the NPU without the module's wrapper | `symlinkJoin` of the two |
 | `fastflowlm` | NPU-optimized LLM runtime | Built from [FastFlowLM](https://github.com/FastFlowLM/FastFlowLM) |
 | `openflowlm` | [OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) (`oflm`), the open-kernel fork of FastFlowLM; its open NPU kernels are built from source in the Nix sandbox | Built from [Atomic-Germ/OpenFlowLM-Next](https://github.com/Atomic-Germ/OpenFlowLM-Next) at a pinned commit (no releases yet) |
 | `mlir-aie` | MLIR-based AI Engine compiler toolchain (`aiecc`, `aie-opt`, `aie-translate`, `bootgen`) | Built from the [Xilinx/mlir-aie](https://github.com/Xilinx/mlir-aie) 1.4.2 wheel |
