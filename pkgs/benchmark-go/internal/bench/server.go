@@ -127,7 +127,7 @@ func (s *LlamaServer) Start() error {
 	}
 
 	// Single owner of cmd.Wait(): this goroutine. It closes waitFinished before
-	// publishing the result, so Stop() can tell that Wait() returned without
+	// signalling waitDone, so Stop() can tell that Wait() returned without
 	// reading cmd.ProcessState while Wait() is still writing it.
 	s.waitDone = make(chan struct{}, 1)
 	s.waitFinished = make(chan struct{})
