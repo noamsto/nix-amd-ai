@@ -74,11 +74,11 @@ type LlamaServer struct {
 
 	cmd    *exec.Cmd
 	stderr *syncBuffer
-	// waitDone receives the single cmd.Wait() result. The goroutine started
-	// in Start() is the sole owner of cmd.Wait(); both waitReadyWithEarlyExit
-	// and Stop() drain this channel rather than calling Wait() again, so
-	// cmd.Wait() runs exactly once over the server's lifetime.
-	waitDone chan error
+	// waitDone receives one token once cmd.Wait() has returned. The goroutine
+	// started in Start() is the sole owner of cmd.Wait(); both
+	// waitReadyWithEarlyExit and Stop() drain this channel rather than calling
+	// Wait() again, so cmd.Wait() runs exactly once over the server's lifetime.
+	waitDone chan struct{}
 	// waitFinished is closed once cmd.Wait() has returned. Stop() selects on it
 	// instead of reading cmd.ProcessState, which Wait() writes concurrently.
 	waitFinished chan struct{}
@@ -127,14 +127,14 @@ func (s *LlamaServer) Start() error {
 	}
 
 	// Single owner of cmd.Wait(): this goroutine. It closes waitFinished before
-	// publishing the result, so Stop() can tell that Wait() returned without
+	// signalling waitDone, so Stop() can tell that Wait() returned without
 	// reading cmd.ProcessState while Wait() is still writing it.
-	s.waitDone = make(chan error, 1)
+	s.waitDone = make(chan struct{}, 1)
 	s.waitFinished = make(chan struct{})
 	go func() {
-		err := s.cmd.Wait()
+		_ = s.cmd.Wait()
 		close(s.waitFinished)
-		s.waitDone <- err
+		s.waitDone <- struct{}{}
 	}()
 
 	if err := s.waitReadyWithEarlyExit(); err != nil {
