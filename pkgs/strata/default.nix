@@ -21,7 +21,7 @@
     repo = "llama.cpp";
     inherit (sources.ggml) rev hash;
   };
-  python = python3.withPackages (ps: [ps.jinja2 ps.pyyaml ps.numpy ps.regex ps.requests ps.psutil ps.pillow]);
+  python = python3.withPackages (ps: [ps.jinja2 ps.pyyaml ps.numpy ps.regex ps.requests ps.psutil ps.pillow ps.jsonschema ps.referencing ps.truststore ps.certifi]);
   gcc = stdenv.cc.cc;
   # TheRock's clang is not the Nix cc wrapper: it needs the host C++ and C library locations spelled out.
   hipHostFlags = lib.concatStringsSep " " [
@@ -36,7 +36,7 @@
 in
   stdenv.mkDerivation {
     pname = "strata";
-    version = "0.1.44.1";
+    version = "0.2.9";
 
     src = fetchFromGitHub {
       owner = "Niko1221";
@@ -92,8 +92,8 @@ in
       install -Dm755 strata $out/bin/strata
       install -Dm755 ../build-vision/bin/strata-vision $out/bin/strata-vision
       mkdir -p $out/share/strata
-      cp -r ../serve ../tools ../data $out/share/strata/
-      # serve/ is imported as a package; the server and the engine's tuning table travel with it.
+      cp -r ../serve ../strata_control ../strata_cli ../tools ../data $out/share/strata/
+      # serve/ and strata_control/ are imported as packages (the tools import strata_control too); the server and the engine's tuning table travel with it.
       makeWrapper ${python}/bin/python $out/bin/strata-server \
         --add-flags "-m serve.server" \
         --chdir $out/share/strata \
