@@ -3,8 +3,8 @@
 # names (passed as STRATA_GGML_DIR so the build is offline), and the TheRock ROCm tarball its docs/STRIX_HALO.md names.
 {
   strata = {
-    rev = "296b59d2f73c8f04a805df29c2fa97655adace78";
-    hash = "sha256-Jfo2uldtyXW8Y/wQxA7WcYwtmzCGAOaXgnlMSo7K9LE=";
+    rev = "c62d5e3a15b40ea51c96aae9e8d36928965f53ab";
+    hash = "sha256-eFuyhZQQNoskUXGB/RkaPvBslg16PZjCS3c8xyl4oZk=";
   };
   ggml = {
     rev = "3cf03257f219afbe7334045ff7c6a06ac68c627d";

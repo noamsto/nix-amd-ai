@@ -1103,8 +1103,13 @@
                       return b"downloaded"
 
 
+              class Service:
+                  def run(self, ids, thinking, tools, max_new, sampling, cancel, force=None, declared_only=False):
+                      raise NotImplementedError
+
+
               def openai_chunks(svc, req, ids, thinking, tools, max_new, cancel, run=None, force=None):
-                  for kind, x in run if run is not None else svc.run(ids, thinking, tools, max_new, req, cancel, force=force):
+                  for kind, x in run if run is not None else svc.run(ids, thinking, tools, max_new, req, cancel, force=force, declared_only=True):
                       if kind == "done":
                           yield {"choices": [{"delta": {}, "finish_reason": "stop"}],
                                  "usage": {"completion_tokens": x["completion_tokens"]}}
@@ -1114,7 +1119,9 @@
                   def __init__(self, reasoning):
                       self.reasoning = reasoning
 
-                  def run(self, ids, thinking, tools, max_new, req, cancel, force=None):
+                  def run(self, ids, thinking, tools, max_new, req, cancel, force=None, declared_only=False):
+                      if not declared_only:
+                          raise AssertionError("declared_only not passed")
                       yield "event", "text"
                       yield "done", {"completion_tokens": 50, "reasoning_tokens": self.reasoning}
 
@@ -1148,7 +1155,7 @@
                   if usage_of(Svc(20)) != {"completion_tokens": 50, "completion_tokens_details": {"reasoning_tokens": 20}}:
                       print("reasoning_tokens missing from usage")
                       return 1
-                  if usage_of(Svc(20), run=Svc(7).run(None, True, None, 0, {}, None)) != {
+                  if usage_of(Svc(20), run=Svc(7).run(None, True, None, 0, {}, None, declared_only=True)) != {
                       "completion_tokens": 50,
                       "completion_tokens_details": {"reasoning_tokens": 7},
                   }:
