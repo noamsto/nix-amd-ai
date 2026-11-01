@@ -21,14 +21,14 @@ let
 in
   stdenv.mkDerivation rec {
     pname = "xrt-plugin-amdxdna";
-    version = "1.9-unstable-2026-10-21";
+    version = "1.9-unstable-2026-10-27";
     pluginVersion = "2.26.0";
 
     src = fetchFromGitHub {
       owner = "amd";
       repo = "xdna-driver";
-      rev = "6b78ab22364c74e9bc51c667ba11ad087cde4be2";
-      hash = "sha256-5NqovKK3gTBIHmaFhwFd4cRwUscJR++hXr73j4ey6GU=";
+      rev = "766fce0c992da1817aeb444d998f553a96e9e0d3";
+      hash = "sha256-bbUNVDn5GJowLzqWqLsKGT8/yui1oqjEUl1tM5DQJzM=";
       fetchSubmodules = true;
     };
 
