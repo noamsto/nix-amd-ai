@@ -42,6 +42,14 @@
     # refuses). We use lemond's web UI, not llama.cpp's, so build without it:
     # tools/ui/CMakeLists.txt documents this as "building without an embedded
     # UI", emitting empty ui.cpp/ui.h. A later overlay can put it back.
+    # llama.cpp 0.7.0's ctest suite fetches stories15M from huggingface.co, which
+    # the sandbox cannot reach; test-generate-models has no model to load and
+    # the three tests that depend on it report "Not Run".
+    llamaCppRocmNoNetworkTests = pkg:
+      pkg.overrideAttrs (old: {
+        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-recurrent-state-rollback|test-save-load-state|test-state-restore-fragmented)$"];
+      });
+
     llamaCppNoWebUi = pkgs: pkg:
       pkg.overrideAttrs (old: {
         nativeBuildInputs = builtins.filter
@@ -259,9 +267,9 @@
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
             llama-cpp-vulkan-unsloth = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned ((llamaCppUnsloth pinned llama-cpp-base).override {vulkanSupport = true;}));
-            llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
+            llama-cpp-rocm = llamaCppRocmNoNetworkTests (llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
               llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
-            });
+            }));
             llama-cpp-rocm-gsqhalo = llamaCppRocmGsqhalo pinned llama-cpp-rocm;
             whisper-cpp-vulkan = withOwnVulkanDriver pinned (pinned.whisper-cpp.override {vulkanSupport = true;});
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {
@@ -359,9 +367,9 @@
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;}));
           llama-cpp-vulkan-unsloth = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs ((llamaCppUnsloth pkgs llama-cpp-base).override {vulkanSupport = true;}));
-          llama-cpp-rocm = llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
+          llama-cpp-rocm = llamaCppRocmNoNetworkTests (llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
             llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
-          });
+          }));
           llama-cpp-rocm-gsqhalo = llamaCppRocmGsqhalo pkgs llama-cpp-rocm;
           whisper-cpp-vulkan = withOwnVulkanDriver pkgs (pkgs.whisper-cpp.override {vulkanSupport = true;});
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {
