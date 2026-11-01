@@ -206,6 +206,92 @@ reject_odd GAIA_LATEST "$GAIA_LATEST"
 reject_odd_list GAIA_SCRIPTS_LATEST "$GAIA_SCRIPTS_LATEST"
 [ -z "$MTP_REQUIRED" ] || reject_odd MTP_REQUIRED "$MTP_REQUIRED"
 
+# Report-only checks (tracking issues, never a diff or a PR). Upstream file
+# contents are untrusted, so every value is regex-validated before it can reach
+# GITHUB_OUTPUT, and a failed fetch or parse downgrades to a warning and an
+# empty/unknown value rather than failing the run.
+sources_value() { # block key
+  awk -v b="$1" -v k="$2" '
+    $0 ~ "^  " b " = \\{$" { f = 1; next }
+    f && /^  };$/ { f = 0 }
+    f && $1 == k && $2 == "=" { gsub(/[";]/, "", $3); print $3; exit }
+  ' pkgs/strata/sources.nix 2>/dev/null || true
+}
+raw_file() { # tag path
+  gh api "repos/Niko1221/Strata/contents/$2?ref=$1" -H "Accept: application/vnd.github.v3.raw" 2>/dev/null || true
+}
+
+STRATA_PINNED=$(sources_value strata rev)
+STRATA_GGML_PINNED=$(sources_value ggml rev)
+STRATA_THEROCK_PINNED=$(sources_value therock version)
+STRATA_TAG=""
+STRATA_TAG_REV=""
+STRATA_BEHIND=unknown
+STRATA_GGML_NEW=""
+STRATA_THEROCK_NEW=""
+STRATA_GGML_CHANGED=unknown
+STRATA_THEROCK_CHANGED=unknown
+
+if ! [[ "$STRATA_PINNED" =~ ^[0-9a-f]{40}$ ]]; then
+  echo "WARNING: could not parse strata.rev from pkgs/strata/sources.nix; skipping Strata tracking" >&2
+  STRATA_PINNED=""
+else
+  [[ "$STRATA_GGML_PINNED" =~ ^[0-9a-f]{40}$ ]] || STRATA_GGML_PINNED=""
+  [[ "$STRATA_THEROCK_PINNED" =~ ^[0-9]+(\.[0-9]+)+$ ]] || STRATA_THEROCK_PINNED=""
+  STRATA_TAG=$(gh api repos/Niko1221/Strata/releases/latest --jq .tag_name 2>/dev/null || true)
+  if [[ "$STRATA_TAG" =~ ^v[0-9]+(\.[0-9]+)*$ ]]; then
+    STRATA_TAG_REV=$(gh api "repos/Niko1221/Strata/commits/$STRATA_TAG" --jq .sha 2>/dev/null || true)
+  fi
+  if ! [[ "$STRATA_TAG_REV" =~ ^[0-9a-f]{40}$ ]]; then
+    echo "WARNING: could not resolve the latest Strata release tag to a commit; skipping Strata tracking" >&2
+    STRATA_TAG=""
+    STRATA_TAG_REV=""
+  else
+    # "behind" only when the release is ahead of the pin: a pin on a fix commit
+    # made after the latest tag is not behind, and the compare link would point
+    # the wrong way.
+    strata_cmp=$(gh api "repos/Niko1221/Strata/compare/${STRATA_PINNED}...${STRATA_TAG_REV}" --jq .status 2>/dev/null || true)
+    case "$strata_cmp" in
+      ahead) STRATA_BEHIND=true ;;
+      identical | behind) STRATA_BEHIND=false ;;
+      *) echo "WARNING: could not compare the Strata pin with $STRATA_TAG (status '${strata_cmp:0:20}'); skipping Strata tracking" >&2 ;;
+    esac
+  fi
+  if [ "$STRATA_BEHIND" = true ]; then
+    read -r STRATA_GGML_NEW _ < <(raw_file "$STRATA_TAG" third_party/ggml/VERSION.txt) || true
+    [[ "$STRATA_GGML_NEW" =~ ^[0-9a-f]{40}$ ]] || STRATA_GGML_NEW=""
+    STRATA_THEROCK_NEW=$(raw_file "$STRATA_TAG" docs/STRIX_HALO.md \
+      | grep -oE -m1 'therock-dist-linux-gfx1151-[0-9]+(\.[0-9]+)+\.tar\.gz' \
+      | head -1 | sed 's/^therock-dist-linux-gfx1151-//; s/\.tar\.gz$//' || true)
+    [[ "$STRATA_THEROCK_NEW" =~ ^[0-9]+(\.[0-9]+)+$ ]] || STRATA_THEROCK_NEW=""
+    if [ -n "$STRATA_GGML_NEW" ] && [ -n "$STRATA_GGML_PINNED" ]; then
+      STRATA_GGML_CHANGED=false
+      [ "$STRATA_GGML_NEW" != "$STRATA_GGML_PINNED" ] && STRATA_GGML_CHANGED=true
+    fi
+    if [ -n "$STRATA_THEROCK_NEW" ] && [ -n "$STRATA_THEROCK_PINNED" ]; then
+      STRATA_THEROCK_CHANGED=false
+      [ "$STRATA_THEROCK_NEW" != "$STRATA_THEROCK_PINNED" ] && STRATA_THEROCK_CHANGED=true
+    fi
+    echo "Strata: pinned ${STRATA_PINNED:0:12}, latest release $STRATA_TAG at ${STRATA_TAG_REV:0:12}"
+  fi
+fi
+
+# Lemonade's FastFlowLM pin after this run's bump (LEM_LATEST), against what
+# this repo packages before the bump (FLM_CURRENT).
+FLM_PIN_LEMONADE=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/resources/backend_versions.json?ref=v${LEM_LATEST}" \
+  -H "Accept: application/vnd.github.v3.raw" --jq '.flm.npu' 2>/dev/null | sed 's/^v//' || true)
+FLM_PIN_PACKAGED="$FLM_CURRENT"
+FLM_PIN_DIVERGES=unknown
+if ! [[ "$FLM_PIN_LEMONADE" =~ ^[0-9]+(\.[0-9]+)*$ ]] || ! [[ "$FLM_PIN_PACKAGED" =~ ^[0-9]+(\.[0-9]+)*$ ]]; then
+  echo "WARNING: could not read both FastFlowLM versions (lemonade='${FLM_PIN_LEMONADE:0:20}'); skipping FLM pin check" >&2
+  FLM_PIN_LEMONADE=""
+  FLM_PIN_PACKAGED=""
+else
+  FLM_PIN_DIVERGES=false
+  [ "$FLM_PIN_LEMONADE" != "$FLM_PIN_PACKAGED" ] && FLM_PIN_DIVERGES=true
+  echo "FLM pin: lemonade v${LEM_LATEST} pins $FLM_PIN_LEMONADE, packaged $FLM_PIN_PACKAGED"
+fi
+
 # A run needs the validation build only when a bump actually changes a file:
 # FLM/Lemonade/xdna-driver rev/vLLM, or a nixpkgs lock refresh. The review-only
 # flags (xdna_branch_new, mtp_override, gaia) change nothing on disk, so building
@@ -245,6 +331,19 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "gaia_needs_update=$GAIA_NEEDS_UPDATE"
     echo "gaia_scripts_current=$GAIA_SCRIPTS_CURRENT"
     echo "gaia_scripts_latest=$GAIA_SCRIPTS_LATEST"
+    echo "strata_behind=$STRATA_BEHIND"
+    echo "strata_tag=$STRATA_TAG"
+    echo "strata_rev_pinned=$STRATA_PINNED"
+    echo "strata_rev_tag=$STRATA_TAG_REV"
+    echo "strata_ggml_pinned=$STRATA_GGML_PINNED"
+    echo "strata_ggml_new=$STRATA_GGML_NEW"
+    echo "strata_ggml_changed=$STRATA_GGML_CHANGED"
+    echo "strata_therock_pinned=$STRATA_THEROCK_PINNED"
+    echo "strata_therock_new=$STRATA_THEROCK_NEW"
+    echo "strata_therock_changed=$STRATA_THEROCK_CHANGED"
+    echo "flm_pin_lemonade=$FLM_PIN_LEMONADE"
+    echo "flm_pin_packaged=$FLM_PIN_PACKAGED"
+    echo "flm_pin_diverges=$FLM_PIN_DIVERGES"
     # Multi-line output needs the heredoc form (GitHub Actions docs). Random
     # delimiter: the content is nix-eval output, and a line equal to a fixed
     # delimiter would close the block early and let the rest write arbitrary
