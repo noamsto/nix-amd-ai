@@ -1,3 +1,4 @@
+import inspect
 import os
 import sys
 
@@ -6,6 +7,7 @@ from serve import server  # noqa: E402
 
 assert hasattr(server.Vision, "load")
 assert hasattr(server.Vision, "download")
+assert "declared_only" in inspect.signature(server.Service.run).parameters
 _load = server.Vision.load
 
 
@@ -33,7 +35,7 @@ _openai_chunks = server.openai_chunks
 
 def openai_chunks(svc, req, ids, thinking, tools, max_new, cancel, run=None, force=None):
     reasoning = [0]
-    source = run if run is not None else svc.run(ids, thinking, tools, max_new, req, cancel, force=force)
+    source = run if run is not None else svc.run(ids, thinking, tools, max_new, req, cancel, force=force, declared_only=True)
 
     def tap():
         for kind, x in source:
