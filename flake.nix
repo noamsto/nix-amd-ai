@@ -33,6 +33,14 @@
       nixpkgs.config.allowUnfreePredicate = allowFastFlowLMUnfree;
     };
 
+    # llama.cpp 0.7.0's ctest suite fetches stories15M from huggingface.co, which
+    # the sandbox cannot reach; test-generate-models has no model to load, and
+    # the tests that consume its output fail or report "Not Run".
+    llamaCppRocmNoNetworkTests = pkg:
+      pkg.overrideAttrs (old: {
+        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-recurrent-state-rollback[a-z0-9-]*|test-save-load-state|test-state-restore-fragmented)$"];
+      });
+
     # nixpkgs builds llama.cpp's embedded server UI (tools/ui) with npm, which
     # pulls `nodejs_latest` -- the newest Node by definition, hence the
     # attribute least likely to be on cache.nixos.org. A nixpkgs bump whose
@@ -42,14 +50,6 @@
     # refuses). We use lemond's web UI, not llama.cpp's, so build without it:
     # tools/ui/CMakeLists.txt documents this as "building without an embedded
     # UI", emitting empty ui.cpp/ui.h. A later overlay can put it back.
-    # llama.cpp 0.7.0's ctest suite fetches stories15M from huggingface.co, which
-    # the sandbox cannot reach; test-generate-models has no model to load and
-    # the three tests that depend on it report "Not Run".
-    llamaCppRocmNoNetworkTests = pkg:
-      pkg.overrideAttrs (old: {
-        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-recurrent-state-rollback|test-save-load-state|test-state-restore-fragmented)$"];
-      });
-
     llamaCppNoWebUi = pkgs: pkg:
       pkg.overrideAttrs (old: {
         nativeBuildInputs = builtins.filter
