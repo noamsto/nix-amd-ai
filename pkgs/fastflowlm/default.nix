@@ -78,6 +78,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     with a missing or non-string `details.family` now fails the load as
   #     500 model_load_failed, not a 400 (#181). A per-request `backend` the
   #     family does not provide is refused 400 before anything is unloaded.
+  #     v1.0.11's d3 decision models count as non-chat tags too, since
+  #     get_auto_model() maps them to the same Llama substitution.
   #     v1.0.10's own swap (clear the tag and prompt cache, then download,
   #     resolve and load in one try) is kept as the step after these checks.
   #   - no-exception-text.patch (#175): handlers built client error bodies
@@ -91,9 +93,11 @@ stdenv.mkDerivation (finalAttrs: {
   #     fail_inference) keeps its curated fixed text and the inner exception
   #     text goes to the log. The SSE error event v1.0.10 sends when
   #     /v1/chat/completions or /v1/completions fails mid-stream goes through
-  #     the same mapping. (A malformed max_prefill_len or model path entry in
-  #     model_list.json failing the load as 500 model_load_failed, which this
-  #     patch used to add, is upstream since v1.0.10.)
+  #     the same mapping. v1.0.11's /v1/systemone and /v1/decisions 500 body
+  #     drops its appended e.what() and keeps the fixed text. (A malformed
+  #     max_prefill_len or model path entry in model_list.json failing the
+  #     load as 500 model_load_failed, which this patch used to add, is
+  #     upstream since v1.0.10.)
   #   - embed-task-prompt.patch (#174): handle_embeddings ignored the
   #     request's prompt_name/task_type and always embedded with task_query,
   #     so a document index was built as if every text were a query and
@@ -257,7 +261,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     LM_Config::_load_json's exit(1) and killed the process; the selected
   #     chat entry's `files` is now validated up front (a non-empty array of
   #     strings that lists config.json), so the same malformed entry is
-  #     refused 500 model_load_failed without unloading (#204).
+  #     refused 500 model_load_failed without unloading (#204). d3 entries
+  #     skip that check like the other non-chat families, which are refused.
   #   - cancel-request-id.patch (#210): every route, POST /api/cancel
   #     included, registered its own cancellation token under the body's
   #     request_id. A cancel therefore overwrote its target's registry slot,

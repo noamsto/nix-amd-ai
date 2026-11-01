@@ -1,5 +1,5 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index afcbc53..ad8f89f 100644
+index afcbc53..62a77f4 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
 @@ -79,6 +79,38 @@ static json require_field(const json& request, const char* field, RequiredFieldT
@@ -148,7 +148,7 @@ index afcbc53..ad8f89f 100644
 +                              current_model_tag + "' stays loaded");
 +        return ModelLoad::Unknown;
 +    }
-+    // embed-gemma and whisper-v3 are in the model list, but get_auto_model()
++    // embed-gemma, whisper-v3 and d3 are in the model list, but get_auto_model()
 +    // substitutes Llama for them instead of refusing. A model_list.json entry
 +    // missing details.family, or with a non-string one, is a server-side config
 +    // fault; fail the load like the reads below instead of letting the
@@ -163,7 +163,7 @@ index afcbc53..ad8f89f 100644
 +        header_print("ERROR", "model '" + ensure_tag + "' has a malformed model-list entry: " + std::string(e.what()));
 +        return ModelLoad::LoadFailed;
 +    }
-+    if (family == "whisper-v3" || family == "embed-gemma") {
++    if (family == "whisper-v3" || family == "embed-gemma" || family == "d3") {
 +        header_print("ERROR", "model '" + ensure_tag + "' is not a chat model -- refusing; '" +
 +                              current_model_tag + "' stays loaded");
 +        return ModelLoad::NotChatModel;

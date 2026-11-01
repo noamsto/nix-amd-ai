@@ -17,7 +17,7 @@ index 45948d2..b296aa7 100644
                  std::string model_size = models.at(model_type).begin().key();
                  new_tag = model_type + ":" + model_size;
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 8f82e52..e4f3d26 100644
+index 9ba0cc7..18c61ed 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
 @@ -749,7 +749,15 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
@@ -48,7 +48,7 @@ index 8f82e52..e4f3d26 100644
 +        // reaches LM_Config::_load_json's exit(1). Refuse it here instead, still
 +        // before anything is unloaded. The non-chat families are refused just
 +        // below, so their entries are not validated here.
-+        if (family != "whisper-v3" && family != "embed-gemma") {
++        if (family != "whisper-v3" && family != "embed-gemma" && family != "d3") {
 +            if (!info.contains("files") || !info["files"].is_array() || info["files"].empty()) {
 +                throw std::runtime_error("missing or empty 'files' array");
 +            }
