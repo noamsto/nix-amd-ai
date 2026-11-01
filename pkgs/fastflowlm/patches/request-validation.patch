@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 5fae794..dffe75a 100644
+index 9f01b16..afcbc53 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -50,6 +50,34 @@ T value_or(const json& request, const char* key, T fallback) {
+@@ -51,6 +51,34 @@ T value_or(const json& request, const char* key, T fallback) {
  }
  }
  
@@ -37,7 +37,7 @@ index 5fae794..dffe75a 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -681,7 +709,11 @@ void RestHandler::handle_show(const json& request,
+@@ -914,7 +942,11 @@ void RestHandler::handle_show(const json& request,
      std::function<void(const json&)> send_response,
      StreamResponseCallback send_streaming_response) {
      try {
@@ -50,7 +50,7 @@ index 5fae794..dffe75a 100644
          json info = {
              {"modelfile", ""},
              {"parameters", ""},
-@@ -719,7 +751,11 @@ void RestHandler::handle_generate(const json& request,
+@@ -952,7 +984,11 @@ void RestHandler::handle_generate(const json& request,
                                   StreamResponseCallback send_streaming_response,
                                   std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -63,7 +63,7 @@ index 5fae794..dffe75a 100644
          bool stream = request.value("stream", true);
          std::string model = request.value("model", current_model_tag);
          const std::string request_backend = request.value("backend", std::string());
-@@ -839,6 +875,10 @@ void RestHandler::handle_chat(const json& request,
+@@ -1072,6 +1108,10 @@ void RestHandler::handle_chat(const json& request,
                               StreamResponseCallback send_streaming_response,
                               std::shared_ptr<CancellationToken> cancellation_token) {
      try {
@@ -74,7 +74,7 @@ index 5fae794..dffe75a 100644
          nlohmann::ordered_json messages = request["messages"];
          bool stream = request.value("stream", false);
          std::string model = request.value("model", current_model_tag);
-@@ -962,7 +1002,19 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -1195,7 +1235,19 @@ void RestHandler::handle_embeddings(const json& request,
                                     std::function<void(const json&)> send_response,
                                     StreamResponseCallback send_streaming_response) {
      try {
@@ -95,28 +95,3 @@ index 5fae794..dffe75a 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1181,6 +1233,10 @@ void RestHandler::handle_openai_chat_completion(const json& request,
-                                                StreamResponseCallback send_streaming_response,
-                                                std::shared_ptr<CancellationToken> cancellation_token) {
-     try {
-+        if (json err = require_field(request, "messages", RequiredFieldType::Array); !err.is_null()) {
-+            send_response(err);
-+            return;
-+        }
-         // Extract OpenAI-style parameters
-         json current_messages = request["messages"];
-         std::string model = value_or(request, "model", current_model_tag);
-@@ -1593,8 +1649,12 @@ void RestHandler::handle_openai_completion(const json& request,
-     StreamResponseCallback send_streaming_response,
-     std::shared_ptr<CancellationToken> cancellation_token) {
-     try {
-+        if (json err = require_field(request, "prompt", RequiredFieldType::String); !err.is_null()) {
-+            send_response(err);
-+            return;
-+        }
-         // Extract OpenAI-style parameters
--        std::string prompt = request["prompt"];
-+        std::string prompt = request["prompt"].get<std::string>();
-         std::string model = request.value("model", current_model_tag);
-         const std::string request_backend = request.value("backend", std::string());
-         std::string reasoning_effort = request.value("reasoning_effort", "medium");

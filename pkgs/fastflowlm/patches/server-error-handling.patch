@@ -1,5 +1,5 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 7c99881..7cd04b2 100644
+index 08c0c06..0390356 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -129,6 +129,16 @@ void brief_print_message_response(nlohmann::json request) {
@@ -45,7 +45,7 @@ index 7c99881..7cd04b2 100644
          return false; 
 @@ -659,14 +673,14 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              if (!req_ref.body().empty()) {
-                 if(is_json)
+                 if(is_json && !reads_raw_body(std::string(req_ref.method_string()), std::string(req_ref.target())))
                      request_json = json::parse(req_ref.body());
 -                //else 
 +                //else
@@ -118,7 +118,7 @@ index 7c99881..7cd04b2 100644
                  }
              }
  
-@@ -713,7 +747,9 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -724,7 +758,9 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
                  response_ref.set(http::field::content_type, "text/plain; charset=utf-8");
              }
              else {
@@ -129,7 +129,7 @@ index 7c99881..7cd04b2 100644
                  response_ref.set(http::field::content_type, "application/json");
              }
              response_ref.prepare_payload();
-@@ -741,12 +777,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -752,12 +788,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
          try {
              it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
          }
@@ -160,7 +160,7 @@ index 7c99881..7cd04b2 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -759,7 +812,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -770,7 +823,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              unregister_active_request(request_id);
  
              res_ref.result(http::status::internal_server_error);
@@ -169,7 +169,7 @@ index 7c99881..7cd04b2 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -789,11 +842,11 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -800,11 +853,11 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              process_task(true);
          })) {
          res.result(http::status::service_unavailable);

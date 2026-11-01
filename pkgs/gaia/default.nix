@@ -4,7 +4,7 @@
   writeShellScriptBin,
   uv,
 }: let
-  version = "0.25.1";
+  version = "0.25.3";
 
   # Upstream dropped the gaia-emr and gaia-code console scripts in 0.21.0
   # (changelog: "drop stale gaia-emr smoke check", amd/gaia#1563). Verified

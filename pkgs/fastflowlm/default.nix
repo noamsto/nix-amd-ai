@@ -15,6 +15,7 @@
   libopus,
   libuuid,
   libvorbis,
+  libwebp,
   cargo,
   rustc,
   rustPlatform,
@@ -61,6 +62,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     `request["field"]` on a const json&, undefined behavior for a missing
   #     key (JSON_ASSERT is compiled out in release builds) that segfaults or
   #     returns garbage instead of throwing. Checks presence and type first.
+  #     (v1.0.11 checks /v1/chat/completions' messages and /v1/completions'
+  #     prompt itself, so the patch now covers /api/show, /api/generate,
+  #     /api/chat and the embeddings routes.)
   #   - model-identity.patch (#173): a request naming a model tag the build
   #     does not know evicted the served model, loaded llama3.2:1b in its
   #     place, and answered under the requested tag; /v1/embeddings likewise
@@ -309,7 +313,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     reuses an id after a cancel is not erased by the cancelled request's
   #     completion; embeddings and audio have no cancellation path and keep
   #     registering when they start; a non-string request_id is refused 400
-  #     before the request is queued.
+  #     before the request is queued. A route that parses its own raw body
+  #     (System One) takes no request_id from it, as upstream's own parse
+  #     skips those routes.
   #   - lm-config-throw.patch (#220): LM_Config::_load_json() called exit(1)
   #     when a model directory had no config.json, so the fault was
   #     uncatchable and killed the process on every path that parsed a
@@ -329,7 +335,7 @@ stdenv.mkDerivation (finalAttrs: {
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
   # that is on the branch commit per this repo's CLAUDE.md, not here.
-  # Still unfixed on ROCm/FastFlowLM main as of v1.0.10; drop once upstream
+  # Still unfixed on ROCm/FastFlowLM main as of v1.0.11; drop once upstream
   # fixes request validation, the throwing error-response dump, the status
   # mapping, model substitution, leaking exception text, ignoring the task
   # prompt, reporting the no-model sentinel in /api/ps, classifying /api/chat
@@ -353,7 +359,9 @@ stdenv.mkDerivation (finalAttrs: {
   # /v1/chat/completions, which this series carried before. v1.0.10 clears
   # the serving tag and prompt cache before a model swap, sizes prefill chunks
   # per model, and ends a /v1 stream that fails after its first chunk with an
-  # error event; the series is rebased onto those.
+  # error event; the series is rebased onto those. v1.0.11 validates the /v1
+  # handlers' messages and prompt, and adds the System One routes and the
+  # prefix cache; the series is rebased onto those.
   # A bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -379,8 +387,9 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/cancel-queued-request.patch
     ./patches/lm-config-throw.patch
     ./patches/cancel-chat-nonstream.patch
-    # Link libjpeg-turbo, opus, ogg and vorbis from nixpkgs instead of
-    # downloading and building pinned tarballs through ExternalProject.
+    # Link libjpeg-turbo, libwebp's decoder, opus, ogg and vorbis from
+    # nixpkgs instead of downloading and building pinned tarballs through
+    # ExternalProject.
     ./patches/use-system-codecs.patch
   ];
 
@@ -411,6 +420,7 @@ stdenv.mkDerivation (finalAttrs: {
     libopus
     libuuid
     libvorbis
+    libwebp
     stdenv.cc.cc.lib
     xrt-combined
   ];

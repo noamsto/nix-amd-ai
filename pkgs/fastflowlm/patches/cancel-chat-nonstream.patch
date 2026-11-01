@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 47272eb..d4fe281 100644
+index bd22b00..fc46499 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1233,6 +1233,17 @@ void RestHandler::handle_chat(const json& request,
+@@ -1466,6 +1466,17 @@ void RestHandler::handle_chat(const json& request,
                  this->auto_chat_engine->clear_context();
                  return;
              }

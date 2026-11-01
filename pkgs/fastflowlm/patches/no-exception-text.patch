@@ -1,8 +1,8 @@
 diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/modeling_phi4.cpp
-index 2f648b5..3beed99 100644
+index bd88e5b..cace5e1 100644
 --- a/src/common/AutoModel/modeling_phi4.cpp
 +++ b/src/common/AutoModel/modeling_phi4.cpp
-@@ -104,11 +104,10 @@ std::string Phi4::apply_chat_template(nlohmann::ordered_json& messages,
+@@ -105,11 +105,10 @@ std::string Phi4::apply_chat_template(nlohmann::ordered_json& messages,
  void Phi4::fail_inference(const std::string& detail) {
      const bool poisoned = backend_ && backend_->poisoned();
      _shared_after_inference_failure(poisoned);
@@ -18,10 +18,10 @@ index 2f648b5..3beed99 100644
  
  bool Phi4::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input,
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 95265a0..883dc3c 100644
+index ad8f89f..e4d8d96 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -29,12 +29,6 @@ json ModelErrorResponse(const ModelRequestError& error) {
+@@ -30,12 +30,6 @@ json ModelErrorResponse(const ModelRequestError& error) {
                         {"session_cleared", error.session_cleared()}}}};
  }
  
@@ -34,7 +34,7 @@ index 95265a0..883dc3c 100644
  /// \brief Whether a request sets a field
  /// \note Some clients send null for every option they leave unset, so null
  ///       counts as not set; json::value() and conversions throw on it instead.
-@@ -110,6 +104,24 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
+@@ -111,6 +105,24 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
      }
  }
  
@@ -59,7 +59,7 @@ index 95265a0..883dc3c 100644
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -815,8 +827,7 @@ void RestHandler::handle_show(const json& request,
+@@ -1048,8 +1060,7 @@ void RestHandler::handle_show(const json& request,
          send_response(info);
      }
      catch (const std::exception& e) {
@@ -69,7 +69,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -873,16 +884,14 @@ void RestHandler::handle_generate(const json& request,
+@@ -1106,16 +1117,14 @@ void RestHandler::handle_generate(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -88,7 +88,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -906,16 +915,14 @@ void RestHandler::handle_generate(const json& request,
+@@ -1139,16 +1148,14 @@ void RestHandler::handle_generate(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -107,7 +107,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -938,8 +945,7 @@ void RestHandler::handle_generate(const json& request,
+@@ -1171,8 +1178,7 @@ void RestHandler::handle_generate(const json& request,
              send_response(response);
          }
      } catch (const std::exception& e) {
@@ -117,7 +117,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -998,8 +1004,7 @@ void RestHandler::handle_chat(const json& request,
+@@ -1231,8 +1237,7 @@ void RestHandler::handle_chat(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -127,7 +127,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1007,8 +1012,7 @@ void RestHandler::handle_chat(const json& request,
+@@ -1240,8 +1245,7 @@ void RestHandler::handle_chat(const json& request,
                  auto_chat_engine->generate(meta_info, length_limit, ostream,
                      [&] { return cancellation_token && cancellation_token->cancelled(); });
              } catch (const std::exception& e) {
@@ -137,7 +137,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1031,8 +1035,7 @@ void RestHandler::handle_chat(const json& request,
+@@ -1264,8 +1268,7 @@ void RestHandler::handle_chat(const json& request,
                      meta_info, uniformed_input, length_limit, nstream,
                      [&] { return cancellation_token && cancellation_token->cancelled(); });
              } catch (const std::exception& e) {
@@ -147,7 +147,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1065,8 +1068,7 @@ void RestHandler::handle_chat(const json& request,
+@@ -1298,8 +1301,7 @@ void RestHandler::handle_chat(const json& request,
              this->auto_chat_engine->clear_context();
          }
      } catch (const std::exception& e) {
@@ -157,7 +157,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1164,8 +1166,7 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -1397,8 +1399,7 @@ void RestHandler::handle_embeddings(const json& request,
          send_response(response);
      }
      catch (const std::exception& e) {
@@ -167,7 +167,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1180,8 +1181,7 @@ void RestHandler::handle_models(const json& request,
+@@ -1413,8 +1414,7 @@ void RestHandler::handle_models(const json& request,
          json models = supported_models.get_all_models_ollama();
          send_response(models);
      } catch (const std::exception& e) {
@@ -177,7 +177,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1210,8 +1210,7 @@ void RestHandler::handle_models_openai(const json& request,
+@@ -1443,8 +1443,7 @@ void RestHandler::handle_models_openai(const json& request,
          send_response(models);
      }
      catch (const std::exception& e) {
@@ -187,7 +187,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1269,8 +1268,7 @@ void RestHandler::handle_ps(const json& request,
+@@ -1502,8 +1501,7 @@ void RestHandler::handle_ps(const json& request,
          // std::cout << "response: " << response.dump(4) << std::endl;
          send_response(response);
      } catch (const std::exception& e) {
@@ -197,7 +197,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1497,8 +1495,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1781,8 +1779,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -207,7 +207,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1512,7 +1509,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1796,7 +1793,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
                  if (error.session_cleared()) this->prompt_cache.reset();
                  return;
              } catch (const std::exception& e) {
@@ -216,7 +216,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1525,8 +1522,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1809,8 +1806,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
              try {
                  ostream.finalize(meta_info);
              } catch (const std::exception& e) {
@@ -226,7 +226,7 @@ index 95265a0..883dc3c 100644
              }
          }
          else {
-@@ -1558,8 +1554,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1848,8 +1844,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -236,9 +236,9 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1568,8 +1563,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
-             try {
-                 response_text = auto_chat_engine->generate(meta_info, length_limit, nstream, [&] { return cancellation_token->cancelled(); });
+@@ -1859,8 +1854,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+                 response_text = auto_chat_engine->generate(meta_info, length_limit, out, [&] { return cancellation_token->cancelled(); });
+                 out.flush();
              } catch (const std::exception& e) {
 -                json error_response = ExceptionResponse(e);
 -                send_response(error_response);
@@ -246,7 +246,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1606,14 +1600,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1899,14 +1893,7 @@ void RestHandler::handle_openai_chat_completion(const json& request,
          }
  
      } catch (const std::exception& e) {
@@ -262,7 +262,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1733,14 +1720,7 @@ void RestHandler::handle_openai_audio_transcriptions(const json& request,
+@@ -2026,14 +2013,7 @@ void RestHandler::handle_openai_audio_transcriptions(const json& request,
          send_response(error_response);
      }
      catch (const std::exception& e) {
@@ -278,7 +278,7 @@ index 95265a0..883dc3c 100644
      }
  }
  
-@@ -1817,8 +1797,7 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2116,8 +2096,7 @@ void RestHandler::handle_openai_completion(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -288,7 +288,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1828,15 +1807,14 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2127,15 +2106,14 @@ void RestHandler::handle_openai_completion(const json& request,
                  send_stream_error(ModelErrorResponse(error));
                  return;
              } catch (const std::exception& e) {
@@ -306,7 +306,7 @@ index 95265a0..883dc3c 100644
              }
  
              this->auto_chat_engine->clear_context();
-@@ -1855,16 +1833,14 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2154,16 +2132,14 @@ void RestHandler::handle_openai_completion(const json& request,
                      return;
                  }
              } catch (const std::exception& e) {
@@ -325,7 +325,7 @@ index 95265a0..883dc3c 100644
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1895,13 +1871,6 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2195,13 +2171,6 @@ void RestHandler::handle_openai_completion(const json& request,
          }
      }
      catch (const std::exception& e) {
@@ -341,7 +341,7 @@ index 95265a0..883dc3c 100644
      }
  }
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 5bf5e77..59b3e53 100644
+index 17821bf..ced938d 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -134,6 +134,8 @@ void brief_print_message_response(nlohmann::json request) {
@@ -353,7 +353,7 @@ index 5bf5e77..59b3e53 100644
  // Ported from OpenFlowLM-Next's server.cpp (Vegard Berget).
  static std::string safe_dump(const json& j) {
      return j.dump(-1, ' ', false, json::error_handler_t::replace);
-@@ -750,8 +752,8 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -761,8 +763,8 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
                  response_ref.set(http::field::content_type, "text/plain; charset=utf-8");
              }
              else {
@@ -364,7 +364,7 @@ index 5bf5e77..59b3e53 100644
                  response_ref.body() = safe_dump(response_data);
                  response_ref.set(http::field::content_type, "application/json");
              }
-@@ -802,7 +804,8 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -813,7 +815,8 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
              unregister_active_request(request_id);
  
              res_ref.result(http::status::internal_server_error);

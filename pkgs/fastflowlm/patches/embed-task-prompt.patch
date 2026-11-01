@@ -34,10 +34,10 @@ index dcc9861..0788bca 100644
  };
 \ No newline at end of file
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 883dc3c..51cbd3c 100644
+index e4d8d96..1b6031a 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -104,6 +104,92 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
+@@ -105,6 +105,92 @@ static json model_error(RestHandler::ModelLoad why, const std::string& model) {
      }
  }
  
@@ -130,7 +130,7 @@ index 883dc3c..51cbd3c 100644
  // e.what() can quote the request's own bytes and nlohmann's type-system
  // internals, so it goes to the server log, never into the response body.
  // request_fault marks a catch around prompt processing (insert(), or
-@@ -1122,6 +1208,66 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -1355,6 +1441,66 @@ void RestHandler::handle_embeddings(const json& request,
          model = loaded;
  #endif
  
@@ -197,7 +197,7 @@ index 883dc3c..51cbd3c 100644
          std::vector<std::string> inputs;
  
          if (request["input"].is_string()) {
-@@ -1139,7 +1285,7 @@ void RestHandler::handle_embeddings(const json& request,
+@@ -1372,7 +1518,7 @@ void RestHandler::handle_embeddings(const json& request,
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
              for (size_t i = 0; i < inputs.size(); ++i) {
                  std::cout << "Embedding input[" << i << "]: " << "\n" << inputs[i] << std::endl;
