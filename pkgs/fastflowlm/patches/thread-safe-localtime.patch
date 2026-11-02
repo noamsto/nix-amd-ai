@@ -13,10 +13,10 @@ index 2cb3eca..1f2ae7a 100644
                  ss << std::put_time(&local_time, format.c_str());
                  return ss.str();
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 894d3b3..8bf907a 100644
+index e4f3d26..f32472b 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1469,19 +1469,21 @@ void RestHandler::handle_ps(const json& request,
+@@ -1702,19 +1702,21 @@ void RestHandler::handle_ps(const json& request,
          auto expires_tp = std::chrono::system_clock::from_time_t(expires_time_t);
          auto fractional_seconds = std::chrono::duration_cast<std::chrono::microseconds>(expires_time - expires_tp).count();
          
@@ -49,7 +49,7 @@ index 894d3b3..8bf907a 100644
          
          // Format timezone offset
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index be5f13a..9289c8e 100644
+index cdb4da0..f0d0e61 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
 @@ -28,8 +28,10 @@ std::atomic<int> g_npu_active_requests{0};

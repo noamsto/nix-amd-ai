@@ -55,6 +55,10 @@
           "-DLLAMA_BUILD_UI=OFF"
           "-DLLAMA_USE_PREBUILT_UI=OFF"
         ];
+        # llama.cpp 0.7.0's ctest suite fetches stories15M from huggingface.co,
+        # which the sandbox cannot reach; test-generate-models has no model to
+        # load, and the tests that consume its output fail or report "Not Run".
+        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-recurrent-state-rollback[a-z0-9-]*|test-save-load-state|test-state-restore-fragmented)$"];
       });
 
     # These backends run against the pinned nixpkgs, which never matches the

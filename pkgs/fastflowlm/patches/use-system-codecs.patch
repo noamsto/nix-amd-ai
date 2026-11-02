@@ -14,9 +14,10 @@ index cd74dd7..0d60308 100644
  #
  # Defines the INTERFACE target flm_audio_codecs. Link it from anything that
  # compiles audio_decoder.cpp.
--include_guard(GLOBAL)
++
+ include_guard(GLOBAL)
 -include(ExternalProject)
--
+ 
 -set(_flm_audio_prefix ${CMAKE_BINARY_DIR}/audio-codecs)
 -if(MSVC)
 -    set(_flm_lib_prefix "")
@@ -28,6 +29,8 @@ index cd74dd7..0d60308 100644
 -foreach(_lib opus ogg vorbis vorbisfile)
 -    set(_flm_${_lib}_lib ${_flm_audio_prefix}/lib/${_flm_lib_prefix}${_lib}${_flm_lib_suffix})
 -endforeach()
++find_package(PkgConfig REQUIRED)
++pkg_check_modules(FLM_AUDIO_CODECS REQUIRED IMPORTED_TARGET opus ogg vorbisfile)
  
 -set(_flm_audio_args
 -    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
@@ -61,8 +64,7 @@ index cd74dd7..0d60308 100644
 -        CMAKE_ARGS ${_flm_audio_args} ${ARGN}
 -        BUILD_BYPRODUCTS ${byproduct})
 -endfunction()
-+include_guard(GLOBAL)
- 
+-
 -_flm_audio_project(opus
 -    "https://downloads.xiph.org/releases/opus/opus-1.6.1.tar.gz;https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.6.1.tar.gz"
 -    6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1
@@ -84,9 +86,7 @@ index cd74dd7..0d60308 100644
 -    "${_flm_vorbis_lib};${_flm_vorbisfile_lib}"
 -    -DCMAKE_POLICY_VERSION_MINIMUM=3.5)
 -ExternalProject_Add_StepDependencies(flm_vorbis configure flm_ogg)
-+find_package(PkgConfig REQUIRED)
-+pkg_check_modules(FLM_AUDIO_CODECS REQUIRED IMPORTED_TARGET opus ogg vorbisfile)
- 
+-
 -# The include directory must exist at configure time for the imported targets.
 -file(MAKE_DIRECTORY ${_flm_audio_prefix}/include)
  add_library(flm_audio_codecs INTERFACE)
@@ -106,11 +106,11 @@ index cd74dd7..0d60308 100644
  # The decoders do wrapping integer arithmetic on corrupt input (e.g. FLAC LPC
  # prediction); make signed overflow defined there instead of undefined.
 diff --git a/src/cmake/FlmImageCodecs.cmake b/src/cmake/FlmImageCodecs.cmake
-index 2177723..6defe83 100644
+index ef1831f..e7b237d 100644
 --- a/src/cmake/FlmImageCodecs.cmake
 +++ b/src/cmake/FlmImageCodecs.cmake
-@@ -1,68 +1,16 @@
- # JPEG/PNG codecs for ImageReader (src/common/image/image_reader.cpp).
+@@ -1,124 +1,19 @@
+ # JPEG/PNG/WebP codecs for ImageReader (src/common/image/image_reader.cpp).
  #
 -#   - libjpeg-turbo (IJG + BSD-3-Clause + zlib licenses), built as a static
 -#     library. Upstream refuses add_subdirectory(), so it goes through
@@ -119,12 +119,18 @@ index 2177723..6defe83 100644
 -#     TurboJPEG API bundles. SIMD is used wherever NASM is on PATH.
 +#   - libjpeg-turbo, taken from the system via pkg-config.
  #   - lodepng (zlib license), vendored in include/lodepng.
+-#   - libwebp (BSD-3-Clause), decoder only (libwebpdecoder), built as a static
+-#     library through ExternalProject: the version Pillow 12 ships, so WebP
+-#     pixels match the reference's.
++#   - libwebp, decoder only (libwebpdecoder), taken from the system via
++#     pkg-config.
  #
  # Defines the INTERFACE target flm_image_codecs. Link it from anything that
  # compiles image_reader.cpp.
--include_guard(GLOBAL)
++
+ include_guard(GLOBAL)
 -include(ExternalProject)
--
+ 
 -set(FLM_LIBJPEG_TURBO_VERSION 3.2.0)
 -set(_flm_ljt_prefix ${CMAKE_BINARY_DIR}/libjpeg-turbo)
 -if(MSVC)
@@ -132,7 +138,7 @@ index 2177723..6defe83 100644
 -else()
 -    set(_flm_ljt_lib ${_flm_ljt_prefix}/lib/libjpeg.a)
 -endif()
- 
+-
 -set(_flm_ljt_args
 -    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
 -    -DCMAKE_INSTALL_LIBDIR=lib
@@ -167,8 +173,7 @@ index 2177723..6defe83 100644
 -    INSTALL_DIR ${_flm_ljt_prefix}
 -    CMAKE_ARGS ${_flm_ljt_args}
 -    BUILD_BYPRODUCTS ${_flm_ljt_lib})
-+include_guard(GLOBAL)
- 
+-
 -# The include directory must exist at configure time for the imported target.
 -file(MAKE_DIRECTORY ${_flm_ljt_prefix}/include)
 -add_library(flm_libjpeg STATIC IMPORTED GLOBAL)
@@ -176,10 +181,64 @@ index 2177723..6defe83 100644
 -    IMPORTED_LOCATION ${_flm_ljt_lib}
 -    INTERFACE_INCLUDE_DIRECTORIES ${_flm_ljt_prefix}/include)
 -add_dependencies(flm_libjpeg flm_libjpeg_turbo)
+-
+-set(FLM_LIBWEBP_VERSION 1.6.0)
+-set(_flm_webp_prefix ${CMAKE_BINARY_DIR}/libwebp)
+-if(MSVC)
+-    set(_flm_webp_lib ${_flm_webp_prefix}/lib/libwebpdecoder.lib)
+-else()
+-    set(_flm_webp_lib ${_flm_webp_prefix}/lib/libwebpdecoder.a)
+-endif()
+-set(_flm_webp_args
+-    -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
+-    -DCMAKE_INSTALL_LIBDIR=lib
+-    -DCMAKE_BUILD_TYPE=Release
+-    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
+-    -DBUILD_SHARED_LIBS=OFF
+-    -DWEBP_USE_THREAD=OFF
+-    -DWEBP_BUILD_ANIM_UTILS=OFF
+-    -DWEBP_BUILD_CWEBP=OFF
+-    -DWEBP_BUILD_DWEBP=OFF
+-    -DWEBP_BUILD_GIF2WEBP=OFF
+-    -DWEBP_BUILD_IMG2WEBP=OFF
+-    -DWEBP_BUILD_VWEBP=OFF
+-    -DWEBP_BUILD_WEBPINFO=OFF
+-    -DWEBP_BUILD_LIBWEBPMUX=OFF
+-    -DWEBP_BUILD_WEBPMUX=OFF
+-    -DWEBP_BUILD_EXTRAS=OFF
+-    # MSVC: the C runtime DLL, like flm (and libjpeg-turbo above)
+-    -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL
+-    -DCMAKE_POLICY_DEFAULT_CMP0091=NEW)
+-if(CMAKE_C_COMPILER)
+-    list(APPEND _flm_webp_args -DCMAKE_C_COMPILER=${CMAKE_C_COMPILER})
+-endif()
+-set(_flm_webp_work ${CMAKE_BINARY_DIR}/wbp)
+-ExternalProject_Add(flm_libwebp
+-    URL https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-${FLM_LIBWEBP_VERSION}.tar.gz
+-    URL_HASH SHA256=e4ab7009bf0629fd11982d4c2aa83964cf244cffba7347ecd39019a9e38c4564
+-    DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+-    EXCLUDE_FROM_ALL TRUE
+-    PREFIX ${_flm_webp_work}
+-    DOWNLOAD_DIR ${_flm_webp_work}/dl
+-    SOURCE_DIR ${_flm_webp_work}/s
+-    BINARY_DIR ${_flm_webp_work}/b
+-    STAMP_DIR ${_flm_webp_work}/st
+-    TMP_DIR ${_flm_webp_work}/t
+-    INSTALL_DIR ${_flm_webp_prefix}
+-    CMAKE_ARGS ${_flm_webp_args}
+-    BUILD_BYPRODUCTS ${_flm_webp_lib})
+-
+-file(MAKE_DIRECTORY ${_flm_webp_prefix}/include)
+-add_library(flm_libwebpdecoder STATIC IMPORTED GLOBAL)
+-set_target_properties(flm_libwebpdecoder PROPERTIES
+-    IMPORTED_LOCATION ${_flm_webp_lib}
+-    INTERFACE_INCLUDE_DIRECTORIES ${_flm_webp_prefix}/include)
+-add_dependencies(flm_libwebpdecoder flm_libwebp)
 +find_package(PkgConfig REQUIRED)
 +pkg_check_modules(FLM_LIBJPEG REQUIRED IMPORTED_TARGET libjpeg)
++pkg_check_modules(FLM_LIBWEBPDECODER REQUIRED IMPORTED_TARGET libwebpdecoder)
  
  add_library(flm_image_codecs INTERFACE)
  target_sources(flm_image_codecs INTERFACE ${CMAKE_CURRENT_LIST_DIR}/../include/lodepng/lodepng.cpp)
--target_link_libraries(flm_image_codecs INTERFACE flm_libjpeg)
-+target_link_libraries(flm_image_codecs INTERFACE PkgConfig::FLM_LIBJPEG)
+-target_link_libraries(flm_image_codecs INTERFACE flm_libjpeg flm_libwebpdecoder)
++target_link_libraries(flm_image_codecs INTERFACE PkgConfig::FLM_LIBJPEG PkgConfig::FLM_LIBWEBPDECODER)

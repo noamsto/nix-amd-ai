@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 51cbd3c..1a8c9d3 100644
+index 1b6031a..e505e0d 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1399,18 +1399,35 @@ void RestHandler::handle_ps(const json& request,
+@@ -1632,18 +1632,35 @@ void RestHandler::handle_ps(const json& request,
          
          std::string expires_at = expires_ss.str();
          

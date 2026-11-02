@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index b4e1f03..0d7407a 100644
+index 610a7bc..8f82e52 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -984,7 +984,6 @@ void RestHandler::handle_generate(const json& request,
+@@ -1217,7 +1217,6 @@ void RestHandler::handle_generate(const json& request,
          header_print("FLM", "Start generating...");
          
          if (stream) {
@@ -10,7 +10,7 @@ index b4e1f03..0d7407a 100644
              // Streaming response using streaming_ostream
              auto total_start_time = time_utils::now();
              streaming_ostream ostream(model, send_streaming_response, false);
-@@ -1126,7 +1125,6 @@ void RestHandler::handle_chat(const json& request,
+@@ -1359,7 +1358,6 @@ void RestHandler::handle_chat(const json& request,
          meta_info.max_prefill_len = this->prefill_chunk_len;
          header_print("FLM", "Start generating...");
          if (stream) {
@@ -18,15 +18,15 @@ index b4e1f03..0d7407a 100644
              // Streaming response using streaming_ostream
              auto total_start_time = time_utils::now();
              streaming_ostream ostream(model, send_streaming_response, true);  // true for chat format
-@@ -1677,7 +1675,6 @@ void RestHandler::handle_openai_chat_completion(const json& request,
-         parse_options.parse_tool_calls = !tools.empty() && constraint_request.tool_choice != chat_tool_choice::NONE;
+@@ -1961,7 +1959,6 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+         parse_options.reasoning_may_close = continue_final && auto_chat_engine->thinking_enabled();
          if (stream){
              // Create a wrapper callback that passes the pre-formatted SSE string directly
 -            cancellation_token->reset();
              bool stream_started = false;
              auto openai_stream_callback = [&send_streaming_response, &stream_started](const std::string& data, bool is_final) {
                  stream_started = true;
-@@ -1997,7 +1994,6 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2296,7 +2293,6 @@ void RestHandler::handle_openai_completion(const json& request,
          header_print("FLM", "Start generating...");
  
          if (stream) {
