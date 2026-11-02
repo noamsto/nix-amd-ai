@@ -94,7 +94,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     text goes to the log. The SSE error event v1.0.10 sends when
   #     /v1/chat/completions or /v1/completions fails mid-stream goes through
   #     the same mapping. v1.0.11's /v1/systemone and /v1/decisions 500 body
-  #     drops its appended e.what() and keeps the fixed text. (A malformed
+  #     drops its appended e.what() and keeps the fixed text, and their 422
+  #     for a body that is not JSON drops the parser's message (line, column
+  #     and offending byte of the body). (A malformed
   #     max_prefill_len or model path entry in model_list.json failing the
   #     load as 500 model_load_failed, which this patch used to add, is
   #     upstream since v1.0.10.)
