@@ -1,3 +1,19 @@
+diff --git a/src/common/AutoDecisionModel/auto_decision_model.cpp b/src/common/AutoDecisionModel/auto_decision_model.cpp
+index babcff3..57d1feb 100644
+--- a/src/common/AutoDecisionModel/auto_decision_model.cpp
++++ b/src/common/AutoDecisionModel/auto_decision_model.cpp
+@@ -478,8 +478,10 @@ DecisionReply AutoDecisionModel::system_one(const std::string& raw_body) {
+     try {
+         body = flm::d3::parse_json(raw_body);
+     } catch (const flm::d3::JsonError& e) {
++        // e.what() quotes the body's own bytes and positions, so it goes to the log, not the reply
++        header_print("ERROR", "System One body is not JSON: " << e.what());
+         reply.status = 422;
+-        reply.body = {{"detail", std::string("could not read the body as JSON (") + e.what() + ")"}};
++        reply.body = {{"detail", "could not read the body as JSON"}};
+         return reply;
+     }
+     // assets and box / track questions: the composed path (upstream _system_one's dispatch)
 diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/modeling_phi4.cpp
 index bd88e5b..cace5e1 100644
 --- a/src/common/AutoModel/modeling_phi4.cpp
