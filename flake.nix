@@ -33,14 +33,6 @@
       nixpkgs.config.allowUnfreePredicate = allowFastFlowLMUnfree;
     };
 
-    # llama.cpp 0.7.0's ctest suite fetches stories15M from huggingface.co, which
-    # the sandbox cannot reach; test-generate-models has no model to load, and
-    # the tests that consume its output fail or report "Not Run".
-    llamaCppRocmNoNetworkTests = pkg:
-      pkg.overrideAttrs (old: {
-        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-recurrent-state-rollback[a-z0-9-]*|test-save-load-state|test-state-restore-fragmented)$"];
-      });
-
     # nixpkgs builds llama.cpp's embedded server UI (tools/ui) with npm, which
     # pulls `nodejs_latest` -- the newest Node by definition, hence the
     # attribute least likely to be on cache.nixos.org. A nixpkgs bump whose
@@ -63,6 +55,10 @@
           "-DLLAMA_BUILD_UI=OFF"
           "-DLLAMA_USE_PREBUILT_UI=OFF"
         ];
+        # llama.cpp 0.7.0's ctest suite fetches stories15M from huggingface.co,
+        # which the sandbox cannot reach; test-generate-models has no model to
+        # load, and the tests that consume its output fail or report "Not Run".
+        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-recurrent-state-rollback[a-z0-9-]*|test-save-load-state|test-state-restore-fragmented)$"];
       });
 
     # These backends run against the pinned nixpkgs, which never matches the
@@ -267,9 +263,9 @@
             llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
             llama-cpp-vulkan-unsloth = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned ((llamaCppUnsloth pinned llama-cpp-base).override {vulkanSupport = true;}));
-            llama-cpp-rocm = llamaCppRocmNoNetworkTests (llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
+            llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
               llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
-            }));
+            });
             llama-cpp-rocm-gsqhalo = llamaCppRocmGsqhalo pinned llama-cpp-rocm;
             whisper-cpp-vulkan = withOwnVulkanDriver pinned (pinned.whisper-cpp.override {vulkanSupport = true;});
             stable-diffusion-cpp-rocm = pinned.stable-diffusion-cpp.override {
@@ -367,9 +363,9 @@
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;}));
           llama-cpp-vulkan-unsloth = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs ((llamaCppUnsloth pkgs llama-cpp-base).override {vulkanSupport = true;}));
-          llama-cpp-rocm = llamaCppRocmNoNetworkTests (llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
+          llama-cpp-rocm = llamaCppNoWebUi pkgs (pkgs.llama-cpp-rocm.override {
             llama-cpp = llama-cpp-base.override {inherit rocmGpuTargets;};
-          }));
+          });
           llama-cpp-rocm-gsqhalo = llamaCppRocmGsqhalo pkgs llama-cpp-rocm;
           whisper-cpp-vulkan = withOwnVulkanDriver pkgs (pkgs.whisper-cpp.override {vulkanSupport = true;});
           stable-diffusion-cpp-rocm = pkgs.stable-diffusion-cpp.override {
