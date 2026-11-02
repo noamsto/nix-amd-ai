@@ -20,12 +20,15 @@ jobs:
   # `build` job takes, sharing its 4 cores. A runner each doubles that, and
   # standard runners are free and unmetered on public repos, so the only cost
   # is one extra checkout per package; `build` then substitutes them instead of building.
+  # llama-cpp-vulkan-unsloth rides along on its own runner: nothing else builds
+  # the Unsloth fork, so a pin bump that breaks it would otherwise only fail at
+  # a user's deploy.
   rocm:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        package: [llama-cpp-rocm, llama-cpp-rocm-gsqhalo, stable-diffusion-cpp-rocm]
+        package: [llama-cpp-rocm, llama-cpp-rocm-gsqhalo, stable-diffusion-cpp-rocm, llama-cpp-vulkan-unsloth]
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
