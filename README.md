@@ -31,7 +31,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
-CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants are built from this flake's pin, **b11382** (the opt-in GSQHalo fork aside); only `whisper-cpp` and `stable-diffusion-cpp` are the pinned nixpkgs builds. b11382 carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
+CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants are built from this flake's pin, **b11382** (the opt-in GSQHalo fork aside); the `whispercpp-cpu` and `sdcpp-cpu` backends use your nixpkgs' own `whisper-cpp` and `stable-diffusion-cpp`. b11382 carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 
 The `lemonade` package composes three derivations:
 
@@ -135,13 +135,13 @@ trusted-public-keys = ["nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4
 > Put this in `nix.settings` (NixOS) or your daemon's `nix.conf`. A substituter added only via flake `nixConfig` takes effect **only for trusted users** — otherwise Nix silently ignores it and rebuilds everything from source, including the Tauri app's crates.io cargo-vendor fetch (the failure in [#28](https://github.com/noamsto/nix-amd-ai/issues/28)).
 
 > [!WARNING]
-> **Do not `.follows` our `nixpkgs` input.** The overlay is intentionally built against this flake's pinned `nixpkgs` (see `flake.nix` `pinned`) so the input closure hash matches both `cache.nixos.org` (Hydra-cached `pkgs.llama-cpp.override`, etc.) and our Cachix. If you add `inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs"`, the overrides re-hash against your `nixpkgs` and every backend rebuilds from source. Just leave this input pinned:
+> **Do not `.follows` our `nixpkgs` input.** The overlay is intentionally built against this flake's pinned `nixpkgs` (see `flake.nix` `pinned`) so the input closure hash matches both `cache.nixos.org` (the pinned `pkgs.llama-cpp`, etc.) and our Cachix. If you add `inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs"`, the overrides re-hash against your `nixpkgs` and every backend rebuilds from source. Just leave this input pinned:
 
 ```nix
 # good — let nix-amd-ai keep its own pinned nixpkgs
 inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 
-# bad — forces rebuilds of llama-cpp / whisper-cpp / stable-diffusion-cpp
+# bad — forces rebuilds of this flake's llama-cpp and ROCm/Vulkan backends
 # inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs";
 ```
 

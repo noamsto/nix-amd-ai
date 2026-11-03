@@ -58,7 +58,7 @@
   # caches -- spelling that list out again here is what would drift.
   #
   # Both rocm packages are thin `pkg.override {rocmSupport = true;}` wrappers,
-  # so the target list is overridden a level down. llama-cpp goes through the
+  # so the target list is overridden a level down. llama-cpp-cpu goes through the
   # wrapper on purpose: that keeps the overlay's `overrideAttrs` on it -- the
   # NoWebUi build (and the pinned llama.cpp version underneath it). sd-cpp
   # carries no such overrideAttrs and its wrapper forwards `.override` to the
@@ -67,7 +67,7 @@
     if cfg.rocmGpuTargets == null
     then cfg.llamaCppRocmPackage
     else cfg.llamaCppRocmPackage.override {
-      llama-cpp = pkgs.llama-cpp.override {rocmGpuTargets = cfg.rocmGpuTargets;};
+      llama-cpp = pkgs.llama-cpp-cpu.override {rocmGpuTargets = cfg.rocmGpuTargets;};
     };
   stableDiffusionCppRocm =
     if cfg.rocmGpuTargets == null
@@ -179,7 +179,7 @@
   lemonadeBackendBin = name: "/etc/lemonade/backends/${name}";
   lemonadeBackendEtc =
     optionalAttrs cfg.enableLemonade {
-      "lemonade/backends/llamacpp-cpu".source = "${pkgs.llama-cpp}/bin/llama-server";
+      "lemonade/backends/llamacpp-cpu".source = "${pkgs.llama-cpp-cpu}/bin/llama-server";
       "lemonade/backends/whispercpp-cpu".source = "${pkgs.whisper-cpp}/bin/whisper-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {

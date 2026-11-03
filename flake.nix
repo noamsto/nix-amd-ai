@@ -192,38 +192,6 @@
           old.cmakeFlags;
       });
 
-    # Bump libwebsockets from 4.4.1 to 4.5.8: 4.4.1 emits a malformed HTTP/101
-    # upgrade response (missing the empty CRLF after the last header) for
-    # lemonade's /realtime endpoint, which strict clients (Firefox, aiohttp,
-    # python-websockets) reject with code 1006.
-    libwebsocketsOverride = pkgs:
-      pkgs.libwebsockets.overrideAttrs (old: rec {
-        version = "4.5.8";
-        src = pkgs.fetchFromGitHub {
-          owner = "warmcat";
-          repo = "libwebsockets";
-          rev = "v${version}";
-          hash = "sha256-0pLBxOSKaxboHd9L27RKKqSJ9lVH4wPgKSyXEoJMal4=";
-        };
-        # 4.5.8 already contains upstream's fix for CVE-2025-11677; the
-        # nixpkgs back-port patch fails to apply on top.
-        patches = [];
-        # 4.5.8's .pc.in uses CMAKE_INSTALL_FULL_LIBDIR (absolute), so the
-        # nixpkgs pc-fix substitute leaves a `${exec_prefix}//nix/store/.../lib`
-        # artifact that the pkg-config-broken-path check rejects. Rewrite to
-        # absolute paths.
-        postInstall =
-          (old.postInstall or "")
-          + ''
-            for pc in "$out"/lib/pkgconfig/*.pc "$dev"/lib/pkgconfig/*.pc; do
-              [ -f "$pc" ] || continue
-              sed -i \
-                -e "s|^libdir=.*$|libdir=$out/lib|" \
-                -e "s|^includedir=.*$|includedir=$dev/include|" \
-                "$pc"
-            done
-          '';
-      });
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-darwin"];
@@ -251,7 +219,6 @@
             lemonade = pinned.callPackage ./pkgs/lemonade/darwin.nix {};
           }
           else let
-            libwebsockets = libwebsocketsOverride pinned;
             xrt = pinned.callPackage ./pkgs/xrt {};
             xrt-plugin-amdxdna = pinned.callPackage ./pkgs/xrt-plugin-amdxdna {inherit xrt;};
             xrt-combined = pinned.callPackage ./pkgs/xrt-combined {inherit xrt xrt-plugin-amdxdna;};
@@ -260,7 +227,7 @@
             mlir-aie = pinned.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
             openflowlm = pinned.callPackage ./pkgs/openflowlm {inherit xrt xrt-combined mlir-aie llvm-aie;};
             llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
-            llama-cpp = llamaCppNoWebUi pinned llama-cpp-base;
+            llama-cpp-cpu = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
             llama-cpp-vulkan-unsloth = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned ((llamaCppUnsloth pinned llama-cpp-base).override {vulkanSupport = true;}));
             llama-cpp-rocm = llamaCppNoWebUi pinned (pinned.llama-cpp-rocm.override {
@@ -274,18 +241,21 @@
             };
             stable-diffusion-cpp-vulkan = withOwnVulkanDriver pinned (pinned.stable-diffusion-cpp.override {vulkanSupport = true;});
           in {
-            inherit xrt xrt-plugin-amdxdna xrt-combined fastflowlm llama-cpp llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo libwebsockets;
+            inherit xrt xrt-plugin-amdxdna xrt-combined fastflowlm llama-cpp-cpu llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
-            # The module's CPU backends link these; the consumer's copies would
-            # build against the pinned llama-cpp above and break on version skew.
-            inherit (pinned) whisper-cpp stable-diffusion-cpp;
             inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             strata = pinned.callPackage ./pkgs/strata {};
             lemonade = pinned.callPackage ./pkgs/lemonade {
-              inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
+              inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm;
               inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
-              inherit (pinned) whisper-cpp stable-diffusion-cpp;
+              inherit (pinned) libwebsockets;
+              # The module's CPU whisper/sd backends are the consumer's nixpkgs
+              # builds (this overlay no longer shadows them), so lemonade's
+              # backend_versions.json must report the consumer's versions or its
+              # "needs update" check fails on pin drift. #328
+              whisper-cpp = prev.whisper-cpp;
+              stable-diffusion-cpp = prev.stable-diffusion-cpp;
             };
             gaia = pinned.callPackage ./pkgs/gaia {};
             vllm-rocm = pinned.callPackage ./pkgs/vllm-rocm {};
@@ -373,7 +343,7 @@
             inherit rocmGpuTargets;
           };
           stable-diffusion-cpp-vulkan = withOwnVulkanDriver pkgs (pkgs.stable-diffusion-cpp.override {vulkanSupport = true;});
-          libwebsockets = libwebsocketsOverride pkgs;
+          libwebsockets = pkgs.libwebsockets;
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
@@ -703,6 +673,25 @@
           if isLinux
           then {
             benchmark-go-gate = benchmarkGate;
+            # #328: overlays.default must not re-export a package nixpkgs already
+            # provides and other packages depend on (whisper-cpp propagates
+            # llama-cpp; ffmpeg-full propagates whisper-cpp). A shadow re-hashes
+            # every consumer of it when the pins drift.
+            overlay-no-shared-shadow = let
+              added = inputs.self.overlays.default pkgs pkgs;
+              shared = [
+                "libwebsockets"
+                "llama-cpp"
+                "stable-diffusion-cpp"
+                "whisper-cpp"
+              ];
+              shadowed = builtins.filter (n: builtins.elem n (builtins.attrNames added)) shared;
+            in
+              pkgs.runCommand "overlay-no-shared-shadow" {} (
+                if shadowed != []
+                then throw "overlays.default shadows shared nixpkgs attributes: ${builtins.concatStringsSep ", " shadowed}"
+                else "touch $out"
+              );
             # xrt-plugin-amdxdna compiles the shim against xrt.src's internal
             # headers and xrt-combined loads it into pkgs.xrt's libxrt_core,
             # while xdna-driver pins its own XRT as the xrt submodule. Bumping
