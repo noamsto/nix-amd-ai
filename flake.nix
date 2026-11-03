@@ -250,10 +250,9 @@
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm;
               inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
               inherit (pinned) libwebsockets;
-              # The module's CPU whisper/sd backends are the consumer's nixpkgs
-              # builds (this overlay no longer shadows them), so lemonade's
-              # backend_versions.json must report the consumer's versions or its
-              # "needs update" check fails on pin drift. #328
+              # lemonade's backend_versions.json must report the versions the
+              # module installs for the CPU backends (the consumer's whisper-cpp /
+              # sd-cpp), or its "needs update" check fails on pin drift.
               whisper-cpp = prev.whisper-cpp;
               stable-diffusion-cpp = prev.stable-diffusion-cpp;
             };
