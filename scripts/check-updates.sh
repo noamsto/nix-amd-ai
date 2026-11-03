@@ -113,8 +113,7 @@ LLAMA_PIN_REQUIRED=""
 LLAMA_PIN_REQUIRED_TAG=""
 LLAMA_PIN_NIXPKGS=""
 # The pin lives in the `llamaCppPin` helper as `pinTag`/`pinBuildNumber`. Read
-# it from that helper's block, and fail loudly if the helper or its fields are
-# gone -- a silent skip is how this check went dead once already.
+# it from that helper's block and fail loudly if either field is gone.
 llama_pin_block=$(awk '/^[[:space:]]*llamaCppPin = /{f=1} f{print} f && /^[[:space:]]*in[[:space:]]*$/{exit}' flake.nix)
 llama_pin_field() { # field
   sed -n 's/^[[:space:]]*'"$1"' = "\([^"]*\)";.*/\1/p' <<<"$llama_pin_block" | head -1
@@ -151,9 +150,9 @@ else
   LLAMA_PIN_REQUIRED_TAG=""
 fi
 
-# nixpkgs' llama-cpp versions as v0.x from the tag, so the old numeric-version
-# test can never fire; read the build number nixpkgs bakes into its cmake flags
-# instead (the same flag `llamaCppPin` asserts exists).
+# nixpkgs' llama-cpp versions as v0.x from the tag, so read the build number
+# nixpkgs bakes into its cmake flags instead (the same flag `llamaCppPin`
+# asserts exists).
 if ! llamacpp_flags=$(nix eval --json "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.cmakeFlags" 2>/dev/null); then
   echo "WARNING: could not evaluate nixpkgs llama-cpp cmakeFlags; skipping the caught-up check" >&2
   llamacpp_flags="[]"
