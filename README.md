@@ -31,7 +31,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
-CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants are built from this flake's pin, **b11382** (the opt-in GSQHalo fork aside); the `whispercpp-cpu` and `sdcpp-cpu` backends use your nixpkgs' own `whisper-cpp` and `stable-diffusion-cpp`. b11382 carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
+CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants are built from this flake's pin, **b11382** (the opt-in GSQHalo fork aside); the module reaches the CPU build through the overlay's private `pkgs.llama-cpp-cpu`, and the `whispercpp-cpu` / `sdcpp-cpu` backends use your nixpkgs' own `whisper-cpp` and `stable-diffusion-cpp`. b11382 carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 
 The `lemonade` package composes three derivations:
 
@@ -135,7 +135,7 @@ trusted-public-keys = ["nix-amd-ai.cachix.org-1:F4OU4vw/lV2oiG6SBHZ+nqjl4EFJuqI4
 > Put this in `nix.settings` (NixOS) or your daemon's `nix.conf`. A substituter added only via flake `nixConfig` takes effect **only for trusted users** — otherwise Nix silently ignores it and rebuilds everything from source, including the Tauri app's crates.io cargo-vendor fetch (the failure in [#28](https://github.com/noamsto/nix-amd-ai/issues/28)).
 
 > [!WARNING]
-> **Do not `.follows` our `nixpkgs` input.** The overlay is intentionally built against this flake's pinned `nixpkgs` (see `flake.nix` `pinned`) so the input closure hash matches both `cache.nixos.org` (the pinned `pkgs.llama-cpp`, etc.) and our Cachix. If you add `inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs"`, the overrides re-hash against your `nixpkgs` and every backend rebuilds from source. Just leave this input pinned:
+> **Do not `.follows` our `nixpkgs` input.** The overlay is intentionally built against this flake's pinned `nixpkgs` (see `flake.nix` `pinned`) so the input closure hash matches both `cache.nixos.org` (the pinned nixpkgs' `llama-cpp`, etc.) and our Cachix. If you add `inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs"`, this flake's `llama-cpp-cpu` and its ROCm/Vulkan backends re-hash against your `nixpkgs` and rebuild from source. Just leave this input pinned:
 
 ```nix
 # good — let nix-amd-ai keep its own pinned nixpkgs
@@ -145,7 +145,7 @@ inputs.nix-amd-ai.url = "github:noamsto/nix-amd-ai";
 # inputs.nix-amd-ai.inputs.nixpkgs.follows = "nixpkgs";
 ```
 
-Because the backends run against this flake's pinned `nixpkgs`, the module never hands them your system's ROCm or mesa libraries, and the Vulkan backends carry their own driver. A system `nixpkgs` with a newer glibc makes those libraries unloadable, and llama.cpp then silently falls back to the CPU ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)).
+Because the ROCm and Vulkan backends run against this flake's pinned `nixpkgs`, the module never hands them your system's ROCm or mesa libraries, and the Vulkan backends carry their own driver. A system `nixpkgs` with a newer glibc makes those libraries unloadable, and llama.cpp then silently falls back to the CPU ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)).
 
 To use a different Vulkan driver (another GPU, AMDVLK), set `VK_DRIVER_FILES` yourself, e.g. `systemd.services.lemond.environment.VK_DRIVER_FILES = "...";` — the wrappers only set it when it is unset.
 
@@ -498,7 +498,7 @@ Bump the pinned version in `pkgs/gaia/default.nix` by hand when a new GAIA relea
 
 ## Validation and benchmarking
 
-Verify that backends are correctly wired with `lemonade backends`; all AMD-applicable recipes should report `installed` (kokoro is intentionally skipped — Rust port, narrower use case). Illustrative output, not a captured run; versions follow the pins in this flake, and the `strata` row appears only with `hardware.amd-npu.strata.enable`:
+Verify that backends are correctly wired with `lemonade backends`; all AMD-applicable recipes should report `installed` (kokoro is intentionally skipped — Rust port, narrower use case). Illustrative output, not a captured run; versions follow this flake's pinned llama.cpp and your nixpkgs' whisper-cpp / sd-cpp, and the `strata` row appears only with `hardware.amd-npu.strata.enable`:
 
 ```
 Recipe              Backend     Status          Message/Version
