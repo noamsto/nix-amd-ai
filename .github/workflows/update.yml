@@ -36,10 +36,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/check-updates.sh
 
-      # Report-only: a Strata bump needs a GPU bench CI cannot run, and an FLM pin
-      # mismatch is a decision, not a diff. These sit right after the check so a
-      # failed bump/PR later in the job cannot skip them, and continue-on-error
-      # keeps a failed issue call from skipping the bump PR in turn.
+      # Report-only: a Strata bump needs a GPU bench CI cannot run, and an FLM or
+      # llama.cpp pin mismatch is a decision, not a diff. These sit right after the
+      # check so a failed bump/PR later in the job cannot skip them, and
+      # continue-on-error keeps a failed issue call from skipping the bump PR in turn.
       # `unknown` (parse or fetch failure) leaves any open issue untouched.
       - name: Track Strata release
         continue-on-error: true
@@ -134,6 +134,56 @@ jobs:
             --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
           [ -n "$existing" ] || exit 0
           gh issue close "$existing" --comment "Lemonade's pin and the packaged version now match ($FLM_PIN_PACKAGED)."
+
+      - name: Track llama.cpp pin divergence
+        continue-on-error: true
+        if: ${{ !cancelled() && steps.check.outputs.llama_pin_diverges == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LEM_LATEST: ${{ steps.check.outputs.lem_latest }}
+          LLAMA_PIN_CURRENT: ${{ steps.check.outputs.llama_pin_current }}
+          LLAMA_PIN_CURRENT_TAG: ${{ steps.check.outputs.llama_pin_current_tag }}
+          LLAMA_PIN_REQUIRED: ${{ steps.check.outputs.llama_pin_required }}
+          LLAMA_PIN_REQUIRED_TAG: ${{ steps.check.outputs.llama_pin_required_tag }}
+          LLAMA_PIN_NIXPKGS: ${{ steps.check.outputs.llama_pin_nixpkgs }}
+          LLAMA_PIN_CLEANUP: ${{ steps.check.outputs.llama_pin_cleanup }}
+        run: |
+          TITLE="llama.cpp: Lemonade pins a different build than llamaCppPin"
+          if [ "$(printf '%s\n%s\n' "$LLAMA_PIN_CURRENT" "$LLAMA_PIN_REQUIRED" | sort -V | tail -1)" = "$LLAMA_PIN_CURRENT" ]; then
+            NEWER="the pinned build is newer"
+          else
+            NEWER="Lemonade's pin is newer"
+          fi
+          BODY="Lemonade \`$LEM_LATEST\` pins llama.cpp \`$LLAMA_PIN_REQUIRED_TAG\` (\`backend_versions.json\`, \`llamacpp.vulkan\`); \`llamaCppPin\` in \`flake.nix\` is at \`$LLAMA_PIN_CURRENT_TAG\` (build \`$LLAMA_PIN_CURRENT\`). Here $NEWER."$'\n\n'
+          BODY+="Compare: https://github.com/ggml-org/llama.cpp/compare/$LLAMA_PIN_CURRENT_TAG...$LLAMA_PIN_REQUIRED_TAG"$'\n\n'
+          BODY+="A bump means editing \`pinTag\`, \`pinBuildNumber\`, \`pinCommit\` and the \`src\` hash in the \`llamaCppPin\` helper in \`flake.nix\`; \`pinCommit\` is the commit for the new tag in \`ggml-org/llama.cpp\`."$'\n\n'
+          BODY+="It needs the halo MTP bench before shipping (the README records the measured MTP win on the current pin), which CI cannot run."$'\n'
+          if [ "$LLAMA_PIN_CLEANUP" = "true" ]; then
+            BODY+=$'\n'"nixpkgs' llama-cpp has caught up to build \`$LLAMA_PIN_NIXPKGS\` (>= Lemonade's \`$LLAMA_PIN_REQUIRED\`), so the pin may be droppable -- verify MTP first."$'\n'
+          fi
+          BODY+=$'\n'"Report-only: no PR is opened for this. The issue closes itself once the pin matches Lemonade's."$'\n'
+          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" \
+            --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          if [ -n "$existing" ]; then
+            echo "$BODY" | gh issue edit "$existing" --body-file -
+          else
+            echo "$BODY" | gh issue create --title "$TITLE" --body-file -
+          fi
+
+      - name: Close llama.cpp pin divergence issue
+        continue-on-error: true
+        if: ${{ !cancelled() && steps.check.outputs.llama_pin_diverges == 'false' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          LLAMA_PIN_REQUIRED_TAG: ${{ steps.check.outputs.llama_pin_required_tag }}
+        run: |
+          TITLE="llama.cpp: Lemonade pins a different build than llamaCppPin"
+          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" \
+            --json number,title \
+            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+          [ -n "$existing" ] || exit 0
+          gh issue close "$existing" --comment "Pin now matches Lemonade's ($LLAMA_PIN_REQUIRED_TAG)."
 
       - name: Update nixpkgs lock
         if: steps.check.outputs.nixpkgs_needs_update == 'true'
@@ -235,10 +285,6 @@ jobs:
           VLLM_NEEDS_UPDATE: ${{ steps.check.outputs.vllm_needs_update }}
           NIXPKGS_DIFFS: ${{ steps.check.outputs.nixpkgs_backend_diffs }}
           NIXPKGS_NEEDS_UPDATE: ${{ steps.check.outputs.nixpkgs_needs_update }}
-          MTP_OVERRIDE_NEEDS_UPDATE: ${{ steps.check.outputs.mtp_override_needs_update }}
-          MTP_CLEANUP: ${{ steps.check.outputs.mtp_cleanup }}
-          MTP_REQUIRED: ${{ steps.check.outputs.mtp_required }}
-          MTP_CURRENT: ${{ steps.check.outputs.mtp_current }}
           GAIA_NEEDS_UPDATE: ${{ steps.check.outputs.gaia_needs_update }}
           GAIA_CURRENT: ${{ steps.check.outputs.gaia_current }}
           GAIA_LATEST: ${{ steps.check.outputs.gaia_latest }}
@@ -289,16 +335,6 @@ jobs:
           if [ -n "$NIXPKGS_DIFFS" ]; then
             BODY+=$'\n'"### nixpkgs backend versions"$'\n'
             BODY+="$NIXPKGS_DIFFS"
-          fi
-
-          if [ "$MTP_OVERRIDE_NEEDS_UPDATE" = "true" ]; then
-            BODY+=$'\n'"### ⚠️ MTP override needs hand-bump"$'\n'
-            BODY+="Lemonade v$LEM_LATEST pins \`llamacpp.vulkan = b$MTP_REQUIRED\`, but \`llamaCppMtpOverride\` in \`flake.nix\` is at \`b$MTP_CURRENT\`."$'\n'
-            BODY+="Update \`version\`, \`rev\` (commit for tag \`b$MTP_REQUIRED\` in \`ggml-org/llama.cpp\`), and both hashes in the \`llamaCppMtpSrc\` / \`llamaCppMtpOverride\` blocks."$'\n'
-          fi
-
-          if [ "$MTP_CLEANUP" = "true" ]; then
-            BODY+=$'\n'"**TODO:** drop \`llamaCppMtpOverride\` from \`flake.nix\` — nixpkgs llama-cpp has caught up to b$MTP_REQUIRED (what Lemonade pins)."$'\n'
           fi
 
           if [ "$GAIA_NEEDS_UPDATE" = "true" ]; then
@@ -374,8 +410,8 @@ jobs:
       # Request auto-merge only on the clean path: this job already built the 4
       # packages and ran flake check on the bumped tree, so build success here
       # gates whether we ask. The merge itself waits for main's required checks
-      # (`build`, `build-darwin`) via --auto. MTP hand-bumps still build green
-      # with a stale override, so they stay for review. Runs under RELEASE_PAT,
+      # (`build`, `build-darwin`) via --auto. Review-only flags (gaia, xdna rev
+      # drift) still build green, so they stay for review. Runs under RELEASE_PAT,
       # not GITHUB_TOKEN, because pushes made by GITHUB_TOKEN do not trigger
       # other workflows -- the resulting push to main must fire build.yml
       # (darwin build + release job).
@@ -384,7 +420,6 @@ jobs:
           steps.pr.outputs.pr_url != '' &&
           steps.flake_check.outputs.status == 'pass' &&
           steps.build.outputs.failed == '' &&
-          steps.check.outputs.mtp_override_needs_update != 'true' &&
           steps.check.outputs.gaia_needs_update != 'true' &&
           steps.check.outputs.xdna_rev_drift != 'true'
         env:

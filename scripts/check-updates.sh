@@ -101,33 +101,57 @@ if [ "$NIXPKGS_CURRENT_REV" != "$NIXPKGS_LATEST_REV" ]; then
   done
 fi
 
-# Cross-check llamaCppMtpOverride against Lemonade's backend_versions.json
+# Cross-check llamaCppPin against Lemonade's backend_versions.json
 # (llamacpp.vulkan). Our flake pin must match for MTP to light up; nixpkgs
-# catching up to that pin means we can drop the override entirely.
-MTP_OVERRIDE_NEEDS_UPDATE=false
-MTP_CLEANUP=false
-MTP_REQUIRED=""
-MTP_CURRENT=""
-if grep -q "llamaCppMtpOverride" flake.nix; then
-  # || true : an empty MTP_REQUIRED/MTP_CURRENT is an expected state, tested
-  # just below. Without it a 404 (tag not pushed yet, file moved upstream) or a
-  # missing version line kills the whole job under `set -o pipefail`.
-  MTP_CURRENT=$(grep -A1 'LLAMA_BUILD_NUMBER' flake.nix | grep 'version =' | sed 's/.*"\([0-9]*\)".*/\1/' || true)
-  MTP_REQUIRED=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/resources/backend_versions.json?ref=v${LEM_LATEST}" \
-    -H "Accept: application/vnd.github.v3.raw" \
-    --jq '.llamacpp.vulkan' 2>/dev/null | sed 's/^b//' || true)
+# catching up to that pin means the override may be droppable. Report-only:
+# the result drives a tracking issue, never a diff.
+LLAMA_PIN_DIVERGES=unknown
+LLAMA_PIN_CLEANUP=false
+LLAMA_PIN_CURRENT=""
+LLAMA_PIN_CURRENT_TAG=""
+LLAMA_PIN_REQUIRED=""
+LLAMA_PIN_REQUIRED_TAG=""
+LLAMA_PIN_NIXPKGS=""
+# The pin lives in the `llamaCppPin` helper as `pinTag`/`pinBuildNumber`. Read
+# it from that helper's block, and fail loudly if the helper or its fields are
+# gone -- a silent skip is how this check went dead once already.
+llama_pin_block=$(awk '/^[[:space:]]*llamaCppPin = /{f=1} f{print} f && /^[[:space:]]*in[[:space:]]*$/{exit}' flake.nix)
+llama_pin_field() { # field
+  sed -n 's/^[[:space:]]*'"$1"' = "\([^"]*\)";.*/\1/p' <<<"$llama_pin_block" | head -1
+}
+LLAMA_PIN_CURRENT_TAG=$(llama_pin_field pinTag)
+LLAMA_PIN_CURRENT=$(llama_pin_field pinBuildNumber)
+if [ -z "$llama_pin_block" ] || [ -z "$LLAMA_PIN_CURRENT_TAG" ] || [ -z "$LLAMA_PIN_CURRENT" ]; then
+  echo "ERROR: llama.cpp pin not found in flake.nix: update scripts/check-updates.sh" >&2
+  exit 1
+fi
 
-  if [ -n "$MTP_REQUIRED" ] && [ -n "$MTP_CURRENT" ] && [ "$MTP_REQUIRED" != "$MTP_CURRENT" ]; then
-    MTP_OVERRIDE_NEEDS_UPDATE=true
-    NEEDS_UPDATE=true
-    echo "MTP override: b${MTP_CURRENT} -> b${MTP_REQUIRED} (lemonade v${LEM_LATEST} pins llamacpp.vulkan)"
+# A failed or empty Lemonade fetch (404, tag without that file) is a soft skip:
+# leave any open issue untouched rather than failing the weekly run.
+LLAMA_PIN_REQUIRED_TAG=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/resources/backend_versions.json?ref=v${LEM_LATEST}" \
+  -H "Accept: application/vnd.github.v3.raw" \
+  --jq '.llamacpp.vulkan' 2>/dev/null || true)
+LLAMA_PIN_REQUIRED=${LLAMA_PIN_REQUIRED_TAG#b}
+if [[ "$LLAMA_PIN_REQUIRED" =~ ^[0-9]+$ ]]; then
+  LLAMA_PIN_DIVERGES=false
+  if [ "$LLAMA_PIN_REQUIRED" != "$LLAMA_PIN_CURRENT" ]; then
+    LLAMA_PIN_DIVERGES=true
+    echo "llama.cpp pin: b${LLAMA_PIN_CURRENT} -> ${LLAMA_PIN_REQUIRED_TAG} (lemonade v${LEM_LATEST} pins llamacpp.vulkan)"
   fi
+else
+  echo "WARNING: could not read the Lemonade llama.cpp pin (lemonade v${LEM_LATEST}); skipping llama.cpp pin check" >&2
+  LLAMA_PIN_REQUIRED=""
+  LLAMA_PIN_REQUIRED_TAG=""
+fi
 
-  llamacpp_new=$(nix eval --raw "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.version" 2>/dev/null || echo "")
-  llamacpp_num="${llamacpp_new%%-*}"
-  if [ -n "$MTP_REQUIRED" ] && [[ "$llamacpp_num" =~ ^[0-9]+$ ]] && [ "$llamacpp_num" -ge "$MTP_REQUIRED" ]; then
-    MTP_CLEANUP=true
-  fi
+# nixpkgs' llama-cpp versions as v0.x from the tag, so the old numeric-version
+# test can never fire; read the build number nixpkgs bakes into its cmake flags
+# instead (the same flag `llamaCppPin` asserts exists).
+llamacpp_flags=$(nix eval --json "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.cmakeFlags" 2>/dev/null || echo "[]")
+LLAMA_PIN_NIXPKGS=$(jq -r '.[] | select(startswith("-DLLAMA_BUILD_NUMBER:STRING=")) | sub(".*="; "")' <<<"$llamacpp_flags" 2>/dev/null | head -1 || true)
+[[ "$LLAMA_PIN_NIXPKGS" =~ ^[0-9]+$ ]] || LLAMA_PIN_NIXPKGS=""
+if [ -n "$LLAMA_PIN_REQUIRED" ] && [ -n "$LLAMA_PIN_NIXPKGS" ] && [ "$LLAMA_PIN_NIXPKGS" -ge "$LLAMA_PIN_REQUIRED" ]; then
+  LLAMA_PIN_CLEANUP=true
 fi
 
 # gaia is a uvx wrapper: no hash to prefetch, and it builds green whatever
@@ -204,7 +228,11 @@ reject_odd XDNA_LATEST "$XDNA_LATEST"
 reject_odd VLLM_LATEST "$VLLM_LATEST"
 reject_odd GAIA_LATEST "$GAIA_LATEST"
 reject_odd_list GAIA_SCRIPTS_LATEST "$GAIA_SCRIPTS_LATEST"
-[ -z "$MTP_REQUIRED" ] || reject_odd MTP_REQUIRED "$MTP_REQUIRED"
+reject_odd LLAMA_PIN_CURRENT "$LLAMA_PIN_CURRENT"
+reject_odd LLAMA_PIN_CURRENT_TAG "$LLAMA_PIN_CURRENT_TAG"
+[ -z "$LLAMA_PIN_REQUIRED" ] || reject_odd LLAMA_PIN_REQUIRED "$LLAMA_PIN_REQUIRED"
+[ -z "$LLAMA_PIN_REQUIRED_TAG" ] || reject_odd LLAMA_PIN_REQUIRED_TAG "$LLAMA_PIN_REQUIRED_TAG"
+[ -z "$LLAMA_PIN_NIXPKGS" ] || reject_odd LLAMA_PIN_NIXPKGS "$LLAMA_PIN_NIXPKGS"
 
 # Report-only checks (tracking issues, never a diff or a PR). Upstream file
 # contents are untrusted, so every value is regex-validated before it can reach
@@ -294,7 +322,7 @@ fi
 
 # A run needs the validation build only when a bump actually changes a file:
 # FLM/Lemonade/xdna-driver rev/vLLM, or a nixpkgs lock refresh. The review-only
-# flags (xdna_branch_new, mtp_override, gaia) change nothing on disk, so building
+# flags (xdna_branch_new, llama_pin, gaia) change nothing on disk, so building
 # on them is building an unchanged tree -- a full 4-package rebuild every week
 # for no diff. needs_update still opens the PR; build_needed gates the build.
 BUILD_NEEDED=false
@@ -322,10 +350,13 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "build_needed=$BUILD_NEEDED"
     echo "vllm_needs_update=$VLLM_NEEDS_UPDATE"
     echo "nixpkgs_needs_update=$NIXPKGS_NEEDS_UPDATE"
-    echo "mtp_cleanup=$MTP_CLEANUP"
-    echo "mtp_override_needs_update=$MTP_OVERRIDE_NEEDS_UPDATE"
-    echo "mtp_required=$MTP_REQUIRED"
-    echo "mtp_current=$MTP_CURRENT"
+    echo "llama_pin_diverges=$LLAMA_PIN_DIVERGES"
+    echo "llama_pin_cleanup=$LLAMA_PIN_CLEANUP"
+    echo "llama_pin_current=$LLAMA_PIN_CURRENT"
+    echo "llama_pin_current_tag=$LLAMA_PIN_CURRENT_TAG"
+    echo "llama_pin_required=$LLAMA_PIN_REQUIRED"
+    echo "llama_pin_required_tag=$LLAMA_PIN_REQUIRED_TAG"
+    echo "llama_pin_nixpkgs=$LLAMA_PIN_NIXPKGS"
     echo "gaia_current=$GAIA_CURRENT"
     echo "gaia_latest=$GAIA_LATEST"
     echo "gaia_needs_update=$GAIA_NEEDS_UPDATE"
