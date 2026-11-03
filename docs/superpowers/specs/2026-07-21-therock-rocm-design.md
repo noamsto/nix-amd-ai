@@ -69,7 +69,7 @@ Today auto-merge is safe because a green build ⇒ a nixpkgs-*vetted* working RO
 
 ### Update automation (contingent)
 - **Deliberate pins, never weekly-auto.** Pin a chosen TheRock build (release/branch tag if usable — open question; else a hand-picked nightly), bump a few times/quarter.
-- **Split lanes with real edits (B4).** There is **no** generic tricky-bump facility — `update.yml` auto-merge is hardcoded to `mtp_override_needs_update != 'true'`. Adding TheRock means concrete edits to `check-updates.sh` (detect TheRock updates) and the auto-merge `if:` (exclude the TheRock lane). Do not describe this as "reusing an existing mechanism."
+- **Split lanes with real edits (B4).** There is **no** generic tricky-bump facility — `update.yml` auto-merge is gated on the flake check passing, no build failures, and `gaia_needs_update`/`xdna_rev_drift` not being `'true'`; the llama.cpp pin is reported through a tracking issue and does not gate it. Adding TheRock means concrete edits to `check-updates.sh` (detect TheRock updates) and the auto-merge `if:` (exclude the TheRock lane). Do not describe this as "reusing an existing mechanism."
 - **Smoke gate must be real or labelled unenforced (B4).** A "manual checkbox" is enforced by nothing without branch protection + a named required status check. Either stand up a self-hosted gfx1150/gfx1151 runner emitting a required check, **or** downgrade to "maintainer-discipline checklist, unenforced — accepted risk" and say so. No hand-waving.
 
 ### License / Cachix (B5 — gate before any public caching)
