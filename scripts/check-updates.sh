@@ -125,6 +125,13 @@ if [ -z "$llama_pin_block" ] || [ -z "$LLAMA_PIN_CURRENT_TAG" ] || [ -z "$LLAMA_
   echo "ERROR: llama.cpp pin not found in flake.nix: update scripts/check-updates.sh" >&2
   exit 1
 fi
+# The source is fetched by `pinTag` but the comparison below uses
+# `pinBuildNumber`; a hand-edit that moves one without the other would make
+# the check silently trust the wrong field.
+[ "$LLAMA_PIN_CURRENT_TAG" = "b$LLAMA_PIN_CURRENT" ] || {
+  echo "ERROR: llamaCppPin pinTag/pinBuildNumber disagree ($LLAMA_PIN_CURRENT_TAG vs b$LLAMA_PIN_CURRENT): update scripts/check-updates.sh" >&2
+  exit 1
+}
 
 # A failed or empty Lemonade fetch (404, tag without that file) is a soft skip:
 # leave any open issue untouched rather than failing the weekly run.
@@ -147,7 +154,10 @@ fi
 # nixpkgs' llama-cpp versions as v0.x from the tag, so the old numeric-version
 # test can never fire; read the build number nixpkgs bakes into its cmake flags
 # instead (the same flag `llamaCppPin` asserts exists).
-llamacpp_flags=$(nix eval --json "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.cmakeFlags" 2>/dev/null || echo "[]")
+if ! llamacpp_flags=$(nix eval --json "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.cmakeFlags" 2>/dev/null); then
+  echo "WARNING: could not evaluate nixpkgs llama-cpp cmakeFlags; skipping the caught-up check" >&2
+  llamacpp_flags="[]"
+fi
 LLAMA_PIN_NIXPKGS=$(jq -r '.[] | select(startswith("-DLLAMA_BUILD_NUMBER:STRING=")) | sub(".*="; "")' <<<"$llamacpp_flags" 2>/dev/null | head -1 || true)
 [[ "$LLAMA_PIN_NIXPKGS" =~ ^[0-9]+$ ]] || LLAMA_PIN_NIXPKGS=""
 if [ -n "$LLAMA_PIN_REQUIRED" ] && [ -n "$LLAMA_PIN_NIXPKGS" ] && [ "$LLAMA_PIN_NIXPKGS" -ge "$LLAMA_PIN_REQUIRED" ]; then
