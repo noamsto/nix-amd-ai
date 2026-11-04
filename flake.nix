@@ -254,7 +254,7 @@
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             strata = pinned.callPackage ./pkgs/strata {};
             lemonade = pinned.callPackage ./pkgs/lemonade {
-              inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm;
+              inherit fastflowlm llama-cpp-cpu llama-cpp-vulkan llama-cpp-rocm;
               inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
               inherit (pinned) libwebsockets;
               # the pinned builds the module's CPU backends install
@@ -351,6 +351,7 @@
           lemonade = pkgs.callPackage ./pkgs/lemonade {
             inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm libwebsockets;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+            llama-cpp-cpu = llama-cpp;
             whisper-cpp = pkgs.whisper-cpp;
             stable-diffusion-cpp = pkgs.stable-diffusion-cpp;
           };
