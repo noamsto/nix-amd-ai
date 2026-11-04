@@ -58,21 +58,21 @@
   # caches -- spelling that list out again here is what would drift.
   #
   # Both rocm packages are thin `pkg.override {rocmSupport = true;}` wrappers,
-  # so the target list is overridden a level down. llama-cpp goes through the
+  # so the target list is overridden a level down. llama-cpp-cpu goes through the
   # wrapper on purpose: that keeps the overlay's `overrideAttrs` on it -- the
   # NoWebUi build (and the pinned llama.cpp version underneath it). sd-cpp
-  # carries no such overrideAttrs and its wrapper forwards `.override` to the
-  # inner package, so it is built directly.
+  # carries no such overrideAttrs, so its pinned `stable-diffusion-cpp-cpu` base
+  # is overridden directly, keeping the CPU and ROCm builds on one source.
   llamaCppRocm =
     if cfg.rocmGpuTargets == null
     then cfg.llamaCppRocmPackage
     else cfg.llamaCppRocmPackage.override {
-      llama-cpp = pkgs.llama-cpp.override {rocmGpuTargets = cfg.rocmGpuTargets;};
+      llama-cpp = pkgs.llama-cpp-cpu.override {rocmGpuTargets = cfg.rocmGpuTargets;};
     };
   stableDiffusionCppRocm =
     if cfg.rocmGpuTargets == null
     then pkgs.stable-diffusion-cpp-rocm
-    else pkgs.stable-diffusion-cpp.override {
+    else pkgs.stable-diffusion-cpp-cpu.override {
       rocmSupport = true;
       rocmGpuTargets = cfg.rocmGpuTargets;
     };
@@ -179,11 +179,11 @@
   lemonadeBackendBin = name: "/etc/lemonade/backends/${name}";
   lemonadeBackendEtc =
     optionalAttrs cfg.enableLemonade {
-      "lemonade/backends/llamacpp-cpu".source = "${pkgs.llama-cpp}/bin/llama-server";
-      "lemonade/backends/whispercpp-cpu".source = "${pkgs.whisper-cpp}/bin/whisper-server";
+      "lemonade/backends/llamacpp-cpu".source = "${pkgs.llama-cpp-cpu}/bin/llama-server";
+      "lemonade/backends/whispercpp-cpu".source = "${pkgs.whisper-cpp-cpu}/bin/whisper-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableImageGen) {
-      "lemonade/backends/sdcpp-cpu".source = "${pkgs.stable-diffusion-cpp}/bin/sd-server";
+      "lemonade/backends/sdcpp-cpu".source = "${pkgs.stable-diffusion-cpp-cpu}/bin/sd-server";
     }
     // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
       "lemonade/backends/llamacpp-rocm".source = "${llamaCppRocm}/bin/llama-server";
