@@ -81,8 +81,43 @@ jobs:
           [[ $SET =~ ^[A-Za-z0-9._-]+$ ]] || { echo "unexpected set name: $SET" >&2; exit 1; }
           nix build -L ".#openflowlm.kernels.passthru.sets.\"$SET\""
 
+  # Everything `build` used to run that needs neither the kernel sets nor the
+  # rocm outputs, started at t=0 beside them instead of after the matrix. Two
+  # runners because the two lemonade builds (~11 min each) were serial on one:
+  # `vm` is the lemond-vm / strata-prepare-vm boot tests, `main` the rest. New
+  # checks land in `main` by default (removeAttrs).
+  build-slice:
+    name: build-slice (${{ matrix.slice }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - slice: vm
+            select: 'o: { checks = { inherit (o.checks.x86_64-linux) lemond-vm strata-prepare-vm; }; }'
+          - slice: main
+            select: |
+              o: {
+                checks = removeAttrs o.checks.x86_64-linux [ "lemond-vm" "strata-prepare-vm" "module-eval-rocm-true" "module-eval-rocm-gsqhalo" "openflowlm-smoke" ];
+                packages = { inherit (o.packages.x86_64-linux) lemonade-headless xrt xrt-plugin-amdxdna fastflowlm lemonade ds4 mlir-aie llvm-aie; };
+              }
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
+        with:
+          name: nix-amd-ai
+          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+      - name: Build ${{ matrix.slice }} slice
+        env:
+          SELECT: ${{ matrix.select }}
+        run: |
+          nix run --inputs-from . nixpkgs#nix-fast-build -- \
+            --no-nom --skip-cached --eval-workers 4 --eval-max-memory-size 3072 \
+            --flake '.#' --select "$SELECT"
+
   build:
-    needs: [rocm, npu-kernel-sets, npu-kernels]
+    needs: [rocm, npu-kernel-sets, npu-kernels, build-slice]
     # A failed upstream job would otherwise SKIP this job, and the ruleset
     # counts a skipped required check as passing. Run unless cancelled, and fail
     # in the first step instead; every later step is gated on its success.
@@ -105,16 +140,18 @@ jobs:
         with:
           name: nix-amd-ai
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
-      - name: Build packages and checks
-        # --skip-cached: outputs already in Cachix are neither downloaded (~3 GiB)
-        # nor rebuilt. Build logs, including VM test boots, stay in the job log
-        # as collapsed ::group:: folds.
+      - name: Build kernel- and rocm-dependent packages and checks
+        # What has to wait for the matrices: openflowlm (its build copies the
+        # joined kernel sets in), its smoke check, and the module-eval checks
+        # that reference the rocm packages. Everything else is in build-slice.
+        # --skip-cached: outputs already in Cachix are neither downloaded nor
+        # rebuilt. Build logs stay in the job log as collapsed ::group:: folds.
         run: |
           nix run --inputs-from . nixpkgs#nix-fast-build -- \
             --no-nom --skip-cached --eval-workers 4 --eval-max-memory-size 3072 \
             --flake '.#' --select 'o: {
-              checks = o.checks.x86_64-linux;
-              packages = { inherit (o.packages.x86_64-linux) xrt xrt-plugin-amdxdna fastflowlm lemonade lemonade-headless ds4 mlir-aie llvm-aie openflowlm; };
+              checks = { inherit (o.checks.x86_64-linux) module-eval-rocm-true module-eval-rocm-gsqhalo openflowlm-smoke; };
+              packages = { inherit (o.packages.x86_64-linux) openflowlm; };
             }'
       - name: Evaluate remaining packages
         # Eval-only: catches eval errors in packages too heavy to build here.
