@@ -498,7 +498,7 @@ Bump the pinned version in `pkgs/gaia/default.nix` by hand when a new GAIA relea
 
 ## Validation and benchmarking
 
-Verify that backends are correctly wired with `lemonade backends`; all AMD-applicable recipes should report `installed` (kokoro is intentionally skipped — Rust port, narrower use case). Illustrative output, not a captured run; versions follow this flake's pins for llama.cpp, whisper-cpp and sd-cpp, and the `strata` row appears only with `hardware.amd-npu.strata.enable`:
+Verify that backends are correctly wired with `lemonade backends`; all AMD-applicable recipes should report `installed` (kokoro is intentionally skipped — Rust port, narrower use case). Illustrative output, not a captured run; versions follow this flake's pins for whisper-cpp, sd-cpp and llama.cpp's ROCm/Vulkan rows (the llama.cpp CPU row keeps lemonade's bundled value), and the `strata` row appears only with `hardware.amd-npu.strata.enable`:
 
 ```
 Recipe              Backend     Status          Message/Version
