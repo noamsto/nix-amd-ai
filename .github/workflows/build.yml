@@ -85,7 +85,10 @@ jobs:
   # rocm outputs, started at t=0 beside them instead of after the matrix. Two
   # runners because the two lemonade builds (~11 min each) were serial on one:
   # `vm` is the lemond-vm / strata-prepare-vm boot tests, `main` the rest. New
-  # checks land in `main` by default (removeAttrs).
+  # checks land in `main` by default (removeAttrs). A check that consumes the
+  # rocm or kernel outputs must be listed in `build`'s select and excluded in
+  # `main`'s removeAttrs (keep the two in step), or `main` rebuilds those
+  # outputs from scratch.
   build-slice:
     name: build-slice (${{ matrix.slice }})
     runs-on: ubuntu-latest
