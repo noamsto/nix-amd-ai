@@ -40,7 +40,7 @@
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-bXxWxbIEB7gJEgjDQgUR1w5CUlQUeMVZloXQYO/eJfQ=";
+    hash = "sha256-DV4qhd0VRjy1zTDZ3e/shby57eaIhDoiSSml3Wu9gpU=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
@@ -118,54 +118,47 @@ in stdenv.mkDerivation {
         'DESTINATION /etc/default' \
         'DESTINATION share/lemonade/conf.d.example'
 
-    # Let a packager point lemonade at a defaults.json outside the FHS path.
-    # v10.7.0 dropped the LEMONADE_*_BIN env→config migration, so the NixOS
-    # module can no longer inject backend bin paths via the environment; the
-    # only seam left is get_defaults(), which merges a hardcoded
-    # /usr/share/lemonade/defaults.json that NixOS doesn't populate. Honor
-    # LEMONADE_DEFAULTS_PATH so the module can supply a store-path defaults
-    # file. Mirrors the LEMONADE_GGML_HIP_PATH escape hatch from #2044.
-    # Drop once the upstream LEMONADE_DEFAULTS_PATH proposal lands.
-    substituteInPlace src/cpp/server/config_file.cpp \
-      --replace-fail \
-        '    return defaults;
-}' \
-        '    if (const char* env = std::getenv("LEMONADE_DEFAULTS_PATH"); env && *env && fs::exists(env)) {
-        defaults = utils::JsonUtils::merge(defaults, load_json_file(env));
-    }
-
-    return defaults;
-}'
-
     # Don't abort downloads when the SSE progress stream's TCP socket goes
     # away. WebKitGTK suspends the network process for backgrounded windows
     # (different workspace, minimized) at ~60-90s, killing the SSE stream and
-    # losing GBs of partial download. Let the download finish in the
-    # background; the next client poll will see it as installed. See
-    # noamsto/nix-amd-ai#5.
+    # losing GBs of partial download. Upstream's DownloadManager::stream
+    # (services/download_manager.cpp) sets `disconnected` and returns false on
+    # a failed write, which cancels the transfer; here a failed write does
+    # neither, so the download finishes in the background and the next client
+    # poll sees it as installed. See noamsto/nix-amd-ai#5.
     #
     # progress_cb fires per progress tick, not per disconnect, so logging on
     # every failed write buries the journal once the socket is gone: 149998 of
     # 150010 lines in a 3-minute window during one download, with journald
     # dropping up to 529815 more per 30s. Latch it to one line per stream.
-    substituteInPlace src/cpp/server/server.cpp \
+    substituteInPlace src/cpp/server/services/download_manager.cpp \
       --replace-fail \
         'bool complete_sent = false;
-                DownloadProgressCallback progress_cb = [&sink, &complete_sent](const DownloadProgress& p) -> bool {' \
+            auto disconnected = std::make_shared<std::atomic<bool>>(false);
+            DownloadProgressCallback progress_cb =
+                [&sink, &complete_sent, disconnected](const DownloadProgress& p) -> bool {' \
         'bool complete_sent = false;
-                bool disconnect_logged = false;
-                DownloadProgressCallback progress_cb = [&sink, &complete_sent, &disconnect_logged](const DownloadProgress& p) -> bool {' \
+            bool disconnect_logged = false;
+            auto disconnected = std::make_shared<std::atomic<bool>>(false);
+            DownloadProgressCallback progress_cb =
+                [&sink, &complete_sent, &disconnect_logged](const DownloadProgress& p) -> bool {' \
       --replace-fail \
-        'if (!sink.write(event.c_str(), event.size())) {
-                        LOG(INFO, "Server") << "Client disconnected, cancelling download" << std::endl;
-                        return false;
-                    }
-                    return true;' \
-        'if (!sink.write(event.c_str(), event.size()) && !disconnect_logged) {
-                        disconnect_logged = true;
-                        LOG(INFO, "Server") << "Client disconnected; download continues in background" << std::endl;
-                    }
-                    return true;'
+        'if (!write_sse_event(sink, p.complete ? "complete" : "progress", event_data)) {
+                    LOG(INFO, "Server") << "Client disconnected, cancelling download" << std::endl;
+                    disconnected->store(true);
+                    return false;
+                }
+                return true;' \
+        'if (!write_sse_event(sink, p.complete ? "complete" : "progress", event_data) && !disconnect_logged) {
+                    disconnect_logged = true;
+                    LOG(INFO, "Server") << "Client disconnected; download continues in background" << std::endl;
+                }
+                return true;' \
+      --replace-fail \
+        '// A failed socket write kills the update channel and the transfer: the
+            // token answers on curl'"'"'s next tick.' \
+        '// `disconnected` is never set (see above), so this token never
+            // cancels the transfer.'
 
     # Never fetch lemonade's downloaded "TheRock" ROCm runtime: it prepends its
     # lib/ to LD_LIBRARY_PATH for rocm-stable, shadowing our nix sd-server /
