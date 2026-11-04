@@ -257,9 +257,7 @@
               inherit fastflowlm llama-cpp-vulkan llama-cpp-rocm;
               inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
               inherit (pinned) libwebsockets;
-              # lemonade's backend_versions.json must report the versions the
-              # module installs for the CPU backends, so it takes the same
-              # pinned builds (never the consumer's).
+              # the pinned builds the module's CPU backends install
               whisper-cpp = whisper-cpp-cpu;
               stable-diffusion-cpp = stable-diffusion-cpp-cpu;
             };
