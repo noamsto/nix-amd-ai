@@ -204,7 +204,7 @@ hardware.amd-npu = {
 
 ### Backend wiring and in-tree patches
 
-The lemonade source build deliberately doesn't bundle backend `llama-server` / `whisper-server` / `sd-server` binaries — it expects host-provided paths. The module seeds a `defaults.json` carrying those paths (plus `global_timeout` and flash-attn) that lemonade merges over its packaged defaults, via the `LEMONADE_DEFAULTS_PATH` patch below. Lemonade v10.7.0 removed the env-var migration into `~/.config/lemonade/config.json` that this replaced:
+The lemonade source build deliberately doesn't bundle backend `llama-server` / `whisper-server` / `sd-server` binaries — it expects host-provided paths. The module seeds a `defaults.json` carrying those paths (plus `global_timeout` and flash-attn) that lemonade merges over its packaged defaults, via `LEMONADE_DEFAULTS_PATH`, which lemond reads itself. Lemonade v10.7.0 removed the env-var migration into `~/.config/lemonade/config.json` that this replaced:
 
 | Flag | What gets wired |
 |---|---|
@@ -218,8 +218,7 @@ Omni models (e.g. `LMX-Omni-*`) pull in two backends that need extra host plumbi
 
 Vanilla lemonade doesn't fit NixOS, so this flake patches it in-tree (see `pkgs/lemonade/default.nix` and `pkgs/lemonade/patches/`, [issue #5](https://github.com/noamsto/nix-amd-ai/issues/5), upstream [lemonade-sdk/lemonade#1791](https://github.com/lemonade-sdk/lemonade/issues/1791)):
 
-- `ConfigFile::get_defaults` honors `LEMONADE_DEFAULTS_PATH`, so the module can seed backend bin paths from a store path instead of the hardcoded `/usr/share/lemonade/defaults.json` that NixOS can't populate.
-- The download SSE handler treats `sink.write` failure as a transient client disconnect rather than a cancel signal, so a backgrounded Tauri window doesn't kill an in-flight multi-GB download.
+- The download SSE handler (`DownloadManager::stream`) treats a failed SSE write as a transient client disconnect rather than a cancel signal, so a backgrounded Tauri window doesn't kill an in-flight multi-GB download.
 - `will_install_therock()` returns false, so lemonade never fetches its TheRock ROCm runtime, whose libraries would shadow the Nix-built backends' own ([#57](https://github.com/noamsto/nix-amd-ai/issues/57)).
 - `strata-recipe.patch` adds a native `strata` recipe that starts the Strata shim backend ([#285](https://github.com/noamsto/nix-amd-ai/issues/285)).
 
