@@ -1,0 +1,103 @@
+diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
+index a8dbe5e..3add5bd 100644
+--- a/src/server/rest_handler.cpp
++++ b/src/server/rest_handler.cpp
+@@ -1243,6 +1243,24 @@ void RestHandler::handle_generate(const json& request,
+         json options = request.value("options", json::object());
+        
+         int length_limit = request.value("max_tokens", 4096);
++        // A request cancelled before it reached the NPU (POST /api/cancel while
++        // queued, or a client that left) must not load the model it names: the
++        // load is pure cost, because insert() would return immediately without
++        // prefilling or decoding. Answer in the same shape a post-insert cancel
++        // would, before touching the engine.
++        if (cancellation_token && cancellation_token->cancelled()) {
++            header_print("❌ ", "Prefill Cancelled!");
++            chat_meta_info_t meta_info;
++            meta_info.stop_reason = CANCEL_DETECTED;
++            if (stream) {
++                streaming_ostream ostream(model, send_streaming_response, false);
++                std::vector<int> empty_context;
++                ostream.finalize_generate(meta_info, empty_context);
++            } else {
++                send_response(json::object());
++            }
++            return;
++        }
+         auto load_start_time = time_utils::now();
+         // TODO: Use Another Check Function avoid loading again
+         if (const ModelLoad why = ensure_model_loaded(model, request.contains("model"), request_backend); why != ModelLoad::Ok) {
+@@ -1382,6 +1400,19 @@ void RestHandler::handle_chat(const json& request,
+         json options = request.value("options", json::object());
+         int length_limit = options.value("num_predict", 4096);
+ 
++        if (cancellation_token && cancellation_token->cancelled()) {
++            header_print("❌ ", "Prefill Cancelled!");
++            chat_meta_info_t meta_info;
++            meta_info.stop_reason = CANCEL_DETECTED;
++            if (stream) {
++                streaming_ostream ostream(model, send_streaming_response, true);
++                ostream.finalize_chat(meta_info);
++            } else {
++                send_response(json::object());
++            }
++            return;
++        }
++
+         auto load_start_time = time_utils::now();
+         if (const ModelLoad why = ensure_model_loaded(model, request.contains("model"), request_backend); why != ModelLoad::Ok) {
+             send_response(model_error(why, model));
+@@ -1896,6 +1927,29 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+             return;
+         }
+ 
++        if (cancellation_token && cancellation_token->cancelled() && auto_chat_engine) {
++            header_print("❌ ", "Prefill Cancelled!");
++            chat_meta_info_t meta_info;
++            meta_info.stop_reason = CANCEL_DETECTED;
++            if (stream) {
++                auto openai_stream_callback = [&send_streaming_response](const std::string& data, bool is_final) {
++                    json data_json = data;
++                    send_streaming_response(data_json, is_final);
++                };
++                chat_parse_options parse_options;
++                parse_options.tools = &tools;
++                parse_options.parse_tool_calls = !tools.empty() && constraint_request.tool_choice != chat_tool_choice::NONE;
++                parse_options.keep_whitespace = continue_final;
++                parse_options.reasoning_may_close = continue_final && auto_chat_engine->thinking_enabled();
++                streaming_ostream_openai_chat ostream(model, auto_chat_engine.get(), openai_stream_callback, parse_options,
++                                                      stream_include_usage(request));
++                ostream.finalize(meta_info);
++            } else {
++                send_response(json());
++            }
++            return;
++        }
++
+         auto load_start_time = time_utils::now();
+         if (const ModelLoad why = ensure_model_loaded(model, has_value(request, "model"), request_backend); why != ModelLoad::Ok) {
+             send_response(model_error(why, model));
+@@ -2330,6 +2384,23 @@ void RestHandler::handle_openai_completion(const json& request,
+ 
+         int length_limit = value_or(request, "max_tokens", 4096);
+ 
++        if (cancellation_token && cancellation_token->cancelled()) {
++            header_print("❌ ", "Prefill Cancelled!");
++            chat_meta_info_t meta_info;
++            meta_info.stop_reason = CANCEL_DETECTED;
++            if (stream) {
++                auto openai_stream_callback = [&send_streaming_response](const std::string& data, bool is_final) {
++                    json data_json = data;
++                    send_streaming_response(data_json, is_final);
++                };
++                streaming_ostream_openai ostream(model, openai_stream_callback, stream_include_usage(request));
++                ostream.finalize(meta_info);
++            } else {
++                send_response(json::object());
++            }
++            return;
++        }
++
+         if (const ModelLoad why = ensure_model_loaded(model, has_value(request, "model"), request_backend); why != ModelLoad::Ok) {
+             send_response(model_error(why, model));
+             return;

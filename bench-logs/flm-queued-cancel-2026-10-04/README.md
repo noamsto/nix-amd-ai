@@ -93,13 +93,17 @@ flight is a caller hazard.
 
 ## Limits
 
-- **A cancelled queued request naming a different model still pays the model
-  swap.** The four handlers call `ensure_model_loaded()` before their
-  cancellation branch, so a request queued behind A that names a model other
-  than A's and is then cancelled will swap/load that model before answering
-  cancelled. The task's "skip it" is met for the decode and prefill (nothing is
-  generated); the load is not avoided, and skipping it would mean answering in
-  an endpoint's shape without that endpoint's engine. Stated as a trade-off.
+- **A cancelled queued request naming a different model no longer pays the
+  model swap.** The four handlers (`/api/generate`, `/api/chat`,
+  `/v1/chat/completions`, `/v1/completions`) check the cancellation predicate
+  before `ensure_model_loaded()` and answer with the endpoint's existing
+  cancelled shape — the streaming handler's empty `done_reason=cancel` NDJSON
+  line, `{}` for non-streaming `/api/chat`. Red swapped to the queued request's
+  model before the cancel was observed: `Gemma4-E4B-IT-NPU2` loaded in 22.5 s
+  and `/api/ps` listed `gemma4e-flash:e4b`. Green loads nothing: the server log
+  shows only the startup `Llama-3.2-1B-NPU2` load, and `/api/ps` still lists
+  `llama3.2:1b`. Both streaming `/api/generate` and non-streaming `/api/chat`
+  are covered; the swap is skipped, not traded for a different answer shape.
 - **Embeddings and audio are not cancellation-aware** (`handle_embeddings` takes
   no token; `handle_openai_audio_transcriptions` ignores it). They keep their
   current behavior: a cancel on a running request answers `cancelled:true`
@@ -126,9 +130,12 @@ nix build .#fastflowlm --no-link --print-out-paths   # red on main, green on thi
 export XRT_LIB=<xrt-combined out path>/lib
 bash bench-logs/flm-queued-cancel-2026-10-04/queued-cancel.sh \
   <fastflowlm out path>/bin/flm <out dir> <red|green>
+bash bench-logs/flm-queued-cancel-2026-10-04/queued-cancel-model-swap.sh \
+  <fastflowlm out path>/bin/flm <out dir> <red|green>
 ```
 
-`queued-cancel.sh` exits 0 iff no case FAILs. It waits for any other `flm`
-process to exit before starting (never kills one), checks its own server PID,
-and `shellcheck`s clean. `nix flake check` passes; `nix build .#fastflowlm`
-builds.
+`queued-cancel.sh` covers the four same-model cases; `queued-cancel-model-swap.sh`
+covers the different-model swap. Both exit 0 iff no case FAILs, wait for any
+other `flm` process to exit before starting (never killing one), check their own
+server PID, and `shellcheck` clean. `nix flake check` passes; `nix build
+.#fastflowlm` builds.

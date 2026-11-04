@@ -338,6 +338,22 @@ stdenv.mkDerivation (finalAttrs: {
   #     200 with content "" when the request is cancelled before the first
   #     token, while /api/generate and /v1/completions answer {} (see
   #     cancel-client-disconnect.patch). The patch answers {} here too.
+  #   - cancel-queued-request-skip-load.patch (#243): the four handlers
+  #     (/api/generate, /api/chat, /v1/chat/completions, /v1/completions)
+  #     called ensure_model_loaded() before their cancellation branch, so a
+  #     request cancelled while queued (POST /api/cancel, or a client that
+  #     left while queued) loaded or swapped the model it names for nothing --
+  #     the load was pure cost, because the request's insert() then returned
+  #     immediately without prefilling or decoding. The handlers now check the
+  #     cancellation predicate before the load and answer with the endpoint's
+  #     existing cancelled shape (the same body/shape the post-insert branch
+  #     emits), so no model is touched. AutoModel::_shared_insert's early
+  #     check (cancel-queued-request.patch) had already made the post-load
+  #     insert a no-op, so this patch only removes the cost. The
+  #     /v1/chat/completions early branch keeps the previously-loaded engine
+  #     (it is not loaded when none is), building its own parse options and
+  #     stream callback since the later locals do not exist yet. No context or
+  #     prompt cache is reset, because nothing was inserted.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
@@ -394,6 +410,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/cancel-queued-request.patch
     ./patches/lm-config-throw.patch
     ./patches/cancel-chat-nonstream.patch
+    ./patches/cancel-queued-request-skip-load.patch
     # Link libjpeg-turbo, libwebp's decoder, opus, ogg and vorbis from
     # nixpkgs instead of downloading and building pinned tarballs through
     # ExternalProject.
