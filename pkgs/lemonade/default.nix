@@ -21,6 +21,7 @@
   libcap,
   libdrm,
   fastflowlm,
+  llama-cpp-cpu,
   llama-cpp-rocm,
   llama-cpp-vulkan,
   whisper-cpp,
@@ -188,6 +189,7 @@ in stdenv.mkDerivation {
     # commit so one version covers all three sd-cpp keys.
     if [ -f src/cpp/resources/backend_versions.json ]; then
       jq '.flm.npu = "v${fastflowlm.version}"
+          | .llamacpp.cpu = "b${llama-cpp-cpu.version}"
           | .llamacpp."rocm-stable" = "b${llama-cpp-rocm.version}"
           | .llamacpp.vulkan = "b${llama-cpp-vulkan.version}"
           | .whispercpp.cpu = "v${whisper-cpp.version}"
