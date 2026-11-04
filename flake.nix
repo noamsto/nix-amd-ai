@@ -240,9 +240,16 @@
               inherit rocmGpuTargets;
             };
             stable-diffusion-cpp-vulkan = withOwnVulkanDriver pinned (pinned.stable-diffusion-cpp.override {vulkanSupport = true;});
+            # Private CPU builds, like llama-cpp-cpu: lemonade's
+            # backend_versions.json and the module's CPU backends must agree on
+            # these versions, and a consumer's own whisper-cpp / sd-cpp would
+            # make lemonade's derivation follow the consumer's nixpkgs (#328).
+            whisper-cpp-cpu = pinned.whisper-cpp;
+            stable-diffusion-cpp-cpu = pinned.stable-diffusion-cpp;
           in {
             inherit xrt xrt-plugin-amdxdna xrt-combined fastflowlm llama-cpp-cpu llama-cpp-vulkan llama-cpp-vulkan-unsloth llama-cpp-rocm llama-cpp-rocm-gsqhalo;
             inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
+            inherit whisper-cpp-cpu stable-diffusion-cpp-cpu;
             inherit mlir-aie llvm-aie openflowlm;
             ds4 = pinned.callPackage ./pkgs/ds4 {};
             strata = pinned.callPackage ./pkgs/strata {};
@@ -251,10 +258,10 @@
               inherit whisper-cpp-vulkan stable-diffusion-cpp-rocm stable-diffusion-cpp-vulkan;
               inherit (pinned) libwebsockets;
               # lemonade's backend_versions.json must report the versions the
-              # module installs for the CPU backends (the consumer's whisper-cpp /
-              # sd-cpp), or its "needs update" check fails on pin drift.
-              whisper-cpp = prev.whisper-cpp;
-              stable-diffusion-cpp = prev.stable-diffusion-cpp;
+              # module installs for the CPU backends, so it takes the same
+              # pinned builds (never the consumer's).
+              whisper-cpp = whisper-cpp-cpu;
+              stable-diffusion-cpp = stable-diffusion-cpp-cpu;
             };
             gaia = pinned.callPackage ./pkgs/gaia {};
             vllm-rocm = pinned.callPackage ./pkgs/vllm-rocm {};
