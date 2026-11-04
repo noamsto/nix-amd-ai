@@ -86,6 +86,7 @@ run X=1 -- corpus
 check "no file: same as stale" '[ $rc = 6 ] && grep -q /health "$STUB_LOG"'
 
 if ! compgen -G '/sys/class/drm/card*/device/mem_info_gtt_total' >/dev/null; then
+    [ "$fail" = 0 ] || exit "$fail"
     echo "skip: no amdgpu card with mem_info_gtt_total; the claim cases need fit_check to pass" >&2
     exit 77
 fi

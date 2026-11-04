@@ -63,23 +63,31 @@ if [ -n "$holder" ]; then
     exit 2
 fi
 
-# Take the file atomically so two benches started seconds apart cannot both hold it: link this run's temp file into
-# place (fails while any file exists), confirm line 1 is this pid, and on a lost race only proceed when the holder is
-# stale (removed, retried once) or refuse. 0 = ours; 2 = a live foreign bench holds it (or both attempts lost).
+# Take the file atomically so two benches started seconds apart cannot both hold it: under a lock, link this run's
+# temp file into place (fails while any file exists), confirm line 1 is this pid, and on a lost race only proceed when
+# the holder is stale (removed, retried once) or refuse. 0 = ours; 2 = a live foreign bench holds it (or both lost).
 signal_claim() { # <row label>
-    local label=$1 tmp=$SIGNAL_FILE.$$ tries=0
+    local label=$1 tmp=$SIGNAL_FILE.$$ tries=0 rc=2
+    # The stale-file takeover below is check-then-delete, so serialise claimers with a kernel lock; without it two
+    # benches finding the same stale file could both discard it and both link a claim. flock is released when this
+    # process dies, so the lock file needs no stale cleanup.
+    exec 9>>"$SIGNAL_FILE.lock" || return 2
+    flock 9 || { exec 9>&-; return 2; }
     while [ "$tries" -lt 2 ]; do
         tries=$((tries + 1))
-        printf '%s\n%s\n' "$$" "$label" >"$tmp" || { rm -f "$tmp"; return 2; }
+        printf '%s\n%s\n' "$$" "$label" >"$tmp" || { rm -f "$tmp"; rc=2; break; }
         if ln "$tmp" "$SIGNAL_FILE" 2>/dev/null && [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" = "$$" ]; then
             rm -f "$tmp"
-            return 0
+            rc=0
+            break
         fi
         rm -f "$tmp"
-        [ -n "$(signal_live_holder)" ] && return 2
+        [ -n "$(signal_live_holder)" ] && { rc=2; break; }
         rm -f "$SIGNAL_FILE" # stale or unparsable holder: drop it and try once more
     done
-    return 2
+    flock -u 9 2>/dev/null
+    exec 9>&-
+    return "$rc"
 }
 
 post() { curl -fsS -X POST "$LEMOND/$1" -H 'Content-Type: application/json' -d "$2"; }
