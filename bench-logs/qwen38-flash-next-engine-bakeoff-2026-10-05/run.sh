@@ -33,7 +33,7 @@
 # later call can continue offline; the last one must not set it). Relative OUT and CACHE resolve against the
 # caller's cwd.
 # Exit: 0 ok, 1 row error (probe printed a JSON row), 2 foreign benchmark busy (also: another bench holds the signal file,
-# refused before lemond is contacted), 3 memory gate, 4 paused on host
+# refused without unloading or reloading lemond), 3 memory gate, 4 paused on host
 # load, 5 does not fit, 6 lemond failure (unreachable, other models loaded, reload failed, still loaded),
 # 7 configuration or usage error, 129/130/131/143 signalled (HUP/INT/QUIT/TERM).
 set -u
@@ -47,14 +47,40 @@ SIGNAL_FILE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
 # shellcheck disable=SC2329 # invoked by the EXIT trap and reload()
 signal_clear() { [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" != "$$" ] || rm -f "$SIGNAL_FILE"; }
 
+# Echo the pid of a live bench other than this process holding the signal file, else nothing. kill -0 fails on EPERM
+# too, which still means alive; /proc distinguishes it from ESRCH.
+signal_live_holder() {
+    local holder
+    holder=$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)
+    [[ $holder =~ ^[1-9][0-9]*$ ]] && [ "$holder" != "$$" ] && { kill -0 "$holder" 2>/dev/null || [ -d "/proc/$holder" ]; } && echo "$holder"
+}
+
 # Another bench holding the file has deliberately unloaded lemond for its own GPU row. Refuse before the EXIT trap
 # exists: reload() on any exit path would load the resident model beside that row. A dead or unparsable pid is stale.
-holder=$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)
-# kill -0 fails on EPERM too, which still means alive; /proc distinguishes it from ESRCH
-if [[ $holder =~ ^[1-9][0-9]*$ ]] && [ "$holder" != "$$" ] && { kill -0 "$holder" 2>/dev/null || [ -d "/proc/$holder" ]; }; then
+holder=$(signal_live_holder)
+if [ -n "$holder" ]; then
     echo "refusing: another bench holds $SIGNAL_FILE (pid $holder, row: $(sed -n 2p "$SIGNAL_FILE" 2>/dev/null)); lemond untouched" >&2
     exit 2
 fi
+
+# Take the file atomically so two benches started seconds apart cannot both hold it: link this run's temp file into
+# place (fails while any file exists), confirm line 1 is this pid, and on a lost race only proceed when the holder is
+# stale (removed, retried once) or refuse. 0 = ours; 2 = a live foreign bench holds it (or both attempts lost).
+signal_claim() { # <row label>
+    local label=$1 tmp=$SIGNAL_FILE.$$ tries=0
+    while [ "$tries" -lt 2 ]; do
+        tries=$((tries + 1))
+        printf '%s\n%s\n' "$$" "$label" >"$tmp" || { rm -f "$tmp"; return 2; }
+        if ln "$tmp" "$SIGNAL_FILE" 2>/dev/null && [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" = "$$" ]; then
+            rm -f "$tmp"
+            return 0
+        fi
+        rm -f "$tmp"
+        [ -n "$(signal_live_holder)" ] && return 2
+        rm -f "$SIGNAL_FILE" # stale or unparsable holder: drop it and try once more
+    done
+    return 2
+}
 
 post() { curl -fsS -X POST "$LEMOND/$1" -H 'Content-Type: application/json' -d "$2"; }
 # 0 loaded, 1 cleanly absent, 2 unreachable or unparseable
@@ -368,10 +394,17 @@ fit_check
 [ "$mode" = exec ] && args+=(--anon-limit-gib "$anon_gib" --swap-limit-gib "${EXEC_SWAP_LIMIT_GIB:-4}")
 [ "${FIT_CHECK_ONLY:-0}" = 1 ] && { rc=0; exit 0; }
 
-# Tell other crews on this host a GPU row is running; the file is ours only while its pid is this process.
+# Tell other crews on this host a GPU row is running; the file is ours only while its pid is this process. Another
+# bench may have claimed it since the startup guard, so take it atomically and refuse (lemond untouched, no reload on
+# exit) when a live holder won the race; a stale holder is removed and the claim retried once.
 row_label=$preset
 for ((i = 1; i < $#; i++)); do [ "${!i}" = --label ] && { j=$((i + 1)); row_label="$preset ${!j}"; }; done
-printf '%s\n%s\n' "$$" "$row_label" >"$SIGNAL_FILE"
+if ! signal_claim "$row_label"; then
+    holder=$(signal_live_holder)
+    echo "refusing: another bench holds $SIGNAL_FILE (pid ${holder:-unknown}, row: $(sed -n 2p "$SIGNAL_FILE" 2>/dev/null)); lemond untouched" >&2
+    trap signal_clear EXIT
+    exit 2
+fi
 
 has_model
 case $? in
