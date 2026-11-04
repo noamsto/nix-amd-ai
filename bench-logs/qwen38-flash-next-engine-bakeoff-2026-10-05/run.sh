@@ -403,8 +403,7 @@ fit_check
 [ "${FIT_CHECK_ONLY:-0}" = 1 ] && { rc=0; exit 0; }
 
 # Tell other crews on this host a GPU row is running; the file is ours only while its pid is this process. Another
-# bench may have claimed it since the startup guard, so take it atomically and refuse (lemond untouched, no reload on
-# exit) when a live holder won the race; a stale holder is removed and the claim retried once.
+# bench may have claimed it since the startup guard, so take it atomically rather than overwrite.
 row_label=$preset
 for ((i = 1; i < $#; i++)); do [ "${!i}" = --label ] && { j=$((i + 1)); row_label="$preset ${!j}"; }; done
 if ! signal_claim "$row_label"; then
