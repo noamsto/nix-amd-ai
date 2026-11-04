@@ -109,7 +109,9 @@ flight is a caller hazard.
   startup `Llama-3.2-1B-NPU2` load, and `/api/ps` still lists `llama3.2:1b`.
   The swap is skipped, not traded for a different answer shape. The
   non-streaming `/v1/chat/completions` arm always answers cancelled without
-  loading: its early check runs even when no chat engine is loaded. The
+  loading: its early check runs even when no chat engine is loaded (this is
+  source-verified, not probe-measured — every case below starts a server with
+  a chat model loaded). The
   streaming `/v1/chat/completions` arm needs a loaded chat engine to build its
   final SSE chunk and falls through to the load when none is loaded; this
   probe's server starts with `llama3.2:1b`, so an engine is already loaded and
