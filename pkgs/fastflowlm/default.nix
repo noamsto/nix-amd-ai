@@ -344,15 +344,17 @@ stdenv.mkDerivation (finalAttrs: {
   #     request cancelled while queued (POST /api/cancel, or a client that
   #     left while queued) loaded or swapped the model it names for nothing --
   #     the load was pure cost, because the request's insert() then returned
-  #     immediately without prefilling or decoding. The handlers now check the
-  #     cancellation predicate before the load and answer with the endpoint's
-  #     existing cancelled shape (the same body/shape the post-insert branch
-  #     emits), so no model is touched. AutoModel::_shared_insert's early
+  #     immediately without prefilling or decoding. Three handlers (/api/generate,
+  #     /api/chat, /v1/completions) plus the non-streaming
+  #     /v1/chat/completions arm now check the cancellation predicate before
+  #     the load and always answer cancelled without loading, with the
+  #     endpoint's existing cancelled shape (the same body/shape the
+  #     post-insert branch emits), so no model is touched. Only the streaming
+  #     /v1/chat/completions arm needs a loaded chat engine, because its SSE
+  #     cancel answer dereferences it, so when no chat engine is loaded that
+  #     arm falls through to the load. AutoModel::_shared_insert's early
   #     check (cancel-queued-request.patch) had already made the post-load
-  #     insert a no-op, so this patch only removes the cost. The
-  #     /v1/chat/completions early branch keeps the previously-loaded engine
-  #     (it is not loaded when none is), building its own parse options and
-  #     stream callback since the later locals do not exist yet. No context or
+  #     insert a no-op, so this patch only removes the cost. No context or
   #     prompt cache is reset, because nothing was inserted.
   # None of the patches carries attribution: require_field, safe_dump, the
   # model-identity checks and the embedding task-prompt mapping are ported

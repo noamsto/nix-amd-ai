@@ -54,6 +54,9 @@ posted while the server log shows B queued. B's stream is the per-request
 | `queued-normal` | PASS (guard): B completed after A, `done_reason=length`, 769 content lines | PASS: same |
 | `registry` (id reuse) | FAIL: first cancel `cancelled:false`, so the sequence never starts | PASS: first cancel for B `cancelled:true`; C re-uses B's id while B is still queued; after B answers cancelled, cancelling the reused id again is `cancelled:true` — B's completion did not erase C's slot |
 
+This table is the #222 same-model sequence. The #243 different-model cases
+(`queued-cancel-model-swap.sh`) are described in [Limits](#limits).
+
 The green queued-cancel B response is a single NDJSON line:
 `{"model":"llama3.2:1b","response":"","prompt_eval_count":0,"eval_count":0,…,"done_reason":"cancel","done":true}`
 — the same shape the streaming handler produces for a client disconnect while
@@ -95,15 +98,22 @@ flight is a caller hazard.
 
 - **A cancelled queued request naming a different model no longer pays the
   model swap.** The four handlers (`/api/generate`, `/api/chat`,
-  `/v1/chat/completions`, `/v1/completions`) check the cancellation predicate
-  before `ensure_model_loaded()` and answer with the endpoint's existing
-  cancelled shape — the streaming handler's empty `done_reason=cancel` NDJSON
-  line, `{}` for non-streaming `/api/chat`. Red swapped to the queued request's
-  model before the cancel was observed: `Gemma4-E4B-IT-NPU2` loaded in 22.5 s
-  and `/api/ps` listed `gemma4e-flash:e4b`. Green loads nothing: the server log
-  shows only the startup `Llama-3.2-1B-NPU2` load, and `/api/ps` still lists
-  `llama3.2:1b`. Both streaming `/api/generate` and non-streaming `/api/chat`
-  are covered; the swap is skipped, not traded for a different answer shape.
+  `/v1/chat/completions`, `/v1/completions`) answer a cancelled queued request
+  in the endpoint's existing cancelled shape — the streaming handler's empty
+  `done_reason=cancel` NDJSON line, `{}` for non-streaming `/api/chat` and
+  `/v1/completions`, a bare `null` for non-streaming `/v1/chat/completions`,
+  and an SSE stream ending `data: [DONE]` with no text for the streaming
+  `/v1` arms. Red swapped to the queued request's model before the cancel was
+  observed: `Gemma4-E4B-IT-NPU2` loaded in 22.5 s and `/api/ps` listed
+  `gemma4e-flash:e4b`. Green loads nothing: the server log shows only the
+  startup `Llama-3.2-1B-NPU2` load, and `/api/ps` still lists `llama3.2:1b`.
+  The swap is skipped, not traded for a different answer shape. The
+  non-streaming `/v1/chat/completions` arm always answers cancelled without
+  loading: its early check runs even when no chat engine is loaded. The
+  streaming `/v1/chat/completions` arm needs a loaded chat engine to build its
+  final SSE chunk and falls through to the load when none is loaded; this
+  probe's server starts with `llama3.2:1b`, so an engine is already loaded and
+  the streaming arm skips the swap.
 - **Embeddings and audio are not cancellation-aware** (`handle_embeddings` takes
   no token; `handle_openai_audio_transcriptions` ignores it). They keep their
   current behavior: a cancel on a running request answers `cancelled:true`
@@ -134,8 +144,16 @@ bash bench-logs/flm-queued-cancel-2026-10-04/queued-cancel-model-swap.sh \
   <fastflowlm out path>/bin/flm <out dir> <red|green>
 ```
 
-`queued-cancel.sh` covers the four same-model cases; `queued-cancel-model-swap.sh`
-covers the different-model swap. Both exit 0 iff no case FAILs, wait for any
-other `flm` process to exit before starting (never killing one), check their own
-server PID, and `shellcheck` clean. `nix flake check` passes; `nix build
-.#fastflowlm` builds.
+`queued-cancel.sh` covers the four same-model cases. `queued-cancel-model-swap.sh`
+covers the different-model swap in six cases: `model-swap` (streaming
+`/api/generate`), `chat-nonstream` (non-streaming `/api/chat`),
+`chat-completions-nonstream` (non-streaming `/v1/chat/completions`),
+`chat-completions-stream` (streaming `/v1/chat/completions`),
+`completions-nonstream` (non-streaming `/v1/completions`) and
+`completions-stream` (streaming `/v1/completions`). Both exit 0 iff no case
+FAILs, wait for any other `flm` process to exit before starting (never killing
+one), check their own server PID, and `shellcheck` clean. The model-swap probe
+writes every artifact with a `.ms` segment (`<label>.ms.results`,
+`server-<label>.ms.log`, ...), so both probes can share one out dir without
+erasing each other's run. `nix flake check` passes; `nix build .#fastflowlm`
+builds.

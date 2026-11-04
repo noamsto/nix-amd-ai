@@ -13,14 +13,31 @@
 # (gemma4e-flash:e4b) with a caller request_id, then /api/cancel is posted while
 # the server log shows B queued. /api/ps is read after B answers.
 #
-#   model-swap:     streaming /api/generate. PASS iff cancel answered
+# Cases:
+#   model-swap: streaming POST /api/generate. PASS iff cancel answered
 #                   cancelled:true, B ends done_reason=cancel with 0 content
 #                   lines, and /api/ps still lists MODEL.
 #                   FAIL (red): /api/ps lists OTHER_MODEL -- B swapped to it
 #                   before the cancel was observed.
-#   chat-nonstream: non-streaming /api/chat, same pattern. PASS iff the answer
-#                   body is {} and /api/ps still lists MODEL.
-#                   FAIL (red): /api/ps lists OTHER_MODEL.
+#   chat-nonstream: non-streaming POST /api/chat. PASS iff the answer body is
+#                   {} and /api/ps still lists MODEL. FAIL (red): ps OTHER_MODEL.
+#   chat-completions-nonstream: non-streaming POST /v1/chat/completions. PASS iff
+#                   the answer body is JSON null (the endpoint's cancelled shape;
+#                   there is no cancelled:true in it) and ps still lists MODEL.
+#                   FAIL (red): ps OTHER_MODEL.
+#   chat-completions-stream: streaming POST /v1/chat/completions. PASS iff the
+#                   SSE stream ends with data: [DONE], carries no assistant text
+#                   delta, and ps still lists MODEL. FAIL (red): ps OTHER_MODEL.
+#   completions-nonstream: non-streaming POST /v1/completions. PASS iff the
+#                   answer body is {} and ps still lists MODEL. FAIL (red): ps
+#                   OTHER_MODEL.
+#   completions-stream: streaming POST /v1/completions. PASS iff the SSE stream
+#                   ends with data: [DONE], carries no text, and ps still lists
+#                   MODEL. FAIL (red): ps OTHER_MODEL.
+#
+# Every artifact this probe writes carries a ".ms" segment ($label.ms.results,
+# server-$label.ms.log, $label.ms.cancels.jsonl, ...), so queued-cancel.sh can
+# share one out dir without either probe erasing the other's run.
 #
 # Env: XRT_LIB (optional; the nix-build flm resolves xrt via RPATH),
 #      PORT=58731, MODEL=llama3.2:1b, OTHER_MODEL=gemma4e-flash:e4b.
@@ -37,9 +54,9 @@ PORT=${PORT:-58731}
 MODEL=${MODEL:-llama3.2:1b}
 OTHER_MODEL=${OTHER_MODEL:-gemma4e-flash:e4b}
 base=http://127.0.0.1:$PORT
-results="$outdir/$label.results"
-log="$outdir/server-$label.log"
-cancels="$outdir/$label.cancels.jsonl"
+results="$outdir/$label.ms.results"
+log="$outdir/server-$label.ms.log"
+cancels="$outdir/$label.ms.cancels.jsonl"
 : >"$results"
 : >"$cancels"
 
@@ -115,29 +132,47 @@ start_server() {
   return 1
 }
 
-# start_stream <model> <request_id|""> <out.ndjson>: streaming POST /api/generate
-start_stream() {
-  local model=$1 rid=$2 out=$3 body
-  body=$(jq -cn --arg m "$model" --arg rid "$rid" '
-    {model: $m, stream: true, max_tokens: 768,
-     prompt: "Write a long, detailed essay about the history of the printing press."}
-    + (if $rid == "" then {} else {request_id: $rid} end)')
+# start_request <path> <stream true|false> <model> <request_id|""> <max_tokens> <out>
+# Streaming replies land raw in <out> (NDJSON for /api/generate, SSE for the
+# /v1 endpoints); non-streaming replies land as the response body.
+start_request() {
+  local path=$1 stream=$2 model=$3 rid=$4 max_tokens=$5 out=$6 body
+  local prompt="Write a long, detailed essay about the history of the printing press."
+  case "$path" in
+    /api/generate)
+      body=$(jq -cn --arg m "$model" --arg rid "$rid" --arg p "$prompt" \
+        --argjson s "$stream" --argjson n "$max_tokens" '
+        {model: $m, stream: $s, max_tokens: $n, prompt: $p}
+        + (if $rid == "" then {} else {request_id: $rid} end)')
+      ;;
+    /api/chat)
+      body=$(jq -cn --arg m "$model" --arg rid "$rid" --arg p "$prompt" \
+        --argjson s "$stream" --argjson n "$max_tokens" '
+        {model: $m, stream: $s,
+         messages: [{role: "user", content: $p}],
+         options: {num_predict: $n}}
+        + (if $rid == "" then {} else {request_id: $rid} end)')
+      ;;
+    /v1/chat/completions)
+      body=$(jq -cn --arg m "$model" --arg rid "$rid" --arg p "$prompt" \
+        --argjson s "$stream" --argjson n "$max_tokens" '
+        {model: $m, stream: $s, max_tokens: $n,
+         messages: [{role: "user", content: $p}]}
+        + (if $rid == "" then {} else {request_id: $rid} end)')
+      ;;
+    /v1/completions)
+      body=$(jq -cn --arg m "$model" --arg rid "$rid" --arg p "$prompt" \
+        --argjson s "$stream" --argjson n "$max_tokens" '
+        {model: $m, stream: $s, max_tokens: $n, prompt: $p}
+        + (if $rid == "" then {} else {request_id: $rid} end)')
+      ;;
+    *)
+      echo "unknown request path: $path" >&2
+      return 1
+      ;;
+  esac
   : >"$out"
-  curl -sN -X POST "$base/api/generate" -H 'Content-Type: application/json' \
-    -d "$body" >"$out" 2>/dev/null &
-  stream_pid=$!
-}
-
-# start_chat_nonstream <model> <request_id> <out.json>: non-streaming /api/chat
-start_chat_nonstream() {
-  local model=$1 rid=$2 out=$3 body
-  body=$(jq -cn --arg m "$model" --arg rid "$rid" '
-    {model: $m, stream: false, request_id: $rid,
-     messages: [{role: "user",
-                 content: "Write a long, detailed essay about the history of the printing press."}],
-     options: {num_predict: 768}}')
-  : >"$out"
-  curl -s -X POST "$base/api/chat" -H 'Content-Type: application/json' \
+  curl -sN -X POST "$base$path" -H 'Content-Type: application/json' \
     -d "$body" >"$out" 2>/dev/null &
   stream_pid=$!
 }
@@ -164,9 +199,10 @@ wait_stream_end() { # <pid> <timeout_s>
 queued_count() { grep -c "request queued.*$1" "$log" 2>/dev/null || true; }
 
 wait_queued_after() { # <endpoint> <prior_count> <timeout_s>: a NEW queued line
-  local target=$(( $2 + 1 )) waited=0
+  local target=$(( $2 + 1 )) waited=0 count
   while (( waited < $3 )); do
-    [[ "$(queued_count "$1")" -ge "$target" ]] && return 0
+    count=$(queued_count "$1")
+    [[ "${count:-0}" -ge "$target" ]] && return 0
     sleep 1; (( waited++ ))
   done
   return 1
@@ -177,61 +213,111 @@ cancel() { curl -s -m 10 -X POST "$base/api/cancel" -H 'Content-Type: applicatio
 done_reason() { jq -r 'select(.done == true) | .done_reason // "none"' "$1" 2>/dev/null | tail -n1; }
 content_lines() { jq -c 'select(.response != null and .response != "")' "$1" 2>/dev/null | wc -l; }
 
+sse_payloads() { sed -n 's/^data: //p' "$1" 2>/dev/null | tr -d '\r' | grep -v '^\[DONE\]$' | grep -v '^[[:space:]]*$'; }
+sse_last_data() { sed -n 's/\r$//; /^data: /p' "$1" 2>/dev/null | tail -n1; }
+sse_text_count() { # <chat|completions> <sse file>
+  local kind=$1 file=$2
+  if [[ "$kind" == chat ]]; then
+    sse_payloads "$file" | jq -rs '[.[] | (.choices // [])[]? | (.delta // {}) | (.content // empty) | select(type == "string" and length > 0)] | length' 2>/dev/null
+  else
+    sse_payloads "$file" | jq -rs '[.[] | (.choices // [])[]? | (.text // empty) | select(type == "string" and length > 0)] | length' 2>/dev/null
+  fi
+}
+
 ps_dump() { curl -s -m 10 "$base/api/ps"; }
 ps_tags() { jq -r '[.models[]? | (.model // .name)] | join(",")' "$1" 2>/dev/null; }
 ps_has() { jq -e --arg t "$1" 'any(.models[]?; ((.model // .name) == $t))' "$2" >/dev/null 2>&1; }
+ps_clean() { ps_has "$MODEL" "$1" && ! ps_has "$OTHER_MODEL" "$1"; }
 
-case_model_swap() {
-  local a="$outdir/$label.ms.a.ndjson" b="$outdir/$label.ms.b.ndjson"
-  local bid="ms-$RANDOM$RANDOM" resp cancelled reason blines psfile pstags qc0
-  psfile="$outdir/$label.ms.ps.json"
-  start_stream "$MODEL" "" "$a"; local apid=$stream_pid
-  if ! wait_first_content "$a"; then record model-swap FAIL "A no content within 60s"; return; fi
-  qc0=$(queued_count "POST /api/generate")
-  start_stream "$OTHER_MODEL" "$bid" "$b"; local bpid=$stream_pid
-  if ! wait_queued_after "POST /api/generate" "$qc0" 60; then
-    record model-swap FAIL "B never appeared in the NPU queue"; return
-  fi
-  # NB: jq's // treats false as a fallback, so read .cancelled directly.
-  resp=$(cancel "$bid"); cancelled=$(jq -r '.cancelled' <<<"$resp" 2>/dev/null)
-  # B can only dequeue once A releases the NPU, so wait A out first.
-  wait_stream_end "$apid" 300 || echo "A stream did not finish within 300s" >&2
-  wait_stream_end "$bpid" 600 || echo "B stream did not finish within 600s" >&2
+assert_model_swap() { # <b.ndjson> <cancelled> <ps file> <ps tags>
+  local b=$1 cancelled=$2 psfile=$3 pstags=$4 reason blines
   reason=$(done_reason "$b"); reason=${reason:-none}
   blines=$(content_lines "$b")
-  ps_dump >"$psfile"
-  pstags=$(ps_tags "$psfile")
   if [[ "$cancelled" == true && "$reason" == cancel && "$blines" -eq 0 ]] \
-     && ps_has "$MODEL" "$psfile" && ! ps_has "$OTHER_MODEL" "$psfile"; then
+     && ps_clean "$psfile"; then
     record model-swap PASS "cancelled=$cancelled B_done_reason=$reason B_content_lines=$blines ps=[$pstags]"
   else
     record model-swap FAIL "cancelled=$cancelled B_done_reason=$reason B_content_lines=$blines ps=[$pstags] (want cancelled/true, cancel, 0, ps=[$MODEL])"
   fi
 }
 
-case_chat_nonstream() {
-  local a="$outdir/$label.cn.a.ndjson" b="$outdir/$label.cn.b.json"
-  local bid="cn-$RANDOM$RANDOM" resp cancelled answer psfile pstags qc0
-  psfile="$outdir/$label.cn.ps.json"
-  start_stream "$MODEL" "" "$a"; local apid=$stream_pid
-  if ! wait_first_content "$a"; then record chat-nonstream FAIL "A no content within 60s"; return; fi
-  qc0=$(queued_count "POST /api/chat")
-  start_chat_nonstream "$OTHER_MODEL" "$bid" "$b"; local bpid=$stream_pid
-  if ! wait_queued_after "POST /api/chat" "$qc0" 60; then
-    record chat-nonstream FAIL "B never appeared in the NPU queue"; return
-  fi
-  resp=$(cancel "$bid"); cancelled=$(jq -r '.cancelled' <<<"$resp" 2>/dev/null)
-  wait_stream_end "$apid" 300 || echo "A stream did not finish within 300s" >&2
-  wait_stream_end "$bpid" 600 || echo "B did not finish within 600s" >&2
+assert_chat_nonstream() { # <b.json> <cancelled> <ps file> <ps tags>
+  local b=$1 cancelled=$2 psfile=$3 pstags=$4 answer
   answer=$(tr -d '[:space:]' <"$b" 2>/dev/null)
-  ps_dump >"$psfile"
-  pstags=$(ps_tags "$psfile")
-  if [[ "$cancelled" == true && "$answer" == "{}" ]] \
-     && ps_has "$MODEL" "$psfile" && ! ps_has "$OTHER_MODEL" "$psfile"; then
+  if [[ "$cancelled" == true && "$answer" == "{}" ]] && ps_clean "$psfile"; then
     record chat-nonstream PASS "cancelled=$cancelled answer=$answer ps=[$pstags]"
   else
     record chat-nonstream FAIL "cancelled=$cancelled answer=$answer ps=[$pstags] (want cancelled/true, {}, ps=[$MODEL])"
   fi
+}
+
+assert_chat_completions_nonstream() { # <b.json> <cancelled> <ps file> <ps tags>
+  local b=$1 cancelled=$2 psfile=$3 pstags=$4 answer
+  answer=$(tr -d '[:space:]' <"$b" 2>/dev/null)
+  if [[ "$cancelled" == true && "$answer" == "null" ]] && ps_clean "$psfile"; then
+    record chat-completions-nonstream PASS "cancelled=$cancelled answer=$answer ps=[$pstags]"
+  else
+    record chat-completions-nonstream FAIL "cancelled=$cancelled answer=$answer ps=[$pstags] (want cancelled/true, null, ps=[$MODEL])"
+  fi
+}
+
+assert_chat_completions_stream() { # <b.sse> <cancelled> <ps file> <ps tags>
+  local b=$1 cancelled=$2 psfile=$3 pstags=$4 last texts
+  last=$(sse_last_data "$b"); last=${last:-none}
+  texts=$(sse_text_count chat "$b")
+  if [[ "$cancelled" == true && "$last" == "data: [DONE]" && "${texts:-none}" == "0" ]] \
+     && ps_clean "$psfile"; then
+    record chat-completions-stream PASS "cancelled=$cancelled last=$last text_deltas=$texts ps=[$pstags]"
+  else
+    record chat-completions-stream FAIL "cancelled=$cancelled last=$last text_deltas=${texts:-none} ps=[$pstags] (want cancelled/true, data: [DONE], 0, ps=[$MODEL])"
+  fi
+}
+
+assert_completions_nonstream() { # <b.json> <cancelled> <ps file> <ps tags>
+  local b=$1 cancelled=$2 psfile=$3 pstags=$4 answer
+  answer=$(tr -d '[:space:]' <"$b" 2>/dev/null)
+  if [[ "$cancelled" == true && "$answer" == "{}" ]] && ps_clean "$psfile"; then
+    record completions-nonstream PASS "cancelled=$cancelled answer=$answer ps=[$pstags]"
+  else
+    record completions-nonstream FAIL "cancelled=$cancelled answer=$answer ps=[$pstags] (want cancelled/true, {}, ps=[$MODEL])"
+  fi
+}
+
+assert_completions_stream() { # <b.sse> <cancelled> <ps file> <ps tags>
+  local b=$1 cancelled=$2 psfile=$3 pstags=$4 last texts
+  last=$(sse_last_data "$b"); last=${last:-none}
+  texts=$(sse_text_count completions "$b")
+  if [[ "$cancelled" == true && "$last" == "data: [DONE]" && "${texts:-none}" == "0" ]] \
+     && ps_clean "$psfile"; then
+    record completions-stream PASS "cancelled=$cancelled last=$last text_parts=$texts ps=[$pstags]"
+  else
+    record completions-stream FAIL "cancelled=$cancelled last=$last text_parts=${texts:-none} ps=[$pstags] (want cancelled/true, data: [DONE], 0, ps=[$MODEL])"
+  fi
+}
+
+run_case() { # <case> <tag> <path> <stream true|false> <max_tokens> <assert_fn>
+  local case=$1 tag=$2 path=$3 stream=$4 max_tokens=$5 assert_fn=$6
+  local a="$outdir/$label.ms.$tag.a.ndjson" b="$outdir/$label.ms.$tag.b.out"
+  local psfile="$outdir/$label.ms.$tag.ps.json"
+  local bid="$tag-$RANDOM$RANDOM" resp cancelled qc0 apid bpid
+  start_request /api/generate true "$MODEL" "" 768 "$a"; apid=$stream_pid
+  if ! wait_first_content "$a"; then record "$case" FAIL "A no content within 60s"; return; fi
+  qc0=$(queued_count "$path")
+  start_request "$path" "$stream" "$OTHER_MODEL" "$bid" "$max_tokens" "$b"; bpid=$stream_pid
+  if ! wait_queued_after "$path" "$qc0" 60; then
+    record "$case" FAIL "B never appeared in the NPU queue"; return
+  fi
+  # NB: jq's // treats false as a fallback, so read .cancelled directly.
+  resp=$(cancel "$bid"); cancelled=$(jq -r '.cancelled' <<<"$resp" 2>/dev/null)
+  # B can only dequeue once A releases the NPU, so wait A out first.
+  if ! wait_stream_end "$apid" 300; then
+    record "$case" FAIL "A stream did not finish within 300s"; return
+  fi
+  if ! wait_stream_end "$bpid" 600; then
+    record "$case" FAIL "B did not finish within 600s"; return
+  fi
+  ps_dump >"$psfile"
+  "$assert_fn" "$b" "$cancelled" "$psfile" "$(ps_tags "$psfile")"
 }
 
 if ! start_server; then
@@ -239,11 +325,15 @@ if ! start_server; then
   exit 1
 fi
 
-ps_dump >"$outdir/$label.ps.start.json"
-echo "start ps: $(ps_tags "$outdir/$label.ps.start.json")" >&2
+ps_dump >"$outdir/$label.ms.ps.start.json"
+echo "start ps: $(ps_tags "$outdir/$label.ms.ps.start.json")" >&2
 echo "queued so far: $(queued_count 'POST /api/generate')" >&2
-case_model_swap
-case_chat_nonstream
+run_case model-swap ms-generate /api/generate true 32 assert_model_swap
+run_case chat-nonstream ms-chat /api/chat false 32 assert_chat_nonstream
+run_case chat-completions-nonstream ms-chat-completions /v1/chat/completions false 32 assert_chat_completions_nonstream
+run_case chat-completions-stream ms-chat-completions-stream /v1/chat/completions true 32 assert_chat_completions_stream
+run_case completions-nonstream ms-completions /v1/completions false 32 assert_completions_nonstream
+run_case completions-stream ms-completions-stream /v1/completions true 32 assert_completions_stream
 
 echo "--- summary ($results)"
 cat "$results"

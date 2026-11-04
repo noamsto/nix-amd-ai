@@ -51,7 +51,7 @@ index a8dbe5e..3add5bd 100644
              return;
          }
  
-+        if (cancellation_token && cancellation_token->cancelled() && auto_chat_engine) {
++        if (cancellation_token && cancellation_token->cancelled() && (auto_chat_engine || !stream)) {
 +            header_print("❌ ", "Prefill Cancelled!");
 +            chat_meta_info_t meta_info;
 +            meta_info.stop_reason = CANCEL_DETECTED;
