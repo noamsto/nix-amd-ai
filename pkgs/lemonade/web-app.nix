@@ -11,14 +11,9 @@ buildNpmPackage {
 
   sourceRoot = "${src.name}/src/web-app";
 
-  # Upstream ships src/web-app/package.json without a lockfile, so we
-  # generated one with `npm install --package-lock-only` and check it in.
-  # Refresh on dep bumps.
-  postPatch = ''
-    cp ${./web-app-package-lock.json} ./package-lock.json
-  '';
-
-  npmDepsHash = "sha256-tHGexDS2Ba2EBEE7O8KiTWtyo1ZilAkxXHUhGs5qWjk=";
+  # Upstream ships its own package-lock.json under src/web-app/, so
+  # buildNpmPackage reads it directly. Refresh on dep bumps.
+  npmDepsHash = "sha256-oNxXTgyz9qgdBn1mrZj53NA3aeg97ySx5tnqDPX7f2Q=";
 
   # webpack.config.js resolves the shared React renderer via
   # `../app/src/renderer/index.tsx`, so the sibling src/app/ must be present

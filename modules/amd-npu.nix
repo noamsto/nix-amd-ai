@@ -209,7 +209,7 @@
     };
 
   # defaults.json seed that lemonade's get_defaults() merges over its packaged
-  # defaults (via the LEMONADE_DEFAULTS_PATH patch in pkgs/lemonade). Carries
+  # defaults (via LEMONADE_DEFAULTS_PATH, which lemond reads itself). Carries
   # the backend bin paths plus global_timeout / flash-attn, all of which lost
   # their env hook when v10.7.0 removed migrate_from_env.
   lemonadeDefaults =
@@ -1315,7 +1315,7 @@ in {
       // optionalAttrs cfg.enableLemonade {
         # v10.7.0 reads backend bin paths + tuning only from config.json; point
         # the lemonade CLI / desktop app at our generated seed via the
-        # LEMONADE_DEFAULTS_PATH patch in pkgs/lemonade.
+        # LEMONADE_DEFAULTS_PATH, which lemonade reads itself.
         LEMONADE_DEFAULTS_PATH = lemonadeDefaultsFile;
       }
       // optionalAttrs (cfg.enableLemonade && cfg.enableROCm) {
@@ -1379,8 +1379,7 @@ in {
           # Backend bin paths plus global_timeout (0 disables lemond's 300s
           # upstream timeout — see lemonade-sdk/lemonade#1364) and the
           # flash-attn arg now live in the generated defaults.json; v10.7.0
-          # dropped their env hooks. See the LEMONADE_DEFAULTS_PATH patch in
-          # pkgs/lemonade.
+          # dropped their env hooks. lemond reads LEMONADE_DEFAULTS_PATH itself.
           LEMONADE_DEFAULTS_PATH = lemonadeDefaultsFile;
         }
         // optionalAttrs cfg.enableNPU {

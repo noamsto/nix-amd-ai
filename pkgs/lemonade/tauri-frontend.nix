@@ -13,7 +13,7 @@ buildNpmPackage {
 
   # Upstream ships its own package-lock.json under src/app/, so buildNpmPackage
   # reads it directly. Refresh on dep bumps.
-  npmDepsHash = "sha256-EdmbKKIOdlzzZiZnIAhu5oqrQUmVFkoAQ/7OCUypL8Q=";
+  npmDepsHash = "sha256-kWa0atUCe3sG7VJBe7keXbWuZfqmTZ+eNEm1vtIexMI=";
 
   npmBuildScript = "build:renderer:prod";
 
