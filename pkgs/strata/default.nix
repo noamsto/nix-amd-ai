@@ -36,7 +36,7 @@
 in
   stdenv.mkDerivation {
     pname = "strata";
-    version = "0.2.9";
+    version = "0.2.11";
 
     src = fetchFromGitHub {
       owner = "Niko1221";
