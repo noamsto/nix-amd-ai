@@ -133,6 +133,8 @@
         tokenizer = "${cfg.strata.pack}/tokenizer";
         model_name = cfg.strata.modelName;
         backend = "hip";
+        # Upstream's default "auto" picks the DFlash2 drafter once its pack is on disk; this module provisions only the MTP layer.
+        drafting = "mtp";
         env = strataProfileEnv;
         args =
           ["--pack" cfg.strata.pack "--native" cfg.strata.model "--mtp" cfg.strata.mtp]
@@ -947,15 +949,19 @@ in {
 
       quant = mkOption {
         type = types.enum (lib.attrNames strataSources.model.quants);
-        default = "UD-IQ4_XS";
+        default = "UD-IQ4_XS-v31";
         description = ''
           Quant whose pinned Hugging Face snapshot `model` defaults to
-          (`${strataSources.model.quants."UD-IQ4_XS".repo}` for `UD-IQ4_XS`,
+          (`${strataSources.model.quants."UD-IQ4_XS-v31".repo}` for
+          `UD-IQ4_XS-v31` and `UD-IQ4_XS`,
           `${strataSources.model.quants."GSQ-RCO-IQ3_S".repo}` for
           `GSQ-RCO-IQ3_S`). Only files Strata's setup lists as runnable are
-          offered. `UD-IQ4_XS` is the one benched on Strata. `GSQ-RCO-IQ3_S`
-          is upstream's recommended size since 0.1.44 (needs 64 GB RAM) and
-          has not been benched on Strix Halo (gfx1151).
+          offered. `UD-IQ4_XS-v31` is Unsloth's 2026-11-04 "Dynamic v3.1"
+          re-upload of IQ4_XS (four shards) and is the default, but this
+          repository has not benched it on Strix Halo (gfx1151). `UD-IQ4_XS`
+          is the September file and the only one benched on Strata.
+          `GSQ-RCO-IQ3_S` is upstream's recommended size since 0.1.44 (needs
+          64 GB RAM) and has not been benched on Strix Halo either.
         '';
       };
 

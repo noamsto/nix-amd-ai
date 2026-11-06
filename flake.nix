@@ -1061,6 +1061,7 @@
               # Explicit-path host: unchanged, no unit, no shim guard key.
               check "$CONFIG" '.config.tokenizer == "/var/lib/models/strata/pack/tokenizer"'
               check "$CONFIG" 'has("prepare") | not'
+              check "$CONFIG" '.config.drafting == "mtp"'
               [ "$EXPLICIT_PREPARE_UNIT" = 0 ] || { echo "explicit-path host rendered strata-prepare"; exit 1; }
 
               # The two silent-mismatch shapes are rejected.
@@ -1070,7 +1071,7 @@
 
               # Cached host (only enable + cacheDir): model is the pinned
               # snapshot in lemond's HF cache, and the unit carries the fetch hint.
-              check "$CACHED_CONFIG" '.model == "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/38bb39ee97821de2c9009abb7e93950eec396e66/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00003.gguf"'
+              check "$CACHED_CONFIG" '.model == "/var/lib/models/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/d96201194f103c906994f283f504209dc8d2a10c/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00004.gguf"'
               grep -qF 'STRATA_MODEL_FETCH=' "$CACHED_UNIT"/strata-prepare.service \
                 || { echo "cached host's strata-prepare lacks the fetch hint"; exit 1; }
               check "$IQ3S_CONFIG" '.model == "/var/lib/models/hf/hub/models--ISTA-DASLab--Qwen3.8-Flash-Next-GSQ-RCO-GGUF/snapshots/ed59f92082b1e93c0e96d60a8b11aab089b52f09/IQ3_S/Qwen3.8-Flash-Next-GSQ-RCO-IQ3_S-00001-of-00002.gguf"'
@@ -1102,7 +1103,7 @@
 
 
               class Service:
-                  def run(self, ids, thinking, tools, max_new, sampling, cancel, force=None, declared_only=False):
+                  def run(self, ids, thinking, tools, max_new, sampling, cancel, force=None, declared_only=False, deferred=False):
                       raise NotImplementedError
 
 

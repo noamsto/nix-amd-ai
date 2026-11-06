@@ -316,6 +316,8 @@ hardware.amd-npu.lemonade.customModels."Qwen3.8-Flash-Next-MTP" = {
 };
 ```
 
+Since 2026-11-04 that checkpoint resolves to Unsloth's v3.1 re-upload; the numbers in this section were taken on the September file.
+
 The `draft` head must be the **ggml-org** one, not unsloth's `MTP/` copy — the latter was built for the superseded fork and aborts stock b11382. `--spec-draft-n-max 3` is the best setting measured (best of {2,3,4} on halo, gfx1151, Vulkan; this exact q8_0-KV / 131K-ctx config was not benchmarked), and the example is unchanged by the
 #237 tuning pass, which found no clear winner among the `--spec-draft-n-max` and
 `--spec-draft-p-min` values it tried. Tuning results and their load caveats: [bench-logs index](bench-logs/README.md) (`qwen38-flash-next-mtp-*`).
@@ -348,7 +350,7 @@ Pick `ttmSizeGiB` by the largest model you actually intend to load, and don't se
 
 ### Opt-in Strata backend (Strix Halo)
 
-[Strata](https://github.com/Niko1221/Strata) (pinned v0.2.9 `c62d5e3`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through a native `strata` recipe carried as a small patch in `pkgs/lemonade`: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "Strata (experimental)" recipe name; the recipe is its own, so the `ds4` recipe stays free for a real DeepSeek V4 model. Measurements: [first run and build](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md), [quality](bench-logs/qwen38-flash-next-strata-quality-2026-10-07/README.md) and the [soak](bench-logs/qwen38-flash-next-strata-soak-2026-10-08/README.md).
+[Strata](https://github.com/Niko1221/Strata) (pinned v0.2.11 `c3b3f50`, built against TheRock ROCm 7.14.1) is a Qwen3.8-Flash-Next engine for Strix Halo. The module serves it behind lemond through a native `strata` recipe carried as a small patch in `pkgs/lemonade`: lemond starts a small shim instead of `ds4-server`, so clients use lemond's normal API and load/unload. The model is listed as `user.Qwen3.8-Flash-Next-Strata` (option `modelName`) under lemond's "Strata (experimental)" recipe name; the recipe is its own, so the `ds4` recipe stays free for a real DeepSeek V4 model. Measurements: [first run and build](bench-logs/qwen38-flash-next-strata-2026-10-06/README.md), [quality](bench-logs/qwen38-flash-next-strata-quality-2026-10-07/README.md) and the [soak](bench-logs/qwen38-flash-next-strata-soak-2026-10-08/README.md).
 
 ```nix
 hardware.amd-npu = {
@@ -361,15 +363,17 @@ hardware.amd-npu = {
 };
 ```
 
-- `model` defaults to the Flash-Next GGUF pinned in `pkgs/strata/sources.nix` (quant chosen by `strata.quant`; `UD-IQ4_XS` is the one benched on Strata; `GSQ-RCO-IQ3_S`, ISTA-DASLab's IQ3_S and upstream's recommended size since 0.1.44, needing 64 GB RAM, is also offered but not yet benched on Strix Halo), read from lemond's Hugging Face cache under `lemonade.cacheDir`, so it shares shards with a llamacpp `customModels` entry for the same repository and quant. Without `cacheDir`, or for a GGUF kept elsewhere, set `model` to the first shard's path.
+- `model` defaults to the Flash-Next GGUF pinned in `pkgs/strata/sources.nix` (quant chosen by `strata.quant`; the default `UD-IQ4_XS-v31` is Unsloth's 2026-11-04 "Dynamic v3.1" IQ4_XS re-upload (four shards) and has not been measured on Strix Halo here; `UD-IQ4_XS`, the September file, is the one benched on Strata; `GSQ-RCO-IQ3_S`, ISTA-DASLab's IQ3_S and upstream's recommended size since 0.1.44, needing 64 GB RAM, is also offered but not yet benched on Strix Halo), read from lemond's Hugging Face cache under `lemonade.cacheDir`, so it shares shards with a llamacpp `customModels` entry for the same repository and snapshot (the v31 default matches a `:UD-IQ4_XS` entry pulled after 2026-11-04; the September `UD-IQ4_XS` does not). Without `cacheDir`, or for a GGUF kept elsewhere, set `model` to the first shard's path.
 - With only `enable` and a model, the `strata-prepare` oneshot unit builds the pack and MTP runtime in `/var/lib/strata` and `vision.mmproj` defaults to a pinned fetch. Set `pack`, `mtp` and `vision.mmproj` explicitly to keep your own artifacts; `strata.prepare.enable` forces it on or off. Details and stamps: [docs/strata.md](docs/strata.md).
-- `profile = "defaults"` is Strata's setup defaults; `"fast"` is the maintainers' fast configuration and turns on bit-changing switches. Its quality was measured on one Strix Halo host (gfx1151, UD-IQ4_XS) against a Q8_0 reference: mean KLD 0.0897 for `fast` versus 0.0920 for `defaults`, so `fast` was not worse there; the [quality bench](bench-logs/qwen38-flash-next-strata-quality-2026-10-07/) also has the measured speed difference, on that host only.
+- `profile = "defaults"` is Strata's setup defaults; `"fast"` is the maintainers' fast configuration and turns on bit-changing switches. Its quality was measured on one Strix Halo host (gfx1151, the September `UD-IQ4_XS` file) against a Q8_0 reference: mean KLD 0.0897 for `fast` versus 0.0920 for `defaults`, so `fast` was not worse there; the [quality bench](bench-logs/qwen38-flash-next-strata-quality-2026-10-07/) also has the measured speed difference, on that host only.
 - `contextSize` (default `131072`) is passed as `--max-context`; lemond's `ctx_size` for the model overrides it per load. `expertCache` (default `20000`) is an explicit expert-cache count, always paired with `--mmap-experts`; Strata's `auto` is rejected as unsafe on unified memory. `extraArgs` (default `[]`) is appended to the Strata command line; `--expert-cache` and `--max-context` are rejected there, so use the two options above. `vision.enable` (default `true`) serves image input and requires `vision.mmproj`; behind lemond, images must be sent as `data:` URLs.
 - `sampling` sets decoding defaults for requests that send none (Qwen's recommended thinking set by default); a request's own fields win. See [docs/strata.md](docs/strata.md).
 
+**Upgrading.** The default quant is now `UD-IQ4_XS-v31` (about 94 GB, not in the cache yet): fetch it before switching, or set `strata.quant = "UD-IQ4_XS"` to keep the benched file; see [docs/strata.md](docs/strata.md).
+
 **Costs.** An 8.9 GiB Nix closure (the pinned SDK), built with `-march=native` so the output is specific to the building host's CPU. It is `gfx1151` only and experimental upstream. CI does not build it, so enabling it compiles it locally.
 
-**Memory.** About 67 GiB of GTT at 131072 context on halo. lemond counts loaded models per slot, not memory, so keep one LLM slot (`lemonade.settings.max_loaded_models`) or unload the resident model first. First-run pack and MTP build timings, the behind-lemond limits and the timeout behaviour are in [docs/strata.md](docs/strata.md).
+**Memory.** About 67 GiB of GTT at 131072 context on halo with the September `UD-IQ4_XS` file; the v31 default is unmeasured. lemond counts loaded models per slot, not memory, so keep one LLM slot (`lemonade.settings.max_loaded_models`) or unload the resident model first. First-run pack and MTP build timings, the behind-lemond limits and the timeout behaviour are in [docs/strata.md](docs/strata.md).
 
 ### Opt-in GSQHalo.cpp ROCm backend
 
@@ -383,7 +387,7 @@ hardware.amd-npu = {
 - **Reported by the user:** with the fork on a nixpkgs `llama-cpp` overlay, a plain `lemonade pull` of the Hugging Face checkpoint (Lemonade's registry in this pin has no Flash-Next entry) shows vision, and an image request worked end to end through an agent.
 - **Not measured:** decode speed, the GTT cost of the projector, and the MTP gain on this fork. The [smoke test](bench-logs/qwen38-flash-next-unsloth-vision-smoke-2026-10-11/README.md) checks vision and tool calls only.
 
-To try it, register the Unsloth checkpoints (a command written from Lemonade's `lemonade pull` syntax and the repository's file names; not run here) and pass the resulting id as `MODEL` to the [smoke test](bench-logs/qwen38-flash-next-unsloth-vision-smoke-2026-10-11/README.md). The quant the reporter used is not recorded; `UD-IQ4_XS` is the one benched in this repo:
+To try it, register the Unsloth checkpoints (a command written from Lemonade's `lemonade pull` syntax and the repository's file names; not run here) and pass the resulting id as `MODEL` to the [smoke test](bench-logs/qwen38-flash-next-unsloth-vision-smoke-2026-10-11/README.md). The quant the reporter used is not recorded; the September `UD-IQ4_XS` (revision `38bb39ee`) is the one benched in this repo, and an unpinned pull now fetches Unsloth's 2026-11-04 v3.1 re-upload under the same name, which is unmeasured here:
 
 ```fish
 lemonade pull user.Qwen3.8-Flash-Next-Unsloth \
