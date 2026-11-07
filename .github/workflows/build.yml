@@ -107,6 +107,11 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+      # PR builds must not fill Cachix with paths nothing else in the run
+      # consumes. Producer jobs push on PRs: rocm and npu-kernels (build
+      # substitutes their outputs), and build-slice (build consumes its
+      # xrt-plugin-amdxdna, fastflowlm and lemonade). Leaf jobs (build,
+      # build-darwin) push only from main; their PR outputs land nowhere else.
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: nix-amd-ai
@@ -142,7 +147,8 @@ jobs:
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: nix-amd-ai
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+          skipPush: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       - name: Build kernel- and rocm-dependent packages and checks
         # What has to wait for the matrices: openflowlm (its build copies the
         # joined kernel sets in), its smoke check, and the module-eval checks
@@ -187,7 +193,8 @@ jobs:
       - uses: cachix/cachix-action@38b082610b782e7e93e209c35fd730d399dee866 # v17
         with:
           name: nix-amd-ai
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          authToken: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && secrets.CACHIX_AUTH_TOKEN || '' }}
+          skipPush: ${{ !(github.event_name == 'push' && github.ref == 'refs/heads/main') }}
       - name: Build Lemonade (Metal)
         run: nix build .#lemonade .#benchmark
       - name: Check flake
