@@ -27,7 +27,7 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.11";
+  version = "1.0.12";
 
   __structuredAttrs = true;
   strictDeps = true;
@@ -36,7 +36,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "ROCm";
     repo = "FastFlowLM";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-XSm9mCO/NjN9obzQgMr6DmHm3cdI23RezkGxWsk1b5s=";
+    hash = "sha256-dl40K2uJuJ6udtYGkxLLmb6MRrPByPgisbjEGIiRa38=";
     # third_party/tokenizers-cpp is built below; third_party/xgrammar's
     # sources are compiled straight into flm.
     fetchSubmodules = true;
