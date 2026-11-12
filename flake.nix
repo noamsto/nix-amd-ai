@@ -296,7 +296,10 @@
         # Pinned to Go 1.26: nilaway (2025-03 snapshot) panics on Go 1.27 in
         # its pinned x/tools SSA builder ("unexpected expr: *ast.KeyValueExpr"),
         # failing its own tests, and a 1.26-built nilaway can't load Go 1.27's
-        # stdlib via `go list`. Both nilaway and the gate must use 1.26.
+        # stdlib via `go list`. Both nilaway and the gate must use 1.26. Drop
+        # the pin once nixpkgs' nilaway builds and passes its tests on the
+        # default Go (newer than the 2025-03 snapshot); `go test -race` then
+        # runs on the toolchain that builds `benchmark` again.
         buildGo126Module = pkgs.buildGoModule.override {go = pkgs.go_1_26;};
         benchmarkGate = buildGo126Module {
           pname = "benchmark-go-gate";

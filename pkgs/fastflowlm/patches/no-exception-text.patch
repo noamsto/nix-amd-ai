@@ -13,6 +13,24 @@ diff --git a/src/common/AutoDecisionModel/auto_decision_model.cpp b/src/common/A
          return reply;
      }
      // assets and box / track questions: the composed path (upstream _system_one's dispatch)
+diff --git a/src/common/AutoModel/modeling_llama3.cpp b/src/common/AutoModel/modeling_llama3.cpp
+--- a/src/common/AutoModel/modeling_llama3.cpp
++++ b/src/common/AutoModel/modeling_llama3.cpp
+@@ -42,11 +42,10 @@
+ void Llama3::fail_inference(const std::string& detail) {
+     const bool poisoned = this->backend_ && this->backend_->poisoned();
+     this->_shared_after_inference_failure(poisoned);
+-    std::string message = poisoned
++    if (!detail.empty()) header_print("ERROR", "Llama3 inference failed: " << detail);
++    throw ModelRequestError(500, true, poisoned
+         ? "Inference failed; unload/reload is required because the model is poisoned"
+-        : "Inference failed; the current conversation was cleared";
+-    if (!detail.empty()) message += " (" + detail + ")";
+-    throw ModelRequestError(500, true, message);
++        : "Inference failed; the current conversation was cleared");
+ }
+ 
+ bool Llama3::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input, std::function<bool()> is_cancelled) {
 diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/modeling_phi4.cpp
 --- a/src/common/AutoModel/modeling_phi4.cpp
 +++ b/src/common/AutoModel/modeling_phi4.cpp

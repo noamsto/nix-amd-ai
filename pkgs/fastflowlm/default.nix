@@ -93,8 +93,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     or any exception from a catch around prompt processing (where a chat
   #     template rejects the conversation), gets 400 invalid_request_error
   #     "Invalid request", as those catches did before; anything else gets
-  #     500 server_error "Internal error"; a ModelRequestError (phi4's
-  #     fail_inference) keeps its curated fixed text and the inner exception
+  #     500 server_error "Internal error"; a ModelRequestError (phi4's and,
+  #     since v1.0.12, llama3's fail_inference) keeps its curated fixed text and the inner exception
   #     text goes to the log. The SSE error event v1.0.10 sends when
   #     /v1/chat/completions or /v1/completions fails mid-stream goes through
   #     the same mapping. v1.0.11's /v1/systemone and /v1/decisions 500 body
