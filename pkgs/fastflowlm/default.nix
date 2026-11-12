@@ -77,7 +77,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     load (is_known_model), and a no-model request 400 and a failed load
   #     500; the patch keeps that 404 and routes the rest of those two
   #     handlers through its own checks, so there an unknown tag is 404, not
-  #     400. An omitted `model` is still served by the loaded chat model; /v1/embeddings still requires `model`
+  #     400. An omitted `model` is still served by the loaded chat model;
+  #     /v1/embeddings still requires `model`
   #     (#171) and refuses any tag but the loaded one. A model_list.json entry
   #     with a missing or non-string `details.family` now fails the load as
   #     500 model_load_failed, not a 400 (#181). A per-request `backend` the
@@ -94,8 +95,8 @@ stdenv.mkDerivation (finalAttrs: {
   #     template rejects the conversation), gets 400 invalid_request_error
   #     "Invalid request", as those catches did before; anything else gets
   #     500 server_error "Internal error"; a ModelRequestError (phi4's and,
-  #     since v1.0.12, llama3's fail_inference) keeps its curated fixed text and the inner exception
-  #     text goes to the log. The SSE error event v1.0.10 sends when
+  #     since v1.0.12, llama3's fail_inference) keeps its curated fixed text
+  #     and the inner exception text goes to the log. The SSE error event v1.0.10 sends when
   #     /v1/chat/completions or /v1/completions fails mid-stream goes through
   #     the same mapping. v1.0.11's /v1/systemone and /v1/decisions 500 body
   #     drops its appended e.what() and keeps the fixed text, and their 422
@@ -348,7 +349,8 @@ stdenv.mkDerivation (finalAttrs: {
   # prompt, reporting the no-model sentinel in /api/ps, classifying /api/chat
   # decode faults as client errors, the unsynchronised /api/ps reads, the
   # unlocked /api/embeddings, a pre-accept reset killing the accept loop,
-  # answering a malformed model_list.json entry as a client error, ignoring a prefill cancel in Qwen3_5_Omni::insert and in the
+  # answering a malformed model_list.json entry as a client error, ignoring a
+  # prefill cancel in Qwen3_5_Omni::insert and in the
   # /api/generate, /api/chat and /v1/completions handlers, erasing a cancel
   # that lands before a streaming handler starts, exiting on a
   # model_list.json entry with no `files`, answering a pre-token cancel of
