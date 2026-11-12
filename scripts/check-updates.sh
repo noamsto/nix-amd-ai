@@ -101,34 +101,16 @@ if [ "$NIXPKGS_CURRENT_REV" != "$NIXPKGS_LATEST_REV" ]; then
   done
 fi
 
-# Cross-check llamaCppPin against Lemonade's backend_versions.json
-# (llamacpp.vulkan). Our flake pin must match for MTP to light up; nixpkgs
-# catching up to that pin means the override may be droppable. Report-only:
-# the result drives a tracking issue, never a diff.
+# Compare the llama.cpp build we ship (nixpkgs' own, see `llamaCppBuildVersion`
+# in flake.nix) with Lemonade's backend_versions.json (llamacpp.vulkan).
+# Flagged only when Lemonade's build is newer than ours. Report-only: the
+# result drives a tracking issue, never a diff.
 LLAMA_PIN_DIVERGES=unknown
-LLAMA_PIN_CLEANUP=false
-LLAMA_PIN_CURRENT=""
-LLAMA_PIN_CURRENT_TAG=""
 LLAMA_PIN_REQUIRED=""
 LLAMA_PIN_REQUIRED_TAG=""
-LLAMA_PIN_NIXPKGS=""
-# The pin lives in the `llamaCppPin` helper as `pinTag`/`pinBuildNumber`. Read
-# it from that helper's block and fail loudly if either field is gone.
-llama_pin_block=$(awk '/^[[:space:]]*llamaCppPin = /{f=1} f{print} f && /^[[:space:]]*in[[:space:]]*$/{exit}' flake.nix)
-llama_pin_field() { # field
-  sed -n 's/^[[:space:]]*'"$1"' = "\([^"]*\)";.*/\1/p' <<<"$llama_pin_block" | head -1
-}
-LLAMA_PIN_CURRENT_TAG=$(llama_pin_field pinTag)
-LLAMA_PIN_CURRENT=$(llama_pin_field pinBuildNumber)
-if [ -z "$llama_pin_block" ] || [ -z "$LLAMA_PIN_CURRENT_TAG" ] || [ -z "$LLAMA_PIN_CURRENT" ]; then
-  echo "ERROR: llama.cpp pin not found in flake.nix: update scripts/check-updates.sh" >&2
-  exit 1
-fi
-# The source is fetched by `pinTag` but the comparison below uses
-# `pinBuildNumber`; a hand-edit that moves one without the other would make
-# the check silently trust the wrong field.
-[ "$LLAMA_PIN_CURRENT_TAG" = "b$LLAMA_PIN_CURRENT" ] || {
-  echo "ERROR: llamaCppPin pinTag/pinBuildNumber disagree ($LLAMA_PIN_CURRENT_TAG vs b$LLAMA_PIN_CURRENT): update scripts/check-updates.sh" >&2
+LLAMA_PIN_CURRENT=$(nix eval --raw ".#llama-cpp-vulkan.version" 2>/dev/null || true)
+[[ "$LLAMA_PIN_CURRENT" =~ ^[0-9]+$ ]] || {
+  echo "ERROR: could not read the shipped llama.cpp build number (.#llama-cpp-vulkan.version): update scripts/check-updates.sh" >&2
   exit 1
 }
 
@@ -140,27 +122,14 @@ LLAMA_PIN_REQUIRED_TAG=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/re
 LLAMA_PIN_REQUIRED=${LLAMA_PIN_REQUIRED_TAG#b}
 if [[ "$LLAMA_PIN_REQUIRED" =~ ^[0-9]+$ ]]; then
   LLAMA_PIN_DIVERGES=false
-  if [ "$LLAMA_PIN_REQUIRED" != "$LLAMA_PIN_CURRENT" ]; then
+  if [ "$LLAMA_PIN_REQUIRED" -gt "$LLAMA_PIN_CURRENT" ]; then
     LLAMA_PIN_DIVERGES=true
-    echo "llama.cpp pin: b${LLAMA_PIN_CURRENT} -> ${LLAMA_PIN_REQUIRED_TAG} (lemonade v${LEM_LATEST} pins llamacpp.vulkan)"
+    echo "llama.cpp: shipped b${LLAMA_PIN_CURRENT} < ${LLAMA_PIN_REQUIRED_TAG} (lemonade v${LEM_LATEST} pins llamacpp.vulkan)"
   fi
 else
-  echo "WARNING: could not read the Lemonade llama.cpp pin (lemonade v${LEM_LATEST}); skipping llama.cpp pin check" >&2
+  echo "WARNING: could not read the Lemonade llama.cpp pin (lemonade v${LEM_LATEST}); skipping llama.cpp check" >&2
   LLAMA_PIN_REQUIRED=""
   LLAMA_PIN_REQUIRED_TAG=""
-fi
-
-# nixpkgs' llama-cpp versions as v0.x from the tag, so read the build number
-# nixpkgs bakes into its cmake flags instead (the same flag `llamaCppPin`
-# asserts exists).
-if ! llamacpp_flags=$(nix eval --json "github:NixOS/nixpkgs/${NIXPKGS_LATEST_REV}#llama-cpp-rocm.cmakeFlags" 2>/dev/null); then
-  echo "WARNING: could not evaluate nixpkgs llama-cpp cmakeFlags; skipping the caught-up check" >&2
-  llamacpp_flags="[]"
-fi
-LLAMA_PIN_NIXPKGS=$(jq -r '.[] | select(startswith("-DLLAMA_BUILD_NUMBER:STRING=")) | sub(".*="; "")' <<<"$llamacpp_flags" 2>/dev/null | head -1 || true)
-[[ "$LLAMA_PIN_NIXPKGS" =~ ^[0-9]+$ ]] || LLAMA_PIN_NIXPKGS=""
-if [ -n "$LLAMA_PIN_REQUIRED" ] && [ -n "$LLAMA_PIN_NIXPKGS" ] && [ "$LLAMA_PIN_NIXPKGS" -ge "$LLAMA_PIN_REQUIRED" ]; then
-  LLAMA_PIN_CLEANUP=true
 fi
 
 # gaia is a uvx wrapper: no hash to prefetch, and it builds green whatever
@@ -238,10 +207,8 @@ reject_odd VLLM_LATEST "$VLLM_LATEST"
 reject_odd GAIA_LATEST "$GAIA_LATEST"
 reject_odd_list GAIA_SCRIPTS_LATEST "$GAIA_SCRIPTS_LATEST"
 reject_odd LLAMA_PIN_CURRENT "$LLAMA_PIN_CURRENT"
-reject_odd LLAMA_PIN_CURRENT_TAG "$LLAMA_PIN_CURRENT_TAG"
 [ -z "$LLAMA_PIN_REQUIRED" ] || reject_odd LLAMA_PIN_REQUIRED "$LLAMA_PIN_REQUIRED"
 [ -z "$LLAMA_PIN_REQUIRED_TAG" ] || reject_odd LLAMA_PIN_REQUIRED_TAG "$LLAMA_PIN_REQUIRED_TAG"
-[ -z "$LLAMA_PIN_NIXPKGS" ] || reject_odd LLAMA_PIN_NIXPKGS "$LLAMA_PIN_NIXPKGS"
 
 # Report-only checks (tracking issues, never a diff or a PR). Upstream file
 # contents are untrusted, so every value is regex-validated before it can reach
@@ -360,12 +327,9 @@ if [ -n "${GITHUB_OUTPUT:-}" ]; then
     echo "vllm_needs_update=$VLLM_NEEDS_UPDATE"
     echo "nixpkgs_needs_update=$NIXPKGS_NEEDS_UPDATE"
     echo "llama_pin_diverges=$LLAMA_PIN_DIVERGES"
-    echo "llama_pin_cleanup=$LLAMA_PIN_CLEANUP"
     echo "llama_pin_current=$LLAMA_PIN_CURRENT"
-    echo "llama_pin_current_tag=$LLAMA_PIN_CURRENT_TAG"
     echo "llama_pin_required=$LLAMA_PIN_REQUIRED"
     echo "llama_pin_required_tag=$LLAMA_PIN_REQUIRED_TAG"
-    echo "llama_pin_nixpkgs=$LLAMA_PIN_NIXPKGS"
     echo "gaia_current=$GAIA_CURRENT"
     echo "gaia_latest=$GAIA_LATEST"
     echo "gaia_needs_update=$GAIA_NEEDS_UPDATE"
