@@ -13,7 +13,7 @@ ROCm 7.14.1 are the same in both. The default arm of the earlier run: `--prefill
 ## Verdict
 
 **v0.2.13 is a wash against v0.2.11 on this machine for the default configuration, and the bump is safe to ship on the numbers measured.**
-Every difference below is inside the run-to-run spread of a single measurement; none of it was repeated, so no gain or loss is claimed.
+The differences below are small (replay +1.6 %, decode within the iteration spread of its row, 32K prefill −2 %); no row was repeated across runs, so no gain or loss is claimed.
 One row, vision, needs a repeat (below).
 
 | (Strix Halo, MTP on, 131072 context, one run each) | v0.2.11 | v0.2.13 |
@@ -31,8 +31,11 @@ One row, vision, needs a repeat (below).
 | Load time (s) | 68.1 | 64.1 |
 | Tool call | ok | ok |
 
-- Decode rows carry a standard deviation of 1.5–5 t/s (3 runs); the 32K decode difference (−2.6 t/s) is about that size. Prefill rows have
-  a standard deviation of 3–10 t/s.
+- Each throughput cell is the mean of the probe's iterations inside one row run (3 for decode, 3–4 for prefill); the spread
+  quoted here is the standard deviation across those iterations in the same row: 1.5–5 t/s for decode, 3–10 t/s for prefill. It is
+  not a spread across separate runs, which were not made. The 32K decode difference (−2.6 t/s) is about the decode figure; the 32K
+  prefill difference (−10.8 t/s) is just above the prefill figure. Replay and load time have no spread at all (one run each): they differ by
+  2.2 s (1.6 %) and 4 s respectively.
 - **GTT for the v31 file: 61.6 GiB after load, unchanged at peak, at 131072 context with `--expert-cache 20000`** (the delta of
   `mem_info_gtt_used` against the machine with lemond's resident model unloaded). The model sits idle after load until the first request, so the
   loaded and idle figures are the same number; the peak over the rows is also 61.6 GiB. It is a delta over an empty GPU, not a
@@ -74,7 +77,7 @@ Harness fixes this run needed, all committed with it:
    `Qwen3.8-Flash-Next-Strata`, which is what the host serves now.
 2. `run.sh`'s fit check refused the first attempt (need 95 GiB, 86.6 GiB free). `lemond_rss` counted only `RssAnon` of lemond's
    process tree, but `strata-host` mlocks its tables: 27 GiB of `VmLck`, 0.2 GiB of `RssAnon`. Mlocked pages are not in `MemAvailable`
-   and come back on unload, so the free figure is now 114.4 GiB. It counts, per process, the larger of `RssAnon` and `VmLck`; `test_lemond_rss.sh`
+   and come back on unload, so the free figure is now 114.4 GiB. It counts, per process, the larger of `RssAnon` and `VmLck`, capped at `VmRSS` (a lock can be larger than what is resident); `test_lemond_rss.sh`
    gained a case. The need (95 GiB) and the lazy-off floor (94 GiB) are unchanged.
 3. `probe.py` looked for an engine process named `strata`; this engine's process is `strata-host`. Both names match now.
 4. `rows.sh` points the probe at the v31 shard (`run.sh` defaults to the September file, which does not match the v31 pack: the

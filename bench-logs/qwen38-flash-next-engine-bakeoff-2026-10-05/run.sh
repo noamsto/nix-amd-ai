@@ -303,7 +303,7 @@ case $NEED_GIB in '' | *[!0-9]*) echo "NEED_GIB must be an integer, got '$NEED_G
 # Sum, per descendant of lemond, the larger of RssAnon and VmLck (bytes): the backend may sit below a wrapper, and its anonymous
 # memory is what an unload gives back (ordinary file-backed pages are already in MemAvailable). mlocked file pages are not
 # (Strata's strata-host mlocks the expert cache: ~27 GiB VmLck, ~0.2 GiB RssAnon), so VmLck counts too; the larger of the
-# two never double-counts locked anonymous pages. PROC_ROOT is /proc unless a test points it elsewhere.
+# two never double-counts locked anonymous pages, and VmRSS caps it (VmLck is the locked mappings' size, not what is resident). PROC_ROOT is /proc unless a test points it elsewhere.
 lemond_rss() {
     local -A tree=()
     local pid ppid comm kib total=0 grew=1
@@ -316,7 +316,7 @@ lemond_rss() {
             [ -n "${tree[$pid]:-}" ] || [ -z "${tree[$ppid]:-}" ] && continue
             tree[$pid]=2
             grew=1
-            kib=$(awk '/^RssAnon:/ {a = $2} /^VmLck:/ {l = $2} END {print (l > a ? l : a)}' "${PROC_ROOT:-/proc}/$pid/status" 2>/dev/null)
+            kib=$(awk '/^RssAnon:/ {a = $2} /^VmLck:/ {l = $2} /^VmRSS:/ {t = $2} END {v = (l > a ? l : a); print (t > 0 && v > t ? t : v)}' "${PROC_ROOT:-/proc}/$pid/status" 2>/dev/null)
             total=$((total + ${kib:-0} * 1024))
         done < <(ps -eo pid=,ppid=,comm=)
     done

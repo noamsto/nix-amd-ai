@@ -1043,7 +1043,7 @@ def run_exec(a, log):
             # a child that set up its own process group (kl_strata's engine) outlives a SIGKILLed parent for a moment:
             # lemond must not reload over it
             waited = False
-            while any(_comm(pid) == "strata" for pid in map(int, filter(str.isdigit, os.listdir("/proc")))):
+            while any(_comm(pid) in ("strata", "strata-host") for pid in map(int, filter(str.isdigit, os.listdir("/proc")))):
                 if not waited:
                     print("waiting for a strata engine process to exit before returning", file=sys.stderr, flush=True)
                     waited = True

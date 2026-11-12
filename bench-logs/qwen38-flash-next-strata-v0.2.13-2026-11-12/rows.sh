@@ -3,7 +3,7 @@
 # Each call is one gated run.sh row (#249): lemond is unloaded for the row and restored after it. run.sh itself holds
 # $XDG_RUNTIME_DIR/halo-gpu-bench.active for the row, so this wrapper writes no second copy.
 # Before the row it waits for the 1-minute loadavg to fall below 4 (cap 15 min; then the row runs and is flagged), and
-# defers while another crew's signal file is live. Loadavg at start and end goes to $W/load.jsonl. Strata's own threads
+# refuses (exit 2) while another bench's signal file is live. Loadavg at start and end goes to $W/load.jsonl. Strata's own threads
 # push the load far above 4 during a row (#257), so a row is judged by its start and end load, not by the peak.
 # Env: PIN_OLD / PIN_NEW (the two `nix build .#strata` out-links), W (work dir), CACHE (corpus cache), PY (python with the
 # server's deps), PACK, MTP_RT, MMPROJ (the v31 pack, MTP runtime and projector, shared by both pins: the pack tools
@@ -15,6 +15,10 @@ case $pin in
 old) R=${PIN_OLD:?} ;;
 new) R=${PIN_NEW:?} ;;
 *) echo "pin must be old or new" >&2; exit 7 ;;
+esac
+case $stage in
+smoke | A | B) ;;
+*) echo "stage must be smoke, A or B" >&2; exit 7 ;;
 esac
 W=${W:?}
 export OUT=$W/rows.jsonl CACHE=${CACHE:?} CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
