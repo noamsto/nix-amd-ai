@@ -38,7 +38,7 @@
 # 7 configuration or usage error, 129/130/131/143 signalled (HUP/INT/QUIT/TERM).
 set -u
 LEMOND=${LEMOND:-http://127.0.0.1:13305/api/v1}
-MODEL=Qwen3.8-Flash-Next-MTP
+MODEL=${LEMOND_MODEL:-Qwen3.8-Flash-Next-MTP} # the resident model lemond serves; Strata hosts serve Qwen3.8-Flash-Next-Strata
 prc=1
 rc=1 # the final status for reload(): the probe's once it has run
 child=
