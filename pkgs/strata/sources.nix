@@ -13,9 +13,9 @@
   # The Flash-Next GGUFs `strata.model` defaults to: a snapshot inside lemond's Hugging Face cache, never copied into
   # the store (the experts are read from the shards in place). Each quant is one `strata.quant` value with its own
   # repository snapshot and first shard; only files Strata's setup.py lists as runnable (SUPPORTED_GGUFS) belong here.
-  # UD-IQ4_XS is the one benched on Strata. UD-IQ4_XS-v31 is Unsloth's 2026-11-04 "Dynamic v3.1" re-upload of that quant
-  # (four shards, Q5_0 experts in 33 layers, a different file from the benched one) and has not been benched on Strix
-  # Halo (gfx1151). GSQ-RCO-IQ3_S is upstream's recommended size since 0.1.44 (64 GB RAM) and
+  # UD-IQ4_XS is the one with quality measurements on Strata. UD-IQ4_XS-v31 is Unsloth's 2026-11-04 "Dynamic v3.1"
+  # re-upload of that quant (four shards, Q5_0 experts in 33 layers, a different file) and has been benched for speed and
+  # memory on Strix Halo (gfx1151), not for quality (bench-logs/qwen38-flash-next-strata-v0.2.13-2026-11-12). GSQ-RCO-IQ3_S is upstream's recommended size since 0.1.44 (64 GB RAM) and
   # has not been benched on Strix Halo (gfx1151).
   model.quants = {
     "UD-IQ4_XS" = {
