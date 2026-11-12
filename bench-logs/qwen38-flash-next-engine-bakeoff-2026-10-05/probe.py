@@ -61,7 +61,7 @@ spec = importlib.util.spec_from_file_location(
     "grid", os.path.join(HERE, "..", "qwen38-flash-next-mtp-tuning-2026-10-04", "grid.py"))
 grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
-grid.WATCHED.update({"gufo", "strata"})
+grid.WATCHED.update({"gufo", "strata", "strata-host"})
 grid.WATCHED.add("llama-perplexity")  # comm is truncated to 15 chars; preflight_busy matches argv[0]'s basename
 
 DEFER = None
@@ -659,7 +659,7 @@ def find_engine(root, proc, timeout=30):
         todo = [root]
         while todo:
             for pid, comm in children.get(todo.pop(), []):
-                if comm == "strata":
+                if comm in ("strata", "strata-host"):  # newer engines rename their process
                     return pid
                 todo.append(pid)
         if proc.poll() is not None or time.time() > deadline:
