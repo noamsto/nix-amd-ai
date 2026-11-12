@@ -1,8 +1,7 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index a8dbe5e..3add5bd 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1243,6 +1243,24 @@ void RestHandler::handle_generate(const json& request,
+@@ -1291,6 +1291,24 @@
          json options = request.value("options", json::object());
         
          int length_limit = request.value("max_tokens", 4096);
@@ -27,7 +26,7 @@ index a8dbe5e..3add5bd 100644
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
          if (const ModelLoad why = ensure_model_loaded(model, request.contains("model"), request_backend); why != ModelLoad::Ok) {
-@@ -1382,6 +1400,19 @@ void RestHandler::handle_chat(const json& request,
+@@ -1434,6 +1452,19 @@
          json options = request.value("options", json::object());
          int length_limit = options.value("num_predict", 4096);
  
@@ -47,10 +46,11 @@ index a8dbe5e..3add5bd 100644
          auto load_start_time = time_utils::now();
          if (const ModelLoad why = ensure_model_loaded(model, request.contains("model"), request_backend); why != ModelLoad::Ok) {
              send_response(model_error(why, model));
-@@ -1896,6 +1927,29 @@ void RestHandler::handle_openai_chat_completion(const json& request,
+@@ -1968,6 +1999,30 @@
+             send_response(UnknownModelResponse(model));
              return;
          }
- 
++
 +        if (cancellation_token && cancellation_token->cancelled() && (auto_chat_engine || !stream)) {
 +            header_print("❌ ", "Prefill Cancelled!");
 +            chat_meta_info_t meta_info;
@@ -77,7 +77,7 @@ index a8dbe5e..3add5bd 100644
          auto load_start_time = time_utils::now();
          if (const ModelLoad why = ensure_model_loaded(model, has_value(request, "model"), request_backend); why != ModelLoad::Ok) {
              send_response(model_error(why, model));
-@@ -2330,6 +2384,23 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2412,6 +2467,23 @@
  
          int length_limit = value_or(request, "max_tokens", 4096);
  

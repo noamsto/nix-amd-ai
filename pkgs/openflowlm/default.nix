@@ -103,6 +103,14 @@ stdenv.mkDerivation (finalAttrs: {
       --replace-fail 'set(CMAKE_CXX_STANDARD 17)' 'set(CMAKE_CXX_STANDARD 20)'
   '';
 
+  # nixpkgs' cargoSetupHook now exports RUSTONIG_SYSTEM_LIBONIG=1, which makes
+  # the tokenizers crate's onig_sys link the system oniguruma. Nothing passes
+  # -lonig to CMake's final link of the staticlib, so it fails with undefined
+  # onig_* symbols; keep building the bundled copy.
+  preBuild = ''
+    export RUSTONIG_SYSTEM_LIBONIG=0
+  '';
+
   cmakeDir = "../src";
   cmakeFlags = [
     "-DOFLM_VERSION=0.1.0"

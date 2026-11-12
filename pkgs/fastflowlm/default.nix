@@ -27,7 +27,7 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "fastflowlm";
-  version = "1.0.11";
+  version = "1.0.12";
 
   __structuredAttrs = true;
   strictDeps = true;
@@ -36,7 +36,7 @@ stdenv.mkDerivation (finalAttrs: {
     owner = "ROCm";
     repo = "FastFlowLM";
     tag = "v${finalAttrs.version}";
-    hash = "sha256-XSm9mCO/NjN9obzQgMr6DmHm3cdI23RezkGxWsk1b5s=";
+    hash = "sha256-dl40K2uJuJ6udtYGkxLLmb6MRrPByPgisbjEGIiRa38=";
     # third_party/tokenizers-cpp is built below; third_party/xgrammar's
     # sources are compiled straight into flm.
     fetchSubmodules = true;
@@ -72,8 +72,13 @@ stdenv.mkDerivation (finalAttrs: {
   #     The tag is now resolved before anything is unloaded: unknown, empty,
   #     "model-faker" and non-chat tags get 400 model_not_found, and a known
   #     model that fails to load gets 500 (a "server_error" type now maps to
-  #     500 in the status mapping above). An omitted `model` is still served
-  #     by the loaded chat model; /v1/embeddings still requires `model`
+  #     500 in the status mapping above). v1.0.12 itself answers an unknown
+  #     tag on /v1/chat/completions and /v1/completions with a 404 before the
+  #     load (is_known_model), and a no-model request 400 and a failed load
+  #     500; the patch keeps that 404 and routes the rest of those two
+  #     handlers through its own checks, so there an unknown tag is 404, not
+  #     400. An omitted `model` is still served by the loaded chat model;
+  #     /v1/embeddings still requires `model`
   #     (#171) and refuses any tag but the loaded one. A model_list.json entry
   #     with a missing or non-string `details.family` now fails the load as
   #     500 model_load_failed, not a 400 (#181). A per-request `backend` the
@@ -89,9 +94,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     or any exception from a catch around prompt processing (where a chat
   #     template rejects the conversation), gets 400 invalid_request_error
   #     "Invalid request", as those catches did before; anything else gets
-  #     500 server_error "Internal error"; a ModelRequestError (phi4's
-  #     fail_inference) keeps its curated fixed text and the inner exception
-  #     text goes to the log. The SSE error event v1.0.10 sends when
+  #     500 server_error "Internal error"; a ModelRequestError (phi4's and,
+  #     since v1.0.12, llama3's fail_inference) keeps its curated fixed text
+  #     and the inner exception text goes to the log. The SSE error event v1.0.10 sends when
   #     /v1/chat/completions or /v1/completions fails mid-stream goes through
   #     the same mapping. v1.0.11's /v1/systemone and /v1/decisions 500 body
   #     drops its appended e.what() and keeps the fixed text, and their 422
@@ -152,29 +157,6 @@ stdenv.mkDerivation (finalAttrs: {
   #     takes it (v1.0.9 now takes the lock in POST /v1/completions, which
   #     swapped models unlocked, and releases it when the handler returns,
   #     because handlers call clear_context() on the engine after sending).
-  #   - connection-slot-release.patch (#194): flm serve caps concurrent
-  #     connections at 10, but a streaming client that disconnected mid-stream
-  #     never gave its slot back. send_chunk_data's write-error branch had its
-  #     active_connections_.fetch_sub(1) commented out, and it returns before
-  #     the is_final branch, which was the only other streaming release. Ten
-  #     such clients left the counter at the cap and every new connection was
-  #     refused ("Connection limit reached (10)") until restart. The decrement
-  #     cannot simply be uncommented: after the first failed write, every later
-  #     chunk for that dead session re-enters the branch (the stream keeps
-  #     producing, and ostream.finalize() sends a final chunk too), so a plain
-  #     decrement per chunk underflows the counter and makes
-  #     load() >= max_connections_ true forever. Every decrement site now goes
-  #     through HttpSession::release_slot(), which exchanges an atomic
-  #     once-per-session flag before fetch_sub, so a connection gives its slot
-  #     back exactly once however it ends. Included are close_connection() (no
-  #     caller in this tree), read_request's read-error path, write_response's
-  #     async_write completion, the OPTIONS async_write error and the streaming
-  #     header-write error (both leaked before), and handle_request's
-  #     non-deferred abandoned-stream case, where generate() threw after chunks
-  #     were sent and send_response() does nothing for a non-deferred session.
-  #     The disconnect monitor needs no release of its own: it only cancels the
-  #     token, and generation still reaches finalize() (or send_response() on
-  #     the deferred path).
   #   - accept-loop-rearm.patch (#202): a client that reset its connection
   #     while it sat in the accept queue made the HttpSession constructor
   #     throw: accept() still returns the socket, and remote_endpoint() on it
@@ -183,8 +165,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     that I/O thread ended, and flm serve never accepted another connection
   #     until restart. The constructor now uses the error_code overloads (the
   #     session then ends through read_request's error path, which releases
-  #     the slot), and do_accept catches a throw from session setup, gives the
-  #     slot back itself -- no session owns it yet -- and still re-arms.
+  #     the slot), and do_accept catches a throw from session setup and still
+  #     re-arms. It gives the slot back itself only when no session was
+  #     constructed; a constructed one releases it from its destructor.
   #   - cancel-client-disconnect.patch (#191): /api/generate, streaming
   #     /api/chat and /v1/completions never passed the request's
   #     cancellation predicate to insert()/generate(), so a client that
@@ -360,15 +343,14 @@ stdenv.mkDerivation (finalAttrs: {
   # model-identity checks and the embedding task-prompt mapping are ported
   # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
   # that is on the branch commit per this repo's CLAUDE.md, not here.
-  # Still unfixed on ROCm/FastFlowLM main as of v1.0.11; drop once upstream
+  # Still unfixed on ROCm/FastFlowLM main as of v1.0.12; drop once upstream
   # fixes request validation, the throwing error-response dump, the status
   # mapping, model substitution, leaking exception text, ignoring the task
   # prompt, reporting the no-model sentinel in /api/ps, classifying /api/chat
   # decode faults as client errors, the unsynchronised /api/ps reads, the
-  # unlocked /api/embeddings, leaking a connection slot when a streaming
-  # client disconnects (see also ROCm/FastFlowLM#680), a pre-accept reset
-  # killing the accept loop, answering a malformed model_list.json entry as a
-  # client error, ignoring a prefill cancel in Qwen3_5_Omni::insert and in the
+  # unlocked /api/embeddings, a pre-accept reset killing the accept loop,
+  # answering a malformed model_list.json entry as a client error, ignoring a
+  # prefill cancel in Qwen3_5_Omni::insert and in the
   # /api/generate, /api/chat and /v1/completions handlers, erasing a cancel
   # that lands before a streaming handler starts, exiting on a
   # model_list.json entry with no `files`, answering a pre-token cancel of
@@ -386,7 +368,12 @@ stdenv.mkDerivation (finalAttrs: {
   # per model, and ends a /v1 stream that fails after its first chunk with an
   # error event; the series is rebased onto those. v1.0.11 validates the /v1
   # handlers' messages and prompt, and adds the System One routes and the
-  # prefix cache; the series is rebased onto those.
+  # prefix cache; the series is rebased onto those. v1.0.12 releases a
+  # connection's slot through an idempotent release_connection(), also from
+  # the session destructor, which fixed the leak when a streaming client
+  # disconnects and replaced connection-slot-release.patch (#194); it also
+  # answers an unknown model on /v1/chat/completions and /v1/completions
+  # itself (see model-identity.patch).
   # A bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
@@ -398,7 +385,6 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/chat-decode-fault.patch
     ./patches/stream-chat-generate.patch
     ./patches/ps-serving-snapshot.patch
-    ./patches/connection-slot-release.patch
     ./patches/accept-loop-rearm.patch
     ./patches/cancel-client-disconnect.patch
     ./patches/model-list-download-check.patch
@@ -454,6 +440,14 @@ stdenv.mkDerivation (finalAttrs: {
   postPatch = ''
     # Cargo.lock is not committed upstream; inject our copy
     cp ${./Cargo.lock} third_party/tokenizers-cpp/rust/Cargo.lock
+  '';
+
+  # nixpkgs' cargoSetupHook now exports RUSTONIG_SYSTEM_LIBONIG=1, which makes
+  # the tokenizers crate's onig_sys link the system oniguruma. Nothing passes
+  # -lonig to CMake's final link of the staticlib, so it fails with undefined
+  # onig_* symbols; keep building the bundled copy.
+  preBuild = ''
+    export RUSTONIG_SYSTEM_LIBONIG=0
   '';
 
   # The source root stays at the top of the checkout for cargoRoot and the
