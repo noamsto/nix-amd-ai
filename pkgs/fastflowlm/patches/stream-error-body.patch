@@ -1,9 +1,8 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 7fbcbd4..cdb4da0 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -223,6 +223,37 @@ void HttpSession::release_slot() {
-     }
+@@ -225,6 +225,37 @@
+     read_request(cors);
  }
  
 +///@brief emit a handler's pending error into the already-started stream
@@ -11,8 +10,8 @@ index 7fbcbd4..cdb4da0 100644
 +///@note The 200 + chunked headers are already on the wire, so the status cannot
 +/// change; the error goes out as the stream's final event, and
 +/// send_chunk_data(..., true) terminates the chunked body, closes the socket and
-+/// releases the slot (once). A throw while framing falls back to the #194
-+/// release so the slot never leaks.
++/// releases the slot (once). A throw while framing releases the slot directly
++/// so it never leaks.
 +void HttpSession::write_streaming_error(const std::string& body) {
 +    try {
 +        const std::string target = std::string(req_.target());
@@ -33,40 +32,33 @@ index 7fbcbd4..cdb4da0 100644
 +            write_streaming_response(json(safe_dump(doc) + "\n"), true);
 +        }
 +    } catch (...) {
-+        release_slot();
++        release_connection();
 +    }
 +}
 +
  ///@brief close connection
  void HttpSession::close_connection() {
      boost::system::error_code ec;
-@@ -327,9 +358,15 @@ void HttpSession::handle_request(bool cors) {
+@@ -327,6 +358,12 @@
+ 
      if (!is_streaming_ && !deferred) {
          write_response();
-     } else if (is_streaming_ && !deferred && !slot_released_.load()) {
--        // A synchronous handler that threw after sending chunks returns without
--        // a final chunk and with no async op left to release the slot.
--        release_slot();
++    } else if (is_streaming_ && !deferred && !connection_released_.load() && !res_.body().empty()) {
 +        // A synchronous handler that threw after sending chunks left its error
 +        // serialized in res_ but unwritten (send_response only writes for a
 +        // deferred session). Emit it in the stream's framing and end the
 +        // chunked body.
-+        if (!res_.body().empty()) {
-+            write_streaming_error(res_.body());
-+        } else {
-+            release_slot();
-+        }
++        write_streaming_error(res_.body());
      } else {
          // For streaming responses, we need to handle connection cleanup differently
          // The connection will be closed when streaming ends
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index 2286b8b..41bf532 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -278,6 +278,7 @@ private:
-     void send_chunk_data(const json& data, bool is_final);
+@@ -280,6 +280,7 @@
      void start_client_disconnect_monitor(std::shared_ptr<CancellationToken> token);
-     void release_slot();
+     /// Give this connection's slot back to the server's connection limit, exactly once.
+     void release_connection();
 +    void write_streaming_error(const std::string& body);
      
      ///@brief socket

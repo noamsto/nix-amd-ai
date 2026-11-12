@@ -1,8 +1,7 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 08c0c06..0390356 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -129,6 +129,16 @@ void brief_print_message_response(nlohmann::json request) {
+@@ -129,6 +129,16 @@
  
  }
  
@@ -19,7 +18,7 @@ index 08c0c06..0390356 100644
  // NPU Access Manager implementation
  bool NPUAccessManager::try_acquire_npu_access() {
      std::lock_guard<std::mutex> lock(g_npu_access_mutex);
-@@ -427,8 +437,12 @@ void HttpSession::send_chunk_data(const json& data, bool is_final) {
+@@ -439,8 +449,12 @@
              chunk_content = data_str;
          }
      } else {
@@ -34,7 +33,7 @@ index 08c0c06..0390356 100644
      }
      
      // std::cout << "Chunk: " << chunk_content;
-@@ -632,7 +646,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -644,7 +658,7 @@
      if (it == routes.end()) {
          // No route: respond 404 synchronously.
          res.result(http::status::not_found);
@@ -43,7 +42,7 @@ index 08c0c06..0390356 100644
          res.set(http::field::content_type, is_json ? "application/json" : "multipart/form-data");
          res.prepare_payload();
          return false; 
-@@ -659,14 +673,14 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -671,14 +685,14 @@
              if (!req_ref.body().empty()) {
                  if(is_json && !reads_raw_body(std::string(req_ref.method_string()), std::string(req_ref.target())))
                      request_json = json::parse(req_ref.body());
@@ -60,7 +59,7 @@ index 08c0c06..0390356 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -678,6 +692,24 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -690,6 +704,24 @@
          auto cancellation_token = std::make_shared<CancellationToken>(session);
          session->set_cancellation_token(cancellation_token);
  
@@ -85,26 +84,17 @@ index 08c0c06..0390356 100644
          std::string request_id;
          if (request_json.contains("request_id")) {
              request_id = request_json["request_id"];
-@@ -689,20 +721,22 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
- 
-         register_active_request(request_id, cancellation_token);
- 
--        // catch is_deferred 
-+        // catch is_deferred
-         auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
-             auto& response_ref = *res_ptr;
+@@ -707,12 +739,15 @@
              http::status status = http::status::ok;
  
+             // An OpenAI style error carries its HTTP status as error.code: 400, 404, 500, ...
 -            if (response_data.contains("error") &&
--                response_data["error"].contains("code"))
+-                response_data["error"].contains("code") &&
+-                response_data["error"]["code"].is_number_integer())
 -            {
 -                int code = response_data["error"]["code"].get<int>();
 -
--                if (code == 400) {
--                    status = http::status::bad_request;
--                } else if (code == 500) {
--                    status = http::status::internal_server_error;
-+            // `code` can be a STRING ("missing_required_parameter",
++            // `code` can also be a STRING ("missing_required_parameter",
 +            // "invalid_value") or absent entirely; only a numeric code is
 +            // trusted, anything else defaults to 400.
 +            if (response_data.contains("error")) {
@@ -113,12 +103,10 @@ index 08c0c06..0390356 100644
 +                if (err.is_object() && err.contains("code") && err["code"].is_number_integer()) {
 +                    code = err["code"].get<int>();
 +                }
-+                if (code >= 400 && code <= 599) {
-+                    status = static_cast<http::status>(code);
+                 if (code >= 400 && code <= 599) {
+                     status = static_cast<http::status>(code);
                  }
-             }
- 
-@@ -724,7 +758,9 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -736,7 +771,9 @@
                  response_ref.set(http::field::content_type, "text/plain; charset=utf-8");
              }
              else {
@@ -129,7 +117,7 @@ index 08c0c06..0390356 100644
                  response_ref.set(http::field::content_type, "application/json");
              }
              response_ref.prepare_payload();
-@@ -752,12 +788,29 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -764,12 +801,29 @@
          try {
              it->second(req_ref, send_response, send_streaming_response, session, cancellation_token);
          }
@@ -160,7 +148,7 @@ index 08c0c06..0390356 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -770,7 +823,7 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -782,7 +836,7 @@
              unregister_active_request(request_id);
  
              res_ref.result(http::status::internal_server_error);
@@ -169,7 +157,7 @@ index 08c0c06..0390356 100644
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
-@@ -800,11 +853,11 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
+@@ -812,11 +866,11 @@
              process_task(true);
          })) {
          res.result(http::status::service_unavailable);

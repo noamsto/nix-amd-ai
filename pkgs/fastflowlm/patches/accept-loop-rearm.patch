@@ -1,8 +1,7 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 08e0821..db1a51e 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -175,13 +175,22 @@ HttpSession::HttpSession(tcp::socket socket, WebServer& server)
+@@ -175,13 +175,22 @@
      : socket_(std::move(socket))
      , server_(server)
      , is_streaming_(false) {
@@ -27,8 +26,8 @@ index 08e0821..db1a51e 100644
 +    }
  }
  
- ///@brief start
-@@ -598,9 +607,19 @@ void WebServer::do_accept() {
+ ///@brief destructor: a session never outlives its slot in the connection limit
+@@ -593,9 +602,21 @@
                      // Increment connection counter
                      active_connections_.fetch_add(1);
                      
@@ -36,17 +35,19 @@ index 08e0821..db1a51e 100644
 -                    auto session = std::make_shared<HttpSession>(std::move(socket), *this);
 -                    session->start(cors);
 +                    // A throw here must not skip the re-arm below, or the
-+                    // server stops accepting for good. Nothing released the
-+                    // slot yet: a session releases it only from a completion
-+                    // handler, and none is queued if construction or start()
-+                    // threw.
++                    // server stops accepting for good. A session that was
++                    // constructed gives its slot back from its destructor;
++                    // only a throwing constructor leaves it to us.
++                    std::shared_ptr<HttpSession> session;
 +                    try {
 +                        // Create a new session for this connection
-+                        auto session = std::make_shared<HttpSession>(std::move(socket), *this);
++                        session = std::make_shared<HttpSession>(std::move(socket), *this);
 +                        session->start(cors);
 +                    } catch (const std::exception& e) {
 +                        header_print("LOG", std::string("Failed to set up connection: ") + e.what());
-+                        active_connections_.fetch_sub(1);
++                        if (!session) {
++                            active_connections_.fetch_sub(1);
++                        }
 +                    }
                  }
              }

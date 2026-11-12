@@ -1,8 +1,7 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index bc01281..fd6c2be 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1206,6 +1206,7 @@ void RestHandler::handle_generate(const json& request,
+@@ -1252,6 +1252,7 @@
          header_print("FLM", "Start generating...");
          
          if (stream) {
@@ -10,7 +9,7 @@ index bc01281..fd6c2be 100644
              // Streaming response using streaming_ostream
              auto total_start_time = time_utils::now();
              streaming_ostream ostream(model, send_streaming_response, false);
-@@ -1213,6 +1214,14 @@ void RestHandler::handle_generate(const json& request,
+@@ -1259,6 +1260,14 @@
              try {
                  bool success = auto_chat_engine->insert(meta_info, uniformed_input, [&] { return cancellation_token && cancellation_token->cancelled(); });
                  if (!success){
@@ -25,7 +24,7 @@ index bc01281..fd6c2be 100644
                      json error_response = {{"error", "Max length reached"}};
                      send_response(error_response);
                      this->auto_chat_engine->clear_context();
-@@ -1230,6 +1239,9 @@ void RestHandler::handle_generate(const json& request,
+@@ -1276,6 +1285,9 @@
                  this->auto_chat_engine->clear_context();
                  return;
              }
@@ -35,7 +34,7 @@ index bc01281..fd6c2be 100644
              auto total_end_time = time_utils::now();
              auto history = this->auto_chat_engine->get_history();
              // std::cout << "history: " << history.first << std::endl;
-@@ -1244,6 +1256,13 @@ void RestHandler::handle_generate(const json& request,
+@@ -1291,6 +1303,13 @@
              try {
                  bool success = auto_chat_engine->insert(meta_info, uniformed_input, [&] { return cancellation_token && cancellation_token->cancelled(); });
                  if (!success){
@@ -49,7 +48,7 @@ index bc01281..fd6c2be 100644
                      json error_response = {{"error", "Max length reached"}};
                      send_response(error_response);
                      this->auto_chat_engine->clear_context();
-@@ -1261,6 +1280,9 @@ void RestHandler::handle_generate(const json& request,
+@@ -1308,6 +1327,9 @@
                  this->auto_chat_engine->clear_context();
                  return;
              }
@@ -59,15 +58,15 @@ index bc01281..fd6c2be 100644
              std::string response_text = ss.str();
              auto history = this->auto_chat_engine->get_history();
              json response = {
-@@ -1326,6 +1348,7 @@ void RestHandler::handle_chat(const json& request,
-         meta_info.max_prefill_len = this->prefill_chunk_len;
+@@ -1376,6 +1398,7 @@
+         meta_info.min_tokens = value_or(request, "min_tokens", 0);
          header_print("FLM", "Start generating...");
          if (stream) {
 +            cancellation_token->reset();
              // Streaming response using streaming_ostream
              auto total_start_time = time_utils::now();
              streaming_ostream ostream(model, send_streaming_response, true);  // true for chat format
-@@ -1333,6 +1356,13 @@ void RestHandler::handle_chat(const json& request,
+@@ -1383,6 +1406,13 @@
              try {
                  bool success = auto_chat_engine->insert(meta_info, uniformed_input, [&] { return cancellation_token && cancellation_token->cancelled(); });
                  if (!success){
@@ -81,7 +80,7 @@ index bc01281..fd6c2be 100644
                      json error_response = {{"error", "Max length reached"}};
                      send_response(error_response);
                      this->auto_chat_engine->clear_context();
-@@ -1351,6 +1381,9 @@ void RestHandler::handle_chat(const json& request,
+@@ -1401,6 +1431,9 @@
                  this->auto_chat_engine->clear_context();
                  return;
              }
@@ -91,7 +90,7 @@ index bc01281..fd6c2be 100644
              auto total_end_time = time_utils::now();
              meta_info.total_duration = (uint64_t)time_utils::duration_ns(total_start_time, total_end_time).first;
              
-@@ -2252,6 +2285,7 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2332,6 +2365,7 @@
          header_print("FLM", "Start generating...");
  
          if (stream) {
@@ -99,7 +98,7 @@ index bc01281..fd6c2be 100644
              // Create a wrapper callback that passes the pre-formatted SSE string directly
              bool stream_started = false;
              auto openai_stream_callback = [&send_streaming_response, &stream_started](const std::string& data, bool is_final) {
-@@ -2275,6 +2309,13 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2355,6 +2389,13 @@
              try {
                  bool success = auto_chat_engine->insert(meta_info, uniformed_input, [&] { return cancellation_token && cancellation_token->cancelled(); });
                  if (!success) {
@@ -113,7 +112,7 @@ index bc01281..fd6c2be 100644
                      json error_response = { {"error", "Max length reached"} };
                      send_response(error_response);
                      this->auto_chat_engine->clear_context();
-@@ -2295,6 +2336,9 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2375,6 +2416,9 @@
                  this->auto_chat_engine->clear_context();
                  return;
              }
@@ -123,7 +122,7 @@ index bc01281..fd6c2be 100644
              try {
                  ostream.finalize(meta_info);
              } catch (const std::exception& e) {
-@@ -2311,6 +2355,13 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2392,6 +2436,13 @@
              try {
                  bool success = auto_chat_engine->insert(meta_info, uniformed_input, [&] { return cancellation_token && cancellation_token->cancelled(); });
                  if (!success) {
@@ -137,7 +136,7 @@ index bc01281..fd6c2be 100644
                      json error_response = { {"error", "Max length reached"} };
                      send_response(error_response);
                      this->auto_chat_engine->clear_context();
-@@ -2328,6 +2379,9 @@ void RestHandler::handle_openai_completion(const json& request,
+@@ -2409,6 +2460,9 @@
                  this->auto_chat_engine->clear_context();
                  return;
              }

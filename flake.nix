@@ -292,13 +292,22 @@
         # Go correctness gate for the repo's one Go module (pkgs/benchmark-go):
         # golangci-lint + nilaway + `go test -race`, run by `nix flake check`.
         # Same vendorHash as the `benchmark` package, so deps are fetched once.
-        benchmarkGate = pkgs.buildGoModule {
+        #
+        # Pinned to Go 1.26: nilaway (2025-03 snapshot) panics on Go 1.27 in
+        # its pinned x/tools SSA builder ("unexpected expr: *ast.KeyValueExpr"),
+        # failing its own tests, and a 1.26-built nilaway can't load Go 1.27's
+        # stdlib via `go list`. Both nilaway and the gate must use 1.26.
+        buildGo126Module = pkgs.buildGoModule.override {go = pkgs.go_1_26;};
+        benchmarkGate = buildGo126Module {
           pname = "benchmark-go-gate";
           version = "0.1.0";
           src = ./pkgs/benchmark-go;
           vendorHash = "sha256-CBmwAVno6OqFdKcUk66MuP5+nI4Z3aQI4kcmT+YbqYY=";
           subPackages = ["cmd/benchmark"];
-          nativeCheckInputs = with pkgs; [golangci-lint nilaway];
+          nativeCheckInputs = [
+            pkgs.golangci-lint
+            (pkgs.nilaway.override {buildGoModule = buildGo126Module;})
+          ];
           checkPhase = ''
             runHook preCheck
 

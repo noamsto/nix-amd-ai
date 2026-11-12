@@ -1,8 +1,7 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 8e2d484..bc01281 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -725,6 +725,20 @@ RestHandler::RestHandler(model_list& models, ModelDownloader& downloader, progra
+@@ -765,6 +765,20 @@
  ///@return the rest handler
  RestHandler::~RestHandler() = default;
  
@@ -23,7 +22,7 @@ index 8e2d484..bc01281 100644
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
  ///@param model_field_present whether the request actually carried a "model" key
-@@ -799,6 +813,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -835,6 +849,7 @@
          return ModelLoad::UnknownBackend;
      }
  
@@ -31,7 +30,7 @@ index 8e2d484..bc01281 100644
      std::this_thread::sleep_for(std::chrono::milliseconds(500));
      // The old model is released before the new one is built, so from here
      // on nothing is loaded until the load below succeeds. Record that now:
-@@ -845,6 +860,7 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -881,6 +896,7 @@
          this->auto_chat_engine = std::move(engine);
          this->current_model_tag = loaded_tag;
          this->current_backend = requested_backend;
@@ -39,7 +38,7 @@ index 8e2d484..bc01281 100644
      }
      catch (const std::exception& e) {
          header_print("ERROR", "Failed to load model: " + std::string(e.what()));
-@@ -1637,14 +1653,16 @@ void RestHandler::handle_ps(const json& request,
+@@ -1701,14 +1717,16 @@
          std::string expires_at = expires_ss.str();
          
          json models = json::array();
@@ -64,7 +63,6 @@ index 8e2d484..bc01281 100644
                  {"details", model_info["details"]},
                  {"expires_at", expires_at},
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
-index 552fe25..0f0afc3 100644
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
 @@ -26,6 +26,7 @@
@@ -75,16 +73,16 @@ index 552fe25..0f0afc3 100644
  #include "prompt_cache.hpp"
  
  using json = nlohmann::ordered_json;
-@@ -128,6 +129,8 @@ public:
+@@ -128,6 +129,8 @@
  private:
      ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false,
                                    const std::string& request_backend = "");
 +    void publish_serving_chat_tag(std::string tag);
 +    std::string serving_chat_tag_snapshot() const;
+     bool is_known_model(const std::string& model_tag);
      void ensure_asr_model_loaded(const std::string& model_tag);
      void ensure_embed_model_loaded(const std::string& model_tag);
-     void ensure_decision_model_loaded(const std::string& model_tag);
-@@ -150,6 +153,11 @@ private:
+@@ -151,6 +154,11 @@
      model_list& supported_models;
      ModelDownloader& downloader;
      std::string current_model_tag;
@@ -97,10 +95,9 @@ index 552fe25..0f0afc3 100644
      bool modelscope;
      bool asr;
 diff --git a/src/server/server.hpp b/src/server/server.hpp
-index 14c351b..9f0b0c1 100644
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -52,6 +52,7 @@ inline bool requires_npu_access(const std::string& method, const std::string& pa
+@@ -52,6 +52,7 @@
      if (method != "POST") return false;
      return path == "/api/generate" || path == "/api/chat" ||
             path == "/v1/chat/completions" || path == "/v1/completions" ||
