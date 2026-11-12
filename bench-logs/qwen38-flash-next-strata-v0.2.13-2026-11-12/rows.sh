@@ -22,7 +22,9 @@ export STRATA_PY=${PY:?} STRATA_REPO=$R/share/strata STRATA_ENGINE=$R/bin/strata
 export STRATA_PACK=${PACK:?} STRATA_MTP_RT=${MTP_RT:?} STRATA_MMPROJ=${MMPROJ:?}
 export LEMOND_MODEL=${LEMOND_MODEL:-Qwen3.8-Flash-Next-Strata}
 export STRATA_EXPERT_CACHE=20000 STRATA_CTX=131072
-unset EXTRA_ARGS IQ4
+unset EXTRA_ARGS
+# the v31 shard the pack was built from (run.sh defaults to the September file)
+export IQ4=${IQ4:-${MODELS:-/var/lib/models}/hf/hub/models--unsloth--Qwen3.8-Flash-Next-GGUF/snapshots/d96201194f103c906994f283f504209dc8d2a10c/UD-IQ4_XS/Qwen3.8-Flash-Next-UD-IQ4_XS-00001-of-00004.gguf}
 
 SIGNAL_FILE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
 load1() { cut -d' ' -f1 /proc/loadavg; }
