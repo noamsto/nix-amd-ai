@@ -108,9 +108,12 @@ fi
 LLAMA_PIN_DIVERGES=unknown
 LLAMA_PIN_REQUIRED=""
 LLAMA_PIN_REQUIRED_TAG=""
-LLAMA_PIN_CURRENT=$(nix eval --raw ".#llama-cpp-vulkan.version" 2>/dev/null || true)
+LLAMA_PIN_CURRENT=$(nix eval --raw ".#llama-cpp-vulkan.version") || {
+  echo "ERROR: nix eval of .#llama-cpp-vulkan.version failed" >&2
+  exit 1
+}
 [[ "$LLAMA_PIN_CURRENT" =~ ^[0-9]+$ ]] || {
-  echo "ERROR: could not read the shipped llama.cpp build number (.#llama-cpp-vulkan.version): update scripts/check-updates.sh" >&2
+  echo "ERROR: shipped llama.cpp version '$LLAMA_PIN_CURRENT' is not a build number: update scripts/check-updates.sh" >&2
   exit 1
 }
 

@@ -95,21 +95,26 @@
     # nixpkgs versions llama-cpp as the upstream release ("0.9.0") but bakes
     # the real build number into -DLLAMA_BUILD_NUMBER. lemonade's
     # backend_versions.json is built from `version` as "b${version}", so report
-    # the build number there (and in `--version`'s package name). `src` is kept
-    # as-is: nixpkgs derives its tag from `finalAttrs.version`, which this
-    # override changes. The assert catches nixpkgs reformatting the flag.
+    # the build number there (and in `--version`'s package name). nixpkgs
+    # derives the source tag from `finalAttrs.version`, which this override
+    # changes, so `src` is taken from `pkg` itself; `old.src` would already
+    # point at a nonexistent `v<build number>` tag (it only builds while the
+    # fixed-output hash lets nix substitute it). The assert catches nixpkgs
+    # reformatting the flag.
     llamaCppBuildVersion = pkgs: pkg: let
       prefix = "-DLLAMA_BUILD_NUMBER:STRING=";
       # Read from `pkg`, not the override's `old`: that one is tied to the
-      # overridden fixpoint, so deriving `version` from it recurses.
+      # overridden fixpoint, so deriving `version` or `src` from it either
+      # recurses or sees the overridden version.
       flags = builtins.filter (pkgs.lib.hasPrefix prefix) pkg.cmakeFlags;
+      inherit (pkg) src;
     in
       assert flags != [];
-        pkg.overrideAttrs (old: {
+        pkg.overrideAttrs {
           version = pkgs.lib.removePrefix prefix (builtins.head flags);
           __intentionallyOverridingVersion = true;
-          inherit (old) src;
-        });
+          inherit src;
+        };
 
     # Aristo94/GSQHalo.cpp, a llama.cpp fork for Strix Halo, as a source swap
     # on a llama-cpp-rocm build: same ROCm toolchain, `rocmGpuTargets` and
