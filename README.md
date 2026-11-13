@@ -17,7 +17,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `llvm-aie` | Peano AI Engine LLVM/Clang backend (`clang`, `lld`, `llc`) | Built from a [Xilinx/llvm-aie](https://github.com/Xilinx/llvm-aie) nightly wheel |
 | `lemonade` | OpenAI-compatible local AI server (`lemond` + CLI + web UI + Tauri desktop app) | Built from [lemonade-sdk/lemonade](https://github.com/lemonade-sdk/lemonade) |
 | `lemonade-headless` | `lemonade` without the Tauri desktop shell — what `lemonade.desktopApp.enable = false` selects, cached so headless hosts substitute it | `lemonade.override { withDesktopApp = false; }` |
-| `llama-cpp` | CPU llama.cpp backend, at the pinned build (b11382) | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
+| `llama-cpp` | CPU llama.cpp backend, at nixpkgs' build (12110) | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-rocm` | ROCm-accelerated llama.cpp backend | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
 | `llama-cpp-rocm-gsqhalo` | `llama-cpp-rocm` built from the GSQHalo.cpp fork, opt-in via `llamaCppRocmPackage` | Built from [Aristo94/GSQHalo.cpp](https://github.com/Aristo94/GSQHalo.cpp) |
 | `llama-cpp-vulkan` | Vulkan-accelerated llama.cpp backend, wrapped to use its own RADV driver ([#215](https://github.com/noamsto/nix-amd-ai/issues/215)); `.unwrapped` is the plain build | Built from [ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp) |
@@ -31,7 +31,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
-CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants are built from this flake's pin, **b11382** (the opt-in GSQHalo fork aside); the module reaches all three CPU backends through the overlay's private `pkgs.llama-cpp-cpu`, `pkgs.whisper-cpp-cpu` and `pkgs.stable-diffusion-cpp-cpu`, and `lemonade` composes the same pinned `whisper-cpp` / `stable-diffusion-cpp`, so its derivation never follows the consumer's nixpkgs. b11382 carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo it gives **1.51× (Vulkan) / 1.74× (ROCm)** decode over MTP-off — see [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
+CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants follow nixpkgs' llama.cpp, build **12110** (the flake no longer pins its own; the opt-in GSQHalo fork aside); the module reaches all three CPU backends through the overlay's private `pkgs.llama-cpp-cpu`, `pkgs.whisper-cpp-cpu` and `pkgs.stable-diffusion-cpp-cpu`, and `lemonade` composes the same pinned `whisper-cpp` / `stable-diffusion-cpp`, so its derivation never follows the consumer's nixpkgs. That build carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo (Strix Halo, gfx1151) it gives **1.53× (Vulkan) / 1.68× (ROCm)** decode over MTP-off (27.4 → 42.1 and 24.0 → 40.4 t/s), within about 2% of the previous b11382 pin re-measured in the same session (1.56× / 1.71×) — see [`bench-logs/qwen38-flash-next-llamacpp-12110-2026-11-13`](bench-logs/qwen38-flash-next-llamacpp-12110-2026-11-13/). The original b11382 measurement is in [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
 
 The `lemonade` package composes three derivations:
 
@@ -507,9 +507,9 @@ Verify that backends are correctly wired with `lemonade backends`; all AMD-appli
 Recipe              Backend     Status          Message/Version
 flm                 npu         installed       <fastflowlm pin>
 llamacpp            cpu         installed       <lemonade's bundled value>
-                    rocm        installed       b11382
+                    rocm        installed       b12110
                     system      installed       -
-                    vulkan      installed       b11382
+                    vulkan      installed       b12110
 sd-cpp              cpu         installed       <sd.cpp pin>
                     rocm        installed       <sd.cpp pin>
 whispercpp          cpu         installed       <whisper.cpp pin>
