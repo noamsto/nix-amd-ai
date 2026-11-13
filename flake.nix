@@ -95,17 +95,13 @@
     # nixpkgs versions llama-cpp as the upstream release ("0.9.0") but bakes
     # the real build number into -DLLAMA_BUILD_NUMBER. lemonade's
     # backend_versions.json is built from `version` as "b${version}", so report
-    # the build number there (and in `--version`'s package name). nixpkgs
-    # derives the source tag from `finalAttrs.version`, which this override
-    # changes, so `src` is taken from `pkg` itself; `old.src` would already
-    # point at a nonexistent `v<build number>` tag (it only builds while the
-    # fixed-output hash lets nix substitute it). The assert catches nixpkgs
-    # reformatting the flag.
+    # the build number there (and in `--version`'s package name). The assert
+    # catches nixpkgs reformatting the flag.
     llamaCppBuildVersion = pkgs: pkg: let
       prefix = "-DLLAMA_BUILD_NUMBER:STRING=";
-      # Read from `pkg`, not the override's `old`: that one is tied to the
-      # overridden fixpoint, so deriving `version` or `src` from it either
-      # recurses or sees the overridden version.
+      # Read from `pkg`, not the override's `old`: nixpkgs derives the source
+      # tag from `finalAttrs.version`, so `old.src` would fetch a nonexistent
+      # `v<build number>` tag, and deriving `version` from `old` recurses.
       flags = builtins.filter (pkgs.lib.hasPrefix prefix) pkg.cmakeFlags;
       inherit (pkg) src;
     in
