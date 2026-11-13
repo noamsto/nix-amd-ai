@@ -61,7 +61,7 @@ spec = importlib.util.spec_from_file_location(
     "grid", os.path.join(HERE, "..", "qwen38-flash-next-mtp-tuning-2026-10-04", "grid.py"))
 grid = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(grid)
-grid.WATCHED.update({"gufo", "strata"})
+grid.WATCHED.update({"gufo", "strata", "strata-host"})
 grid.WATCHED.add("llama-perplexity")  # comm is truncated to 15 chars; preflight_busy matches argv[0]'s basename
 
 DEFER = None
@@ -659,7 +659,7 @@ def find_engine(root, proc, timeout=30):
         todo = [root]
         while todo:
             for pid, comm in children.get(todo.pop(), []):
-                if comm == "strata":
+                if comm in ("strata", "strata-host"):  # newer engines rename their process
                     return pid
                 todo.append(pid)
         if proc.poll() is not None or time.time() > deadline:
@@ -1043,7 +1043,7 @@ def run_exec(a, log):
             # a child that set up its own process group (kl_strata's engine) outlives a SIGKILLed parent for a moment:
             # lemond must not reload over it
             waited = False
-            while any(_comm(pid) == "strata" for pid in map(int, filter(str.isdigit, os.listdir("/proc")))):
+            while any(_comm(pid) in ("strata", "strata-host") for pid in map(int, filter(str.isdigit, os.listdir("/proc")))):
                 if not waited:
                     print("waiting for a strata engine process to exit before returning", file=sys.stderr, flush=True)
                     waited = True

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# lemond_rss (run.sh) sums RssAnon over lemond's whole process tree, not only its direct children.
+# lemond_rss (run.sh) sums max(RssAnon, VmLck) over lemond's whole process tree, not only its direct children.
 set -eu
 d=$(mktemp -d)
 trap 'rm -rf "$d"' EXIT
@@ -10,7 +10,11 @@ for p in 9:32 10:1 11:2 12:4 13:8 14:16; do
     mkdir -p "$d/${p%%:*}"
     printf 'Name:\tx\nVmRSS:\t999999 kB\nRssAnon:\t%s kB\n' "${p##*:}" >"$d/${p%%:*}/status"
 done
+# a mlocked file-backed mapping: VmLck far above RssAnon (strata-host)
+printf 'Name:\tx\nVmRSS:\t999999 kB\nVmLck:\t64 kB\nRssAnon:\t1 kB\n' >"$d/12/status"
+# a lock larger than what is resident (MLOCK_ONFAULT, mlockall over a reservation): capped at VmRSS
+printf 'Name:\tx\nVmRSS:\t20 kB\nVmLck:\t100 kB\nRssAnon:\t16 kB\n' >"$d/14/status"
 got=$(PROC_ROOT=$d lemond_rss)
-want=$(((2 + 4 + 16 + 32) * 1024))
+want=$(((2 + 64 + 20 + 32) * 1024))
 [ "$got" = "$want" ] || { echo "FAIL: lemond_rss $got, want $want" >&2; exit 1; }
 echo "ok: descendants of lemond summed ($got bytes)"

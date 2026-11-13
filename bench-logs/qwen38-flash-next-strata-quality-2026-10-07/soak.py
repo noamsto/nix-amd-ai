@@ -93,7 +93,7 @@ def engine_pid(P, e):
     """Current pid of the `strata` engine in the server's process group (changes when the server restarts it)."""
     for pid in P.group_members(e.pid.pgid):
         with contextlib.suppress(OSError), open(f"/proc/{pid}/comm") as f:
-            if f.read().strip() == "strata":
+            if f.read().strip() in ("strata", "strata-host"):
                 return pid
     return None
 
