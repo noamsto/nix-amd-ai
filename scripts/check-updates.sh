@@ -123,7 +123,7 @@ LLAMA_PIN_REQUIRED_TAG=$(gh api "repos/lemonade-sdk/lemonade/contents/src/cpp/re
   -H "Accept: application/vnd.github.v3.raw" \
   --jq '.llamacpp.vulkan' 2>/dev/null || true)
 LLAMA_PIN_REQUIRED=${LLAMA_PIN_REQUIRED_TAG#b}
-if [[ "$LLAMA_PIN_REQUIRED" =~ ^[0-9]+$ ]]; then
+if [[ "$LLAMA_PIN_REQUIRED" =~ ^[0-9]{1,9}$ ]]; then
   LLAMA_PIN_DIVERGES=false
   if [ "$LLAMA_PIN_REQUIRED" -gt "$LLAMA_PIN_CURRENT" ]; then
     LLAMA_PIN_DIVERGES=true
