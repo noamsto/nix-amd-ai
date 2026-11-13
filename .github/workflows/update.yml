@@ -135,33 +135,21 @@ jobs:
           [ -n "$existing" ] || exit 0
           gh issue close "$existing" --comment "Lemonade's pin and the packaged version now match ($FLM_PIN_PACKAGED)."
 
-      - name: Track llama.cpp pin divergence
+      - name: Track llama.cpp build lag
         continue-on-error: true
         if: ${{ !cancelled() && steps.check.outputs.llama_pin_diverges == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           LEM_LATEST: ${{ steps.check.outputs.lem_latest }}
           LLAMA_PIN_CURRENT: ${{ steps.check.outputs.llama_pin_current }}
-          LLAMA_PIN_CURRENT_TAG: ${{ steps.check.outputs.llama_pin_current_tag }}
           LLAMA_PIN_REQUIRED: ${{ steps.check.outputs.llama_pin_required }}
           LLAMA_PIN_REQUIRED_TAG: ${{ steps.check.outputs.llama_pin_required_tag }}
-          LLAMA_PIN_NIXPKGS: ${{ steps.check.outputs.llama_pin_nixpkgs }}
-          LLAMA_PIN_CLEANUP: ${{ steps.check.outputs.llama_pin_cleanup }}
         run: |
-          TITLE="llama.cpp: Lemonade pins a different build than llamaCppPin"
-          if [ "$(printf '%s\n%s\n' "$LLAMA_PIN_CURRENT" "$LLAMA_PIN_REQUIRED" | sort -V | tail -1)" = "$LLAMA_PIN_CURRENT" ]; then
-            NEWER="the pinned build is newer"
-          else
-            NEWER="Lemonade's pin is newer"
-          fi
-          BODY="Lemonade \`$LEM_LATEST\` pins llama.cpp \`$LLAMA_PIN_REQUIRED_TAG\` (\`backend_versions.json\`, \`llamacpp.vulkan\`); \`llamaCppPin\` in \`flake.nix\` is at \`$LLAMA_PIN_CURRENT_TAG\` (build \`$LLAMA_PIN_CURRENT\`). Here $NEWER."$'\n\n'
-          BODY+="Compare: https://github.com/ggml-org/llama.cpp/compare/$LLAMA_PIN_CURRENT_TAG...$LLAMA_PIN_REQUIRED_TAG"$'\n\n'
-          BODY+="A bump means editing \`pinTag\`, \`pinBuildNumber\`, \`pinCommit\` and the \`src\` hash in the \`llamaCppPin\` helper in \`flake.nix\`; \`pinCommit\` is the commit for the new tag in \`ggml-org/llama.cpp\`."$'\n\n'
-          BODY+="It needs the halo MTP bench before shipping (the README records the measured MTP win on the current pin), which CI cannot run."$'\n'
-          if [ "$LLAMA_PIN_CLEANUP" = "true" ]; then
-            BODY+=$'\n'"nixpkgs' llama-cpp has caught up to build \`$LLAMA_PIN_NIXPKGS\` (>= Lemonade's \`$LLAMA_PIN_REQUIRED\`), so the pin may be droppable -- verify MTP first."$'\n'
-          fi
-          BODY+=$'\n'"Report-only: no PR is opened for this. The issue closes itself once the pin matches Lemonade's."$'\n'
+          TITLE="llama.cpp: Lemonade pins a newer build than this repo ships"
+          BODY="Lemonade \`$LEM_LATEST\` pins llama.cpp \`$LLAMA_PIN_REQUIRED_TAG\` (\`backend_versions.json\`, \`llamacpp.vulkan\`); this repo ships nixpkgs' llama-cpp at build \`$LLAMA_PIN_CURRENT\`."$'\n\n'
+          BODY+="Compare: https://github.com/ggml-org/llama.cpp/compare/b$LLAMA_PIN_CURRENT...$LLAMA_PIN_REQUIRED_TAG"$'\n\n'
+          BODY+="The build follows nixpkgs' \`llama-cpp\` (\`llamaCppBuildVersion\` in \`flake.nix\` only reports its build number), so it catches up when the nixpkgs lock does. If MTP or another fix needs the newer build sooner, pin \`src\` and the build number in that helper after the halo MTP bench, which CI cannot run."$'\n\n'
+          BODY+="Report-only: no PR is opened for this. The issue closes itself once the shipped build is at least Lemonade's."$'\n'
           existing=$(gh issue list --state open --search "\"$TITLE\" in:title" \
             --json number,title \
             --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
@@ -171,19 +159,20 @@ jobs:
             echo "$BODY" | gh issue create --title "$TITLE" --body-file -
           fi
 
-      - name: Close llama.cpp pin divergence issue
+      - name: Close llama.cpp build lag issue
         continue-on-error: true
         if: ${{ !cancelled() && steps.check.outputs.llama_pin_diverges == 'false' }}
         env:
           GH_TOKEN: ${{ github.token }}
-          LLAMA_PIN_REQUIRED_TAG: ${{ steps.check.outputs.llama_pin_required_tag }}
+          LLAMA_PIN_CURRENT: ${{ steps.check.outputs.llama_pin_current }}
         run: |
-          TITLE="llama.cpp: Lemonade pins a different build than llamaCppPin"
-          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" \
+          TITLE="llama.cpp: Lemonade pins a newer build than this repo ships"
+          OLD_TITLE="llama.cpp: Lemonade pins a different build than llamaCppPin"
+          existing=$(gh issue list --state open --search "llama.cpp: Lemonade pins in:title" \
             --json number,title \
-            --jq "map(select(.title == \"$TITLE\")) | .[0].number // empty")
+            --jq "map(select(.title == \"$TITLE\" or .title == \"$OLD_TITLE\")) | .[0].number // empty")
           [ -n "$existing" ] || exit 0
-          gh issue close "$existing" --comment "Pin now matches Lemonade's ($LLAMA_PIN_REQUIRED_TAG)."
+          gh issue close "$existing" --comment "Shipped llama.cpp build ($LLAMA_PIN_CURRENT) is at least Lemonade's."
 
       - name: Update nixpkgs lock
         if: steps.check.outputs.nixpkgs_needs_update == 'true'
