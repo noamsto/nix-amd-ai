@@ -1,14 +1,20 @@
 """Memory footprint of one bench row: a sampler that runs beside a gated run.sh row, and its summariser.
 
     python3 footprint.py watch --root-pid P --out summary.json [--raw raw.jsonl] [--interval 0.2]
+    python3 footprint.py summarise --raw raw.jsonl [--out summary.json]
 
 Every tick records GTT in use (amdgpu), /proc/meminfo MemAvailable, Mlocked, Mapped and Cached, and the memory of each
 process under P whose comm starts with `strata`. Only descendants of P count, so lemond's resident Strata engine (a
 sibling tree) is never included. The sampler stops on SIGTERM or SIGINT or once P is gone, then writes the summary.
+`summarise` re-reads a raw series and gives the same summary without re-running the row.
 
 The idle baseline is the first sample with a watched process: run.sh has unloaded lemond's model by then, so GTT and
-MemAvailable are the host's floor. Samples before it (the lemond phase) are ignored. All summary values are GiB rounded
-to 0.1, and null when unmeasured. Drops are baseline minus value, so a positive drop means memory was taken.
+MemAvailable are the host's floor. Samples before it (the lemond phase) are ignored. The probe tears the engine down at
+the end of the watched window, so the tail is not the loaded state. The loaded window is the watched samples whose GTT
+delta vs the baseline is at least LOADED_FRACTION of the peak GTT delta; every `*_loaded_*` figure is the median over
+that window, and all are null when GTT is unreadable. All summary values are GiB rounded to 0.1 (seconds to 0.1), and
+null when unmeasured. Drops are baseline minus value, so a positive drop means memory was taken. `load_s` is the time
+from the first watched sample to the first loaded one, `loaded_s` the span of the loaded window.
 """
 
 import argparse
@@ -17,10 +23,11 @@ import json
 import os
 import signal
 import statistics
+import sys
 import time
 
 GIB = 2**30
-STEADY_SAMPLES = 10
+LOADED_FRACTION = 0.9
 MEMINFO_KEYS = {
     "MemAvailable": "mem_available",
     "Mlocked": "mlocked",
@@ -37,18 +44,20 @@ PROC_FIELDS = tuple(STATUS_KEYS.values())
 SUMMARY_KEYS = [
     "gtt_baseline_gib",
     "gtt_peak_delta_gib",
-    "gtt_steady_delta_gib",
+    "gtt_loaded_delta_gib",
     "mem_available_baseline_gib",
     "mem_available_min_drop_gib",
-    "mem_available_final_drop_gib",
-    "mlocked_final_delta_gib",
-    "mapped_final_delta_gib",
-    "cached_final_delta_gib",
+    "mem_available_loaded_drop_gib",
+    "mlocked_loaded_delta_gib",
+    "mapped_loaded_delta_gib",
+    "cached_loaded_delta_gib",
     "rss_peak_gib",
-    "rss_steady_gib",
-    "rss_anon_steady_gib",
-    "rss_file_steady_gib",
-    "vm_lck_steady_gib",
+    "rss_loaded_gib",
+    "rss_anon_loaded_gib",
+    "rss_file_loaded_gib",
+    "vm_lck_loaded_gib",
+    "load_s",
+    "loaded_s",
 ]
 
 
@@ -163,6 +172,17 @@ def proc_sum(sample, field):
     return sum(values) if values else None
 
 
+def loaded_window(live):
+    """The live samples whose GTT delta vs the first one is at least LOADED_FRACTION of the peak delta."""
+    deltas = [delta(s["gtt"], live[0]["gtt"]) for s in live]
+    peak = max(known(deltas), default=None)
+    if peak is None:
+        return []
+    return [
+        s for s, d in zip(live, deltas) if d is not None and d >= LOADED_FRACTION * peak
+    ]
+
+
 def summarise(samples):
     """Summary dict (GiB, 0.1) of a sample series; see the module docstring for the definitions."""
     live = [s for s in samples if s["procs"]]
@@ -170,31 +190,41 @@ def summarise(samples):
     out.update(samples=len(samples), watched_s=None)
     if not live:
         return out
-    base, last, window = live[0], live[-1], live[-STEADY_SAMPLES:]
+    base = live[0]
+    window = loaded_window(live)
     gtts = known(s["gtt"] for s in live)
     mems = known(s["mem_available"] for s in live)
     out.update(
-        watched_s=round(last["t"] - base["t"], 1),
+        watched_s=round(live[-1]["t"] - base["t"], 1),
         gtt_baseline_gib=gib(base["gtt"]),
         gtt_peak_delta_gib=gib(delta(max(gtts), base["gtt"])) if gtts else None,
-        gtt_steady_delta_gib=gib(delta(median(s["gtt"] for s in window), base["gtt"])),
         mem_available_baseline_gib=gib(base["mem_available"]),
         mem_available_min_drop_gib=gib(delta(base["mem_available"], min(mems)))
         if mems
         else None,
-        mem_available_final_drop_gib=gib(
-            delta(base["mem_available"], last["mem_available"])
-        ),
-        mlocked_final_delta_gib=gib(delta(last["mlocked"], base["mlocked"])),
-        mapped_final_delta_gib=gib(delta(last["mapped"], base["mapped"])),
-        cached_final_delta_gib=gib(delta(last["cached"], base["cached"])),
         rss_peak_gib=gib(max(known(proc_sum(s, "vm_rss") for s in live), default=None)),
     )
+    if not window:
+        return out
+    out.update(
+        load_s=round(window[0]["t"] - base["t"], 1),
+        loaded_s=round(window[-1]["t"] - window[0]["t"], 1),
+        gtt_loaded_delta_gib=gib(delta(median(s["gtt"] for s in window), base["gtt"])),
+        mem_available_loaded_drop_gib=gib(
+            delta(base["mem_available"], median(s["mem_available"] for s in window))
+        ),
+    )
     for name, field in (
-        ("rss_steady_gib", "vm_rss"),
-        ("rss_anon_steady_gib", "rss_anon"),
-        ("rss_file_steady_gib", "rss_file"),
-        ("vm_lck_steady_gib", "vm_lck"),
+        ("mlocked_loaded_delta_gib", "mlocked"),
+        ("mapped_loaded_delta_gib", "mapped"),
+        ("cached_loaded_delta_gib", "cached"),
+    ):
+        out[name] = gib(delta(median(s[field] for s in window), base[field]))
+    for name, field in (
+        ("rss_loaded_gib", "vm_rss"),
+        ("rss_anon_loaded_gib", "rss_anon"),
+        ("rss_file_loaded_gib", "rss_file"),
+        ("vm_lck_loaded_gib", "vm_lck"),
     ):
         out[name] = gib(median(proc_sum(s, field) for s in window))
     return out
@@ -206,6 +236,20 @@ def write_summary(path, samples):
         json.dump(summarise(samples), fh, indent=2)
         fh.write("\n")
     os.replace(tmp, path)
+
+
+def read_raw(path):
+    with open(path) as fh:
+        return [json.loads(line) for line in fh if line.strip()]
+
+
+def summarise_raw(args):
+    samples = read_raw(args.raw)
+    if args.out:
+        write_summary(args.out, samples)
+        return
+    json.dump(summarise(samples), sys.stdout, indent=2)
+    sys.stdout.write("\n")
 
 
 def watch(args):
@@ -227,7 +271,7 @@ def watch(args):
             write_summary(args.out, samples)
 
 
-def main():
+def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
     w = sub.add_parser("watch")
@@ -235,8 +279,13 @@ def main():
     w.add_argument("--out", required=True)
     w.add_argument("--raw")
     w.add_argument("--interval", type=float, default=0.2)
-    args = p.parse_args()
-    watch(args)
+    w.set_defaults(run=watch)
+    r = sub.add_parser("summarise")
+    r.add_argument("--raw", required=True)
+    r.add_argument("--out")
+    r.set_defaults(run=summarise_raw)
+    args = p.parse_args(argv)
+    args.run(args)
 
 
 if __name__ == "__main__":

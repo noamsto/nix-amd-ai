@@ -3,6 +3,7 @@
 python3 test_footprint.py
 """
 
+import json
 import os
 import sys
 import tempfile
@@ -36,50 +37,39 @@ def sample(t, gtt, mem, procs=(), mlocked=0, mapped=0, cached=0):
 
 
 def series():
-    """lemond phase (resident model, no bench process), bench appears, load ramp with a one-sample spike, steady."""
+    """lemond phase, bench appears (idle baseline), ramp, plateau with a one-sample GTT spike, teardown."""
     out = [
         sample(0.0, 70.0, 20.0, mapped=5.0, cached=30.0),
         sample(0.2, 70.0, 20.0, mapped=5.0, cached=30.0),
+        # lemond unloaded; the bench process appears: this is the idle baseline
+        sample(0.4, 2.0, 100.0, [(0.5, 0.4, 0.1, 0.0)], mapped=1.0, cached=10.0),
+        # ramp: 3.9 GiB of GTT, then the jump to the plateau
+        sample(0.6, 5.9, 95.0, [(4.0, 3.0, 1.0, 0.0)], mapped=20.0, cached=40.0),
+        sample(0.8, 5.9, 94.0, [(4.0, 3.0, 1.0, 0.0)], mapped=20.0, cached=40.0),
     ]
-    # lemond unloaded; the bench process appears: this is the idle baseline
-    out.append(
-        sample(
-            0.4,
-            2.0,
-            100.0,
-            [(0.5, 0.4, 0.1, 0.0)],
-            mlocked=0.0,
-            mapped=1.0,
-            cached=10.0,
-        )
-    )
-    ramp = [
-        (10.0, 90.0),
-        (30.0, 70.0),
-        (60.0, 45.0),
-        (52.0, 50.0),
-    ]  # 60.0 is the one-sample spike
-    for i, (gtt, mem) in enumerate(ramp):
+    for i in range(13):
+        spike = i == 5
         out.append(
             sample(
-                0.6 + 0.2 * i,
-                gtt,
-                mem,
-                [(4.0, 3.0, 1.0, 0.0)],
-                mapped=20.0,
-                cached=40.0,
-            )
-        )
-    for i in range(12):
-        out.append(
-            sample(
-                1.4 + 0.2 * i,
-                52.0,
-                52.0,
+                1.0 + 0.2 * i,
+                56.0 if spike else 52.0,
+                50.0 if spike else 52.0,
                 [(6.0, 3.5, 2.5, 1.0), (0.5, 0.4, 0.1, 0.0)],
                 mlocked=1.0,
                 mapped=30.0,
                 cached=50.0,
+            )
+        )
+    # teardown, longer than any fixed trailing window: GTT, RSS and MemAvailable fall back
+    for i in range(12):
+        out.append(
+            sample(
+                3.6 + 0.2 * i,
+                3.0,
+                100.0,
+                [(0.2, 0.2, 0.0, 0.0)],
+                mapped=2.0,
+                cached=12.0,
             )
         )
     return out
@@ -93,27 +83,37 @@ class Summarise(unittest.TestCase):
         self.assertEqual(self.s["gtt_baseline_gib"], 2.0)
         self.assertEqual(self.s["mem_available_baseline_gib"], 100.0)
 
-    def test_load_peak_catches_one_sample_spike(self):
-        self.assertEqual(self.s["gtt_peak_delta_gib"], 58.0)
+    def test_peak_catches_the_one_sample_spike(self):
+        self.assertEqual(self.s["gtt_peak_delta_gib"], 54.0)
+        self.assertEqual(self.s["mem_available_min_drop_gib"], 50.0)
 
-    def test_steady_value_ignores_the_spike(self):
-        self.assertEqual(self.s["gtt_steady_delta_gib"], 50.0)
+    def test_loaded_value_is_the_plateau_median_not_the_spike_or_teardown(self):
+        self.assertEqual(self.s["gtt_loaded_delta_gib"], 50.0)
+        self.assertEqual(self.s["mem_available_loaded_drop_gib"], 48.0)
 
-    def test_mem_available_min_and_final_are_drops_vs_baseline(self):
-        self.assertEqual(self.s["mem_available_min_drop_gib"], 55.0)
-        self.assertEqual(self.s["mem_available_final_drop_gib"], 48.0)
-
-    def test_page_cache_counters_are_final_deltas(self):
-        self.assertEqual(self.s["mlocked_final_delta_gib"], 1.0)
-        self.assertEqual(self.s["mapped_final_delta_gib"], 29.0)
-        self.assertEqual(self.s["cached_final_delta_gib"], 40.0)
+    def test_page_cache_counters_are_loaded_deltas(self):
+        self.assertEqual(self.s["mlocked_loaded_delta_gib"], 1.0)
+        self.assertEqual(self.s["mapped_loaded_delta_gib"], 29.0)
+        self.assertEqual(self.s["cached_loaded_delta_gib"], 40.0)
 
     def test_rss_split_sums_the_watched_processes(self):
-        self.assertEqual(self.s["rss_steady_gib"], 6.5)
-        self.assertEqual(self.s["rss_anon_steady_gib"], 3.9)
-        self.assertEqual(self.s["rss_file_steady_gib"], 2.6)
-        self.assertEqual(self.s["vm_lck_steady_gib"], 1.0)
+        self.assertEqual(self.s["rss_loaded_gib"], 6.5)
+        self.assertEqual(self.s["rss_anon_loaded_gib"], 3.9)
+        self.assertEqual(self.s["rss_file_loaded_gib"], 2.6)
+        self.assertEqual(self.s["vm_lck_loaded_gib"], 1.0)
         self.assertEqual(self.s["rss_peak_gib"], 6.5)
+
+    def test_durations(self):
+        self.assertEqual(self.s["watched_s"], 5.4)
+        self.assertEqual(self.s["load_s"], 0.6)
+        self.assertEqual(self.s["loaded_s"], 2.4)
+        self.assertEqual(self.s["samples"], 30)
+
+    def test_old_steady_and_final_keys_are_gone(self):
+        self.assertEqual(
+            [k for k in self.s if "steady" in k or "final" in k],
+            [],
+        )
 
     def test_values_round_to_a_tenth(self):
         r = f.summarise(
@@ -122,17 +122,31 @@ class Summarise(unittest.TestCase):
                 sample(0.2, 1.04, 9.0, [(0.1, 0.1, 0.0, 0.0)]),
             ]
         )
-        self.assertEqual(r["gtt_steady_delta_gib"], 0.0)
-        self.assertEqual(r["mem_available_final_drop_gib"], 1.0)
+        self.assertEqual(r["gtt_loaded_delta_gib"], 0.0)
+        self.assertEqual(r["mem_available_loaded_drop_gib"], 1.0)
+
+    def test_single_live_sample_does_not_crash(self):
+        r = f.summarise([sample(0.0, 2.0, 100.0, [(1.0, 0.5, 0.5, 0.0)])])
+        self.assertEqual(r["gtt_baseline_gib"], 2.0)
+        self.assertEqual(r["gtt_peak_delta_gib"], 0.0)
+        self.assertEqual(r["gtt_loaded_delta_gib"], 0.0)
+        self.assertEqual(r["mem_available_loaded_drop_gib"], 0.0)
+        self.assertEqual(r["rss_loaded_gib"], 1.0)
+        self.assertEqual(r["watched_s"], 0.0)
+        self.assertEqual(r["loaded_s"], 0.0)
+        self.assertEqual(r["load_s"], 0.0)
 
     def test_bench_process_never_seen_is_all_null(self):
         r = f.summarise(series()[:2])
         self.assertIsNone(r["gtt_baseline_gib"])
         self.assertIsNone(r["gtt_peak_delta_gib"])
+        self.assertIsNone(r["gtt_loaded_delta_gib"])
         self.assertIsNone(r["mem_available_min_drop_gib"])
-        self.assertIsNone(r["rss_steady_gib"])
+        self.assertIsNone(r["rss_loaded_gib"])
+        self.assertIsNone(r["loaded_s"])
+        self.assertIsNone(r["load_s"])
 
-    def test_unreadable_gtt_is_null_not_zero(self):
+    def test_unreadable_gtt_gives_null_loaded_values_not_zero(self):
         r = f.summarise(
             [
                 sample(0.0, None, 10.0, [(1.0, 1.0, 0.0, 0.0)]),
@@ -141,14 +155,29 @@ class Summarise(unittest.TestCase):
         )
         self.assertIsNone(r["gtt_baseline_gib"])
         self.assertIsNone(r["gtt_peak_delta_gib"])
-        self.assertIsNone(r["gtt_steady_delta_gib"])
-        self.assertEqual(r["mem_available_final_drop_gib"], 1.0)
+        for key in f.SUMMARY_KEYS:
+            if "loaded" in key:
+                self.assertIsNone(r[key], key)
+        self.assertIsNone(r["load_s"])
+        self.assertEqual(r["mem_available_min_drop_gib"], 1.0)
+        self.assertEqual(r["rss_peak_gib"], 1.0)
+        self.assertEqual(r["watched_s"], 0.2)
 
     def test_samples_after_the_process_exits_do_not_count(self):
-        tail = [sample(9.0, 3.0, 99.0)]
-        r = f.summarise(series() + tail)
-        self.assertEqual(r["gtt_steady_delta_gib"], 50.0)
-        self.assertEqual(r["mem_available_final_drop_gib"], 48.0)
+        r = f.summarise(series() + [sample(9.0, 3.0, 99.0)])
+        self.assertEqual(r["gtt_loaded_delta_gib"], 50.0)
+        self.assertEqual(r["watched_s"], 5.4)
+
+
+class Cli(unittest.TestCase):
+    def test_summarise_raw_matches_summarise_and_writes_out(self):
+        with tempfile.TemporaryDirectory() as d:
+            raw, out = os.path.join(d, "raw.jsonl"), os.path.join(d, "out.json")
+            with open(raw, "w") as fh:
+                fh.writelines(json.dumps(s) + "\n" for s in series())
+            f.main(["summarise", "--raw", raw, "--out", out])
+            with open(out) as fh:
+                self.assertEqual(json.load(fh), f.summarise(series()))
 
 
 class Filter(unittest.TestCase):
