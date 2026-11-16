@@ -1,10 +1,10 @@
-# Pinned inputs for the Strata engine (Niko1221/Strata, MIT). Strata changes daily and its CMake fetches ggml at
-# configure time, so every input is fixed here: the engine commit, the llama.cpp commit its third_party/ggml/VERSION.txt
-# names (passed as STRATA_GGML_DIR so the build is offline), and the TheRock ROCm tarball its docs/STRIX_HALO.md names.
+# Pinned inputs for the Strata engine (Niko1221/Strata, MIT). Strata changes daily, so every input is fixed here: the
+# engine commit, the llama.cpp commit its third_party/ggml/VERSION.txt names (still passed as STRATA_GGML_DIR so the
+# build uses this pin; upstream vendors the same tree), and the TheRock ROCm tarball its docs/STRIX_HALO.md names.
 {
   strata = {
-    rev = "d2f096475817d4666c364c820b0ca830f751cfc5";
-    hash = "sha256-ygLtDYyrwfRKez46xKnPkO7BtY0Q4uMwxlvh3JyUHbE=";
+    rev = "c77572806996349b49995e4f98d41b5294d36a21";
+    hash = "sha256-ehbQHpljUeclywp0ubGcrGG+xQ35SppRoosVWZLJiDY=";
   };
   ggml = {
     rev = "3cf03257f219afbe7334045ff7c6a06ac68c627d";
@@ -13,9 +13,10 @@
   # The Flash-Next GGUFs `strata.model` defaults to: a snapshot inside lemond's Hugging Face cache, never copied into
   # the store (the experts are read from the shards in place). Each quant is one `strata.quant` value with its own
   # repository snapshot and first shard; only files Strata's setup.py lists as runnable (SUPPORTED_GGUFS) belong here.
-  # UD-IQ4_XS is the one with quality measurements on Strata. UD-IQ4_XS-v31 is Unsloth's 2026-11-04 "Dynamic v3.1"
-  # re-upload of that quant (four shards, Q5_0 experts in 33 layers, a different file) and has been benched for speed and
-  # memory on Strix Halo (gfx1151), not for quality (bench-logs/qwen38-flash-next-strata-v0.2.13-2026-11-12). GSQ-RCO-IQ3_S is upstream's recommended size since 0.1.44 (64 GB RAM) and
+  # UD-IQ4_XS-v31 is Unsloth's 2026-11-04 "Dynamic v3.1" re-upload of IQ4_XS (four shards, Q5_0 experts in 33 layers,
+  # a different file); it has been benched for speed, memory and KL against the Q8_0 reference on Strix Halo (gfx1151)
+  # (bench-logs/qwen38-flash-next-strata-v0.2.15-2026-11-16). UD-IQ4_XS is the September file, measured in the earlier
+  # quality run. GSQ-RCO-IQ3_S is upstream's recommended size since 0.1.44 (64 GB RAM) and
   # has not been benched on Strix Halo (gfx1151).
   model.quants = {
     "UD-IQ4_XS" = {
