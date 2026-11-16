@@ -15,9 +15,19 @@ import footprint as f
 G = 2**30
 
 
-def sample(t, gtt, mem, procs=(), mlocked=0, mapped=0, cached=0):
-    """One sample; sizes in GiB. procs: (vm_rss, rss_anon, rss_file, vm_lck) per watched process."""
+def sample(
+    t, gtt, mem, procs=(), mlocked=0, mapped=0, cached=0, active_file=None, inactive_file=None
+):
+    """One sample; sizes in GiB. procs: (vm_rss, rss_anon, rss_file, vm_lck) per watched process.
+
+    active_file and inactive_file left None are omitted, like in a series recorded before they existed."""
+    split = {
+        k: int(v * G)
+        for k, v in (("active_file", active_file), ("inactive_file", inactive_file))
+        if v is not None
+    }
     return {
+        **split,
         "t": t,
         "gtt": None if gtt is None else int(gtt * G),
         "mem_available": None if mem is None else int(mem * G),
@@ -75,6 +85,22 @@ def series():
     return out
 
 
+def split_series():
+    """series() with the file-page split recorded: baseline 2/1 GiB, plateau 30/12 GiB, teardown 3/1 GiB."""
+    out = []
+    for s in series():
+        loaded = s["gtt"] is not None and s["gtt"] >= 50 * G
+        base = s["procs"] and s["mapped"] == G
+        out.append(
+            {
+                **s,
+                "active_file": (30 if loaded else 2 if base else 3) * G,
+                "inactive_file": (12 if loaded else 1) * G,
+            }
+        )
+    return out
+
+
 class Summarise(unittest.TestCase):
     def setUp(self):
         self.s = f.summarise(series())
@@ -95,6 +121,21 @@ class Summarise(unittest.TestCase):
         self.assertEqual(self.s["mlocked_loaded_delta_gib"], 1.0)
         self.assertEqual(self.s["mapped_loaded_delta_gib"], 29.0)
         self.assertEqual(self.s["cached_loaded_delta_gib"], 40.0)
+
+    def test_file_page_split_is_a_loaded_delta(self):
+        r = f.summarise(split_series())
+        self.assertEqual(r["active_file_loaded_delta_gib"], 28.0)
+        self.assertEqual(r["inactive_file_loaded_delta_gib"], 11.0)
+
+    def test_series_without_the_file_page_split_still_summarises(self):
+        old = series()
+        self.assertNotIn("active_file", old[0])
+        self.assertIsNone(self.s["active_file_loaded_delta_gib"])
+        self.assertIsNone(self.s["inactive_file_loaded_delta_gib"])
+        new = f.summarise(split_series())
+        for key in f.SUMMARY_KEYS:
+            if "file_loaded_delta" not in key:
+                self.assertEqual(new[key], self.s[key], key)
 
     def test_rss_split_sums_the_watched_processes(self):
         self.assertEqual(self.s["rss_loaded_gib"], 6.5)

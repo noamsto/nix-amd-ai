@@ -1,14 +1,19 @@
 #!/usr/bin/env bash
 # 2-bit Flash-Next quants on Strata (#352). From the repo root: rows.sh <base|q2_0|iq2_xs|ud_q2_0> <stage> [expert-cache]
+#   (reload: rows.sh base reload <expert-cache> <cold|warm>)
 # Candidates: base is the production UD-IQ4_XS-v31 (its pack already exists); the others are the 2-bit GGUFs under test.
 # Stages:
 #   pack    CPU-only iq_pack.py of the candidate's GGUF into $WORK/<cand>/pack, run niced; no GPU, lemond stays up. Not for base.
 #   smoke   run.sh strata --quick at 8K context and expert cache 2048: does it load, tool call, prefill 4K, decode 512, vision
-#   foot    run.sh strata at the default 128K config: tool call, prefill 4K, decode 512, with the footprint sampler. The optional
-#           expert-cache argument (blob count) replaces 20000 for this row only
+#   foot    run.sh strata at the default 128K config: tool call, prefill 4K, decode 512, with the footprint sampler
 #   A       run.sh strata, the 2026-11-12 A stage: tool call, prefill 4K, decode 512, decode 32K, replay, vision
 #   B       run.sh strata, the 2026-11-12 B stage: decode 128K
 #   kl      one `kl_strata.py run --arm def --chunks 64` row against the Q8_0 reference through run.sh exec
+#   reload  base only: run.sh strata --do firsttoken, the first streamed completion after the server starts. cold drops the
+#           page cache of the GGUF shards first (--evict-before), warm leaves it
+# The optional expert-cache argument (blob count, base only) replaces 20000 for foot, A, B, kl and reload (required for
+# reload). Any size but 20000 is carried in the label, log and kl dir (foot always names it), so rows of different sizes never
+# share a name; with 20000 or no argument every name is the original.
 # Each GPU stage is one gated run.sh row (#249) with KEEP_OFFLINE=0: lemond is unloaded for the row and restored after it.
 # run.sh holds $XDG_RUNTIME_DIR/halo-gpu-bench.active for the row, so this wrapper writes no second copy.
 # Before any stage it waits for the 1-minute loadavg to fall below 4 (cap 15 min; then the row runs and is flagged), and
@@ -19,6 +24,8 @@
 # journal cannot be read). Any hit prints AMDGPU WEDGE SUSPECTED and exits 9: stop and do not reboot. footprint.py runs
 # beside the row (descendants of this script only, so lemond's resident engine is not counted) and writes
 # $W/foot-<label>.json plus the raw series $W/foot-<label>.raw.jsonl.
+# ROWS_DRY_RUN=1 prints the resolved row (key=value lines) and exits 0 before the load wait, the signal-file check, the kl
+# cleanup, the sampler and any run.sh call.
 # Exit: the row's own status, 2 another bench is live, 7 usage or configuration error (before anything is touched), 9 wedge.
 # Env (all required): WORK (parent work dir; each candidate gets $WORK/<cand>), CACHE (corpus cache.json), PY (python with
 # numpy regex jinja2 pyyaml requests psutil pillow tqdm), STRATA_OUT (the `nix build .#strata` out-link: share/strata,
@@ -31,22 +38,40 @@ D=bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05
 Q=bench-logs/qwen38-flash-next-strata-quality-2026-10-07
 B=bench-logs/qwen38-flash-next-strata-2bit-2026-11-15
 
-usage() { echo "usage: rows.sh <base|q2_0|iq2_xs|ud_q2_0> <pack|smoke|foot|A|B|kl> [expert-cache (foot only)]" >&2; exit 7; }
+usage() {
+    echo "usage: rows.sh <base|q2_0|iq2_xs|ud_q2_0> <pack|smoke|foot|A|B|kl|reload> [expert-cache (base: foot|A|B|kl)]" >&2
+    echo "       rows.sh base reload <expert-cache> <cold|warm>" >&2
+    exit 7
+}
 die() { echo "rows.sh: $*" >&2; exit 7; }
 
-cand=${1:-} stage=${2:-} cache_arg=${3:-}
+cand=${1:-} stage=${2:-} cache_arg=${3:-} temp_arg=${4:-}
 case $cand in
 base | q2_0 | iq2_xs | ud_q2_0) ;;
 *) usage ;;
 esac
 case $stage in
-pack | smoke | foot | A | B | kl) ;;
+pack | smoke | foot | A | B | kl | reload) ;;
 *) usage ;;
 esac
-[ $# -le 3 ] || usage
+[ $# -le 4 ] || usage
 if [ -n "$cache_arg" ]; then
-    [ "$stage" = foot ] || die "the expert-cache argument is only for the foot stage"
+    case $stage in
+    foot | A | B | kl | reload) ;;
+    *) die "the expert-cache argument is only for the foot, A, B, kl and reload stages" ;;
+    esac
+    [ "$stage" = foot ] || [ "$cand" = base ] || die "the expert-cache argument is only for the base candidate (foot takes it for any)"
     [[ $cache_arg =~ ^[1-9][0-9]*$ ]] || die "expert-cache must be a positive integer (blob count), got: $cache_arg"
+fi
+if [ "$stage" = reload ]; then
+    [ "$cand" = base ] || die "the reload stage is only for the base candidate"
+    [ -n "$cache_arg" ] || die "the reload stage needs an expert-cache argument"
+    case $temp_arg in
+    cold | warm) ;;
+    *) die "the reload stage needs cold|warm after the expert-cache argument, got: ${temp_arg:-nothing}" ;;
+    esac
+else
+    [ -z "$temp_arg" ] || usage
 fi
 [ "$stage $cand" != "pack base" ] || die "base's pack already exists (BASE_PACK)"
 
@@ -69,15 +94,65 @@ else
     [ -d "$PACK" ] || die "no pack at $PACK; run the pack stage first"
 fi
 
+
+# Resolve the row before the gate so ROWS_DRY_RUN prints what the real row runs. The size is carried in names only when it
+# is not the default, so default rows keep their names.
+ctx=131072 cache=${cache_arg:-20000} sfx='' kl_name='' kl_dir='' exec_log=''
+[ "$cache" = 20000 ] || sfx=-c$cache
+row_env=(KEEP_OFFLINE=0) row_argv=("$D/run.sh")
+case $stage in
+smoke)
+    ctx=8192 cache=2048 label=$cand-smoke
+    row_argv+=(strata --label "$label" --quick --do "toolcall,prefill4k,decode512,vision")
+    ;;
+foot)
+    label=$cand-foot$cache
+    row_argv+=(strata --label "$label" --do "toolcall,prefill4k,decode512")
+    ;;
+A)
+    label=$cand-def-A$sfx
+    row_argv+=(strata --label "$label" --do "toolcall,prefill4k,decode512,decode32k,replay,vision")
+    ;;
+B)
+    label=$cand-def-B$sfx
+    row_argv+=(strata --label "$label" --do decode128k)
+    ;;
+kl)
+    kl_name=kl-def-64$sfx label=$cand-$kl_name kl_dir=$W/kl/$kl_name exec_log=$W/$kl_name.log
+    row_env+=(EXEC_DEV=gpu TARGET="$IQ4" EXEC_LOG="$exec_log" NEED_GIB=95)
+    row_argv+=(exec --label "$kl_name" -- "$PY" "$Q/kl_strata.py" run --arm def --ref "$REF" --target "$IQ4"
+        --chunks 64 --out "$kl_dir")
+    ;;
+reload)
+    label=$cand-reload$cache-$temp_arg
+    row_argv+=(strata --label "$label" --do firsttoken)
+    [ "$temp_arg" = warm ] || row_argv+=(--evict-before)
+    ;;
+esac
+
 export OUT=$W/rows.jsonl CACHE CORPUS_REV=4166bc461d7d4c0c10bac574f543a2a6cb912157
 export STRATA_PY=$PY STRATA_PACK=$PACK STRATA_MTP_RT=$MTP_RT STRATA_MMPROJ=$MMPROJ
 export STRATA_REPO STRATA_ENGINE STRATA_VISION_BIN IQ4
 # run.sh defaults to another model name and refuses (exit 6) when the resident is a different one
 export LEMOND_MODEL=${LEMOND_MODEL:-Qwen3.8-Flash-Next-Strata}
 # set per stage, always explicitly: kl_strata.py reads the same variable, so a lever row's value must never leak
-export STRATA_CTX=131072 STRATA_EXPERT_CACHE=20000
+export STRATA_CTX=$ctx STRATA_EXPERT_CACHE=$cache
 unset EXTRA_ARGS
 mkdir -p "$W"
+
+if [ "${ROWS_DRY_RUN:-}" = 1 ]; then
+    echo "stage=$stage"
+    if [ "$stage" != pack ]; then
+        echo "label=$label"
+        echo "STRATA_EXPERT_CACHE=$STRATA_EXPERT_CACHE"
+        echo "STRATA_CTX=$STRATA_CTX"
+        echo "OUT=$OUT"
+        [ -z "$kl_dir" ] || { echo "kl_dir=$kl_dir"; echo "EXEC_LOG=$exec_log"; }
+        echo "env=${row_env[*]}"
+        echo "argv=${row_argv[*]}"
+    fi
+    exit 0
+fi
 
 SIGNAL_FILE=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
 load1() { cut -d' ' -f1 /proc/loadavg; }
@@ -123,15 +198,6 @@ fi
 holder=$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)
 [ -z "$holder" ] || [ ! -d "/proc/$holder" ] || { echo "another bench holds $SIGNAL_FILE (pid $holder)" >&2; exit 2; }
 
-case $stage in
-smoke) label=$cand-smoke STRATA_CTX=8192 STRATA_EXPERT_CACHE=2048 ;;
-foot) label=$cand-foot${cache_arg:-20000} STRATA_EXPERT_CACHE=${cache_arg:-20000} ;;
-A) label=$cand-def-A ;;
-B) label=$cand-def-B ;;
-kl) label=$cand-kl-def-64 ;;
-esac
-export STRATA_CTX STRATA_EXPERT_CACHE
-
 if [ "$stage" = kl ]; then
     # Not the quality rows.sh: its start-up check refuses while lemond's resident `strata` engine is up. This keeps its
     # refusal for another benchmark of ours, matched by script name on a bash/python argv[1], never by `strata`.
@@ -145,7 +211,7 @@ if [ "$stage" = kl ]; then
         exit 2
     done
     # the run dir is the row's output; a rerun starts it over
-    rm -rf "${W:?}/kl/kl-def-64"
+    rm -rf "${kl_dir:?}"
     mkdir -p "$W/kl"
 fi
 
@@ -162,17 +228,7 @@ sampler=$!
 row_start=$(date '+%Y-%m-%d %H:%M:%S')
 start=$(load1)
 [ -z "$sig_rc" ] || exit "$sig_rc" # signalled before any GPU work began: nothing to check
-case $stage in
-smoke) KEEP_OFFLINE=0 "$D/run.sh" strata --label "$label" --quick --do toolcall,prefill4k,decode512,vision ;;
-foot) KEEP_OFFLINE=0 "$D/run.sh" strata --label "$label" --do toolcall,prefill4k,decode512 ;;
-A) KEEP_OFFLINE=0 "$D/run.sh" strata --label "$label" --do toolcall,prefill4k,decode512,decode32k,replay,vision ;;
-B) KEEP_OFFLINE=0 "$D/run.sh" strata --label "$label" --do decode128k ;;
-kl)
-    KEEP_OFFLINE=0 EXEC_DEV=gpu TARGET=$IQ4 EXEC_LOG=$W/kl-def-64.log NEED_GIB=95 \
-        "$D/run.sh" exec --label kl-def-64 -- "$PY" "$Q/kl_strata.py" run --arm def --ref "$REF" --target "$IQ4" \
-        --chunks 64 --out "$W/kl/kl-def-64"
-    ;;
-esac
+env "${row_env[@]}" "${row_argv[@]}"
 rc=$?
 [ -z "$sig_rc" ] || rc=$sig_rc
 end=$(load1)
