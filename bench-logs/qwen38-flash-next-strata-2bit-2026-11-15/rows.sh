@@ -86,7 +86,8 @@ sampler='' pack_tmp=''
 stop_sampler() {
     [ -n "$sampler" ] || return 0
     kill "$sampler" 2>/dev/null
-    wait "$sampler" 2>/dev/null
+    # a trapped signal ends a bare `wait` early, while the sampler is still writing its summary
+    while kill -0 "$sampler" 2>/dev/null; do wait "$sampler" 2>/dev/null; done
     sampler=
 }
 # shellcheck disable=SC2329 # invoked by the EXIT trap
@@ -160,6 +161,7 @@ sampler=$!
 
 row_start=$(date '+%Y-%m-%d %H:%M:%S')
 start=$(load1)
+[ -z "$sig_rc" ] || exit "$sig_rc" # signalled before any GPU work began: nothing to check
 case $stage in
 smoke) KEEP_OFFLINE=0 "$D/run.sh" strata --label "$label" --quick --do toolcall,prefill4k,decode512,vision ;;
 foot) KEEP_OFFLINE=0 "$D/run.sh" strata --label "$label" --do toolcall,prefill4k,decode512 ;;
@@ -187,6 +189,7 @@ fi
 [ "$hits" != unreadable ] || echo "warning: kernel log unreadable; amdgpu wedge check skipped for $label" >&2
 hits_json=$hits
 [[ $hits =~ ^[0-9]+$ ]] || hits_json=\"$hits\"
+[ -z "$sig_rc" ] || rc=$sig_rc # a signal during the checks above still ends the script non-zero
 printf '{"label":"%s","started":"%s","rc":%s,"flag":"%s","wait_s":%s,"loadavg_start":%s,"loadavg_end":%s,"kernel_hits":%s}\n' \
     "$label" "$row_start" "$rc" "$flag" "$waited" "$start" "$end" "$hits_json" >>"$W/load.jsonl"
 if [[ $hits =~ ^[0-9]+$ ]] && [ "$hits" -gt 0 ]; then

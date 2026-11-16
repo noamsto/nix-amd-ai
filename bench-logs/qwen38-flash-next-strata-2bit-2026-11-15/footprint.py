@@ -9,12 +9,14 @@ sibling tree) is never included. The sampler stops on SIGTERM or SIGINT or once 
 `summarise` re-reads a raw series and gives the same summary without re-running the row.
 
 The idle baseline is the first sample with a watched process: run.sh has unloaded lemond's model by then, so GTT and
-MemAvailable are the host's floor. Samples before it (the lemond phase) are ignored. The probe tears the engine down at
-the end of the watched window, so the tail is not the loaded state. The loaded window is the watched samples whose GTT
-delta vs the baseline is at least LOADED_FRACTION of the peak GTT delta; every `*_loaded_*` figure is the median over
-that window, and all are null when GTT is unreadable. All summary values are GiB rounded to 0.1 (seconds to 0.1), and
-null when unmeasured. Drops are baseline minus value, so a positive drop means memory was taken. `load_s` is the time
-from the first watched sample to the first loaded one, `loaded_s` the span of the loaded window.
+MemAvailable are the host's floor (the GTT baseline is the first watched sample with a readable GTT). Samples before it
+(the lemond phase) are ignored. The probe tears the engine down at the end of the watched window, so the tail is not the
+loaded state. The loaded window is the watched samples whose GTT delta vs the baseline is at least LOADED_FRACTION of
+the peak GTT delta; every `*_loaded_*` figure is the median over that window. The window is empty, and every
+`*_loaded_*` figure, `load_s`, `loaded_s` and `loaded_samples` null, when GTT is unreadable or never rises above its
+baseline. All summary values are GiB rounded to 0.1 (seconds to 0.1, `loaded_samples` a count), and null when
+unmeasured. Drops are baseline minus value, so a positive drop means memory was taken. `load_s` is the time from the
+first watched sample to the first loaded one, `loaded_s` the span of the loaded window, `loaded_samples` its length.
 """
 
 import argparse
