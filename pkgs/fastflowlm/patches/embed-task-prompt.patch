@@ -1,0 +1,82 @@
+diff --git a/src/server/embedding_handler.cpp b/src/server/embedding_handler.cpp
+--- a/src/server/embedding_handler.cpp
++++ b/src/server/embedding_handler.cpp
+@@ -6,6 +6,58 @@
+ #include "rest_handler.hpp"
+ #include "http_guard.hpp"
+ 
++// The names a request may give a task prompt in "prompt_name", or its alias
++// "task_type", and the "task" each one stands for. Gemma_Embedding reads only
++// "task", so without this mapping the two fields would be ignored and the
++// vector would silently carry the query prefix.
++static const std::pair<const char*, const char*> kTaskAliases[] = {
++    {"query", "query"}, {"search_query", "query"}, {"Retrieval-query", "query"},
++    {"document", "document"}, {"search_document", "document"}, {"Retrieval-document", "document"},
++    {"clustering", "clustering"}, {"Clustering", "clustering"},
++    {"classification", "classification"}, {"Classification", "classification"},
++    {"STS", "sentence_similarity"}, {"sentence_similarity", "sentence_similarity"},
++    {"Summarization", "summarization"}, {"summarization", "summarization"},
++    {"code_retrieval", "code_retrieval"},
++};
++
++// Folds "prompt_name" and "task_type" into item["task"]. Both are checked: sending both is fine
++// only when they name the same task, and a "task" beside them must agree too. Returns the 400 body
++// for a value that is not a string, is not an accepted name, or disagrees; a name the model has no
++// prompt for (e.g. BitextMining) is refused here rather than embedded under a substitute.
++static std::optional<json> resolve_task_prompt(json& item) {
++    const auto invalid = [](const std::string& field, const std::string& message) {
++        return json{{"error", {{"message", message},
++                               {"type", "invalid_request_error"},
++                               {"param", field},
++                               {"code", "invalid_value"}}}};
++    };
++    std::string accepted;
++    for (const auto& alias : kTaskAliases) accepted += (accepted.empty() ? "" : ", ") + std::string(alias.first);
++
++    std::string resolved;
++    for (const char* field : {"prompt_name", "task_type"}) {
++        const auto it = item.find(field);
++        if (it == item.end()) continue;
++        if (!it->is_string())
++            return invalid(field, std::string("'") + field + "' must be a string, one of [" + accepted + "]");
++        const std::string name = it->get<std::string>();
++        const char* mapped = nullptr;
++        for (const auto& alias : kTaskAliases)
++            if (name == alias.first) { mapped = alias.second; break; }
++        if (!mapped)
++            return invalid(field, "unknown " + std::string(field) + " '" + name + "'. Known: [" + accepted + "]");
++        if (!resolved.empty() && resolved != mapped)
++            return invalid(field, "'prompt_name' and 'task_type' are aliases and disagree; send one, or the same task in both");
++        resolved = mapped;
++    }
++    if (resolved.empty()) return std::nullopt;
++    const auto task = item.find("task");
++    if (task != item.end() && !(task->is_string() && task->get<std::string>() == resolved))
++        return invalid("task", "'task' disagrees with 'prompt_name'/'task_type' (" + resolved + "); send one, or the same task in all");
++    item["task"] = resolved;
++    return std::nullopt;
++}
++
+ ///@brief Ensure the embed model is loaded
+ ///@param model_tag the model tag
+ void RestHandler::ensure_embed_model_loaded(const std::string& model_tag) {
+@@ -51,6 +103,11 @@
+             send_response(*bad);
+             return;
+         }
++        json item_request = request;
++        if (auto bad = resolve_task_prompt(item_request)) {
++            send_response(*bad);
++            return;
++        }
+         std::lock_guard lock(embedding_mutex);
+         std::string model = request.at("model");
+         const auto& input = request.at("input");
+@@ -58,7 +115,6 @@
+         ensure_embed_model_loaded(model);
+         json embedding_data = json::array();
+         uint64_t prompt_tokens = 0;
+-        json item_request = request;
+         for (size_t i = 0; i < inputs.size(); ++i) {
+             if (cancelled()) return;
+             item_request["input"] = inputs[i];

@@ -102,6 +102,10 @@ stdenv.mkDerivation (finalAttrs: {
   #     WebServer::handle_request and HttpSession::handle_request. The
   #     embeddings handler keeps the curated text of a std::invalid_argument
   #     (unknown model, bad dimensions) and gives the rest the fixed message.
+  #     Qwen2-VL's insert() put the chat-template exception's e.what() in
+  #     meta_info.error_message, which /v1's PrefillFailedResponse sends to the
+  #     client; it now carries a fixed message and the text stays in the log
+  #     line beside it.
   #     v1.0.11's /v1/systemone and /v1/decisions 500 body
   #     drops its appended e.what() and keeps the fixed text, and their 422
   #     for a body that is not JSON drops the parser's message (line, column
@@ -109,6 +113,19 @@ stdenv.mkDerivation (finalAttrs: {
   #     max_prefill_len or model path entry in model_list.json failing the
   #     load as 500 model_load_failed, which this patch used to add, is
   #     upstream since v1.0.10.)
+  #   - embed-task-prompt.patch: /v1/embeddings took its task prompt from
+  #     `prompt_name` (alias `task_type`) and used the query prefix without
+  #     either. v1.0.13 reads only `task` (the name Gemma_Embedding's prefix
+  #     function takes), so those two fields would be ignored and the vector
+  #     would silently carry the query prefix. handle_embeddings now resolves
+  #     both fields before the model is touched, onto `task`, with the old
+  #     names mapped to upstream's vocabulary (Retrieval-query and
+  #     search_query are query, STS is sentence_similarity, ...); a value that
+  #     is not a string, an unknown name, or two fields (or a `task`) that
+  #     name different tasks is a 400 invalid_value. Names the old table
+  #     accepted but the model has no prompt for (MultilabelClassification,
+  #     BitextMining, search_result) are now a 400 as unknown instead of a
+  #     query vector. A request with only `task` is untouched.
   #   - ps-loaded-models.patch (#178): GET /api/ps built its entry from
   #     current_model_tag unconditionally, so with no chat model loaded (flm
   #     serve with no tag, a non-chat startup tag such as embed-gemma:300m,
@@ -118,9 +135,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     same UB was reachable mid-load, when the new engine is set before
   #     current_model_tag. It now lists the chat model only when a chat
   #     engine is loaded under a real tag ({"models": []} otherwise), and
-  #     like Ollama also lists the loaded embedding model (read from
-  #     current_embedding_tag under embedding_mutex, since v1.0.13 loads
-  #     embedding models per request). Whisper (--asr) is not listed.
+  #     like Ollama also lists the loaded embedding model (since v1.0.13 loads
+  #     embedding models per request; ps-serving-snapshot.patch publishes its
+  #     tag). Whisper (--asr) is not listed.
   #   - chat-decode-fault.patch (#180): non-streaming /api/chat ran
   #     generate_with_prompt() -- prefill then decode -- inside a catch that
   #     answered any exception 400 invalid_request_error, so a decode-time
@@ -148,7 +165,11 @@ stdenv.mkDerivation (finalAttrs: {
   #     across a load), so /api/ps does not wait on a load. The tag is
   #     cleared before the old engine is torn down and set once the new one
   #     has loaded, so during a swap /api/ps answers [] rather than the
-  #     outgoing model. (POST /api/embeddings ran without the NPU lock; v1.0.13
+  #     outgoing model. The embedding model's tag is published the same way
+  #     from ensure_embed_model_loaded: v1.0.13's handle_embeddings holds
+  #     embedding_mutex for the whole request, model download included, so
+  #     /api/ps reading current_embedding_tag under it would stall behind a
+  #     pull. (POST /api/embeddings ran without the NPU lock; v1.0.13
   #     lists it in requires_npu_access itself. v1.0.9 now takes the lock in
   #     POST /v1/completions, which swapped models unlocked, and releases it
   #     when the handler returns, because handlers call clear_context() on the
@@ -170,7 +191,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     disconnected left flm serve decoding to its token limit. v1.0.9 passes
   #     the predicate in all of them, including non-streaming /api/chat, and
   #     v1.0.13 ends a cancelled /v1/completions prefill itself (a failed one
-  #     now answers an error, not "Max length reached"). The patch keeps the
+  #     now answers an error, not "Max length reached"), but answers the
+  #     non-streaming one with a JSON null, where the patch makes it {} like
+  #     the other non-streaming cancels. The patch keeps the
   #     rest for /api/generate and /api/chat: a cancelled prefill ends the
   #     request the way a cancelled decode does -- finalising the stream (or
   #     answering {} on the non-streaming branches) instead of "Max length
@@ -343,10 +366,10 @@ stdenv.mkDerivation (finalAttrs: {
   #     insert a no-op, so this patch only removes the cost. No context or
   #     prompt cache is reset, because nothing was inserted.
   # None of the patches carries attribution: model_error and the
-  # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget),
-  # as were the since-dropped require_field, safe_dump and embedding
-  # task-prompt mapping -- the Co-authored-by trailer for that is on the
-  # branch commit per this repo's CLAUDE.md, not here.
+  # model-identity checks and embed-task-prompt's name table are ported from
+  # OpenFlowLM-Next (Vegard Berget), as were the since-dropped require_field
+  # and safe_dump -- the Co-authored-by trailer for that is on the branch
+  # commit per this repo's CLAUDE.md, not here.
   # Still unfixed on ROCm/FastFlowLM main as of v1.0.13; drop once upstream
   # fixes the throwing dump of a handler's streamed chunk and response body,
   # the status mapping, model substitution, leaking exception text, reporting
@@ -357,7 +380,9 @@ stdenv.mkDerivation (finalAttrs: {
   # /api/generate and /api/chat handlers, erasing a cancel that lands before a
   # streaming handler starts, exiting on a model_list.json entry with no
   # `files`, answering a pre-token cancel of non-streaming /api/chat with an
-  # empty completion, and /api/cancel cancelling itself instead of its target;
+  # empty completion, a prefill cancel of non-streaming /v1/completions with a
+  # JSON null, ignoring /v1/embeddings' prompt_name and task_type, and
+  # /api/cancel cancelling itself instead of its target;
   # and leaving a truncated /api/generate or /api/chat stream instead of an
   # error when generate() fails after the first chunk (this repo's #199), and
   # racing libc's shared static struct tm in the served time formatting
@@ -385,11 +410,16 @@ stdenv.mkDerivation (finalAttrs: {
   # over the limit gets a 503 (ROCm/FastFlowLM#1003, #1014). It also moves
   # the embedding model behind a per-request handler that honours `model` and
   # `task` (#1005), and puts the chat engine behind flm::frontend. The series
-  # is rebased onto those: request-validation.patch and embed-task-prompt.patch
-  # are dropped as merged (the latter's REST names prompt_name and task_type
-  # are no longer read; upstream reads `task`), model-identity drops its
-  # embeddings part, ps-loaded-models reads the per-request embedding tag,
-  # cancel-client-disconnect loses its /v1/completions prefill-cancel hunks,
+  # is rebased onto those: request-validation.patch is dropped as merged,
+  # embed-task-prompt.patch shrinks to the REST-field mapping (upstream reads
+  # only `task`, so prompt_name and task_type are folded onto it in
+  # handle_embeddings), model-identity drops its embeddings part,
+  # ps-loaded-models lists the per-request embedding tag (published for
+  # /api/ps by ps-serving-snapshot, since handle_embeddings holds
+  # embedding_mutex across a download), no-exception-text also covers
+  # Qwen2-VL's chat-template error text, cancel-client-disconnect keeps only
+  # the non-streaming /v1/completions prefill-cancel {} body of its
+  # /v1/completions hunks,
   # cancel-queued-request parses the body at accept time with upstream's own
   # 400 for bad JSON, and the patches that used safe_dump() call
   # dump_error_body().
@@ -398,6 +428,7 @@ stdenv.mkDerivation (finalAttrs: {
     ./patches/server-error-handling.patch
     ./patches/model-identity.patch
     ./patches/no-exception-text.patch
+    ./patches/embed-task-prompt.patch
     ./patches/ps-loaded-models.patch
     ./patches/chat-decode-fault.patch
     ./patches/stream-chat-generate.patch

@@ -49,6 +49,18 @@ diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/model
  }
  
  bool Phi4::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input,
+diff --git a/src/common/AutoModel/modeling_qwen2vl.cpp b/src/common/AutoModel/modeling_qwen2vl.cpp
+--- a/src/common/AutoModel/modeling_qwen2vl.cpp
++++ b/src/common/AutoModel/modeling_qwen2vl.cpp
+@@ -164,7 +164,7 @@
+         throw; // a final message that cannot be continued is the client's error (400), not a failed prefill
+     } catch (const std::exception& e) {
+         header_print_r("ERROR", std::string("Exception during chat template application: ") + e.what());
+-        meta_info.error_message = std::string("Applying the chat template failed: ") + e.what();
++        meta_info.error_message = "Applying the chat template failed (see server log)";
+         return false;
+     }
+     std::vector<int> tokens_init = this->tokenizer->encode(templated_text);
 diff --git a/src/server/embedding_handler.cpp b/src/server/embedding_handler.cpp
 --- a/src/server/embedding_handler.cpp
 +++ b/src/server/embedding_handler.cpp
