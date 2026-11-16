@@ -1,8 +1,7 @@
 diff --git a/src/include/model_list.hpp b/src/include/model_list.hpp
-index 45948d2..b296aa7 100644
 --- a/src/include/model_list.hpp
 +++ b/src/include/model_list.hpp
-@@ -180,6 +180,13 @@ class model_list {
+@@ -197,6 +197,13 @@
                  if (!models.contains(model_type) || models.at(model_type).empty()) {
                      return new_tag;
                  }
@@ -13,14 +12,13 @@ index 45948d2..b296aa7 100644
 +                if (!models.at(model_type).is_object()) {
 +                    throw std::runtime_error("model '" + model_type + "' has no size variants");
 +                }
-                 // get the first size in the subset
-                 std::string model_size = models.at(model_type).begin().key();
-                 new_tag = model_type + ":" + model_size;
+                 // The first size in the subset, preferring built-in sizes: overlay
+                 // validation only sees the unfiltered catalog, so once the
+                 // platform filter drops a family's first built-in size an
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 9ba0cc7..18c61ed 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -749,7 +749,15 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -799,7 +799,15 @@
      // rectify_model_tag() indexes config by type: only safe for a supported tag.
      std::string ensure_tag = supported_models.cut_tag(model_tag);
      if (supported_models.is_model_supported(ensure_tag)) {
@@ -37,9 +35,9 @@ index 9ba0cc7..18c61ed 100644
      }
      // "model-faker" is the sentinel for `flm serve` started without a chat model,
      // and the handlers default `model` to current_model_tag -- so a request naming
-@@ -786,6 +794,30 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
-     try {
+@@ -838,6 +846,30 @@
          auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
+         embedding = is_embedding_model(info);  // an extension's embedding entry has its own family
          family = info["details"]["family"];
 +        // A chat entry must declare the files that make up the model, including
 +        // config.json: get_missing_files() swallows a missing or non-array
@@ -48,7 +46,7 @@ index 9ba0cc7..18c61ed 100644
 +        // reaches LM_Config::_load_json's exit(1). Refuse it here instead, still
 +        // before anything is unloaded. The non-chat families are refused just
 +        // below, so their entries are not validated here.
-+        if (family != "whisper-v3" && family != "embed-gemma" && family != "d3") {
++        if (!embedding && family != "whisper-v3" && family != "embed-gemma" && family != "d3") {
 +            if (!info.contains("files") || !info["files"].is_array() || info["files"].empty()) {
 +                throw std::runtime_error("missing or empty 'files' array");
 +            }

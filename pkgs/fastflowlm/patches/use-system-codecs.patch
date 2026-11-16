@@ -1,8 +1,7 @@
 diff --git a/src/cmake/FlmAudioCodecs.cmake b/src/cmake/FlmAudioCodecs.cmake
-index cd74dd7..0d60308 100644
 --- a/src/cmake/FlmAudioCodecs.cmake
 +++ b/src/cmake/FlmAudioCodecs.cmake
-@@ -1,97 +1,19 @@
+@@ -1,101 +1,19 @@
  # Audio codecs for AudioReader (src/common/audio/audio_decoder.cpp).
  #
 -#   - libopus 1.6.1, libogg 1.3.6 and libvorbis 1.3.7 (all BSD-3-Clause), built
@@ -65,8 +64,12 @@ index cd74dd7..0d60308 100644
 -        BUILD_BYPRODUCTS ${byproduct})
 -endfunction()
 -
+-# xiph/opus has no GitHub release asset for 1.6.1, and downloads.xiph.org
+-# redirects to ftp.osuosl.org, whose certificate's revocation server Windows
+-# (schannel) cannot always reach (CRYPT_E_REVOCATION_OFFLINE). The extra
+-# mirrors serve the identical tarball under certificates from other CAs.
 -_flm_audio_project(opus
--    "https://downloads.xiph.org/releases/opus/opus-1.6.1.tar.gz;https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.6.1.tar.gz"
+-    "https://downloads.xiph.org/releases/opus/opus-1.6.1.tar.gz;https://ftp.osuosl.org/pub/xiph/releases/opus/opus-1.6.1.tar.gz;https://mirror.csclub.uwaterloo.ca/xiph/releases/opus/opus-1.6.1.tar.gz;https://distfiles.gentoo.org/distfiles/cb/opus-1.6.1.tar.gz"
 -    6ffcb593207be92584df15b32466ed64bbec99109f007c82205f0194572411a1
 -    ${_flm_opus_lib}
 -    -DOPUS_BUILD_PROGRAMS=OFF
@@ -106,7 +109,6 @@ index cd74dd7..0d60308 100644
  # The decoders do wrapping integer arithmetic on corrupt input (e.g. FLAC LPC
  # prediction); make signed overflow defined there instead of undefined.
 diff --git a/src/cmake/FlmImageCodecs.cmake b/src/cmake/FlmImageCodecs.cmake
-index ef1831f..e7b237d 100644
 --- a/src/cmake/FlmImageCodecs.cmake
 +++ b/src/cmake/FlmImageCodecs.cmake
 @@ -1,124 +1,19 @@

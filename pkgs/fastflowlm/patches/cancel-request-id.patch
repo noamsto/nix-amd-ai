@@ -1,18 +1,17 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
-index 920a907..37d01b4 100644
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -13,6 +13,8 @@
- #include <iostream>
+@@ -15,6 +15,8 @@
  #include <iomanip>
  #include <locale>
+ #include <array>
 +#include <cstdlib>
 +#include <sys/random.h>
  
+ namespace {
+ /// Serialize an error body. Error text can carry raw request bytes (a parse error quotes the
+@@ -210,6 +212,19 @@
  
- // Global NPU access control
-@@ -141,6 +143,19 @@ static std::string safe_dump(const json& j) {
-     return j.dump(-1, ' ', false, json::error_handler_t::replace);
  }
  
 +// A guessable default id would let any client cancel another's request via
@@ -31,15 +30,16 @@ index 920a907..37d01b4 100644
  // NPU Access Manager implementation
  bool NPUAccessManager::try_acquire_npu_access() {
      std::lock_guard<std::mutex> lock(g_npu_access_mutex);
-@@ -765,13 +780,13 @@ bool WebServer::handle_request(http::request<http::string_body>& req,
-             return;
-         }
+@@ -896,14 +911,14 @@
+         auto cancellation_token = std::make_shared<CancellationToken>(session);
+         session->set_cancellation_token(cancellation_token);
  
 +        // /api/cancel's request_id names the request to cancel, not this one.
          std::string request_id;
--        if (request_json.contains("request_id")) {
-+        if (key != "POST /api/cancel" && request_json.contains("request_id")) {
-             request_id = request_json["request_id"];
+-        if (request_json.is_object() && request_json.contains("request_id") &&
++        if (key != "POST /api/cancel" && request_json.is_object() && request_json.contains("request_id") &&
+             request_json["request_id"].is_string()) {
+             request_id = request_json["request_id"].get<std::string>();
          }
          else {
 -            static std::atomic<int> counter{ 0 };

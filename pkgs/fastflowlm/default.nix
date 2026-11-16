@@ -50,41 +50,40 @@ stdenv.mkDerivation (finalAttrs: {
   #     default dump() validates UTF-8, and e.what() quotes the request's
   #     bytes), escaping every catch before the NPU lock was released and
   #     wedging it permanently. v1.0.9 releases the lock through an RAII
-  #     guard upstream, so the wedge is gone; the patch keeps the root cause
-  #     out of the response path with a non-throwing safe_dump(), and a
-  #     non-string request_id is refused 400 before it can throw in
-  #     process_task. error.code was mapped to an HTTP status only for an
-  #     object with a numeric code, so a bare-string error (or an object with
-  #     a string code, from request-validation.patch) stayed HTTP 200 --
+  #     guard upstream, so the wedge is gone, and v1.0.13 dumps its own
+  #     error bodies, 404 and 400 included, with the non-throwing
+  #     dump_error_body() (what this patch used to add as safe_dump()) and
+  #     ignores a non-string request_id. The patch keeps the two dumps that
+  #     are left: a handler's streamed chunk and its send_response() body.
+  #     error.code was mapped to an HTTP status only for an object with a
+  #     numeric code, so a bare-string error (or an object with a string
+  #     code, which model-identity.patch's errors carry) stayed HTTP 200 --
   #     supersedes #157, whose numeric-code mapping this keeps, plus a 400
-  #     default for other shapes.
-  #   - request-validation.patch: rest_handler.cpp read required fields with
-  #     `request["field"]` on a const json&, undefined behavior for a missing
-  #     key (JSON_ASSERT is compiled out in release builds) that segfaults or
-  #     returns garbage instead of throwing. Checks presence and type first.
-  #     (v1.0.11 checks /v1/chat/completions' messages and /v1/completions'
-  #     prompt itself, so the patch now covers /api/show, /api/generate,
-  #     /api/chat and the embeddings routes.)
+  #     default for other shapes. (request-validation.patch, which checked
+  #     the required fields of /api/show, /api/generate, /api/chat and the
+  #     embeddings routes, is dropped: v1.0.13's http_guard.hpp does that.)
   #   - model-identity.patch (#173): a request naming a model tag the build
   #     does not know evicted the served model, loaded llama3.2:1b in its
-  #     place, and answered under the requested tag; /v1/embeddings likewise
-  #     labelled the loaded model's vectors with whatever name was asked for.
-  #     The tag is now resolved before anything is unloaded: unknown, empty,
-  #     "model-faker" and non-chat tags get 400 model_not_found, and a known
-  #     model that fails to load gets 500 (a "server_error" type now maps to
-  #     500 in the status mapping above). v1.0.12 itself answers an unknown
-  #     tag on /v1/chat/completions and /v1/completions with a 404 before the
-  #     load (is_known_model), and a no-model request 400 and a failed load
-  #     500; the patch keeps that 404 and routes the rest of those two
-  #     handlers through its own checks, so there an unknown tag is 404, not
-  #     400. An omitted `model` is still served by the loaded chat model;
-  #     /v1/embeddings still requires `model`
-  #     (#171) and refuses any tag but the loaded one. A model_list.json entry
-  #     with a missing or non-string `details.family` now fails the load as
-  #     500 model_load_failed, not a 400 (#181). A per-request `backend` the
+  #     place, and answered under the requested tag. (/v1/embeddings did the
+  #     same with its vectors; v1.0.13 loads the embedding model the request
+  #     names and answers an unknown or non-embedding tag 400, so that part
+  #     of the patch is dropped.) The tag is now resolved before anything is
+  #     unloaded: unknown, empty, "model-faker" and non-chat tags get 400
+  #     model_not_found, and a known model that fails to load gets 500 (a
+  #     "server_error" type now maps to 500 in the status mapping above).
+  #     v1.0.12 itself answers an unknown tag on /v1/chat/completions and
+  #     /v1/completions with a 404 before the load (is_known_model), and a
+  #     no-model request 400 and a failed load 500; the patch keeps that 404
+  #     and routes the rest of those two handlers through its own checks, so
+  #     there an unknown tag is 404, not 400. An omitted `model` is still
+  #     served by the loaded chat model. A model_list.json entry with a
+  #     missing or non-string `details.family` now fails the load as 500
+  #     model_load_failed, not a 400 (#181). A per-request `backend` the
   #     family does not provide is refused 400 before anything is unloaded.
   #     v1.0.11's d3 decision models count as non-chat tags too, since
-  #     get_auto_model() maps them to the same Llama substitution.
+  #     get_auto_model() maps them to the same Llama substitution, and so do
+  #     v1.0.13's extension embedding entries, which are refused the same way
+  #     instead of evicting the served model on a failed chat load.
   #     v1.0.10's own swap (clear the tag and prompt cache, then download,
   #     resolve and load in one try) is kept as the step after these checks.
   #   - no-exception-text.patch (#175): handlers built client error bodies
@@ -98,23 +97,18 @@ stdenv.mkDerivation (finalAttrs: {
   #     since v1.0.12, llama3's fail_inference) keeps its curated fixed text
   #     and the inner exception text goes to the log. The SSE error event v1.0.10 sends when
   #     /v1/chat/completions or /v1/completions fails mid-stream goes through
-  #     the same mapping. v1.0.11's /v1/systemone and /v1/decisions 500 body
+  #     the same mapping, as do v1.0.13's /v1 handler catches (its
+  #     OpenAIExceptionResponse carried e.what()) and the 500 bodies of
+  #     WebServer::handle_request and HttpSession::handle_request. The
+  #     embeddings handler keeps the curated text of a std::invalid_argument
+  #     (unknown model, bad dimensions) and gives the rest the fixed message.
+  #     v1.0.11's /v1/systemone and /v1/decisions 500 body
   #     drops its appended e.what() and keeps the fixed text, and their 422
   #     for a body that is not JSON drops the parser's message (line, column
   #     and offending byte of the body). (A malformed
   #     max_prefill_len or model path entry in model_list.json failing the
   #     load as 500 model_load_failed, which this patch used to add, is
   #     upstream since v1.0.10.)
-  #   - embed-task-prompt.patch (#174): handle_embeddings ignored the
-  #     request's prompt_name/task_type and always embedded with task_query,
-  #     so a document index was built as if every text were a query and
-  #     nothing downstream could tell -- the vector is correctly shaped and
-  #     normed either way. The REST names are now mapped onto the model's
-  #     task enum (OpenFlowLM-Next's task_names/resolve_task/task_policy),
-  #     and an unknown or non-string task is refused 400 invalid_value. A
-  #     model that declares no prompt names (embed-gemma: hardcoded prefixes)
-  #     keeps task_query when the request names none; a model that declares
-  #     prompt names would require one (missing_required_parameter).
   #   - ps-loaded-models.patch (#178): GET /api/ps built its entry from
   #     current_model_tag unconditionally, so with no chat model loaded (flm
   #     serve with no tag, a non-chat startup tag such as embed-gemma:300m,
@@ -124,8 +118,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     same UB was reachable mid-load, when the new engine is set before
   #     current_model_tag. It now lists the chat model only when a chat
   #     engine is loaded under a real tag ({"models": []} otherwise), and
-  #     like Ollama also lists a loaded --embed model. Whisper (--asr) is
-  #     not listed.
+  #     like Ollama also lists the loaded embedding model (read from
+  #     current_embedding_tag under embedding_mutex, since v1.0.13 loads
+  #     embedding models per request). Whisper (--asr) is not listed.
   #   - chat-decode-fault.patch (#180): non-streaming /api/chat ran
   #     generate_with_prompt() -- prefill then decode -- inside a catch that
   #     answered any exception 400 invalid_request_error, so a decode-time
@@ -153,10 +148,11 @@ stdenv.mkDerivation (finalAttrs: {
   #     across a load), so /api/ps does not wait on a load. The tag is
   #     cleared before the old engine is torn down and set once the new one
   #     has loaded, so during a swap /api/ps answers [] rather than the
-  #     outgoing model. POST /api/embeddings ran without the NPU lock and now
-  #     takes it (v1.0.9 now takes the lock in POST /v1/completions, which
-  #     swapped models unlocked, and releases it when the handler returns,
-  #     because handlers call clear_context() on the engine after sending).
+  #     outgoing model. (POST /api/embeddings ran without the NPU lock; v1.0.13
+  #     lists it in requires_npu_access itself. v1.0.9 now takes the lock in
+  #     POST /v1/completions, which swapped models unlocked, and releases it
+  #     when the handler returns, because handlers call clear_context() on the
+  #     engine after sending.)
   #   - accept-loop-rearm.patch (#202): a client that reset its connection
   #     while it sat in the accept queue made the HttpSession constructor
   #     throw: accept() still returns the socket, and remote_endpoint() on it
@@ -172,10 +168,13 @@ stdenv.mkDerivation (finalAttrs: {
   #     /api/chat and /v1/completions never passed the request's
   #     cancellation predicate to insert()/generate(), so a client that
   #     disconnected left flm serve decoding to its token limit. v1.0.9 passes
-  #     the predicate in all of them, including non-streaming /api/chat. The
-  #     patch keeps the rest: a cancelled prefill ends the request the way a
-  #     cancelled decode does -- finalising the stream (or answering {} on the
-  #     non-streaming branches) instead of "Max length reached" -- and, like
+  #     the predicate in all of them, including non-streaming /api/chat, and
+  #     v1.0.13 ends a cancelled /v1/completions prefill itself (a failed one
+  #     now answers an error, not "Max length reached"). The patch keeps the
+  #     rest for /api/generate and /api/chat: a cancelled prefill ends the
+  #     request the way a cancelled decode does -- finalising the stream (or
+  #     answering {} on the non-streaming branches) instead of "Max length
+  #     reached" -- and, like
   #     /v1/chat/completions, resets the token only on the streaming branches
   #     (cancel-keep-early.patch drops those resets again): on a non-streaming
   #     one a reset erases the cancel of a client that left while queued, and
@@ -246,8 +245,9 @@ stdenv.mkDerivation (finalAttrs: {
   #     LM_Config::_load_json's exit(1) and killed the process; the selected
   #     chat entry's `files` is now validated up front (a non-empty array of
   #     strings that lists config.json), so the same malformed entry is
-  #     refused 500 model_load_failed without unloading (#204). d3 entries
-  #     skip that check like the other non-chat families, which are refused.
+  #     refused 500 model_load_failed without unloading (#204). d3 and
+  #     embedding entries skip that check like the other non-chat families,
+  #     which are refused.
   #   - cancel-request-id.patch (#210): every route, POST /api/cancel
   #     included, registered its own cancellation token under the body's
   #     request_id. A cancel therefore overwrote its target's registry slot,
@@ -302,10 +302,11 @@ stdenv.mkDerivation (finalAttrs: {
   #     slot only while it still holds that request's token, so a request that
   #     reuses an id after a cancel is not erased by the cancelled request's
   #     completion; embeddings and audio have no cancellation path and keep
-  #     registering when they start; a non-string request_id is refused 400
-  #     before the request is queued. A route that parses its own raw body
-  #     (System One) takes no request_id from it, as upstream's own parse
-  #     skips those routes.
+  #     registering when they start; a body that is not JSON is answered 400
+  #     before the request is queued, and a non-string request_id gets a
+  #     generated one, as upstream does since v1.0.13. A route that parses its
+  #     own raw body (System One) takes no request_id from it, as upstream's
+  #     own parse skips those routes.
   #   - lm-config-throw.patch (#220): LM_Config::_load_json() called exit(1)
   #     when a model directory had no config.json, so the fault was
   #     uncatchable and killed the process on every path that parsed a
@@ -315,8 +316,10 @@ stdenv.mkDerivation (finalAttrs: {
   #     already answers the serve request path 500 model_load_failed
   #     (#204/#205, kept; after the unload, v1.0.10's own try covers it);
   #     pull_model's existing catch turns it into a clean CLI error and exit
-  #     1; and the optional startup loads log the fault, drop ASR/embeddings
-  #     and keep serving chat models instead of aborting startup.
+  #     1; and the optional startup loads log the fault, drop ASR (and, for
+  #     --embed, the embedding preload, which v1.0.13 makes throw out of the
+  #     constructor instead of exiting) and keep serving chat models instead
+  #     of aborting startup.
   #   - cancel-chat-nonstream.patch: upstream's non-streaming /api/chat answers
   #     200 with content "" when the request is cancelled before the first
   #     token, while /api/generate and /v1/completions answer {} (see
@@ -339,48 +342,62 @@ stdenv.mkDerivation (finalAttrs: {
   #     check (cancel-queued-request.patch) had already made the post-load
   #     insert a no-op, so this patch only removes the cost. No context or
   #     prompt cache is reset, because nothing was inserted.
-  # None of the patches carries attribution: require_field, safe_dump, the
-  # model-identity checks and the embedding task-prompt mapping are ported
-  # from OpenFlowLM-Next (Vegard Berget) -- the Co-authored-by trailer for
-  # that is on the branch commit per this repo's CLAUDE.md, not here.
-  # Still unfixed on ROCm/FastFlowLM main as of v1.0.12; drop once upstream
-  # fixes request validation, the throwing error-response dump, the status
-  # mapping, model substitution, leaking exception text, ignoring the task
-  # prompt, reporting the no-model sentinel in /api/ps, classifying /api/chat
-  # decode faults as client errors, the unsynchronised /api/ps reads, the
-  # unlocked /api/embeddings, a pre-accept reset killing the accept loop,
-  # answering a malformed model_list.json entry as a client error, ignoring a
-  # prefill cancel in Qwen3_5_Omni::insert and in the
-  # /api/generate, /api/chat and /v1/completions handlers, erasing a cancel
-  # that lands before a streaming handler starts, exiting on a
-  # model_list.json entry with no `files`, answering a pre-token cancel of
-  # non-streaming /api/chat with an empty completion, and
-  # /api/cancel cancelling itself instead of its target; and leaving a
-  # truncated /api/generate or /api/chat stream instead of an error when
-  # generate() fails after the first chunk (this repo's #199), and racing
-  # libc's shared static struct tm in the served time formatting (#197). (An
-  # insert() failure is pre-stream in all four handlers, so it keeps the
-  # unchanged HTTP 4xx/5xx path.) v1.0.9 fixed the NPU-lock leak, streaming /api/chat's
-  # double insert, the unlocked /v1/completions, releasing the lock before a
-  # handler is done with the engine, and ignoring a client disconnect outside
-  # /v1/chat/completions, which this series carried before. v1.0.10 clears
-  # the serving tag and prompt cache before a model swap, sizes prefill chunks
-  # per model, and ends a /v1 stream that fails after its first chunk with an
-  # error event; the series is rebased onto those. v1.0.11 validates the /v1
-  # handlers' messages and prompt, and adds the System One routes and the
-  # prefix cache; the series is rebased onto those. v1.0.12 releases a
-  # connection's slot through an idempotent release_connection(), also from
-  # the session destructor, which fixed the leak when a streaming client
-  # disconnects and replaced connection-slot-release.patch (#194); it also
-  # answers an unknown model on /v1/chat/completions and /v1/completions
-  # itself (see model-identity.patch).
+  # None of the patches carries attribution: model_error and the
+  # model-identity checks are ported from OpenFlowLM-Next (Vegard Berget),
+  # as were the since-dropped require_field, safe_dump and embedding
+  # task-prompt mapping -- the Co-authored-by trailer for that is on the
+  # branch commit per this repo's CLAUDE.md, not here.
+  # Still unfixed on ROCm/FastFlowLM main as of v1.0.13; drop once upstream
+  # fixes the throwing dump of a handler's streamed chunk and response body,
+  # the status mapping, model substitution, leaking exception text, reporting
+  # the no-model sentinel in /api/ps, classifying /api/chat decode faults as
+  # client errors, the unsynchronised /api/ps reads, a pre-accept reset
+  # killing the accept loop, answering a malformed model_list.json entry as a
+  # client error, ignoring a prefill cancel in Qwen3_5_Omni::insert and in the
+  # /api/generate and /api/chat handlers, erasing a cancel that lands before a
+  # streaming handler starts, exiting on a model_list.json entry with no
+  # `files`, answering a pre-token cancel of non-streaming /api/chat with an
+  # empty completion, and /api/cancel cancelling itself instead of its target;
+  # and leaving a truncated /api/generate or /api/chat stream instead of an
+  # error when generate() fails after the first chunk (this repo's #199), and
+  # racing libc's shared static struct tm in the served time formatting
+  # (#197). (An insert() failure is pre-stream in all four handlers, so it
+  # keeps the unchanged HTTP 4xx/5xx path.) v1.0.9 fixed the NPU-lock leak,
+  # streaming /api/chat's double insert, the unlocked /v1/completions,
+  # releasing the lock before a handler is done with the engine, and ignoring
+  # a client disconnect outside /v1/chat/completions, which this series
+  # carried before. v1.0.10 clears the serving tag and prompt cache before a
+  # model swap, sizes prefill chunks per model, and ends a /v1 stream that
+  # fails after its first chunk with an error event; the series is rebased
+  # onto those. v1.0.11 validates the /v1 handlers' messages and prompt, and
+  # adds the System One routes and the prefix cache; the series is rebased
+  # onto those. v1.0.12 releases a connection's slot through an idempotent
+  # release_connection(), also from the session destructor, which fixed the
+  # leak when a streaming client disconnects and replaced
+  # connection-slot-release.patch (#194); it also answers an unknown model on
+  # /v1/chat/completions and /v1/completions itself (see model-identity.patch).
+  # v1.0.13 hardens the server itself: http_guard.hpp refuses foreign
+  # browser origins and checks the required fields of /api/show,
+  # /api/generate, /api/chat and the embeddings routes (400 instead of
+  # undefined behavior), every error body goes through dump_error_body(),
+  # handler exceptions never escape into the I/O threads, a malformed JSON
+  # body is a 400, a failed prefill on /v1 answers an error, and a connection
+  # over the limit gets a 503 (ROCm/FastFlowLM#1003, #1014). It also moves
+  # the embedding model behind a per-request handler that honours `model` and
+  # `task` (#1005), and puts the chat engine behind flm::frontend. The series
+  # is rebased onto those: request-validation.patch and embed-task-prompt.patch
+  # are dropped as merged (the latter's REST names prompt_name and task_type
+  # are no longer read; upstream reads `task`), model-identity drops its
+  # embeddings part, ps-loaded-models reads the per-request embedding tag,
+  # cancel-client-disconnect loses its /v1/completions prefill-cancel hunks,
+  # cancel-queued-request parses the body at accept time with upstream's own
+  # 400 for bad JSON, and the patches that used safe_dump() call
+  # dump_error_body().
   # A bump that breaks any patch fails the build rather than silently losing it.
   patches = [
     ./patches/server-error-handling.patch
-    ./patches/request-validation.patch
     ./patches/model-identity.patch
     ./patches/no-exception-text.patch
-    ./patches/embed-task-prompt.patch
     ./patches/ps-loaded-models.patch
     ./patches/chat-decode-fault.patch
     ./patches/stream-chat-generate.patch

@@ -1,7 +1,7 @@
 diff --git a/src/server/server.cpp b/src/server/server.cpp
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -225,6 +225,37 @@
+@@ -294,6 +294,37 @@
      read_request(cors);
  }
  
@@ -29,7 +29,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 +                doc["error"].contains("message") && doc["error"]["message"].is_string()) {
 +                doc["error"] = doc["error"]["message"];
 +            }
-+            write_streaming_response(json(safe_dump(doc) + "\n"), true);
++            write_streaming_response(json(dump_error_body(doc) + "\n"), true);
 +        }
 +    } catch (...) {
 +        release_connection();
@@ -39,7 +39,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  ///@brief close connection
  void HttpSession::close_connection() {
      boost::system::error_code ec;
-@@ -327,6 +358,12 @@
+@@ -458,6 +489,12 @@
  
      if (!is_streaming_ && !deferred) {
          write_response();

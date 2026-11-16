@@ -1,5 +1,4 @@
 diff --git a/src/include/lm_config.hpp b/src/include/lm_config.hpp
-index 570ace5..60e0f2b 100644
 --- a/src/include/lm_config.hpp
 +++ b/src/include/lm_config.hpp
 @@ -11,6 +11,7 @@
@@ -10,7 +9,7 @@ index 570ace5..60e0f2b 100644
  
  /// \brief read one parameter out of a config json
  /// \note Same semantics as JSON_GET (missing OR null falls back to the default),
-@@ -104,8 +105,7 @@ class LM_Config{
+@@ -117,8 +118,7 @@
              flm::file_access::ObserveOpen(config_path);
              std::ifstream file(config_path);
              if (!file.is_open()){
@@ -21,10 +20,26 @@ index 570ace5..60e0f2b 100644
              // read the json file as a string
              std::string json_str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index f32472b..bd22b00 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -918,27 +918,35 @@ RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model
+@@ -748,7 +748,15 @@
+     }
+ #endif
+     if (args.embed && !embedding_only) {
+-        ensure_embed_model_loaded(args.embed_tag);
++        // Embeddings are optional: a malformed entry (an absent config.json, a
++        // non-array `files`) or a failed download must not abort startup, and
++        // the next embeddings request retries the load.
++        try {
++            ensure_embed_model_loaded(args.embed_tag);
++        }
++        catch (const std::exception& e) {
++            header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()) + "; continuing without it");
++        }
+     }
+ 
+     if (!args.decision.empty()) {
+@@ -977,27 +985,35 @@
  void RestHandler::ensure_asr_model_loaded(const std::string& model_tag) {
  #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
      std::string ensure_tag = model_tag;
@@ -77,56 +92,3 @@ index f32472b..bd22b00 100644
      }
  #else
      throw std::runtime_error("ASR models are not supported in this build");
-@@ -1030,28 +1038,34 @@ void RestHandler::handle_systemone(const std::string& raw_body,
- void RestHandler::ensure_embed_model_loaded(const std::string& model_tag) {
- #ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
-     std::string ensure_tag = model_tag;
--    switch (this->downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true)) {
--        case ModelDownloader::ModelStatus::Ready:
--            break;
--        case ModelDownloader::ModelStatus::Outdated:
--        case ModelDownloader::ModelStatus::Missing:
--            this->downloader.pull_model(ensure_tag, this->modelscope);
--            break;
--        case ModelDownloader::ModelStatus::Incompatible:
--            header_print("ERROR", "EmbeddingGemma is incompatible with this version of FastFlowLM, skipping... ");
--            this->embed = false;
--            return;
--    }
--    auto [embedding_model_tag, auto_embedding_engine] = get_auto_embedding_model(ensure_tag, this->npu_device_inst);
--    this->auto_embedding_engine = std::move(auto_embedding_engine);
--    auto [new_embedding_model_tag, embedding_model_info] = this->supported_models.get_model_info(embedding_model_tag);
--    std::string embedding_model_path = this->supported_models.get_model_path(new_embedding_model_tag);
-+    // A malformed embed-gemma entry (an absent config.json, or a non-array
-+    // `files`) makes is_model_downloaded()/load_model() throw. Embeddings are
-+    // optional: log it, drop embeddings, and keep serving chat models rather
-+    // than aborting startup.
-     try {
-+        switch (this->downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true)) {
-+            case ModelDownloader::ModelStatus::Ready:
-+                break;
-+            case ModelDownloader::ModelStatus::Outdated:
-+            case ModelDownloader::ModelStatus::Missing:
-+                this->downloader.pull_model(ensure_tag, this->modelscope);
-+                break;
-+            case ModelDownloader::ModelStatus::Incompatible:
-+                header_print("ERROR", "EmbeddingGemma is incompatible with this version of FastFlowLM, skipping... ");
-+                this->embed = false;
-+                return;
-+        }
-+        auto [embedding_model_tag, auto_embedding_engine] = get_auto_embedding_model(ensure_tag, this->npu_device_inst);
-+        this->auto_embedding_engine = std::move(auto_embedding_engine);
-+        auto [new_embedding_model_tag, embedding_model_info] = this->supported_models.get_model_info(embedding_model_tag);
-+        std::string embedding_model_path = this->supported_models.get_model_path(new_embedding_model_tag);
-         this->auto_embedding_engine->load_model(embedding_model_path, embedding_model_info, this->preemption);
-     }
-     catch (const std::exception& e) {
--        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()));
--        exit(EXIT_FAILURE);
-+        header_print("ERROR", "Failed to load embedding model: " + std::string(e.what()) + "; serving without embeddings");
-+        this->auto_embedding_engine.reset();
-+        this->embed = false;
-+        return;
-     }
- #else
-     throw std::runtime_error("Embedding models are not supported in this build");

@@ -1,8 +1,8 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -121,6 +121,38 @@
-     return json();
+@@ -119,6 +119,38 @@
+ }
  }
  
 +// Ported from OpenFlowLM-Next's openai_compat::model_error
@@ -40,7 +40,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -620,8 +652,9 @@
+@@ -727,8 +759,9 @@
              header_print("Warning", "Default model tag '" << default_model_tag << "' is not supported. Falling back to 'llama3.2:1b'.");
              this->default_model_tag = "llama3.2:1b";
          }
@@ -51,7 +51,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
          }
      }
      else {
-@@ -636,86 +669,130 @@
+@@ -743,87 +776,133 @@
  
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
@@ -68,12 +68,6 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 -        header_print_r("ERROR", "Model tag '" << model_tag
 -            << "' is not supported. Please check with `flm list`.");
 -        return false;
--    }
--
--    // Nothing was chosen, so there is nothing to load; succeed only if a
--    // model is in fact loaded.
--    if (model_tag == "model-faker") {
--        return auto_chat_engine != nullptr;
 +///@param model_field_present whether the request actually carried a "model" key
 +RestHandler::ModelLoad RestHandler::ensure_model_loaded(const std::string& model_tag, bool model_field_present,
 +                                                        const std::string& request_backend) {
@@ -83,7 +77,12 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 +    std::string ensure_tag = supported_models.cut_tag(model_tag);
 +    if (supported_models.is_model_supported(ensure_tag)) {
 +        ensure_tag = supported_models.rectify_model_tag(ensure_tag);
-+    }
+     }
+-
+-    // Nothing was chosen, so there is nothing to load; succeed only if a
+-    // model is in fact loaded.
+-    if (model_tag == "model-faker") {
+-        return auto_chat_engine != nullptr;
 +    // "model-faker" is the sentinel for `flm serve` started without a chat model,
 +    // and the handlers default `model` to current_model_tag -- so a request naming
 +    // no model arrives here as the sentinel.
@@ -137,22 +136,8 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 -            engine->set_prefix_limits(this->prefix_cache_mb, this->prefix_slots, this->prefix_min_gain);
 -            const auto load_started = std::chrono::steady_clock::now();
 -            engine->load_model(supported_models.get_load_path(new_ensure_tag), model_info, ctx_length, preemption, requested_backend);
+-            engine->save_request_settings();
 -            report_load_time(load_started);
--
--            // Per model, not per process: the flash models take 1024-token
--            // chunks and the rest 4096, so keeping the first model's value
--            // feeds every later model chunks sized for another one.
--            this->prefill_chunk_len = this->prefill_chunk_len_arg != -1
--                ? this->prefill_chunk_len_arg
--                : model_info["max_prefill_len"].get<int>();
--            this->auto_chat_engine = std::move(engine);
--            this->current_model_tag = ensure_tag;
--            this->current_backend = requested_backend;
--        }
--        catch (const std::exception& e) {
--            header_print("ERROR", "Failed to load model: " + std::string(e.what()));
--            return false;
--        }
 +    if (ensure_tag == current_model_tag && current_backend == requested_backend && auto_chat_engine) {
 +        return ModelLoad::Ok;
 +    }
@@ -170,21 +155,35 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 +    // json::exception surface as a client error. Resolved before anything is
 +    // unloaded, so the refusal does not evict the model that is serving.
 +    std::string family;
++    bool embedding = false;
 +    try {
 +        auto [info_tag, info] = supported_models.get_model_info(ensure_tag);
++        embedding = is_embedding_model(info);  // an extension's embedding entry has its own family
 +        family = info["details"]["family"];
-     }
--    return auto_chat_engine != nullptr;
++    }
 +    catch (const std::exception& e) {
 +        header_print("ERROR", "model '" + ensure_tag + "' has a malformed model-list entry: " + std::string(e.what()));
 +        return ModelLoad::LoadFailed;
 +    }
-+    if (family == "whisper-v3" || family == "embed-gemma" || family == "d3") {
++    if (embedding || family == "whisper-v3" || family == "embed-gemma" || family == "d3") {
 +        header_print("ERROR", "model '" + ensure_tag + "' is not a chat model -- refusing; '" +
 +                              current_model_tag + "' stays loaded");
 +        return ModelLoad::NotChatModel;
 +    }
-+
+ 
+-            // Per model, not per process: the flash models take 1024-token
+-            // chunks and the rest 4096, so keeping the first model's value
+-            // feeds every later model chunks sized for another one.
+-            this->prefill_chunk_len = this->prefill_chunk_len_arg != -1
+-                ? this->prefill_chunk_len_arg
+-                : model_info["max_prefill_len"].get<int>();
+-            this->auto_chat_engine = std::move(engine);
+-            this->current_model_tag = ensure_tag;
+-            this->current_backend = requested_backend;
+-        }
+-        catch (const std::exception& e) {
+-            header_print("ERROR", "Failed to load model: " + std::string(e.what()));
+-            return false;
 +    if (downloader.is_model_downloaded(ensure_tag, false, /*fast_check=*/true) == ModelDownloader::ModelStatus::Incompatible) {
 +        header_print("ERROR", "model '" + ensure_tag + "' is not compatible with this version of FastFlowLM -- refusing; '" +
 +                              current_model_tag + "' stays loaded");
@@ -229,13 +228,14 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 +                break;
 +            case ModelDownloader::ModelStatus::Incompatible:
 +                throw std::runtime_error(loaded_tag + " is incompatible with this version of FastFlowLM");
-+        }
+         }
 +        auto [new_ensure_tag, model_info] = supported_models.get_model_info(loaded_tag);
 +        engine->set_server_mode(true);
 +        engine->configure_parameter("img_pre_resize", this->img_pre_resize);
 +        engine->set_prefix_limits(this->prefix_cache_mb, this->prefix_slots, this->prefix_min_gain);
 +        const auto load_started = std::chrono::steady_clock::now();
 +        engine->load_model(supported_models.get_load_path(new_ensure_tag), model_info, ctx_length, preemption, requested_backend);
++        engine->save_request_settings();
 +        report_load_time(load_started);
 +
 +        // Per model, not per process: the flash models take 1024-token
@@ -251,12 +251,13 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 +    catch (const std::exception& e) {
 +        header_print("ERROR", "Failed to load model: " + std::string(e.what()));
 +        return ModelLoad::LoadFailed;
-+    }
+     }
+-    return auto_chat_engine != nullptr;
 +    return ModelLoad::Ok;
  }
  
  ///@brief Whether ensure_model_loaded's gate would admit the model tag
-@@ -1046,9 +1123,8 @@
+@@ -1125,9 +1204,8 @@
          int length_limit = request.value("max_tokens", 4096);
          auto load_start_time = time_utils::now();
          // TODO: Use Another Check Function avoid loading again
@@ -268,7 +269,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1173,13 +1249,12 @@
+@@ -1254,13 +1332,12 @@
          int length_limit = options.value("num_predict", 4096);
  
          auto load_start_time = time_utils::now();
@@ -285,50 +286,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
          configure_chat_engine_parameters(options, request);
  
          // messages = normalize_messages(messages);
-@@ -1292,6 +1367,17 @@
-                                    std::function<void(const json&)> send_response,
-                                    StreamResponseCallback send_streaming_response) {
-     try {
-+#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
-+        if (!this->embed || !this->auto_embedding_engine) {
-+#else
-+        if (!this->embed) {
-+#endif
-+            send_response(json{{"error", {
-+                {"message", "no embedding model is loaded; start flm serve with --embed 1 to "
-+                            "serve embeddings."},
-+                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}});
-+            return;
-+        }
-         if (json err = require_field(request, "model", RequiredFieldType::String); !err.is_null()) {
-             send_response(err);
-             return;
-@@ -1305,6 +1391,24 @@
-             return;
-         }
-         std::string model = request["model"].get<std::string>();
-+
-+#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
-+        // One embedding model is loaded per server.
-+        std::string ensure_tag = supported_models.cut_tag(model);
-+        if (supported_models.is_model_supported(ensure_tag)) {
-+            ensure_tag = supported_models.rectify_model_tag(ensure_tag);
-+        }
-+        std::string loaded = this->auto_embedding_engine->get_current_model();
-+        if (ensure_tag != loaded) {
-+            send_response(json{{"error", {
-+                {"message", "this server has '" + loaded + "' loaded, not '" + model +
-+                            "'. One embedding model is loaded per server."},
-+                {"type", "invalid_request_error"}, {"param", "model"}, {"code", "model_not_found"}}}});
-+            return;
-+        }
-+        model = loaded;
-+#endif
-+
-         std::vector<std::string> inputs;
- 
-         if (request["input"].is_string()) {
-@@ -1591,8 +1695,8 @@
+@@ -1580,8 +1657,8 @@
              return;
          }
          auto load_start_time = time_utils::now();
@@ -339,7 +297,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
              return;
          }
          auto load_end_time = time_utils::now();
-@@ -1676,7 +1780,7 @@
+@@ -1675,7 +1752,7 @@
              }
          }
  
@@ -348,7 +306,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
              current_messages = convert_tool_responses_gemma4(current_messages);
          }
  
-@@ -2053,8 +2157,8 @@
+@@ -2038,8 +2115,8 @@
  
          int length_limit = value_or(request, "max_tokens", 4096);
  
@@ -362,7 +320,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
-@@ -39,6 +39,10 @@
+@@ -40,6 +40,10 @@
  
  class RestHandler {
  public:
@@ -373,7 +331,7 @@ diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
      RestHandler(model_list& models, ModelDownloader& downloader, program_args_t& args,
                  flm_rt::device* npu_device);
      ~RestHandler();
-@@ -122,8 +126,8 @@
+@@ -124,8 +128,8 @@
          std::shared_ptr<CancellationToken> cancellation_token = nullptr);
  
  private:
@@ -387,7 +345,7 @@ diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
 diff --git a/src/server/server.cpp b/src/server/server.cpp
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -741,12 +741,15 @@
+@@ -878,12 +878,15 @@
              // An OpenAI style error carries its HTTP status as error.code: 400, 404, 500, ...
              // `code` can also be a STRING ("missing_required_parameter",
              // "invalid_value") or absent entirely; only a numeric code is

@@ -1,8 +1,7 @@
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
-index 1b6031a..e505e0d 100644
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -1632,18 +1632,35 @@ void RestHandler::handle_ps(const json& request,
+@@ -1514,18 +1514,37 @@
          
          std::string expires_at = expires_ss.str();
          
@@ -32,10 +31,13 @@ index 1b6031a..e505e0d 100644
 +                {"expires_at", expires_at},
 +            });
 +        }
-+#ifndef FASTFLOWLM_LINUX_LIMITED_MODELS
 +        // Like Ollama, /api/ps lists every loaded model, embedding included.
-+        if (this->embed && this->auto_embedding_engine) {
-+            std::string embedding_tag = this->auto_embedding_engine->get_current_model();
++        std::string embedding_tag;
++        {
++            std::lock_guard lock(embedding_mutex);
++            embedding_tag = current_embedding_tag;
++        }
++        if (!embedding_tag.empty()) {
 +            auto [new_embedding_tag, embedding_model_info] = supported_models.get_model_info(embedding_tag);
 +            models.push_back({
 +                {"name", embedding_tag},
@@ -45,7 +47,6 @@ index 1b6031a..e505e0d 100644
 +                {"expires_at", expires_at},
 +            });
 +        }
-+#endif
 +        json response = {{"models", models}};
          // std::cout << "response: " << response.dump(4) << std::endl;
          send_response(response);

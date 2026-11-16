@@ -16,7 +16,7 @@ diff --git a/src/common/AutoDecisionModel/auto_decision_model.cpp b/src/common/A
 diff --git a/src/common/AutoModel/modeling_llama3.cpp b/src/common/AutoModel/modeling_llama3.cpp
 --- a/src/common/AutoModel/modeling_llama3.cpp
 +++ b/src/common/AutoModel/modeling_llama3.cpp
-@@ -42,11 +42,10 @@
+@@ -43,11 +43,10 @@
  void Llama3::fail_inference(const std::string& detail) {
      const bool poisoned = this->backend_ && this->backend_->poisoned();
      this->_shared_after_inference_failure(poisoned);
@@ -34,7 +34,7 @@ diff --git a/src/common/AutoModel/modeling_llama3.cpp b/src/common/AutoModel/mod
 diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/modeling_phi4.cpp
 --- a/src/common/AutoModel/modeling_phi4.cpp
 +++ b/src/common/AutoModel/modeling_phi4.cpp
-@@ -105,11 +105,10 @@
+@@ -106,11 +106,10 @@
  void Phi4::fail_inference(const std::string& detail) {
      const bool poisoned = backend_ && backend_->poisoned();
      _shared_after_inference_failure(poisoned);
@@ -49,10 +49,34 @@ diff --git a/src/common/AutoModel/modeling_phi4.cpp b/src/common/AutoModel/model
  }
  
  bool Phi4::insert(chat_meta_info_t& meta_info, lm_uniform_input_t& input,
+diff --git a/src/server/embedding_handler.cpp b/src/server/embedding_handler.cpp
+--- a/src/server/embedding_handler.cpp
++++ b/src/server/embedding_handler.cpp
+@@ -85,10 +85,16 @@
+     }
+     catch (const std::exception& e) {
+         if (cancelled()) return;
+-        const int code = dynamic_cast<const std::invalid_argument*>(&e) ||
+-                         dynamic_cast<const nlohmann::json::exception*>(&e) ? 400 : 500;
+-        send_response({{"error", {{"message", e.what()},
+-                                  {"type", code == 400 ? "invalid_request_error" : "server_error"},
++        header_print("ERROR", std::string("Embedding failed: ") + e.what());
++        // Only std::invalid_argument carries curated text (unknown model, bad dimensions). A
++        // json::exception quotes nlohmann internals and anything else is a server fault, so
++        // their text stays in the log, not the response.
++        const bool curated = dynamic_cast<const std::invalid_argument*>(&e) != nullptr;
++        const bool bad_request = curated || dynamic_cast<const nlohmann::json::exception*>(&e) != nullptr;
++        const int code = bad_request ? 400 : 500;
++        const std::string message = curated ? e.what() : bad_request ? "Invalid request" : "Internal error";
++        send_response({{"error", {{"message", message},
++                                  {"type", bad_request ? "invalid_request_error" : "server_error"},
+                                   {"code", code}}}});
+     }
+ }
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -30,12 +30,6 @@
+@@ -37,23 +37,6 @@
                         {"session_cleared", error.session_cleared()}}}};
  }
  
@@ -62,10 +86,21 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 -    return {{"error", error.what()}};
 -}
 -
- /// \brief The reply to a model name the catalog does not have: a 404, as OpenAI's
- json UnknownModelResponse(const std::string& model) {
-     return {{"error", {{"message", "The model '" + model + "' does not exist. Please check with `flm list`."},
-@@ -153,6 +147,24 @@
+-/// \brief The reply to an exception on a /v1 endpoint: an OpenAI error body whose code makes it an HTTP 500
+-/// \note ExceptionResponse above keeps the Ollama shape ({"error": "..."}, no code, so HTTP 200)
+-///       that the /api/* handlers send; only the /v1 handlers use this one.
+-json OpenAIExceptionResponse(const std::exception& error) {
+-    if (const auto* model_error = dynamic_cast<const ModelRequestError*>(&error))
+-        return ModelErrorResponse(*model_error);
+-    return {{"error", {{"message", error.what()},
+-                       {"type", "server_error"},
+-                       {"code", 500}}}};
+-}
+-
+ /// \brief The reply when insert() returned false without being cancelled: the reason the model gave, if any
+ json PrefillFailedResponse(const chat_meta_info_t& meta_info) {
+     const std::string message = meta_info.error_message.empty() ? "Prefill failed (see server log)" : meta_info.error_message;
+@@ -151,6 +134,24 @@
      }
  }
  
@@ -90,7 +125,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
  ///@brief Normalize messages by merging consecutive user messages (like Ollama does)
  ///@param messages the original messages
  ///@return normalized messages with consecutive user messages merged
-@@ -907,7 +919,7 @@
+@@ -1019,7 +1020,7 @@
      catch (const std::exception& e) {
          header_print("ERROR", "System One request failed: " << e.what());
          reply["__http_status"] = 500;
@@ -99,7 +134,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
      send_response(reply);
  }
-@@ -1092,8 +1104,7 @@
+@@ -1175,8 +1176,7 @@
          send_response(info);
      }
      catch (const std::exception& e) {
@@ -109,7 +144,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -1152,16 +1163,14 @@
+@@ -1237,16 +1237,14 @@
                      return;
                  }
              } catch (const std::exception& e) {
@@ -128,7 +163,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1186,16 +1195,14 @@
+@@ -1271,16 +1269,14 @@
                      return;
                  }
              } catch (const std::exception& e) {
@@ -147,7 +182,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1219,8 +1226,7 @@
+@@ -1304,8 +1300,7 @@
              send_response(response);
          }
      } catch (const std::exception& e) {
@@ -157,7 +192,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -1281,8 +1287,7 @@
+@@ -1366,8 +1361,7 @@
                      return;
                  }
              } catch (const std::exception& e) {
@@ -167,7 +202,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1290,8 +1295,7 @@
+@@ -1375,8 +1369,7 @@
                  auto_chat_engine->generate(meta_info, length_limit, ostream,
                      [&] { return cancellation_token && cancellation_token->cancelled(); });
              } catch (const std::exception& e) {
@@ -177,7 +212,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1315,8 +1319,7 @@
+@@ -1400,8 +1393,7 @@
                      meta_info, uniformed_input, length_limit, nstream,
                      [&] { return cancellation_token && cancellation_token->cancelled(); });
              } catch (const std::exception& e) {
@@ -187,7 +222,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -1350,8 +1353,7 @@
+@@ -1435,8 +1427,7 @@
              this->auto_chat_engine->clear_context();
          }
      } catch (const std::exception& e) {
@@ -197,28 +232,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -1460,19 +1462,8 @@
-         }
-         send_response(response);
-     }
--    catch (const json::exception& e) {
--        // A missing or mistyped "model" / "input": the request is at fault
--        send_response({{"error", {{"message", std::string("Invalid embeddings request: ") + e.what()},
--                                  {"type", "invalid_request_error"},
--                                  {"code", 400}}}});
--    }
-     catch (const std::exception& e) {
--        // A failed NPU dispatch throws from embed(); it must reach the client as a 5xx, not a 200
--        // whose body is an error string (the 200 is what let a broken vector look like an answer).
--        header_print("ERROR", std::string("Embedding failed: ") + e.what());
--        send_response({{"error", {{"message", e.what()},
--                                  {"type", "server_error"},
--                                  {"code", 500}}}});
-+        send_response(exception_error("handle_embeddings", e));
-     }
- }
- 
-@@ -1487,8 +1478,7 @@
+@@ -1451,8 +1442,7 @@
          json models = supported_models.get_all_models_ollama();
          send_response(models);
      } catch (const std::exception& e) {
@@ -228,7 +242,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -1517,8 +1507,7 @@
+@@ -1481,8 +1471,7 @@
          send_response(models);
      }
      catch (const std::exception& e) {
@@ -238,7 +252,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -1576,8 +1565,7 @@
+@@ -1540,8 +1529,7 @@
          // std::cout << "response: " << response.dump(4) << std::endl;
          send_response(response);
      } catch (const std::exception& e) {
@@ -248,56 +262,55 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -1861,8 +1849,7 @@
+@@ -1829,7 +1817,7 @@
                      return;
                  }
              } catch (const std::exception& e) {
--                json error_response = ExceptionResponse(e);
--                send_response(error_response);
-+                send_response(exception_error("handle_openai_chat_completion", e, true));
+-                send_stream_error(OpenAIExceptionResponse(e));
++                send_stream_error(exception_error("handle_openai_chat_completion", e, true));
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1876,7 +1863,7 @@
+@@ -1843,7 +1831,7 @@
                  if (error.session_cleared()) this->prompt_cache.reset();
                  return;
              } catch (const std::exception& e) {
--                send_stream_error(ExceptionResponse(e));
+-                send_stream_error(OpenAIExceptionResponse(e));
 +                send_stream_error(exception_error("handle_openai_chat_completion", e));
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1889,8 +1876,7 @@
+@@ -1856,8 +1844,7 @@
              try {
                  ostream.finalize(meta_info);
              } catch (const std::exception& e) {
 -                header_print("ERROR", std::string("Finishing the stream failed: ") + e.what());
--                send_stream_error(ExceptionResponse(e));
+-                send_stream_error(OpenAIExceptionResponse(e));
 +                send_stream_error(exception_error("handle_openai_chat_completion: finishing the stream", e));
              }
              log_request_summary(meta_info, this->auto_chat_engine->get_current_context_length(), this->auto_chat_engine->get_max_length());
          }
-@@ -1929,8 +1915,7 @@
+@@ -1889,8 +1876,7 @@
                      return;
                  }
              } catch (const std::exception& e) {
--                json error_response = ExceptionResponse(e);
+-                json error_response = OpenAIExceptionResponse(e);
 -                send_response(error_response);
 +                send_response(exception_error("handle_openai_chat_completion", e, true));
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1940,8 +1925,7 @@
+@@ -1900,8 +1886,7 @@
                  response_text = auto_chat_engine->generate(meta_info, length_limit, out, [&] { return cancellation_token->cancelled(); });
                  out.flush();
              } catch (const std::exception& e) {
--                json error_response = ExceptionResponse(e);
+-                json error_response = OpenAIExceptionResponse(e);
 -                send_response(error_response);
 +                send_response(exception_error("handle_openai_chat_completion", e));
                  this->auto_chat_engine->clear_context();
                  this->prompt_cache.reset();
                  return;
-@@ -1981,14 +1965,7 @@
+@@ -1941,14 +1926,7 @@
          }
  
      } catch (const std::exception& e) {
@@ -313,7 +326,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -2108,14 +2085,7 @@
+@@ -2068,14 +2046,7 @@
          send_response(error_response);
      }
      catch (const std::exception& e) {
@@ -329,21 +342,20 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
  }
  
-@@ -2206,8 +2176,7 @@
+@@ -2172,7 +2143,7 @@
                      return;
                  }
              } catch (const std::exception& e) {
--                json error_response = ExceptionResponse(e);
--                send_response(error_response);
-+                send_response(exception_error("handle_openai_completion", e, true));
+-                send_stream_error(OpenAIExceptionResponse(e));
++                send_stream_error(exception_error("handle_openai_completion", e, true));
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -2217,15 +2186,14 @@
+@@ -2182,15 +2153,14 @@
                  send_stream_error(ModelErrorResponse(error));
                  return;
              } catch (const std::exception& e) {
--                send_stream_error(ExceptionResponse(e));
+-                send_stream_error(OpenAIExceptionResponse(e));
 +                send_stream_error(exception_error("handle_openai_completion", e));
                  this->auto_chat_engine->clear_context();
                  return;
@@ -352,16 +364,16 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  ostream.finalize(meta_info);
              } catch (const std::exception& e) {
 -                header_print("ERROR", std::string("Finishing the stream failed: ") + e.what());
--                send_stream_error(ExceptionResponse(e));
+-                send_stream_error(OpenAIExceptionResponse(e));
 +                send_stream_error(exception_error("handle_openai_completion: finishing the stream", e));
              }
              log_request_summary(meta_info, this->auto_chat_engine->get_current_context_length(), this->auto_chat_engine->get_max_length());
  
-@@ -2245,16 +2213,14 @@
+@@ -2215,16 +2185,14 @@
                      return;
                  }
              } catch (const std::exception& e) {
--                json error_response = ExceptionResponse(e);
+-                json error_response = OpenAIExceptionResponse(e);
 -                send_response(error_response);
 +                send_response(exception_error("handle_openai_completion", e, true));
                  this->auto_chat_engine->clear_context();
@@ -370,13 +382,13 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
              try {
                  auto_chat_engine->generate(meta_info, length_limit, ostream, [&] { return cancellation_token && cancellation_token->cancelled(); });
              } catch (const std::exception& e) {
--                json error_response = ExceptionResponse(e);
+-                json error_response = OpenAIExceptionResponse(e);
 -                send_response(error_response);
 +                send_response(exception_error("handle_openai_completion", e));
                  this->auto_chat_engine->clear_context();
                  return;
              }
-@@ -2287,13 +2253,6 @@
+@@ -2257,13 +2225,6 @@
          }
      }
      catch (const std::exception& e) {
@@ -394,16 +406,16 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 diff --git a/src/server/server.cpp b/src/server/server.cpp
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -134,6 +134,8 @@
- // the default .dump() validates UTF-8, so building {"error": e.what()} and
- // dumping it threw a second time, escaping the catch before it released the
- // NPU lock. error_handler_t::replace substitutes U+FFFD instead of throwing.
-+// Response bodies no longer carry e.what(), but safe_dump still guards
-+// request text a handler echoes back (e.g. a model tag).
- // Ported from OpenFlowLM-Next's server.cpp (Vegard Berget).
- static std::string safe_dump(const json& j) {
-     return j.dump(-1, ' ', false, json::error_handler_t::replace);
-@@ -774,8 +776,8 @@
+@@ -408,7 +408,7 @@
+             res_.keep_alive(false);
+             res_.result(http::status::internal_server_error);
+             res_.set(http::field::content_type, "application/json");
+-            res_.body() = dump_error_body(json{ {"error", std::string("Internal server error: ") + e.what()} });
++            res_.body() = dump_error_body(json{ {"error", { {"message", "Internal error"}, {"type", "server_error"} }} });
+             res_.prepare_payload();
+         } else {
+             close_connection();
+@@ -911,8 +911,8 @@
                  response_ref.set(http::field::content_type, "text/plain; charset=utf-8");
              }
              else {
@@ -411,16 +423,32 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 -                // and e.what() is not guaranteed valid UTF-8.
 +                // response_data can echo request text (e.g. a model tag), which
 +                // is not guaranteed valid UTF-8.
-                 response_ref.body() = safe_dump(response_data);
+                 response_ref.body() = dump_error_body(response_data);
                  response_ref.set(http::field::content_type, "application/json");
              }
-@@ -826,7 +828,8 @@
+@@ -948,13 +948,14 @@
+             unregister_active_request(request_id);
+ 
+             const bool bad_body = !json::accept(req_ref.body());
++            if (!bad_body) header_print("ERROR", "Handler exception: " + std::string(e.what()));
+             res_ref.result(bad_body ? http::status::bad_request : http::status::internal_server_error);
+             res_ref.body() = bad_body
+                 ? dump_error_body(json{ {"error", {
+                     {"message", "Invalid JSON: " + json_log::what(e)},
+                     {"type", "invalid_request_error"},
+                     {"code", 400}}} })
+-                : dump_error_body(json{ {"error", std::string("Handler exception: ") + e.what()} });
++                : dump_error_body(json{ {"error", { {"message", "Internal error"}, {"type", "server_error"} }} });
+             res_ref.set(http::field::content_type, "application/json");
+             res_ref.prepare_payload();
+ 
+@@ -967,7 +968,8 @@
              unregister_active_request(request_id);
  
              res_ref.result(http::status::internal_server_error);
--            res_ref.body() = safe_dump(json{ {"error", std::string("Handler exception: ") + e.what()} });
+-            res_ref.body() = dump_error_body(json{ {"error", std::string("Handler exception: ") + e.what()} });
 +            header_print("ERROR", "Handler exception: " + std::string(e.what()));
-+            res_ref.body() = safe_dump(json{ {"error", { {"message", "Internal error"}, {"type", "server_error"} }} });
++            res_ref.body() = dump_error_body(json{ {"error", { {"message", "Internal error"}, {"type", "server_error"} }} });
              res_ref.set(http::field::content_type, "application/json");
              res_ref.prepare_payload();
  
