@@ -5,9 +5,9 @@
      "thenoise|thenoise"
      "ds4|ds4"
 +    "strata|strata"
-     "cloud|cloud"
-     "thinksound|thinksound"
-     "acestep|acestep"
+     "rocmfpx|rocmfpx"
+     "halogen|halogen"
+     "gufo|gufo"
 --- a/src/cpp/include/lemon/backends/strata/strata.h	1970-01-01 02:00:00.000000000 +0200
 +++ b/src/cpp/include/lemon/backends/strata/strata.h	2026-10-07 21:21:54.721212418 +0300
 @@ -0,0 +1,49 @@

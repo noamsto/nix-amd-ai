@@ -1,7 +1,23 @@
+diff --git a/src/server/embedding_handler.cpp b/src/server/embedding_handler.cpp
+--- a/src/server/embedding_handler.cpp
++++ b/src/server/embedding_handler.cpp
+@@ -84,10 +84,12 @@
+     // construction/load leaves no engine or tag, so the next request retries.
+     auto_embedding_engine.reset();
+     current_embedding_tag.clear();
++    publish_serving_embedding_tag("");
+     auto engine = get_auto_embedding_model(info, npu_device_inst);
+     engine->load_model(supported_models.get_model_path(tag), info, preemption);
+     auto_embedding_engine = std::move(engine);
+     current_embedding_tag = tag;
++    publish_serving_embedding_tag(tag);
+ }
+ 
+ ///@brief Handle the embeddings request
 diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 --- a/src/server/rest_handler.cpp
 +++ b/src/server/rest_handler.cpp
-@@ -765,6 +765,20 @@
+@@ -775,6 +775,34 @@
  ///@return the rest handler
  RestHandler::~RestHandler() = default;
  
@@ -19,10 +35,24 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
 +    return serving_chat_tag;
 +}
 +
++///@brief Publish the embedding model tag that /api/ps lists
++///@param tag the loaded embedding tag, or empty when none is loaded
++void RestHandler::publish_serving_embedding_tag(std::string tag) {
++    std::lock_guard<std::mutex> lock(loaded_model_mutex);
++    serving_embedding_tag = std::move(tag);
++}
++
++///@brief Snapshot the embedding model tag that /api/ps lists
++///@return the loaded embedding tag, or empty when none is loaded
++std::string RestHandler::serving_embedding_tag_snapshot() const {
++    std::lock_guard<std::mutex> lock(loaded_model_mutex);
++    return serving_embedding_tag;
++}
++
  ///@brief Ensure the model is loaded
  ///@param model_tag the model tag
  ///@param model_field_present whether the request actually carried a "model" key
-@@ -835,6 +849,7 @@
+@@ -851,6 +879,7 @@
          return ModelLoad::UnknownBackend;
      }
  
@@ -30,7 +60,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      std::this_thread::sleep_for(std::chrono::milliseconds(500));
      // The old model is released before the new one is built, so from here
      // on nothing is loaded until the load below succeeds. Record that now:
-@@ -881,6 +896,7 @@
+@@ -898,6 +927,7 @@
          this->auto_chat_engine = std::move(engine);
          this->current_model_tag = loaded_tag;
          this->current_backend = requested_backend;
@@ -38,7 +68,7 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
      }
      catch (const std::exception& e) {
          header_print("ERROR", "Failed to load model: " + std::string(e.what()));
-@@ -1701,14 +1717,16 @@
+@@ -1521,25 +1551,25 @@
          std::string expires_at = expires_ss.str();
          
          json models = json::array();
@@ -62,46 +92,46 @@ diff --git a/src/server/rest_handler.cpp b/src/server/rest_handler.cpp
                  {"size", model_info["size"]},
                  {"details", model_info["details"]},
                  {"expires_at", expires_at},
+             });
+         }
+-        // Like Ollama, /api/ps lists every loaded model, embedding included.
+-        std::string embedding_tag;
+-        {
+-            std::lock_guard lock(embedding_mutex);
+-            embedding_tag = current_embedding_tag;
+-        }
++        // Like Ollama, /api/ps lists every loaded model, embedding included. The
++        // snapshot, not current_embedding_tag under embedding_mutex: an embeddings
++        // request holds that mutex through a model download.
++        const std::string embedding_tag = serving_embedding_tag_snapshot();
+         if (!embedding_tag.empty()) {
+             auto [new_embedding_tag, embedding_model_info] = supported_models.get_model_info(embedding_tag);
+             models.push_back({
 diff --git a/src/server/rest_handler.hpp b/src/server/rest_handler.hpp
 --- a/src/server/rest_handler.hpp
 +++ b/src/server/rest_handler.hpp
-@@ -26,6 +26,7 @@
- #include <string>
- #include <memory>
- #include <functional>
-+#include <mutex>
- #include "prompt_cache.hpp"
- 
- using json = nlohmann::ordered_json;
-@@ -128,6 +129,8 @@
+@@ -130,6 +130,10 @@
  private:
      ModelLoad ensure_model_loaded(const std::string& model_tag, bool model_field_present = false,
                                    const std::string& request_backend = "");
 +    void publish_serving_chat_tag(std::string tag);
 +    std::string serving_chat_tag_snapshot() const;
++    void publish_serving_embedding_tag(std::string tag);
++    std::string serving_embedding_tag_snapshot() const;
      bool is_known_model(const std::string& model_tag);
      void ensure_asr_model_loaded(const std::string& model_tag);
      void ensure_embed_model_loaded(const std::string& model_tag);
-@@ -151,6 +154,11 @@
+@@ -155,6 +159,13 @@
      model_list& supported_models;
      ModelDownloader& downloader;
      std::string current_model_tag;
-+    // What /api/ps lists: empty while no chat model is serving, including
-+    // mid-swap. Guarded by the mutex because /api/ps is not serialised by the
-+    // NPU token.
++    // What /api/ps lists: empty while no chat (or embedding) model is serving,
++    // including mid-swap. Guarded by the mutex because /api/ps is not
++    // serialised by the NPU token, and must not wait on embedding_mutex, which
++    // an embeddings request holds across a model download.
 +    mutable std::mutex loaded_model_mutex;
 +    std::string serving_chat_tag;
++    std::string serving_embedding_tag;
      std::string default_model_tag;
      bool modelscope;
      bool asr;
-diff --git a/src/server/server.hpp b/src/server/server.hpp
---- a/src/server/server.hpp
-+++ b/src/server/server.hpp
-@@ -52,6 +52,7 @@
-     if (method != "POST") return false;
-     return path == "/api/generate" || path == "/api/chat" ||
-            path == "/v1/chat/completions" || path == "/v1/completions" ||
-+           path == "/api/embeddings" ||
-            path == "/v1/audio/transcriptions" || path == "/v1/embeddings" ||
-            path == "/v1/systemone" || path == "/v1/decisions";
- }

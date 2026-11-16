@@ -1,7 +1,7 @@
 diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel.cpp
 --- a/src/common/AutoModel/automodel.cpp
 +++ b/src/common/AutoModel/automodel.cpp
-@@ -536,6 +536,16 @@
+@@ -606,6 +606,16 @@
          this->_begin_turn(meta_info, tokens);
      }
  
@@ -21,7 +21,7 @@ diff --git a/src/common/AutoModel/automodel.cpp b/src/common/AutoModel/automodel
 diff --git a/src/server/server.cpp b/src/server/server.cpp
 --- a/src/server/server.cpp
 +++ b/src/server/server.cpp
-@@ -185,6 +185,20 @@
+@@ -254,6 +254,20 @@
      return g_npu_active_requests.load();
  }
  
@@ -42,7 +42,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  ///@brief HttpSession class implementation
  ///@param socket the socket
  ///@param server the server
-@@ -607,16 +621,31 @@
+@@ -752,16 +766,31 @@
  ///@brief register active request
  ///@param request_id the request ID
  ///@param token the cancellation token
@@ -78,45 +78,27 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  }
  
  ///@brief cancel request
-@@ -726,15 +755,15 @@
-     header_print("LOG", "Target: " << req.target());
-     header_print("LOG", "Version: " << req.version());
-     header_print("LOG", "Keep-Alive: " << req.keep_alive());
--    json request_json_log;
-+    json request_json;
-     bool is_json = false;
-     try {
-         if (!req.body().empty()) {
-             std::string content_type = std::string(req[http::field::content_type]);
- 
-             if (content_type.find("application/json") != std::string::npos) {
--                json request_json_log = json::parse(req.body());
--                brief_print_message_request(request_json_log);
-+                request_json = json::parse(req.body());
-+                brief_print_message_request(request_json);
-                 is_json = true;
-             }
-             else if (content_type.find("multipart/form-data") != std::string::npos) {
-@@ -761,71 +790,42 @@
+@@ -909,58 +938,43 @@
      // Decide if this handler needs exclusive NPU access.
-     bool needs_npu = requires_npu_access(std::string(req.method_string()), std::string(req.target()));
+     bool needs_npu = requires_npu_access(std::string(req.method_string()), path);
  
 +    const bool cancel_route = (key == "POST /api/cancel");
 +    const bool defer_registration = needs_npu && !handler_honours_cancel(key) && !cancel_route;
 +
-+    // A route that parses its own raw body (System One) takes no request_id
-+    // from it: upstream's per-request parse skips those routes.
-+    if (reads_raw_body(std::string(req.method_string()), std::string(req.target()))) request_json = json();
-+
-+    // Refuse a non-string request_id before registering or queueing: the
-+    // handler throws on it, and it used to throw while holding the NPU lock.
-+    if (request_json.contains("request_id") && !request_json["request_id"].is_string()) {
++    // Parse JSON request body. Done here, before the request queues or takes the
++    // NPU, because its request_id is needed to register the request at accept time.
++    json request_json;
++    try {
++        if (is_json && !req.body().empty() && !reads_raw_body(std::string(req.method_string()), path))
++            request_json = json::parse(req.body());
++    }
++    catch (const std::exception& e) {
++        header_print("LOG", "Invalid JSON request body: " + json_log::what(e));
 +        res.result(http::status::bad_request);
-+        res.body() = safe_dump(json{ {"error", {
-+            {"message", "request_id must be a string."},
++        res.body() = dump_error_body(json{ {"error", {
++            {"message", "Invalid JSON: " + json_log::what(e)},
 +            {"type", "invalid_request_error"},
-+            {"param", "request_id"},
-+            {"code", "invalid_value"}}} });
++            {"code", 400}}} });
 +        res.set(http::field::content_type, "application/json");
 +        res.prepare_payload();
 +        return false;
@@ -127,7 +109,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
      auto* res_ptr = &res;
  
 -    // Define a task lambda with is_deferred flag
--    auto process_task = [this, it, req_ptr, res_ptr, session, needs_npu, key, is_json](bool is_deferred) {
+-    auto process_task = [this, it, req_ptr, res_ptr, session, needs_npu, key, path, is_json](bool is_deferred) {
 +    // Define a task lambda with is_deferred flag. The token and id come from
 +    // prepare() below; a no-cancel-path route registers here, when it starts.
 +    auto process_task = [this, it, req_ptr, res_ptr, session, needs_npu, defer_registration]
@@ -142,16 +124,20 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 -        json request_json;
 -        try {
 -            if (!req_ref.body().empty()) {
--                if(is_json && !reads_raw_body(std::string(req_ref.method_string()), std::string(req_ref.target())))
+-                if(is_json && !reads_raw_body(std::string(req_ref.method_string()), path))
 -                    request_json = json::parse(req_ref.body());
--                //else
+-                //else 
 -                    //do some parse to the MultiPart request?
 -                    //std::map<std::string, MultipartPart> parts = parse_multipart(req_ref);
 -            }
 -        }
 -        catch (const std::exception& e) {
+-            header_print("LOG", "Invalid JSON request body: " + json_log::what(e));
 -            res_ref.result(http::status::bad_request);
--            res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
+-            res_ref.body() = dump_error_body(json{ {"error", {
+-                {"message", "Invalid JSON: " + json_log::what(e)},
+-                {"type", "invalid_request_error"},
+-                {"code", 400}}} });
 -            res_ref.set(http::field::content_type, "application/json");
 -            res_ref.prepare_payload();
 -
@@ -163,28 +149,11 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 -        auto cancellation_token = std::make_shared<CancellationToken>(session);
 -        session->set_cancellation_token(cancellation_token);
 -
--        // A non-string request_id threw here, outside every try, while this
--        // request held the NPU lock -- which was then never released, so
--        // every request queued behind it waited forever. Refuse it the way a
--        // body that does not parse is refused above.
--        if (request_json.contains("request_id") && !request_json["request_id"].is_string()) {
--            res_ref.result(http::status::bad_request);
--            res_ref.body() = safe_dump(json{ {"error", {
--                {"message", "request_id must be a string."},
--                {"type", "invalid_request_error"},
--                {"param", "request_id"},
--                {"code", "invalid_value"}}} });
--            res_ref.set(http::field::content_type, "application/json");
--            res_ref.prepare_payload();
--
--            if (is_deferred && session) session->write_response_from_callback();
--            return;
--        }
--
 -        // /api/cancel's request_id names the request to cancel, not this one.
 -        std::string request_id;
--        if (key != "POST /api/cancel" && request_json.contains("request_id")) {
--            request_id = request_json["request_id"];
+-        if (key != "POST /api/cancel" && request_json.is_object() && request_json.contains("request_id") &&
+-            request_json["request_id"].is_string()) {
+-            request_id = request_json["request_id"].get<std::string>();
 -        }
 -        else {
 -            request_id = random_request_id();
@@ -195,7 +164,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
          // catch is_deferred 
          auto send_response = [res_ptr, session, this, request_id, needs_npu, is_deferred, cancellation_token](const json& response_data) {
-@@ -875,7 +875,7 @@
+@@ -1010,7 +1024,7 @@
              }
              response_ref.prepare_payload();
              cancellation_token->complete();
@@ -204,7 +173,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
              if (is_deferred && session) {
                  session->write_response_from_callback();
-@@ -891,7 +891,7 @@
+@@ -1026,7 +1040,7 @@
                  session->write_streaming_response(data, is_final);
              }
              if (is_final) {
@@ -213,16 +182,16 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
              }
          };
  
-@@ -904,7 +904,7 @@
-             // application/json) -- refuse it like the parse failure above,
-             // not the generic 500 below.
+@@ -1037,7 +1051,7 @@
+             // A route that parses the body itself (any Content-Type) got a malformed one: 400.
+             // A parse error on anything else (model output, a file) stays a 500.
              cancellation_token->complete();
 -            unregister_active_request(request_id);
 +            unregister_active_request(request_id, cancellation_token);
  
-             res_ref.result(http::status::bad_request);
-             res_ref.body() = safe_dump(json{ {"error", "Invalid JSON"} });
-@@ -917,7 +917,7 @@
+             const bool bad_body = !json::accept(req_ref.body());
+             if (!bad_body) header_print("ERROR", "Handler exception: " + std::string(e.what()));
+@@ -1057,7 +1071,7 @@
          }
          catch (const std::exception& e) {
              cancellation_token->complete();
@@ -231,7 +200,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
  
              res_ref.result(http::status::internal_server_error);
              header_print("ERROR", "Handler exception: " + std::string(e.what()));
-@@ -931,7 +931,7 @@
+@@ -1071,7 +1085,7 @@
          }
          catch (...) {
              cancellation_token->complete();
@@ -239,8 +208,8 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 +            unregister_active_request(request_id, cancellation_token);
  
              res_ref.result(http::status::internal_server_error);
-             res_ref.body() = safe_dump(json{ {"error", "Unknown handler exception"} });
-@@ -947,8 +947,38 @@
+             res_ref.body() = dump_error_body(json{ {"error", "Unknown handler exception"} });
+@@ -1087,8 +1101,39 @@
  
      // --- Logic to run or queue the task ---
  
@@ -265,7 +234,8 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 +            request_id = random_request_id();
 +        }
 +        else {
-+            request_id = request_json.contains("request_id")
++            request_id = request_json.is_object() && request_json.contains("request_id") &&
++                         request_json["request_id"].is_string()
 +                ? request_json["request_id"].get<std::string>()
 +                : random_request_id();
 +            if (!defer_registration) previous = register_active_request(request_id, cancellation_token);
@@ -280,7 +250,7 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
          return false;
      }
  
-@@ -956,13 +986,20 @@
+@@ -1096,13 +1141,20 @@
          if (needs_npu) {
              header_print("🟢 ", "NPU Locked!");
          }
@@ -302,12 +272,12 @@ diff --git a/src/server/server.cpp b/src/server/server.cpp
 +        unregister_active_request(request_id, cancellation_token, previous);
 +        cancellation_token->complete();
          res.result(http::status::service_unavailable);
-         res.body() = safe_dump(json{
+         res.body() = dump_error_body(json{
              {"error", "NPU is in use and request queue is full (limit: " +
 diff --git a/src/server/server.hpp b/src/server/server.hpp
 --- a/src/server/server.hpp
 +++ b/src/server/server.hpp
-@@ -217,8 +217,9 @@
+@@ -215,8 +215,9 @@
                         std::shared_ptr<HttpSession> session);
  
      // Request tracking methods
