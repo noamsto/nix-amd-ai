@@ -16,7 +16,12 @@ way round, value(S) - value(reference): what the smaller cache added on the host
 not measured: it asks where the freed amount reappeared. locked = dVmLck, reclaimable file = dRssFile - dVmLck, anon =
 dRssAnon, rest = freed - (locked + reclaimable + anon); a negative rest means the host gained more than the GPU freed.
 It assumes strata-host's VmLck pages are file-backed (so RssFile contains them). The raw deltas are printed beside it so
-a reader can redo it under another assumption. The sum check adds the four parts back up and must equal the freed GTT.
+a reader can redo it under another assumption. The last column adds the four parts back up; it equals the freed GTT
+by construction (rest is the remainder), so it checks the arithmetic and says nothing about the host.
+
+The reload table's "page cache dropped" is Cached before the cold row's pre-eviction minus Cached after it. The eviction
+is posix_fadvise DONTNEED, only a hint, so a cold row with a small drop was really warm; the figure is printed beside the
+timing and not judged here. It is `-` on warm rows (no pre-eviction) and `unmeasured` when either Cached value is null.
 """
 
 import argparse
@@ -124,7 +129,7 @@ def footprint(args):
     print_table(raw_header, [[s] + [num(sp[k], True) for k in raw_keys] for s, sp in splits.items()])
     split_header = ["split of freed GTT (GiB)", "freed GTT", "reappeared as locked (dVmLck)"]
     split_header += ["reappeared as reclaimable file (dRssFile - dVmLck)", "reappeared as anon (dRssAnon)"]
-    split_header += ["rest = freed - (locked + file + anon)", "sum check"]
+    split_header += ["rest = freed - (locked + file + anon)", "parts sum to freed (by construction)"]
     split_keys = ["freed_gtt", "locked", "reclaimable", "anon", "rest", "check"]
     print_table(split_header, [[s] + [num(sp[k], True) for k in split_keys] for s, sp in splits.items()])
 
@@ -142,20 +147,19 @@ def reload_rows(args):
     sizes = args.sizes.split(",")
     rows = read_rows(args.rows)
     header = ["--expert-cache", "reload", "since spawn (s)", "load_s", "ttft_s", "GTT peak", "RSS peak"]
-    header += ["MemAvailable drop, lowest", "Cached at start", "Cached before pre-eviction", "Cached after pre-eviction"]
+    header += ["MemAvailable drop, lowest", "Cached at start", "page cache dropped (GiB)"]
     table = []
     for size in sizes:
         for kind in ("cold", "warm"):
             summary = load_json(os.path.join(args.dir, f"foot-base-reload{size}-{kind}.json"))
             row = rows.get(f"base-reload{size}-{kind}", {})
             first = row.get("firsttoken") or {}
-            cached = [kb_to_gib(row.get(k)) for k in ("cached_kb_at_start", "cached_kb_before_evict_pre", "cached_kb_after_evict_pre")]
-            evict = [num(c) for c in cached[1:]] if kind == "cold" else ["-", "-"]
+            at_start, before, after = (kb_to_gib(row.get(k)) for k in ("cached_kb_at_start", "cached_kb_before_evict_pre", "cached_kb_after_evict_pre"))
+            dropped = num(diff(before, after)) if kind == "cold" else "-"
             table.append(
                 [size, kind, num(first.get("since_spawn_s")), num(row.get("load_s")), num(first.get("ttft_s"))]
                 + [num(summary.get(k)) for k in ("gtt_peak_delta_gib", "rss_peak_gib", "mem_available_min_drop_gib")]
-                + [num(cached[0])]
-                + evict
+                + [num(at_start), dropped]
             )
     print_table(header, table)
 

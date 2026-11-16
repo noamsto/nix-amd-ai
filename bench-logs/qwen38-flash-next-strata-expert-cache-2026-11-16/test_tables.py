@@ -155,6 +155,8 @@ class FootprintCliTest(unittest.TestCase):
         self.assertIn("-20.6", raw)
         derived = {r[0]: r for r in table_rows(out, "split of freed GTT")}["5000"]
         self.assertEqual(derived[1:], ["+40.0", "+0.0", "+41.7", "+1.0", "-2.7", "+40.0"])
+        header = next(cells(l) for l in out.splitlines() if cells(l)[0] == "split of freed GTT (GiB)")
+        self.assertEqual(header[-1], "parts sum to freed (by construction)")
 
     def test_null_renders_unmeasured_in_freed_table(self):
         d, _ = write_dir(
@@ -205,13 +207,40 @@ class ReloadCliTest(unittest.TestCase):
         cold = by_key[("5000", "cold")]
         self.assertEqual(
             cold[2:],
-            ["42.0", "40.2", "1.5", "21.6", "87.5", "53.0", "2.0", "50.0", "3.0"],
+            ["42.0", "40.2", "1.5", "21.6", "87.5", "53.0", "2.0", "47.0"],  # 50 GiB before - 3 GiB after = 47.0 dropped
         )
         warm = by_key[("5000", "warm")]
         self.assertEqual(warm[2:5], ["11.0", "9.0", "unmeasured"])  # ttft null
         self.assertEqual(warm[6], "unmeasured")  # rss peak null
         self.assertEqual(warm[8], "50.0")  # Cached at start
-        self.assertEqual(warm[9:], ["-", "-"])  # no pre-eviction on warm rows
+        self.assertEqual(warm[9:], ["-"])  # no pre-eviction on warm rows
+
+    def test_drop_column_header_and_small_drop(self):
+        rows = [
+            {
+                "label": "base-reload5000-cold",
+                "cached_kb_at_start": 50 * 2**20,
+                "cached_kb_before_evict_pre": 50 * 2**20,
+                "cached_kb_after_evict_pre": int(49.5 * 2**20),  # DONTNEED did not take: really warm
+            },
+        ]
+        d, path = write_dir({"foot-base-reload5000-cold.json": {}}, rows)
+        out = run(["reload", "--dir", d, "--rows", path])
+        header = next(cells(l) for l in out.splitlines() if cells(l)[0] == "--expert-cache")
+        self.assertEqual(header[-1], "page cache dropped (GiB)")
+        self.assertNotIn("Cached before pre-eviction", header)
+        cold = {(r[0], r[1]): r for r in table_rows(out, "--expert-cache")}[("5000", "cold")]
+        self.assertEqual(cold[-1], "0.5")
+
+    def test_drop_unmeasured_when_either_side_null(self):
+        base = {"label": "base-reload5000-cold", "cached_kb_at_start": 2**20}
+        for missing in ("cached_kb_before_evict_pre", "cached_kb_after_evict_pre"):
+            row = dict(base, cached_kb_before_evict_pre=2**20, cached_kb_after_evict_pre=2**19)
+            row[missing] = None
+            d, path = write_dir({"foot-base-reload5000-cold.json": {}}, [row])
+            out = run(["reload", "--dir", d, "--rows", path])
+            cold = {(r[0], r[1]): r for r in table_rows(out, "--expert-cache")}[("5000", "cold")]
+            self.assertEqual(cold[-1], "unmeasured")
 
     def test_missing_row_and_summary_is_unmeasured(self):
         d, path = write_dir({"foot-base-reload5000-cold.json": {}}, [])

@@ -11,8 +11,8 @@
 #   kl      one `kl_strata.py run --arm def --chunks 64` row against the Q8_0 reference through run.sh exec
 #   reload  base only: run.sh strata --do firsttoken, the first streamed completion after the server starts. cold drops the
 #           page cache of the GGUF shards first (--evict-before), warm leaves it
-# The optional expert-cache argument (blob count, base only) replaces 20000 for foot, A, B, kl and reload (required for
-# reload). Any size but 20000 is carried in the label, log and kl dir (foot always names it), so rows of different sizes never
+# The optional expert-cache argument (blob count; any candidate for foot, base only for A, B, kl and reload) replaces 20000
+# (required for reload). Any size but 20000 is carried in the label, log and kl dir (foot always names it), so rows of different sizes never
 # share a name; with 20000 or no argument every name is the original.
 # Each GPU stage is one gated run.sh row (#249) with KEEP_OFFLINE=0: lemond is unloaded for the row and restored after it.
 # run.sh holds $XDG_RUNTIME_DIR/halo-gpu-bench.active for the row, so this wrapper writes no second copy.
@@ -39,7 +39,7 @@ Q=bench-logs/qwen38-flash-next-strata-quality-2026-10-07
 B=bench-logs/qwen38-flash-next-strata-2bit-2026-11-15
 
 usage() {
-    echo "usage: rows.sh <base|q2_0|iq2_xs|ud_q2_0> <pack|smoke|foot|A|B|kl|reload> [expert-cache (base: foot|A|B|kl)]" >&2
+    echo "usage: rows.sh <base|q2_0|iq2_xs|ud_q2_0> <pack|smoke|foot|A|B|kl|reload> [expert-cache (foot: any; base: A|B|kl)]" >&2
     echo "       rows.sh base reload <expert-cache> <cold|warm>" >&2
     exit 7
 }
