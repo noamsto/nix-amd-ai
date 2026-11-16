@@ -3,9 +3,9 @@
     python3 footprint.py watch --root-pid P --out summary.json [--raw raw.jsonl] [--interval 0.2]
     python3 footprint.py summarise --raw raw.jsonl [--out summary.json]
 
-Every tick records GTT in use (amdgpu), /proc/meminfo MemAvailable, Mlocked, Mapped and Cached, and the memory of each
-process under P whose comm starts with `strata`. Only descendants of P count, so lemond's resident Strata engine (a
-sibling tree) is never included. The sampler stops on SIGTERM or SIGINT or once P is gone, then writes the summary.
+Every tick records GTT in use (amdgpu), /proc/meminfo MemAvailable, Mlocked, Mapped, Cached and the file-page split Active(file) and
+Inactive(file), and the memory of each process under P whose comm starts with `strata`. Only descendants of P count, so
+lemond's resident Strata engine (a sibling tree) is never included. The sampler stops on SIGTERM or SIGINT or once P is gone, then writes the summary.
 `summarise` re-reads a raw series and gives the same summary without re-running the row.
 
 The idle baseline is the first sample with a watched process: run.sh has unloaded lemond's model by then, so GTT and
@@ -35,6 +35,8 @@ MEMINFO_KEYS = {
     "Mlocked": "mlocked",
     "Mapped": "mapped",
     "Cached": "cached",
+    "Active(file)": "active_file",
+    "Inactive(file)": "inactive_file",
 }
 STATUS_KEYS = {
     "VmRSS": "vm_rss",
@@ -53,6 +55,8 @@ SUMMARY_KEYS = [
     "mlocked_loaded_delta_gib",
     "mapped_loaded_delta_gib",
     "cached_loaded_delta_gib",
+    "active_file_loaded_delta_gib",
+    "inactive_file_loaded_delta_gib",
     "rss_peak_gib",
     "rss_loaded_gib",
     "rss_anon_loaded_gib",
@@ -230,8 +234,10 @@ def summarise(samples):
         ("mlocked_loaded_delta_gib", "mlocked"),
         ("mapped_loaded_delta_gib", "mapped"),
         ("cached_loaded_delta_gib", "cached"),
+        ("active_file_loaded_delta_gib", "active_file"),
+        ("inactive_file_loaded_delta_gib", "inactive_file"),
     ):
-        out[name] = gib(delta(median(s[field] for s in window), base[field]))
+        out[name] = gib(delta(median(s.get(field) for s in window), base.get(field)))
     for name, field in (
         ("rss_loaded_gib", "vm_rss"),
         ("rss_anon_loaded_gib", "rss_anon"),

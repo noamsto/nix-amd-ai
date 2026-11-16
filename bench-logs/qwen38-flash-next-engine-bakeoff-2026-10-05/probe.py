@@ -75,7 +75,7 @@ def _on_signal(sig, _frame):
     else:
         sys.exit(143)
 
-GROUPS = ["toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks",
+GROUPS = ["firsttoken", "toolcall", "prefill4k", "decode512", "decode32k", "decode128k", "replay", "correctness", "concurrency", "vision", "tasks",
           "soak", "longsoak", "bigimage", "quirks", "depth", "twosession"]
 SLICE_TOKENS = (512, 4096, 32768, 130000)
 DECODE_SLICE = {"decode512": "512", "decode32k": "32768", "decode128k": "130000"}
@@ -478,6 +478,15 @@ def g_vision(e, c, quick):
             "ttft_s": round(r["ttft_s"], 3), "wall_s": round(r["wall_s"], 3), "prompt_tokens": r["prompt_tokens"]}
 
 
+def g_firsttoken(e, t0):
+    t_req = time.time()
+    r = stream(e, "/v1/chat/completions", {
+        "messages": [{"role": "user", "content": "Name the primary colors."}],
+        "max_tokens": 16, "temperature": 0, **thinking_off(e)})
+    # load_s and ttft_s alone miss the calls between ready and the request
+    return {"ttft_s": round(r["ttft_s"], 3), "since_spawn_s": round(t_req - t0 + r["ttft_s"], 3)}
+
+
 def g_replay(e, c, quick, decode32k):
     rp = c["replay"]
     rate = decode32k["decode_tps"]["mean"] if decode32k else None
@@ -836,6 +845,13 @@ def run_row(a, log):
            "corpus_sha256": cache["corpus_sha256"]}
     do = set(a.do.split(","))
     gtt0, vram0 = grid.gpu_mem()
+    row["cached_kb_at_start"] = meminfo_kb("Cached")
+    if a.cmd == "strata":
+        row["cached_kb_before_evict_pre"] = row["cached_kb_after_evict_pre"] = None
+        if a.evict_before:
+            row["cached_kb_before_evict_pre"] = meminfo_kb("Cached")
+            evict_files([os.path.realpath(p) for p in gguf_shards(a.target)])
+            row["cached_kb_after_evict_pre"] = meminfo_kb("Cached")
     t0 = time.time()
     cpu0 = {}
     server = {"llama": llama_server, "gufo": gufo_server, "strata": strata_server}[a.cmd]
@@ -850,6 +866,8 @@ def run_row(a, log):
         except (grid.RowError, OSError, ValueError, http.client.HTTPException) as exc:
             row["server_slots"] = f"unavailable: {type(exc).__name__}"
         cpu0 = {"t": time.time(), "sys": cpu_ticks(), "eng": cpu_ticks(pid)}
+        if "firsttoken" in do:
+            row["firsttoken"] = g_firsttoken(e, t0)
         if "toolcall" in do:
             row["toolcall"] = g_toolcall(e, cache, a.quick)
         if "prefill4k" in do:
@@ -1220,6 +1238,8 @@ def main():
             p.add_argument("--mmproj", help="vision projector file; with --vision-bin turns images on")
             p.add_argument("--evict-after", action="store_true",
                            help="after teardown, drop the page cache of the GGUF shards (last row of a stage)")
+            p.add_argument("--evict-before", action="store_true",
+                           help="before the server starts, drop the page cache of the GGUF shards (a cold first load)")
 
     p = sub.add_parser("exec", usage="%(prog)s [options] -- cmd [args...]")
     p.add_argument("--target", required=True)

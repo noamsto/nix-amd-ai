@@ -703,7 +703,7 @@ def main(argv=None):
     if a.cmd == "ppl" and a.ppl_args and a.ppl_args[0] == "--":
         a.ppl_args = a.ppl_args[1:]
     if a.cmd == "row":
-        unknown = set(a.do.split(",")) - (set(probe.GROUPS) - {"concurrency"}) - {"checks"}
+        unknown = set(a.do.split(",")) - (set(probe.GROUPS) - {"concurrency", "firsttoken"}) - {"checks"}
         if unknown:
             ap.error(f"unknown groups: {sorted(unknown)}")
     for sig in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
