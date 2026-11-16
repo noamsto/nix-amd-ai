@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Old-vs-new Strata pin rows (#356). From the repo root: rows.sh <old|new> <smoke|foot|A|B|kl>
+# Old-vs-new Strata pin rows. From the repo root: rows.sh <old|new> <smoke|foot|A|B|kl>
 # Runs the 2-bit bench's rows.sh for its `base` candidate (the production UD-IQ4_XS-v31 file and its existing pack) against
 # one engine build: old = PIN_OLD (v0.2.13), new = PIN_NEW (v0.2.15). All gating (loadavg wait, foreign signal-file
 # refusal, footprint sampler, amdgpu kernel-log check, load.jsonl) lives in that script; this wrapper only picks the build.
