@@ -235,7 +235,7 @@ class ReloadCliTest(unittest.TestCase):
     def test_drop_unmeasured_when_either_side_null(self):
         base = {"label": "base-reload5000-cold", "cached_kb_at_start": 2**20}
         for missing in ("cached_kb_before_evict_pre", "cached_kb_after_evict_pre"):
-            row = dict(base, cached_kb_before_evict_pre=2**20, cached_kb_after_evict_pre=2**19)
+            row: dict[str, object] = dict(base, cached_kb_before_evict_pre=2**20, cached_kb_after_evict_pre=2**19)
             row[missing] = None
             d, path = write_dir({"foot-base-reload5000-cold.json": {}}, [row])
             out = run(["reload", "--dir", d, "--rows", path])
@@ -247,6 +247,93 @@ class ReloadCliTest(unittest.TestCase):
         out = run(["reload", "--dir", d, "--rows", path])
         cold = {(r[0], r[1]): r for r in table_rows(out, "--expert-cache")}[("5000", "cold")]
         self.assertTrue(all(c == "unmeasured" for c in cold[2:]))
+
+
+def stat(mean, stdev=None):
+    return {"mean": mean, "stdev": stdev}
+
+
+def speed_a(prefill4k, decode32k_acc, **replay):
+    return {
+        "prefill4k": {"prefill_tps": stat(prefill4k)},
+        "decode512": {"decode_tps": stat(31.84, 3.66), "acceptance": 0.6234},
+        "decode32k": {"prefill_tps": stat(700.26), "decode_tps": stat(20.04, 1.96), "acceptance": decode32k_acc},
+        "replay": dict({"normalized_total_s": 120.46, "ttft_total_s": 30.04}, **replay),
+        "load_s": 55.62,
+        "loadavg_max": 27.6,
+    }
+
+
+SPEED_ROWS = [
+    dict(speed_a(812.34, 0.5), label="base-def-A"),
+    {
+        "label": "base-def-B",
+        "decode128k": {"prefill_tps": stat(310.51), "decode_tps": stat(9.96, 0.44), "acceptance": 0.41234},
+        "loadavg_max": 34.9,
+    },
+    dict(speed_a(1.0, 0.1), label="base-def-A-c5000"),  # superseded by the re-run below
+    dict(speed_a(900.1, None, normalized_incomplete=True, normalized_total_s=99.94), label="base-def-A-c5000"),
+]
+
+
+class SpeedCliTest(unittest.TestCase):
+    def setUp(self):
+        _, path = write_dir({}, SPEED_ROWS)
+        out = run(["speed", "--rows", path, "--sizes", "20000,10000,5000"])
+        self.header = next(cells(l) for l in out.splitlines())
+        self.table = {r[0]: r[1:] for r in table_rows(out, "")}
+
+    def test_header(self):
+        self.assertEqual(
+            self.header, ["", "--expert-cache 20000", "--expert-cache 10000", "--expert-cache 5000"]
+        )
+
+    def test_full_column_from_a_and_b_rows(self):
+        col = [r[0] for r in self.table.values()]
+        self.assertEqual(
+            col,
+            [
+                "812.3",
+                "700.3",
+                "310.5",
+                "31.8 ± 3.7",
+                "20.0 ± 2.0",
+                "10.0 ± 0.4",
+                "0.623 / 0.500 / 0.412",
+                "120.5",
+                "30.0",
+                "55.6",
+                "27.6 / 34.9",
+            ],
+        )
+
+    def test_last_duplicate_wins_and_missing_b_row_is_unmeasured(self):
+        col = [r[2] for r in self.table.values()]
+        self.assertEqual(
+            col,
+            [
+                "900.1",
+                "700.3",
+                "unmeasured",  # no B row
+                "31.8 ± 3.7",
+                "20.0 ± 2.0",
+                "unmeasured ± unmeasured",
+                "0.623 / unmeasured / unmeasured",  # null acceptance, no B row
+                "99.9 (incomplete)",
+                "30.0",
+                "55.6",
+                "27.6 / unmeasured",
+            ],
+        )
+
+    def test_size_without_rows_is_all_unmeasured(self):
+        for cell in (r[1] for r in self.table.values()):
+            self.assertEqual(set(cell.replace("±", "/").split(" / ")), {"unmeasured"})
+
+    def test_null_stdev_is_unmeasured_part(self):
+        _, path = write_dir({}, [{"label": "base-def-A", "decode512": {"decode_tps": stat(31.84)}}])
+        out = run(["speed", "--rows", path, "--sizes", "20000"])
+        self.assertEqual(table_rows(out, "")[3][1], "31.8 ± unmeasured")
 
 
 if __name__ == "__main__":

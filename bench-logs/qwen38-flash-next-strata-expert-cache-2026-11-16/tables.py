@@ -3,6 +3,7 @@
 
     tables.py footprint --dir D [--sizes 20000,10000,5000]   footprint per --expert-cache, and what a smaller cache frees
     tables.py reload --dir D --rows rows.jsonl [--sizes ...]  cold and warm reload rows per --expert-cache
+    tables.py speed --rows rows.jsonl [--sizes ...]           prefill, decode, acceptance and replay per --expert-cache
 
 D holds `foot-base-foot<N>.json` (footprint rows) and `foot-base-reload<N>-<cold|warm>.json` (reload rows), the summaries
 footprint.py writes; rows.jsonl rows are labelled `base-reload<N>-<cold|warm>`. Every missing or null value prints
@@ -22,6 +23,11 @@ by construction (rest is the remainder), so it checks the arithmetic and says no
 The reload table's "page cache dropped" is Cached before the cold row's pre-eviction minus Cached after it. The eviction
 is posix_fadvise DONTNEED, only a hint, so a cold row with a small drop was really warm; the figure is printed beside the
 timing and not judged here. It is `-` on warm rows (no pre-eviction) and `unmeasured` when either Cached value is null.
+
+The speed table reads rows.jsonl labels `base-def-A` / `base-def-B` for 20000 and `base-def-A-c<S>` / `base-def-B-c<S>` for
+other sizes; a label that appears twice (a re-run) keeps its last row. Prefill 4K and 32K, decode 512 and 32K, replay and
+load_s come from the A row; prefill and decode at 128K come from the B row. loadavg_max is the peak 1-minute loadavg
+during the row, a contamination indicator on a shared host. A missing row, key or null prints `unmeasured`.
 """
 
 import argparse
@@ -54,10 +60,10 @@ RAW_DELTAS = [
 ]
 
 
-def num(value, signed=False):
+def num(value, signed=False, places=1):
     if value is None:
         return UNMEASURED
-    return f"{value:+.1f}" if signed else f"{value:.1f}"
+    return f"{value:+.{places}f}" if signed else f"{value:.{places}f}"
 
 
 def diff(a, b):
@@ -164,6 +170,65 @@ def reload_rows(args):
     print_table(header, table)
 
 
+def dig(row, path):
+    for key in path.split("."):
+        if not isinstance(row, dict):
+            return None
+        row = row.get(key)
+    return row
+
+
+def speed(args):
+    sizes = args.sizes.split(",")
+    rows = read_rows(args.rows)
+
+    def pair(size):
+        suffix = "" if size == "20000" else f"-c{size}"
+        return rows.get(f"base-def-A{suffix}", {}), rows.get(f"base-def-B{suffix}", {})
+
+    def one(row, path, places=1):
+        return num(dig(row, path), places=places)
+
+    def spread(row, path):
+        return f"{one(row, path + '.mean')} ± {one(row, path + '.stdev')}"
+
+    def replay(a):
+        cell = one(a, "replay.normalized_total_s")
+        return cell + " (incomplete)" if cell != UNMEASURED and dig(a, "replay.normalized_incomplete") else cell
+
+    def column(size):
+        a, b = pair(size)
+        return [
+            one(a, "prefill4k.prefill_tps.mean"),
+            one(a, "decode32k.prefill_tps.mean"),
+            one(b, "decode128k.prefill_tps.mean"),
+            spread(a, "decode512.decode_tps"),
+            spread(a, "decode32k.decode_tps"),
+            spread(b, "decode128k.decode_tps"),
+            " / ".join(one(r, f"{p}.acceptance", 3) for r, p in ((a, "decode512"), (a, "decode32k"), (b, "decode128k"))),
+            replay(a),
+            one(a, "replay.ttft_total_s"),
+            one(a, "load_s"),
+            f"{one(a, 'loadavg_max')} / {one(b, 'loadavg_max')}",
+        ]
+
+    labels = [
+        "Prefill 4K (t/s)",
+        "Prefill 32K (t/s)",
+        "Prefill 128K (t/s)",
+        "Decode 512 (t/s, T=0.7)",
+        "Decode 32K (t/s)",
+        "Decode 128K (t/s)",
+        "MTP acceptance at 512 / 32K / 128K",
+        "Agent replay, normalized (s, lower is better)",
+        "Replay, time to first token summed (s)",
+        "Load time, spawn to ready (s)",
+        "Peak 1-minute loadavg during the A / B rows",
+    ]
+    columns = [column(s) for s in sizes]
+    print_table([""] + [f"--expert-cache {s}" for s in sizes], [[label] + [c[i] for c in columns] for i, label in enumerate(labels)])
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -176,6 +241,10 @@ def main(argv=None):
     r.add_argument("--rows", required=True)
     r.add_argument("--sizes", default="20000,10000,5000")
     r.set_defaults(run=reload_rows)
+    s = sub.add_parser("speed")
+    s.add_argument("--rows", required=True)
+    s.add_argument("--sizes", default="20000,10000,5000")
+    s.set_defaults(run=speed)
     args = p.parse_args(argv)
     args.run(args)
 
