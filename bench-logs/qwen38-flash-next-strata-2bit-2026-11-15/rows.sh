@@ -148,6 +148,12 @@ if [ "$stage" = kl ]; then
     mkdir -p "$W/kl"
 fi
 
+# From here a signal must not skip the wedge check below: an interrupted row is the one most likely to have wedged the GPU.
+# run.sh restores lemond itself on a signal; this wrapper only records it and carries on to the kernel-log check.
+sig_rc=''
+trap 'sig_rc=143' TERM
+trap 'sig_rc=130' INT
+
 # the job's descendants only: the sampler never sees lemond's resident engine
 python3 "$B/footprint.py" watch --root-pid $$ --out "$W/foot-$label.json" --raw "$W/foot-$label.raw.jsonl" &
 sampler=$!
@@ -166,6 +172,7 @@ kl)
     ;;
 esac
 rc=$?
+[ -z "$sig_rc" ] || rc=$sig_rc
 end=$(load1)
 stop_sampler
 [ -s "$W/foot-$label.json" ] || echo "warning: no footprint summary for $label" >&2
@@ -177,6 +184,7 @@ if out=$(journalctl -k --since "$row_start" --no-pager 2>&1); then
     *) hits=$(printf '%s\n' "$out" | grep -cE 'BO_VA|amdgpu.*-12|ring .* timeout') ;;
     esac
 fi
+[ "$hits" != unreadable ] || echo "warning: kernel log unreadable; amdgpu wedge check skipped for $label" >&2
 hits_json=$hits
 [[ $hits =~ ^[0-9]+$ ]] || hits_json=\"$hits\"
 printf '{"label":"%s","started":"%s","rc":%s,"flag":"%s","wait_s":%s,"loadavg_start":%s,"loadavg_end":%s,"kernel_hits":%s}\n' \

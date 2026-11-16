@@ -29,7 +29,7 @@ The IQ1 quants were skipped, as asked.
 whether it counts depends on which memory figure the watchdog reads.**
 
 1. **All three 2-bit quants pack and load on Strata at the default configuration** (tool call ok, vision answered on the
-   A rows, no kernel log hit on any row). Unsloth's `UD-Q2_0` loads too, unlike its `UD-IQ3_XXS` in the 2026-10-06 run.
+   A rows, no kernel log hit on any row). Unsloth's `UD-Q2_0` loads too.
 2. **They are not close to the reference.** Against #260's Q8_0 logits on the same 65,472 positions, mean KLD is 0.0741 for
    the v31 baseline, **0.284 for Q2_0, 0.252 for IQ2_XS and 0.156 for UD-Q2_0**; top-token agreement is 92.1 % against
    85.5 %, 85.9 % and 88.6 %. Paired against v31, the two ISTA quants add +0.21 / +0.18 KLD with 13.7–13.9 % of top tokens
@@ -46,8 +46,9 @@ whether it counts depends on which memory figure the watchdog reads.**
 5. For scale, [#276](../qwen38-flash-next-strata-quality-2026-10-07/README.md) measured Strata `def` on the earlier
    UD-IQ4_XS file at 0.0920 KLD / 91.4 %, and the [IQ3_XXS run](../qwen38-flash-next-iq3-quality-2026-10-06/README.md)
    measured 0.158 KLD / 89.2 % on GSQHalo with the full-vocabulary estimator, a result the project kept opt-in only. That
-   estimator differs from the top-256 one here, so 0.158 against 0.156 is not a like-for-like comparison. By the same
-   yardstick `UD-Q2_0` sits near IQ3_XXS and the two GSQ-RCO quants are well below it. **Whether any of them is worth an
+   estimator differs from the top-256 one here (which reads about 5 % low, per #276) and the engine differs, so the
+   comparison is indicative only: allowing for it, `UD-Q2_0` is roughly at IQ3_XXS's level and the two GSQ-RCO quants are
+   well below it. **Whether any of them is worth an
    opt-in profile is the owner's call**, not a result of this run.
 
 ## Footprint
@@ -78,6 +79,8 @@ resident engine); "loaded" values are medians over the window where GTT was with
 - **Load peak.** GTT never exceeds its loaded figure, so the transient peak of a load is on the host side: the lowest
   MemAvailable during a row is 0.5–3.3 GiB below the loaded median, and the RSS peak is 0.4–11.1 GiB above the loaded
   RSS (11.1 GiB at cache 10000, 3.5 GiB at most for the others).
+- **RSS is a sum over the watched `strata*` processes**: two in each row; in the sample inspected (the Q2_0 footprint row) the
+  second held 0.9 GiB of anonymous memory and almost no file pages, so the file-backed figure is the main process's own.
 - **`VmLck`** of `strata-host` (its mlocked tables) is 26.8 GiB in every row; mlocked pages are not in MemAvailable.
 - The MemAvailable drop is not the process's footprint: it also moves with whatever page cache the kernel had given up.
   It is reported because it is the figure a pressure watchdog is most likely to read; which figure that is was not
@@ -94,7 +97,7 @@ resident engine); "loaded" values are medians over the window where GTT was with
 | 5000 | 21.6 | 52.5 | 427.4 | 31.9 (−15 %) | 0.500 |
 
 Decode at 32K and 128K and the agent replay were **not measured** at the smaller caches, and neither was KLD. The
-smoke rows used a 2048 cache at 8K context: GTT was 7.5 GiB for Q2_0, 7.2 GiB for IQ2_XS and 10.0 GiB for UD-Q2_0
+smoke rows used a 2048 cache at 8K context: GTT was 7.0 GiB for Q2_0, 7.2 GiB for IQ2_XS and 10.0 GiB for UD-Q2_0
 (IQ2_XS at cache 20000 and 131072 context: 34.3 GiB), so most of the GTT here scales with the cache or the context.
 
 ## Quality
@@ -135,7 +138,7 @@ only covered tool call, prefill 4K and decode 512 (second column), so its other 
 | Decode 512 (t/s, T=0.7) | 38.6 | 37.4 | 46.5 | 43.4 | 42.7 |
 | Decode 32K (t/s) | 38.3 | unmeasured | 43.8 | 45.8 | 45.2 |
 | Decode 128K (t/s) | 37.5 | unmeasured | 41.1 | 42.3 | 43.7 |
-| MTP acceptance at 512 / 32K / 128K | 0.535 / — / 0.571 | 0.518 / — / — | 0.529 / 0.555 / 0.554 | 0.444 / 0.646 / 0.638 | 0.509 / 0.571 / 0.603 |
+| MTP acceptance at 512 / 32K / 128K | 0.535 / not reported / 0.571 | 0.518 / unmeasured / unmeasured | 0.529 / 0.555 / 0.554 | 0.444 / 0.646 / 0.638 | 0.509 / 0.571 / 0.603 |
 | Agent replay, normalized (s, lower is better) | 139.5 | unmeasured | 101.4 | 117.5 | 108.5 |
 | Replay, time to first token summed (s) | 99.0 | unmeasured | 66.8 | 79.0 | 72.7 |
 | Tool call | ok | ok | ok | ok | ok |
@@ -184,9 +187,9 @@ export WORK=<work dir> CACHE=<corpus cache.json at rev 4166bc4> PY=<python with 
   STRATA_OUT=$PWD/result-strata MTP_RT=<mtp/rt> MMPROJ=<mmproj file> REF=<Q8_0 reference logits> \
   BASE_PACK=<v31 pack> BASE_SHARD=<v31 shard 1> Q2_0_SHARD=<shard 1> IQ2_XS_SHARD=<shard 1> UD_Q2_0_SHARD=<shard 1>
 D=bench-logs/qwen38-flash-next-strata-2bit-2026-11-15
-for c in q2_0 iq2_xs ud_q2_0; do $D/rows.sh $c pack; done                 # CPU only, niced
-for c in q2_0 iq2_xs ud_q2_0; do for s in smoke "foot 20000" A B kl; do $D/rows.sh $c $s; done; done
-for s in "foot 20000" "foot 10000" "foot 5000" kl; do $D/rows.sh base $s; done
+for c in q2_0 iq2_xs ud_q2_0; do $D/rows.sh $c pack || break; done          # CPU only, niced
+for c in q2_0 iq2_xs ud_q2_0; do for s in smoke "foot 20000" A B kl; do $D/rows.sh $c $s || break 2; done; done  # stop on exit 9 (wedge) or 2
+for s in "foot 20000" "foot 10000" "foot 5000" kl; do $D/rows.sh base $s || break; done
 $PY bench-logs/qwen38-flash-next-strata-quality-2026-10-07/kl_strata.py compare --ref "$REF" --json cmp.json \
   base=$WORK/base/kl/kl-def-64 q2_0=$WORK/q2_0/kl/kl-def-64 iq2_xs=$WORK/iq2_xs/kl/kl-def-64 ud_q2_0=$WORK/ud_q2_0/kl/kl-def-64
 $PY bench-logs/qwen38-flash-next-strata-quality-2026-10-07/tables.py kl cmp.json

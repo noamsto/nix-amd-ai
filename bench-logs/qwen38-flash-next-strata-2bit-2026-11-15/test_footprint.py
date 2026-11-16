@@ -125,16 +125,42 @@ class Summarise(unittest.TestCase):
         self.assertEqual(r["gtt_loaded_delta_gib"], 0.0)
         self.assertEqual(r["mem_available_loaded_drop_gib"], 1.0)
 
-    def test_single_live_sample_does_not_crash(self):
+    def test_single_live_sample_has_no_loaded_window(self):
         r = f.summarise([sample(0.0, 2.0, 100.0, [(1.0, 0.5, 0.5, 0.0)])])
         self.assertEqual(r["gtt_baseline_gib"], 2.0)
         self.assertEqual(r["gtt_peak_delta_gib"], 0.0)
-        self.assertEqual(r["gtt_loaded_delta_gib"], 0.0)
-        self.assertEqual(r["mem_available_loaded_drop_gib"], 0.0)
-        self.assertEqual(r["rss_loaded_gib"], 1.0)
+        self.assertEqual(r["rss_peak_gib"], 1.0)
         self.assertEqual(r["watched_s"], 0.0)
-        self.assertEqual(r["loaded_s"], 0.0)
-        self.assertEqual(r["load_s"], 0.0)
+        for key in ("gtt_loaded_delta_gib", "rss_loaded_gib", "load_s", "loaded_s", "loaded_samples"):
+            self.assertIsNone(r[key], key)
+
+    def test_gtt_that_never_rises_has_no_loaded_window(self):
+        r = f.summarise(
+            [sample(0.2 * i, 2.0, 100.0, [(1.0, 1.0, 0.0, 0.0)]) for i in range(5)]
+        )
+        self.assertEqual(r["gtt_peak_delta_gib"], 0.0)
+        self.assertIsNone(r["loaded_samples"])
+        self.assertIsNone(r["rss_loaded_gib"])
+
+    def test_one_unreadable_baseline_gtt_read_uses_the_next_known_one(self):
+        r = f.summarise(
+            [
+                sample(0.0, None, 100.0, [(1.0, 1.0, 0.0, 0.0)]),
+                sample(0.2, 2.0, 100.0, [(1.0, 1.0, 0.0, 0.0)]),
+                sample(0.4, 22.0, 90.0, [(5.0, 1.0, 4.0, 0.0)]),
+                sample(0.6, 22.0, 90.0, [(5.0, 1.0, 4.0, 0.0)]),
+            ]
+        )
+        self.assertEqual(r["gtt_baseline_gib"], 2.0)
+        self.assertEqual(r["gtt_loaded_delta_gib"], 20.0)
+        self.assertEqual(r["loaded_samples"], 2)
+
+    def test_large_spike_shrinks_the_window_and_the_count_shows_it(self):
+        plateau = [sample(0.2 * i, 22.0, 90.0, [(5.0, 1.0, 4.0, 0.0)]) for i in range(1, 11)]
+        spike = [sample(2.2, 40.0, 80.0, [(5.0, 1.0, 4.0, 0.0)])]
+        r = f.summarise([sample(0.0, 2.0, 100.0, [(1.0, 1.0, 0.0, 0.0)]), *plateau, *spike])
+        self.assertEqual(r["loaded_samples"], 1)
+        self.assertEqual(r["gtt_loaded_delta_gib"], 38.0)
 
     def test_bench_process_never_seen_is_all_null(self):
         r = f.summarise(series()[:2])

@@ -58,6 +58,7 @@ SUMMARY_KEYS = [
     "vm_lck_loaded_gib",
     "load_s",
     "loaded_s",
+    "loaded_samples",
 ]
 
 
@@ -172,11 +173,18 @@ def proc_sum(sample, field):
     return sum(values) if values else None
 
 
+def first_gtt(live):
+    return next((s["gtt"] for s in live if s["gtt"] is not None), None)
+
+
 def loaded_window(live):
-    """The live samples whose GTT delta vs the first one is at least LOADED_FRACTION of the peak delta."""
-    deltas = [delta(s["gtt"], live[0]["gtt"]) for s in live]
+    """The live samples whose GTT delta vs the first known one is at least LOADED_FRACTION of the peak delta.
+
+    Empty when GTT never rose: a row whose weights never reached GTT has no loaded window."""
+    gtt_base = first_gtt(live)
+    deltas = [delta(s["gtt"], gtt_base) for s in live]
     peak = max(known(deltas), default=None)
-    if peak is None:
+    if peak is None or peak <= 0:
         return []
     return [
         s for s, d in zip(live, deltas) if d is not None and d >= LOADED_FRACTION * peak
@@ -192,12 +200,13 @@ def summarise(samples):
         return out
     base = live[0]
     window = loaded_window(live)
+    gtt_base = first_gtt(live)
     gtts = known(s["gtt"] for s in live)
     mems = known(s["mem_available"] for s in live)
     out.update(
         watched_s=round(live[-1]["t"] - base["t"], 1),
-        gtt_baseline_gib=gib(base["gtt"]),
-        gtt_peak_delta_gib=gib(delta(max(gtts), base["gtt"])) if gtts else None,
+        gtt_baseline_gib=gib(gtt_base),
+        gtt_peak_delta_gib=gib(delta(max(gtts), gtt_base)) if gtts else None,
         mem_available_baseline_gib=gib(base["mem_available"]),
         mem_available_min_drop_gib=gib(delta(base["mem_available"], min(mems)))
         if mems
@@ -209,7 +218,8 @@ def summarise(samples):
     out.update(
         load_s=round(window[0]["t"] - base["t"], 1),
         loaded_s=round(window[-1]["t"] - window[0]["t"], 1),
-        gtt_loaded_delta_gib=gib(delta(median(s["gtt"] for s in window), base["gtt"])),
+        loaded_samples=len(window),
+        gtt_loaded_delta_gib=gib(delta(median(s["gtt"] for s in window), gtt_base)),
         mem_available_loaded_drop_gib=gib(
             delta(base["mem_available"], median(s["mem_available"] for s in window))
         ),
