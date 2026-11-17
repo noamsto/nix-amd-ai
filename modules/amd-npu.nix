@@ -958,11 +958,11 @@ in {
           `GSQ-RCO-IQ3_S`). Only files Strata's setup lists as runnable are
           offered. `UD-IQ4_XS-v31` is Unsloth's 2026-11-04 "Dynamic v3.1"
           re-upload of IQ4_XS (four shards) and is the default; this
-          repository benched its speed and memory on Strix Halo (gfx1151),
-          not its output quality. `UD-IQ4_XS` is the September file and the
-          only one with quality measurements on Strata.
+          repository benched its speed, memory and KL against the Q8_0
+          reference on Strix Halo (gfx1151). `UD-IQ4_XS` is the September
+          file, measured in the earlier quality run.
           `GSQ-RCO-IQ3_S` is upstream's recommended size since 0.1.44 (needs
-          64 GB RAM) and has not been benched on Strix Halo either.
+          64 GB RAM) and has not been benched on Strix Halo.
         '';
       };
 

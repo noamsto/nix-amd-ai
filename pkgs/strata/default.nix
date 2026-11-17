@@ -36,7 +36,7 @@
 in
   stdenv.mkDerivation {
     pname = "strata";
-    version = "0.2.13";
+    version = "0.2.15";
 
     src = fetchFromGitHub {
       owner = "Niko1221";
@@ -51,7 +51,9 @@ in
       "-DCMAKE_BUILD_TYPE=Release"
       "-DSTRATA_ENABLE_HIP=ON"
       "-DSTRATA_ENABLE_CUDA=OFF"
+      # Since upstream 0.2.14 the prompt path uses Strata's own kernels unless STRATA_MMQ is ON; OFF keeps that default.
       "-DSTRATA_PREFILL_MMQ=ON"
+      "-DSTRATA_MMQ=OFF"
       "-DSTRATA_BUILD_TESTS=OFF"
       # The SDK is the gfx1151-only TheRock tarball, so this package is gfx1151-only.
       "-DCMAKE_HIP_ARCHITECTURES=gfx1151"
