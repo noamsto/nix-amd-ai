@@ -42,8 +42,8 @@ stdenv.mkDerivation (finalAttrs: {
   src = fetchFromGitHub {
     owner = "Atomic-Germ";
     repo = "OpenFlowLM-Next";
-    rev = "3621edf2561c2a4438c73abd4f74412387dcd06e";
-    hash = "sha256-PD91GN4sZn3iRwZqkl1Pa/uw3hYuNKLZLA5c1krE4Ls=";
+    rev = "9b1409d3e150e3602936307f5ff725c7bb4ac8af";
+    hash = "sha256-l40woJEB7wmmL2W85gUbCcQek+i7gC8YZvJgeypnpP0=";
     fetchSubmodules = true;
   };
 
