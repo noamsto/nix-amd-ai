@@ -35,9 +35,10 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "openflowlm";
-  # Upstream has no tags or releases (checked 2026-10-03), so this pins main;
-  # the binary reports upstream's own 0.1.0.
-  version = "0.1.0-unstable-2026-10-03";
+  # Upstream's only tag is a prerelease (pre-v.0.1.0) on a branch this rev does
+  # not descend from (checked 2026-11-18), so this pins main; the binary
+  # reports upstream's own 0.1.0.
+  version = "0.1.0-unstable-2026-11-13";
 
   src = fetchFromGitHub {
     owner = "Atomic-Germ";
