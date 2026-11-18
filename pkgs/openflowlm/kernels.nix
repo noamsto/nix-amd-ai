@@ -1,4 +1,4 @@
-# Builds OFLM's open NPU kernel sets (12 open_kernels recipe specs + 5 BERT
+# Builds OFLM's open NPU kernel sets (30 open_kernels recipe specs + 5 BERT
 # embedding design sets) with no NPU and no pyxrt, thanks to upstream's
 # device-free BERT export (Atomic-Germ/OpenFlowLM-Next#126, merged as 457ddfd);
 # one derivation per set so Nix builds them in parallel, joined into the same
@@ -9,12 +9,6 @@
 # (src, list) into the serial execution order the join follows and reports
 # drift in either direction, which the join recovers from rather than failing
 # (see that script's header).
-#
-# Upstream quirk preserved exactly: gemma3-12b.json and gemma3-4b.json both
-# carry extra.model = "Gemma3-4B-NPU2", so they export into the same directory.
-# The serial build runs the specs in sorted order, so gemma3-12b's output is
-# overwritten by gemma3-4b's; the join copies/builds in that same order, so the
-# joined tree is what the serial build produces.
 #
 # xclbins are not bit-reproducible (UUID/timestamp fields); insts*.bin and
 # design.json are.

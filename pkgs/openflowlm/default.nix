@@ -35,15 +35,16 @@
 }:
 stdenv.mkDerivation (finalAttrs: {
   pname = "openflowlm";
-  # Upstream has no tags or releases (checked 2026-10-03), so this pins main;
-  # the binary reports upstream's own 0.1.0.
-  version = "0.1.0-unstable-2026-10-03";
+  # Upstream's only tag is a prerelease (pre-v.0.1.0) on a branch this rev does
+  # not descend from (checked 2026-11-18), so this pins main; the binary
+  # reports upstream's own 0.1.0.
+  version = "0.1.0-unstable-2026-11-13";
 
   src = fetchFromGitHub {
     owner = "Atomic-Germ";
     repo = "OpenFlowLM-Next";
-    rev = "3621edf2561c2a4438c73abd4f74412387dcd06e";
-    hash = "sha256-PD91GN4sZn3iRwZqkl1Pa/uw3hYuNKLZLA5c1krE4Ls=";
+    rev = "9b1409d3e150e3602936307f5ff725c7bb4ac8af";
+    hash = "sha256-l40woJEB7wmmL2W85gUbCcQek+i7gC8YZvJgeypnpP0=";
     fetchSubmodules = true;
   };
 
@@ -101,6 +102,11 @@ stdenv.mkDerivation (finalAttrs: {
       third_party/tokenizers-cpp/CMakeLists.txt \
       third_party/tokenizers-cpp/sentencepiece/CMakeLists.txt \
       --replace-fail 'set(CMAKE_CXX_STANDARD 17)' 'set(CMAKE_CXX_STANDARD 20)'
+
+    # Upstream's test/ CMake assumes the repo root is the source dir; cmakeDir
+    # is ../src, so its CMAKE_SOURCE_DIR-relative src/ paths resolve to src/src/.
+    substituteInPlace src/CMakeLists.txt \
+      --replace-fail 'add_subdirectory(test)' ""
   '';
 
   # nixpkgs' cargoSetupHook now exports RUSTONIG_SYSTEM_LIBONIG=1, which makes
