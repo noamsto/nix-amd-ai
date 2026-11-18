@@ -744,6 +744,7 @@
               pkgs.runCommand "openflowlm-smoke" {
                 nativeBuildInputs = [pkgs.jq];
                 OFLM = linuxPackages.openflowlm;
+                SETS = ./pkgs/openflowlm/kernel-sets.json;
               } ''
                 export HOME=$TMPDIR/home # oflm creates ~/.config/oflm on start
                 mkdir -p "$HOME"
@@ -756,8 +757,8 @@
                 OFLM_MODEL_PATH=$store "$OFLM/bin/oflm" list --filter installed --quiet --json 2>/dev/null | jq -e '.models | type == "array"'
                 OFLM_MODEL_PATH=$store "$OFLM/bin/oflm" list --json 2>/dev/null | jq -e '.models | length > 0'
 
-                test "$(find "$OFLM/share/oflm/xclbins" -path '*/open_kernels/manifest.json' | wc -l)" -eq 11
-                test "$(find "$OFLM/share/oflm/xclbins" -path '*/gemm_rtp/design.json' | wc -l)" -eq 5
+                test "$(find "$OFLM/share/oflm/xclbins" -path '*/open_kernels/manifest.json' | wc -l)" -eq "$(jq '.llmSpecs | length' "$SETS")"
+                test "$(find "$OFLM/share/oflm/xclbins" -path '*/gemm_rtp/design.json' | wc -l)" -eq "$(jq '.bertFamilies | length' "$SETS")"
                 test -d "$OFLM/share/oflm/xclbins/Llama-3.2-1B-NPU2"
 
                 touch $out
