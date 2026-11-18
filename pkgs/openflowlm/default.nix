@@ -102,6 +102,11 @@ stdenv.mkDerivation (finalAttrs: {
       third_party/tokenizers-cpp/CMakeLists.txt \
       third_party/tokenizers-cpp/sentencepiece/CMakeLists.txt \
       --replace-fail 'set(CMAKE_CXX_STANDARD 17)' 'set(CMAKE_CXX_STANDARD 20)'
+
+    # Upstream's test/ CMake assumes the repo root is the source dir; cmakeDir
+    # is ../src, so its CMAKE_SOURCE_DIR-relative src/ paths resolve to src/src/.
+    substituteInPlace src/CMakeLists.txt \
+      --replace-fail 'add_subdirectory(test)' ""
   '';
 
   # nixpkgs' cargoSetupHook now exports RUSTONIG_SYSTEM_LIBONIG=1, which makes
