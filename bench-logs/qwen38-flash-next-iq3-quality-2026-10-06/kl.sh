@@ -38,6 +38,7 @@ SIGNAL=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
 SIGNAL_FILE=$SIGNAL
 # shellcheck source=/dev/null # bench-logs/lib/gpu-signal.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../lib/gpu-signal.sh"
+unset GPU_SIGNAL_OWNER # only this script sets it, after its own claim
 # 1 from just before any row's run.sh launches until the last row succeeds: run.sh may unload lemond at any point and
 # die by a signal that skips its own reload, and restore_lemond is a no-op when the model is loaded.
 offline=0

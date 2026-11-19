@@ -50,6 +50,9 @@ signal_clear() { [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" != "$$" ] || rm -f 
 # shellcheck source=/dev/null # bench-logs/lib/gpu-signal.sh
 . "$(dirname "${BASH_SOURCE[0]}")/../lib/gpu-signal.sh"
 
+# The owner handoff comes only from the wrapper that launched this run.sh; an inherited or reused pid is not one.
+[ "${GPU_SIGNAL_OWNER:-}" = "$PPID" ] || unset GPU_SIGNAL_OWNER
+
 # Another bench holding the file has deliberately unloaded lemond for its own GPU row. Refuse before the EXIT trap
 # exists: reload() on any exit path would load the resident model beside that row. A dead or unparsable pid is stale.
 holder=$(signal_live_holder)
