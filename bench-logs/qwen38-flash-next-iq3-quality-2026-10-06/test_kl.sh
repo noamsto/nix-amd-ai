@@ -174,6 +174,7 @@ printf 'Mean KLD: 0.1\n' >"$T/child.log"
 nice -n 10 bash "$KL" summary "$T/child.log" >/dev/null 2>&1
 check "summary exit 0" eq $? 0
 check "signal file survives summary" eq "$(head -n 1 "$SIGNAL")" 1
+rm -f "$SIGNAL" # pid 1 is live, so kl.sh would now refuse to run beside it (case 7)
 STUB_SLEEP_LABEL=iq4-vs-ref nice -n 10 bash "$KL" candidates 2>/dev/null &
 klpid=$!
 bgpids+=("$klpid")
@@ -185,6 +186,21 @@ check "signal file survives the refusal" eq "$(head -n 1 "$SIGNAL")" 1
 kill -TERM "$klpid"
 wait "$klpid"
 check "signal file survives the first invocation's exit" eq "$(head -n 1 "$SIGNAL")" 1
+
+echo "== 7. a live foreign bench already holds the file: refuse, run.sh never called, file intact"
+reset
+sleep 60 &
+holder=$!
+bgpids+=("$holder")
+printf '%s\nforeign row\n' "$holder" >"$SIGNAL"
+nice -n 10 bash "$KL" candidates 2>"$T/refuse.err"
+check "exit 2" eq $? 2
+check "stub never called" eq "$(wc -l <"$STUB_LOG")" 0
+check "holder pid untouched" eq "$(sed -n 1p "$SIGNAL")" "$holder"
+check "holder row untouched" eq "$(sed -n 2p "$SIGNAL")" "foreign row"
+check "refusal names the holder" grep -q "pid $holder" "$T/refuse.err"
+check "no marker written" eq "$(find "$T/w" -name '*.log.ok' | wc -l)" 0
+kill "$holder" 2>/dev/null
 
 echo
 if [ "$fails" = 0 ]; then echo "all passed"; else echo "$fails failed"; fi

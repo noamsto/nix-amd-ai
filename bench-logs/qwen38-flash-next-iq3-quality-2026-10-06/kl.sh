@@ -34,6 +34,10 @@ need() {
 
 # Other crews on the host defer CPU-heavy gates while this file exists and its pid is alive.
 SIGNAL=${XDG_RUNTIME_DIR:-/tmp}/halo-gpu-bench.active
+# shellcheck disable=SC2034 # read by lib/gpu-signal.sh
+SIGNAL_FILE=$SIGNAL
+# shellcheck source=/dev/null # bench-logs/lib/gpu-signal.sh
+. "$(dirname "${BASH_SOURCE[0]}")/../lib/gpu-signal.sh"
 # 1 from just before any row's run.sh launches until the last row succeeds: run.sh may unload lemond at any point and
 # die by a signal that skips its own reload, and restore_lemond is a no-op when the model is loaded.
 offline=0
@@ -89,7 +93,11 @@ exec_row() {
         return
     fi
     [ "$pos" = last ] && keep=0
-    printf '%s\n%s\n' "$$" "$(basename "$log" .log)" >"$SIGNAL"
+    # claimed per row: the file stays ours between rows (only on_exit removes it), so a re-claim just refreshes the label
+    if ! signal_claim "$(basename "$log" .log)"; then
+        echo "refusing: another bench holds $SIGNAL (pid $(signal_live_holder), row: $(sed -n 2p "$SIGNAL" 2>/dev/null)); lemond untouched" >&2
+        exit 2
+    fi
     [ -n "$armed" ] || { trap on_exit EXIT; armed=1; }
     offline=1
     # in the background so a signal reaches the handler instead of waiting out run.sh
