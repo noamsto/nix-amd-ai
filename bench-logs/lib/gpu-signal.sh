@@ -1,13 +1,17 @@
 # shellcheck shell=bash
 # GPU bench signal file helpers. Source this; do not execute it. The caller sets SIGNAL_FILE to the file's path before
 # calling either function.
+#
+# A wrapper that holds the file across several run.sh rows (kl.sh) exports GPU_SIGNAL_OWNER=<its pid> after claiming it.
+# A holder equal to GPU_SIGNAL_OWNER is then not foreign: signal_live_holder skips it and signal_claim keeps it. Unset,
+# the helpers behave as without the handoff.
 
 # Echo the pid of a live bench other than this process holding the signal file, else nothing. kill -0 fails on EPERM
 # too, which still means alive; /proc distinguishes it from ESRCH.
 signal_live_holder() {
     local holder
     holder=$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)
-    [[ $holder =~ ^[1-9][0-9]*$ ]] && [ "$holder" != "$$" ] && { kill -0 "$holder" 2>/dev/null || [ -d "/proc/$holder" ]; } && echo "$holder"
+    [[ $holder =~ ^[1-9][0-9]*$ ]] && [ "$holder" != "$$" ] && [ "$holder" != "${GPU_SIGNAL_OWNER:-}" ] && { kill -0 "$holder" 2>/dev/null || [ -d "/proc/$holder" ]; } && echo "$holder"
 }
 
 # Take the file atomically so two benches started seconds apart cannot both hold it: under a lock, link this run's
@@ -15,6 +19,7 @@ signal_live_holder() {
 # the holder is stale (removed, retried once) or refuse. 0 = ours; 2 = a live foreign bench holds it (or both lost).
 signal_claim() { # <row label>
     local label=$1 tmp=$SIGNAL_FILE.$$ tries=0 rc=2
+    [ -z "${GPU_SIGNAL_OWNER:-}" ] || [ "$(sed -n 1p "$SIGNAL_FILE" 2>/dev/null)" != "$GPU_SIGNAL_OWNER" ] || return 0
     # The stale-file takeover below is check-then-delete, so serialise claimers with a kernel lock; without it two
     # benches finding the same stale file could both discard it and both link a claim. flock is released when this
     # process dies, so the lock file needs no stale cleanup.

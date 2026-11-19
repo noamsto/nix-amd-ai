@@ -33,7 +33,7 @@ need() {
 }
 
 # Other crews on the host defer CPU-heavy gates while this file exists and its pid is alive.
-SIGNAL=${XDG_RUNTIME_DIR:-/tmp}/halo-gpu-bench.active
+SIGNAL=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
 # shellcheck disable=SC2034 # read by lib/gpu-signal.sh
 SIGNAL_FILE=$SIGNAL
 # shellcheck source=/dev/null # bench-logs/lib/gpu-signal.sh
@@ -65,7 +65,14 @@ restore_lemond() {
 # shellcheck disable=SC2329 # invoked by the EXIT trap
 on_exit() {
     local rc=$?
-    if [ "$offline" = 1 ]; then restore_lemond || rc=6; fi
+    local foreign
+    foreign=$(signal_live_holder)
+    if [ "$offline" = 1 ] && [ -n "$foreign" ]; then
+        echo "lemond LEFT OFFLINE: bench pid $foreign holds $SIGNAL; reloading would collide with its GPU row" >&2
+        rc=6
+    elif [ "$offline" = 1 ]; then
+        restore_lemond || rc=6
+    fi
     [ "$(head -n 1 -- "$SIGNAL" 2>/dev/null)" = "$$" ] && rm -f -- "$SIGNAL"
     exit "$rc"
 }
@@ -93,12 +100,17 @@ exec_row() {
         return
     fi
     [ "$pos" = last ] && keep=0
-    # claimed per row: the file stays ours between rows (only on_exit removes it), so a re-claim just refreshes the label
-    if ! signal_claim "$(basename "$log" .log)"; then
-        echo "refusing: another bench holds $SIGNAL (pid $(signal_live_holder), row: $(sed -n 2p "$SIGNAL" 2>/dev/null)); lemond untouched" >&2
-        exit 2
+    # Claimed once, for the whole window: lemond stays offline between rows, so the file must stay ours until on_exit.
+    # run.sh sees GPU_SIGNAL_OWNER and treats this process's claim as its own.
+    if [ -z "$armed" ]; then
+        if ! signal_claim "$(basename "$log" .log)"; then
+            echo "refusing: another bench holds $SIGNAL (pid $(signal_live_holder), row: $(sed -n 2p "$SIGNAL" 2>/dev/null)); lemond untouched" >&2
+            exit 2
+        fi
+        export GPU_SIGNAL_OWNER=$$
+        trap on_exit EXIT
+        armed=1
     fi
-    [ -n "$armed" ] || { trap on_exit EXIT; armed=1; }
     offline=1
     # in the background so a signal reaches the handler instead of waiting out run.sh
     KEEP_OFFLINE=$keep OUT=$W/rows.jsonl EXEC_DEV=$dev TARGET=$target EXEC_LOG=$log NEED_GIB=$need \
