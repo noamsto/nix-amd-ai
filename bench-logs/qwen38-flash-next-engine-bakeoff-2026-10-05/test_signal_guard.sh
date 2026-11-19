@@ -45,7 +45,7 @@ run() { # <label> <env assignments...> -- <run.sh args...>; sets rc
     while [ "$1" != -- ]; do env+=("$1"); shift; done
     shift
     : >"$STUB_LOG"
-    env -u OUT -u CACHE -u CORPUS_REV -u KEEP_OFFLINE -u FIT_CHECK_ONLY -u STUB_OK -u STUB_RACE_PID -u STUB_RACE_FILE "${env[@]}" bash "$here/run.sh" "$@" >"$d/out" 2>&1
+    env -u OUT -u CACHE -u CORPUS_REV -u KEEP_OFFLINE -u FIT_CHECK_ONLY -u STUB_OK -u STUB_RACE_PID -u STUB_RACE_FILE -u GPU_SIGNAL_OWNER "${env[@]}" bash "$here/run.sh" "$@" >"$d/out" 2>&1
     rc=$?
 }
 check() { # <desc> <ok?>
@@ -70,6 +70,19 @@ for c in "${cases[@]}"; do
     check "held by live pid, $name: exit 2, lemond untouched" '[ $rc = 2 ] && [ ! -s "$STUB_LOG" ] && grep -q "other-bench row" "$d/out" && grep -q "pid $holder" "$d/out"'
     check "held by live pid, $name: signal file kept" '[ "$(sed -n 1p "$sig")" = "$holder" ]'
 done
+
+# GPU_SIGNAL_OWNER naming run.sh's parent (this shell) is a wrapper's own claim: no startup refusal, file kept
+printf '%s\n%s\n' "$$" "wrapper window" >"$sig"
+run GPU_SIGNAL_OWNER="$$" X=1 -- corpus
+check "owner handoff: not refused (lemond contacted by reload, usual config error)" '[ $rc = 6 ] && grep -q /health "$STUB_LOG" && grep -q "OUT is required" "$d/out"'
+check "owner handoff: signal file kept" '[ "$(sed -n 1p "$sig")" = "$$" ]'
+# an owner that is not run.sh's parent (leaked env, reused pid) does not excuse a live holder
+printf '%s\n%s\n' "$holder" "other-bench row" >"$sig"
+run GPU_SIGNAL_OWNER="$holder" X=1 -- corpus
+check "leaked owner naming the holder: still refused, lemond untouched" '[ $rc = 2 ] && [ ! -s "$STUB_LOG" ] && grep -q "pid $holder" "$d/out"'
+run GPU_SIGNAL_OWNER=999999999 X=1 -- corpus
+check "other owner: still refused, lemond untouched" '[ $rc = 2 ] && [ ! -s "$STUB_LOG" ] && grep -q "pid $holder" "$d/out"'
+check "other owner: signal file kept" '[ "$(sed -n 1p "$sig")" = "$holder" ]'
 
 kill "$holder"
 wait "$holder" 2>/dev/null
@@ -110,4 +123,10 @@ echo loaded >"$d/state"
 run STUB_OK=1 OUT="$d/o" TARGET="$d/target" EXEC_DEV=cpu EXEC_LOG="$d/l" -- exec -- true
 check "stale holder at claim: row runs and unloads lemond" '[ $rc = 0 ] && grep -q /unload "$STUB_LOG"'
 check "stale holder at claim: signal file gone on exit" '[ ! -e "$sig" ]'
+# a wrapper's claim (GPU_SIGNAL_OWNER) is kept: the row runs, and neither claims over it nor removes it on exit
+printf '%s\n%s\n' "$$" "wrapper window" >"$sig"
+echo loaded >"$d/state"
+run STUB_OK=1 GPU_SIGNAL_OWNER="$$" OUT="$d/o" TARGET="$d/target" EXEC_DEV=cpu EXEC_LOG="$d/l" -- exec -- true
+check "owner handoff: row runs and unloads lemond" '[ $rc = 0 ] && grep -q /unload "$STUB_LOG"'
+check "owner handoff: signal file and label left to the owner" '[ "$(sed -n 1p "$sig")" = "$$" ] && [ "$(sed -n 2p "$sig")" = "wrapper window" ]'
 exit $fail

@@ -34,7 +34,11 @@ for a; do
     [ "$prev" = --label ] && label=$a
     prev=$a
 done
-echo "label=$label keep=${KEEP_OFFLINE:-} fit=${FIT_CHECK_ONLY:-} dev=${EXEC_DEV:-} argv=$*" >>"$STUB_LOG"
+echo "label=$label keep=${KEEP_OFFLINE:-} fit=${FIT_CHECK_ONLY:-} dev=${EXEC_DEV:-} argv=$* owner=${GPU_SIGNAL_OWNER:-} holder=$(sed -n 1p "$XDG_RUNTIME_DIR/halo-gpu-bench.active" 2>/dev/null)" >>"$STUB_LOG"
+if [ -n "$label" ] && [ "$label" = "${STUB_STEAL_LABEL:-}" ]; then
+    printf '%s\n%s\n' "$STUB_STEAL_PID" "thief row" >"$XDG_RUNTIME_DIR/halo-gpu-bench.active"
+    exit 1
+fi
 [ "${FIT_CHECK_ONLY:-0}" = 1 ] && exit "${STUB_FIT_RC:-0}"
 if [ -n "$label" ] && [ "$label" = "${STUB_SLEEP_LABEL:-}" ]; then
     echo "$$" >"$STUB_PIDFILE"
@@ -72,7 +76,7 @@ keeps() { sed -n 's/^label=[^ ]\+ keep=\([^ ]*\) .*/\1/p' "$STUB_LOG" | tr '\n' 
 restores() { grep -c '^label= keep=0 fit=1 dev=cpu ' "$STUB_LOG"; }
 reset() {
     rm -f -- "$T"/w/*.log "$T"/w/*.ok "$T/w/rows.jsonl" "$SIGNAL" "$STUB_LOG" "$STUB_PIDFILE"
-    unset STUB_SLEEP_LABEL STUB_FAIL_LABEL STUB_KILL_LABEL STUB_FIT_RC
+    unset STUB_SLEEP_LABEL STUB_FAIL_LABEL STUB_KILL_LABEL STUB_FIT_RC STUB_STEAL_LABEL STUB_STEAL_PID
     : >"$STUB_LOG"
 }
 # shellcheck disable=SC2329 # run through check
@@ -96,6 +100,8 @@ check "only the last has KEEP_OFFLINE=0" eq "$(keeps)" "1 1 1 1 1 0"
 check "no restore call" eq "$(restores)" 0
 check "every row has an .ok marker" eq "$(find "$T/w" -name '*.log.ok' | wc -l)" 6
 check "signal file removed" test ! -e "$SIGNAL"
+check "every row sees GPU_SIGNAL_OWNER equal to the holder pid" eq "$(sed -n 's/.* owner=\([0-9]*\) holder=\([0-9]*\)$/\1 \2/p' "$STUB_LOG" | awk '$1 == "" || $1 != $2' | wc -l)" 0
+check "the owner is set on every row" eq "$(grep -c ' owner=[0-9][0-9]* ' "$STUB_LOG")" 6
 
 echo "== 2. rerun with every marker: all skipped, nothing ran, no restore"
 : >"$STUB_LOG"
@@ -174,6 +180,7 @@ printf 'Mean KLD: 0.1\n' >"$T/child.log"
 nice -n 10 bash "$KL" summary "$T/child.log" >/dev/null 2>&1
 check "summary exit 0" eq $? 0
 check "signal file survives summary" eq "$(head -n 1 "$SIGNAL")" 1
+rm -f "$SIGNAL" # pid 1 is live, so kl.sh would now refuse to run beside it (case 7)
 STUB_SLEEP_LABEL=iq4-vs-ref nice -n 10 bash "$KL" candidates 2>/dev/null &
 klpid=$!
 bgpids+=("$klpid")
@@ -185,6 +192,33 @@ check "signal file survives the refusal" eq "$(head -n 1 "$SIGNAL")" 1
 kill -TERM "$klpid"
 wait "$klpid"
 check "signal file survives the first invocation's exit" eq "$(head -n 1 "$SIGNAL")" 1
+
+echo "== 7. a live foreign bench already holds the file: refuse, run.sh never called, file intact"
+reset
+sleep 60 &
+holder=$!
+bgpids+=("$holder")
+printf '%s\nforeign row\n' "$holder" >"$SIGNAL"
+nice -n 10 bash "$KL" candidates 2>"$T/refuse.err"
+check "exit 2" eq $? 2
+check "stub never called" eq "$(wc -l <"$STUB_LOG")" 0
+check "holder pid untouched" eq "$(sed -n 1p "$SIGNAL")" "$holder"
+check "holder row untouched" eq "$(sed -n 2p "$SIGNAL")" "foreign row"
+check "refusal names the holder" grep -q "pid $holder" "$T/refuse.err"
+check "no marker written" eq "$(find "$T/w" -name '*.log.ok' | wc -l)" 0
+kill "$holder" 2>/dev/null
+
+echo "== 8. a live foreign bench takes the file mid-window: lemond is left offline, not reloaded beside it"
+reset
+sleep 60 &
+thief=$!
+bgpids+=("$thief")
+STUB_STEAL_LABEL=iq3-vs-ref STUB_STEAL_PID=$thief nice -n 10 bash "$KL" candidates 2>"$T/steal.err"
+check "exit 6" eq $? 6
+check "no restore call" eq "$(restores)" 0
+check "loud message names the thief" grep -q "LEFT OFFLINE: bench pid $thief" "$T/steal.err"
+check "thief's file untouched" eq "$(sed -n 1p "$SIGNAL")" "$thief"
+kill "$thief" 2>/dev/null
 
 echo
 if [ "$fails" = 0 ]; then echo "all passed"; else echo "$fails failed"; fi

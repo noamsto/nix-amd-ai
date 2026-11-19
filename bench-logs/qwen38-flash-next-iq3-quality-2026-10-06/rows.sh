@@ -18,10 +18,17 @@ if pgrep -x 'llama-perplexit|llama-server|llama-bench' >/dev/null ||
     exit 2
 fi
 
-# Other crews on the host defer CPU-heavy gates while this file exists and its pid is alive.
-SIGNAL=${XDG_RUNTIME_DIR:-/tmp}/halo-gpu-bench.active
-printf '%s\n%s\n' "$$" "tasks-${1:-}" >"$SIGNAL"
-trap '[ "$(head -n 1 -- "$SIGNAL" 2>/dev/null)" = "$$" ] && rm -f -- "$SIGNAL"' EXIT
+# Each case is one run.sh row, which claims the signal file for itself; refuse up front while another bench holds it.
+SIGNAL=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/halo-gpu-bench.active
+# shellcheck disable=SC2034 # read by lib/gpu-signal.sh
+SIGNAL_FILE=$SIGNAL
+# shellcheck source=/dev/null # bench-logs/lib/gpu-signal.sh
+. bench-logs/lib/gpu-signal.sh
+holder=$(signal_live_holder)
+if [ -n "$holder" ]; then
+    echo "refusing: another bench holds $SIGNAL (pid $holder, row: $(sed -n 2p "$SIGNAL" 2>/dev/null)); lemond untouched" >&2
+    exit 2
+fi
 
 case ${1:-} in
 smoke)
