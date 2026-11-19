@@ -160,6 +160,24 @@ in stdenv.mkDerivation {
         '// `disconnected` is never set (see above), so this token never
             // cancels the transfer.'
 
+    # Same disconnect fix for the Ollama /api/pull route: its progress callback
+    # cancelled the download on a failed write. Log the disconnect once per stream.
+    substituteInPlace src/cpp/server/routes/ollama/pull.cpp \
+      --replace-fail \
+        '                        DownloadProgressCallback progress_cb = [&sink](const DownloadProgress& p) -> bool {' \
+        '                        bool disconnect_logged = false;
+                            DownloadProgressCallback progress_cb = [&sink, &disconnect_logged](const DownloadProgress& p) -> bool {' \
+      --replace-fail \
+        '                            if (!sink.write(ndjson.c_str(), ndjson.size())) {
+                                    return false;
+                                }
+                                return true;' \
+        '                            if (!sink.write(ndjson.c_str(), ndjson.size()) && !disconnect_logged) {
+                                    disconnect_logged = true;
+                                    LOG(INFO, "Server") << "Client disconnected; download continues in background" << std::endl;
+                                }
+                                return true;'
+
     # Never fetch lemonade's downloaded "TheRock" ROCm runtime: it prepends its
     # lib/ to LD_LIBRARY_PATH for rocm-stable, shadowing our nix sd-server /
     # llama-server's own ROCm libs (same sonames) with TheRock copies that need
