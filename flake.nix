@@ -178,6 +178,13 @@
       systems = ["x86_64-linux" "aarch64-darwin"];
 
       flake = {
+        # The models this module serves, as data a client can render its own
+        # model list from, e.g. pi's models.json on a laptop pointing at a host:
+        #   inputs.nix-amd-ai.lib.modelCatalog {strata = {enable = true;}};
+        # -> { "Qwen3.8-Flash-Next-Strata" = { contextWindow, labels, inputs }; }
+        # Settings the module defaults may be omitted. See lib/model-catalog.nix.
+        lib.modelCatalog = (import ./lib/model-catalog.nix {lib = inputs.nixpkgs.lib;}).modelCatalog;
+
         overlays.default = final: prev: let
           # Build against our own nixpkgs input for closure/Cachix stability,
           # but inherit the consumer's unfree policy so fastflowlm is refused
@@ -1074,6 +1081,51 @@
               grep -qF 'STRATA_MODEL_FETCH=' "$AUTO_UNIT"/strata-prepare.service \
                 && { echo "explicit model got the pinned snapshot's fetch hint"; exit 1; }
               [ "$UNCACHED_REJECTED" = 1 ] || { echo "no model and no cacheDir was accepted"; exit 1; }
+              touch $out
+            '';
+
+            # A client renders its model list from lib.modelCatalog; the module
+            # renders lemond's customModels from the same function. Given the
+            # same settings, both must name the same labels and window - the
+            # drift that left a client advertising the Strata model as
+            # text-only while the engine served `--vision`.
+            model-catalog = pkgs.runCommand "model-catalog" {
+              nativeBuildInputs = [pkgs.jq];
+              VISION_ON = builtins.toJSON {
+                module = (strataEvalHost {}).config.hardware.amd-npu.lemonade.customModels;
+                catalog = inputs.self.lib.modelCatalog {strata = {enable = true;};};
+              };
+              DISABLED = builtins.toJSON (inputs.self.lib.modelCatalog {strata = {};});
+              VISION_OFF = builtins.toJSON {
+                module = (strataEvalHost {vision.enable = false;}).config.hardware.amd-npu.lemonade.customModels;
+                catalog = inputs.self.lib.modelCatalog {
+                  strata = {
+                    enable = true;
+                    vision.enable = false;
+                  };
+                };
+              };
+            } ''
+              check() {
+                printf '%s' "$1" | jq -e "$2" >/dev/null \
+                  || { echo "FAILED: $2"; printf '%s\n' "$1"; exit 1; }
+              }
+              # Defaults alone (enable only) reproduce the module's own: name,
+              # window and labels come out the same from both sides.
+              check "$VISION_ON" '.module | keys == ["Qwen3.8-Flash-Next-Strata"]'
+              check "$VISION_ON" '.module["Qwen3.8-Flash-Next-Strata"].labels == .catalog["Qwen3.8-Flash-Next-Strata"].labels'
+              check "$VISION_ON" '.module["Qwen3.8-Flash-Next-Strata"].recipe_options.ctx_size == .catalog["Qwen3.8-Flash-Next-Strata"].contextWindow'
+              check "$VISION_ON" '.catalog["Qwen3.8-Flash-Next-Strata"].inputs == ["text", "image"]'
+
+              # Vision off drops the label and the modality together.
+              check "$VISION_OFF" '.module["Qwen3.8-Flash-Next-Strata"].labels == .catalog["Qwen3.8-Flash-Next-Strata"].labels'
+              check "$VISION_OFF" '.catalog["Qwen3.8-Flash-Next-Strata"].inputs == ["text"]'
+              check "$VISION_OFF" '.catalog["Qwen3.8-Flash-Next-Strata"].labels | index("vision") == null'
+
+              # A host that does not serve strata (enable is off by default) gets
+              # no entry, so a client cannot advertise a model nobody runs.
+              check "$DISABLED" '. == {}'
+
               touch $out
             '';
 
