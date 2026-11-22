@@ -28,6 +28,18 @@ The `strata-prepare` pack step is CPU-only. Measured on a Strix Halo (gfx1151) h
 
 **Limits behind lemond.** Images must be sent as `data:` URLs; file paths, `file://` URLs and http(s) URLs are refused (a request using one fails with a 400), since lemond forwards client requests as-is. Engine arguments set per model through lemond are limited to tuning flags (`--prefill`, `--spec`, `--spec-min-p`, `--mtp-q4`, `--kv`, `--lookup-chain`, `--vram-reserve-mib`).
 
+**Telling a client what this host serves.** A client's own model list carries capabilities it cannot see from the endpoint: pi's `models.json`, for one, takes `input = ["text", "image"]` per model and defaults it to text-only, so a client that names the model but not its vision support drops every attached image before the request is sent. The flake exposes the module's own answer as data:
+
+```nix
+inputs.nix-amd-ai.lib.modelCatalog {strata = config.hardware.amd-npu.strata;}
+# { "Qwen3.8-Flash-Next-Strata" = {
+#     contextWindow = 131072;
+#     labels = ["chat" "reasoning" "tool-calling" "vision"];
+#     inputs = ["text" "image"]; }; }
+```
+
+Settings the module defaults (`modelName`, `contextSize`, `vision.enable`) may be omitted; the module renders `lemonade.customModels.*.labels` and `recipe_options.ctx_size` from the same function (`lib/model-catalog.nix`), so a client given the same settings cannot claim a capability the server lacks, or miss one it has. The flake's `model-catalog` check holds the two sides together. `GET /api/v1/models` carries the same labels at runtime, plus `max_context_window` for models from Lemonade's registry.
+
 **Timeout.** The `strata` backend carries its own fixed 1 h readiness timeout, so enabling Strata leaves lemond's `global_timeout` at 0 (no request cutoff) and `global_timeout` no longer changes the strata startup wait. vLLM still raises `global_timeout` to 3600 for its own startup wait.
 
 Unloading the model or stopping lemond ends the engine's whole process group within lemond's stop window.

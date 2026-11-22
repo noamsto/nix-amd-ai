@@ -13,6 +13,10 @@
   # `true`/`false` wins, and `null` (auto) runs it only when `pack`/`mtp` are left at their default outputs, so a host
   # with explicit paths (today's only consumer) keeps its runConfig byte-for-byte and never downloads anything.
   strataSources = import ../pkgs/strata/sources.nix;
+  # One implementation of "what this host serves", shared with clients that render their own model list
+  # (flake output `lib.modelCatalog`). See ../lib/model-catalog.nix.
+  modelCatalog = import ../lib/model-catalog.nix {inherit lib;};
+  strataCatalogEntry = (modelCatalog.modelCatalog {strata = cfg.strata;}).${cfg.strata.modelName};
   strataStateDir = "/var/lib/strata";
   strataPackDefault = "${strataStateDir}/pack";
   strataMtpDefault = "${strataStateDir}/mtp/rt";
@@ -1017,7 +1021,7 @@ in {
 
       modelName = mkOption {
         type = types.str;
-        default = "Qwen3.8-Flash-Next-Strata";
+        default = modelCatalog.defaults.modelName;
         description = "Name the model is registered under in lemonade's `customModels`.";
       };
 
@@ -1033,7 +1037,7 @@ in {
 
       contextSize = mkOption {
         type = types.ints.positive;
-        default = 131072;
+        default = modelCatalog.defaults.contextSize;
         description = "Context tokens passed as `--max-context`. lemond's `ctx_size` for the model overrides it per load.";
       };
 
@@ -1087,7 +1091,7 @@ in {
       vision = {
         enable = mkOption {
           type = types.bool;
-          default = true;
+          default = modelCatalog.defaults.vision;
           description = "Serve image input through `strata-vision`. Requires `vision.mmproj`. Behind lemond, images must be sent as `data:` URLs.";
         };
 
@@ -1241,8 +1245,8 @@ in {
         checkpoint = cfg.strata.model;
         source = "local_path";
         recipe = "strata";
-        labels = ["chat" "reasoning" "tool-calling"] ++ optional cfg.strata.vision.enable "vision";
-        recipe_options.ctx_size = cfg.strata.contextSize;
+        inherit (strataCatalogEntry) labels;
+        recipe_options.ctx_size = strataCatalogEntry.contextWindow;
       };
     };
 
