@@ -22,7 +22,7 @@ rustPlatform.buildRustPackage {
 
   sourceRoot = "${src.name}/src/app/src-tauri";
 
-  cargoHash = "sha256-xX2Wkk0QqCQ//YoxeQBLTWfGEfyIR8JJKArYLzaAc0g=";
+  cargoHash = "sha256-O/r/nJhKY+M9RaffbQ9LTxqoZqioRiu7uV27htBTxf4=";
 
   # tauri-codegen's `generate_context!()` proc-macro embeds the frontendDist
   # files at lib.rs compile time. tauri.conf.json points frontendDist at
