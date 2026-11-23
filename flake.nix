@@ -250,6 +250,8 @@
               stable-diffusion-cpp = stable-diffusion-cpp-cpu;
             };
             gaia = pinned.callPackage ./pkgs/gaia {};
+            # Opt-in; not built by CI.
+            unsloth-studio = pinned.callPackage ./pkgs/unsloth-studio {inherit llama-cpp-vulkan;};
             vllm-rocm = pinned.callPackage ./pkgs/vllm-rocm {};
           };
 
@@ -364,6 +366,8 @@
           # built here so headless hosts substitute it rather than compile it.
           lemonade-headless = lemonade.override {withDesktopApp = false;};
           gaia = pkgs.callPackage ./pkgs/gaia {};
+          # Opt-in; not built by CI.
+          unsloth-studio = pkgs.callPackage ./pkgs/unsloth-studio {inherit llama-cpp-vulkan;};
           vllm-rocm = pkgs.callPackage ./pkgs/vllm-rocm {};
           # Opt-in through `hardware.amd-npu.strata`; not built by CI.
           strata = pkgs.callPackage ./pkgs/strata {};

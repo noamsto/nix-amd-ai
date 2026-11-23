@@ -29,6 +29,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
 | `strata` | Qwen3.8-Flash-Next engine on TheRock ROCm 7.14.1, Strix Halo (`gfx1151`); opt-in lemond backend via `hardware.amd-npu.strata` ([section](#opt-in-strata-backend-strix-halo)) | Built from [Niko1221/Strata](https://github.com/Niko1221/Strata) |
 | `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
+| `unsloth-studio` | Unsloth Studio (local UI to run and fine-tune LLMs) in an FHS env with AMD ROCm torch; opt-in, not built by CI ([section](#opt-in-unsloth-studio-strix-halo)) | `buildFHSEnv` wrapper around [unslothai/unsloth](https://github.com/unslothai/unsloth)'s installer (AGPL-3.0) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
 CPU backends for llamacpp / whispercpp / sd-cpp are wired automatically when `enableLemonade = true`. `llama-cpp` and the Vulkan and ROCm variants follow nixpkgs' llama.cpp, build **12110** (the flake no longer pins its own; the opt-in GSQHalo fork aside); the module reaches all three CPU backends through the overlay's private `pkgs.llama-cpp-cpu`, `pkgs.whisper-cpp-cpu` and `pkgs.stable-diffusion-cpp-cpu`, and `lemonade` composes the same pinned `whisper-cpp` / `stable-diffusion-cpp`, so its derivation never follows the consumer's nixpkgs. That build carries [ggml-org/llama.cpp#29761](https://github.com/ggml-org/llama.cpp/pull/29761)'s Qwen3.8-Flash-Next MTP sidecar support; on halo (Strix Halo, gfx1151) it gives **1.53× (Vulkan) / 1.68× (ROCm)** decode over MTP-off (27.4 → 42.1 and 24.0 → 40.4 t/s), within about 2% of the previous b11382 pin re-measured in the same session (1.56× / 1.71×) — see [`bench-logs/qwen38-flash-next-llamacpp-12110-2026-11-13`](bench-logs/qwen38-flash-next-llamacpp-12110-2026-11-13/). The original b11382 measurement is in [`bench-logs/qwen38-flash-next-mtp-2026-10-04`](bench-logs/qwen38-flash-next-mtp-2026-10-04/).
@@ -498,6 +499,22 @@ It exports the three console scripts the wheel declares — `gaia`, `gaia-cli`, 
 The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~120 packages into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
 
 Bump the pinned version in `pkgs/gaia/default.nix` by hand when a new GAIA release lands — that is by design, not an oversight. `scripts/check-updates.sh` reads the version from PyPI and the console scripts out of the published wheel's `entry_points.txt` (a version-only bump would otherwise ship wrappers for entry points upstream removed), reports both in the weekly update PR, and withholds that PR from auto-merge so the edit stays a human's.
+
+### Opt-in: Unsloth Studio (Strix Halo)
+
+[Unsloth Studio](https://unsloth.ai/docs/new/studio/install) is Unsloth's local UI for running and fine-tuning models. Upstream's installer creates a Python venv under `~/.unsloth/studio`, downloads PyTorch wheels by GPU and fetches a `llama-server`; those binaries assume an FHS layout, so the package wraps the installer in a `buildFHSEnv` and, like `gaia`, pins the installer and leaves the Python tree to upstream rather than building Unsloth from source. It is not built by CI.
+
+```fish
+nix run .#unsloth-studio                      # first run installs into ~/.unsloth/studio, then serves on :8888
+nix run .#unsloth-studio -- train --help      # any `unsloth` subcommand
+nix run .#unsloth-studio -- doctor
+```
+
+What the wrapper does: runs the installer fetched at a pinned upstream commit (the commit pins the installer and its torch routing; the installer's own `uv pip install unsloth` is unversioned, so the wrapper sets `UV_CONSTRAINT` to pin `unsloth` and `unsloth-zoo` to the wrapper's version, `2026.11.9`; transitive wheels are not hash-pinned), with `UNSLOTH_ROCM_GFX_ARCH` and the AMD per-GPU torch index (`https://repo.amd.com/rocm/whl/<gfx>/`, torch 2.11+rocm7.13) set from `gpuTarget` (`gfx1151` by default; `gfx1150` shares the index pattern; anything else is refused). It hands the installer this flake's `llama-cpp-vulkan` through `--with-llama-cpp-dir`, uses a uv-managed CPython (Triton needs `Python.h`), and sets `UNSLOTH_MOE_BACKEND=native_torch`, a compile cache under the state dir and `HF_HUB_DISABLE_XET=1`. State lives in `$UNSLOTH_STUDIO_HOME` (default `~/.unsloth/studio`); the installer's llama.cpp link sits at `~/.unsloth/llama.cpp` for the default home and at `$UNSLOTH_STUDIO_HOME/llama.cpp` (or `$UNSLOTH_HOME/llama.cpp`) when overridden, and the wrapper refreshes whichever applies on every launch so it never points at a collected store path. Nothing is written system-wide. Bump the pinned installer commit in `pkgs/unsloth-studio/default.nix` by hand.
+
+**Verified** on one Strix Halo (gfx1151) host, [`bench-logs/unsloth-studio-trial-2026-11-23`](bench-logs/unsloth-studio-trial-2026-11-23/README.md): the installer routes to the gfx1151 index and accepts the external `llama-server` directory; `doctor` sees the GPU with torch `2.11.0+rocm7.13.0`; `/api/health` reports `chat_only: false` after hardware detection; a 40-step LoRA of Llama-3.2-1B-Instruct (bf16) through `unsloth train` finished with a falling, NaN-free loss.
+
+**Not verified:** GGUF chat through the external `llama-server` (linked, never launched); training started from the web UI; 4-bit (QLoRA) training, which upstream warns about on AMD; larger models and longer runs; throughput (the trial ran under heavy host load); which scaled-dot-product-attention kernel ran; `gfx1150`.
 
 ## Validation and benchmarking
 
