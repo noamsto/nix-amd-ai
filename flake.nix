@@ -59,7 +59,8 @@
         # which the sandbox cannot reach; test-generate-models has no model to
         # load, and the tests that consume its output fail or report "Not Run".
         # test-llama-context fails the same way ("no .gguf models found").
-        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-llama-context|test-recurrent-state-rollback[a-z0-9-]*|test-save-load-state|test-state-restore-fragmented)$"];
+        # test-kv-cache-scales imports torch, which the build env lacks.
+        ctestFlags = (old.ctestFlags or []) ++ ["-E" "^(test-download-model|test-generate-models|test-kv-cache-scales|test-llama-context|test-recurrent-state-rollback[a-z0-9-]*|test-save-load-state|test-state-restore-fragmented)$"];
       });
 
     # These backends run against the pinned nixpkgs, which never matches the
@@ -92,25 +93,50 @@
         '';
       };
 
-    # nixpkgs versions llama-cpp as the upstream release ("0.9.0") but bakes
-    # the real build number into -DLLAMA_BUILD_NUMBER. lemonade's
-    # backend_versions.json is built from `version` as "b${version}", so report
-    # the build number there (and in `--version`'s package name). The assert
-    # catches nixpkgs reformatting the flag.
-    llamaCppBuildVersion = pkgs: pkg: let
+    # nixpkgs' llama-cpp lags upstream (it versions as the release "0.9.0" and
+    # bakes build 12110 into -DLLAMA_BUILD_NUMBER), so pin src to a newer
+    # upstream tag on top of its derivation. lemonade's backend_versions.json
+    # is built from `version` as "b${version}", so `version` is the build
+    # number. `pinBuildNumber` and `pinCommit` move together with `pinTag` on
+    # the next bump -- there is no single source of truth to derive them from
+    # (fetchFromGitHub's `src.rev` is just the tag we passed in, not the
+    # resolved commit). Drop the pin, don't raise it, once nixpkgs catches up:
+    # the assert fails eval when nixpkgs' own build is newer than the pin.
+    llamaCppPin = pkgs: pkg: let
+      pinTag = "b12653";
+      pinBuildNumber = "12653";
+      pinCommit = "7d9b931";
       prefix = "-DLLAMA_BUILD_NUMBER:STRING=";
-      # Read from `pkg`, not the override's `old`: nixpkgs derives the source
-      # tag from `finalAttrs.version`, so `old.src` would fetch a nonexistent
-      # `v<build number>` tag, and deriving `version` from `old` recurses.
-      flags = builtins.filter (pkgs.lib.hasPrefix prefix) pkg.cmakeFlags;
-      inherit (pkg) src;
+      nixpkgsBuild = pkgs.lib.toInt (pkgs.lib.removePrefix prefix (builtins.head (builtins.filter (pkgs.lib.hasPrefix prefix) pkg.cmakeFlags)));
     in
-      assert flags != [];
-        pkg.overrideAttrs {
-          version = pkgs.lib.removePrefix prefix (builtins.head flags);
+      assert pkgs.lib.assertMsg (pkgs.lib.toInt pinBuildNumber >= nixpkgsBuild)
+      "nixpkgs' llama-cpp is build ${toString nixpkgsBuild}, newer than the pinned ${pinBuildNumber}: drop llamaCppPin in flake.nix";
+        pkg.overrideAttrs (old: {
+          version = pinBuildNumber;
           __intentionallyOverridingVersion = true;
-          inherit src;
-        };
+          src = pkgs.fetchFromGitHub {
+            owner = "ggml-org";
+            repo = "llama.cpp";
+            tag = pinTag;
+            hash = "sha256-NOoGrWOoTVVEtzr2hGjGQzh1LRgIXiiKa77IzwJnp9Y=";
+          };
+          # nixpkgs bakes its own build number/commit into `--version` and
+          # `/props` as plain -D flags (the release tarball carries no .git for
+          # llama.cpp to read them from); replace them so ours doesn't lie. The
+          # asserts catch a future nixpkgs reformatting these flags silently
+          # leaving the stale build number/commit in place instead of erroring.
+          cmakeFlags = assert pkgs.lib.any (pkgs.lib.hasPrefix prefix) old.cmakeFlags;
+          assert pkgs.lib.any (pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=") old.cmakeFlags;
+            builtins.map (
+              flag:
+                if pkgs.lib.hasPrefix prefix flag
+                then "${prefix}${pinBuildNumber}"
+                else if pkgs.lib.hasPrefix "-DLLAMA_BUILD_COMMIT:STRING=" flag
+                then "-DLLAMA_BUILD_COMMIT:STRING=${pinCommit}"
+                else flag
+            )
+            old.cmakeFlags;
+        });
 
     # Aristo94/GSQHalo.cpp, a llama.cpp fork for Strix Halo, as a source swap
     # on a llama-cpp-rocm build: same ROCm toolchain, `rocmGpuTargets` and
@@ -214,7 +240,7 @@
             llvm-aie = pinned.callPackage ./pkgs/llvm-aie {};
             mlir-aie = pinned.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
             openflowlm = pinned.callPackage ./pkgs/openflowlm {inherit xrt xrt-combined mlir-aie llvm-aie;};
-            llama-cpp-base = llamaCppBuildVersion pinned pinned.llama-cpp;
+            llama-cpp-base = llamaCppPin pinned pinned.llama-cpp;
             llama-cpp-cpu = llamaCppNoWebUi pinned llama-cpp-base;
             llama-cpp-vulkan = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned (llama-cpp-base.override {vulkanSupport = true;}));
             llama-cpp-vulkan-unsloth = withOwnVulkanDriver pinned (llamaCppNoWebUi pinned ((llamaCppUnsloth pinned llama-cpp-base).override {vulkanSupport = true;}));
@@ -333,7 +359,7 @@
           llvm-aie = pkgs.callPackage ./pkgs/llvm-aie {};
           mlir-aie = pkgs.callPackage ./pkgs/mlir-aie {inherit llvm-aie;};
           openflowlm = pkgs.callPackage ./pkgs/openflowlm {inherit xrt xrt-combined mlir-aie llvm-aie;};
-          llama-cpp-base = llamaCppBuildVersion pkgs pkgs.llama-cpp;
+          llama-cpp-base = llamaCppPin pkgs pkgs.llama-cpp;
           llama-cpp = llamaCppNoWebUi pkgs llama-cpp-base;
           llama-cpp-vulkan = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs (llama-cpp-base.override {vulkanSupport = true;}));
           llama-cpp-vulkan-unsloth = withOwnVulkanDriver pkgs (llamaCppNoWebUi pkgs ((llamaCppUnsloth pkgs llama-cpp-base).override {vulkanSupport = true;}));

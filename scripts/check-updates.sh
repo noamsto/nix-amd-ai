@@ -101,7 +101,7 @@ if [ "$NIXPKGS_CURRENT_REV" != "$NIXPKGS_LATEST_REV" ]; then
   done
 fi
 
-# Compare the llama.cpp build we ship (nixpkgs' own, see `llamaCppBuildVersion`
+# Compare the llama.cpp build we ship (pinned past nixpkgs', see `llamaCppPin`
 # in flake.nix) with Lemonade's backend_versions.json (llamacpp.vulkan).
 # Flagged only when Lemonade's build is newer than ours. Report-only: the
 # result drives a tracking issue, never a diff.
