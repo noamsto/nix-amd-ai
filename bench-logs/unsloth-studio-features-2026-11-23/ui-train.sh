@@ -20,7 +20,9 @@ jq -n --arg m "$model" --argjson s "$steps" '{
     batch_size: 2, gradient_accumulation_steps: 4, max_steps: $s, warmup_steps: 5,
     learning_rate: "2e-4", lora_r: 16, lora_alpha: 16, packing: false, project_name: "ui-train-probe",
     target_modules: ["q_proj","k_proj","v_proj","o_proj","gate_proj","up_proj","down_proj"]
-}' | api POST /api/train/start | jq -c .
+}' | api POST /api/train/start >"$work/start.json"
+jq -c . "$work/start.json"
+jq -e '(.error // null) == null and (.detail // null) == null' "$work/start.json" >/dev/null || { echo "ui-train: start failed" >&2; exit 1; }
 
 last=
 start=$(date +%s)
@@ -34,3 +36,4 @@ while :; do
 done
 jq -c '{phase,message,error}' <<<"$st"
 api GET /api/train/metrics </dev/null | jq -c '{n: (.loss_history|length), loss_history, step_history}'
+[ "$phase" = completed ] || { echo "ui-train: ended in phase $phase" >&2; exit 1; }

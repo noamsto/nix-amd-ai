@@ -13,17 +13,25 @@ work=$(mktemp -d)
 trap 'session_cleanup; rm -rf -- "$work"' EXIT
 studio_login || exit 1
 
-jq -n --arg p "$gguf" '{model_path: $p, max_seq_length: 2048, is_lora: false}' | api POST /api/inference/load | jq -c '{status,model,is_gguf,error,detail}'
+jq -n --arg p "$gguf" '{model_path: $p, max_seq_length: 2048, is_lora: false}' | api POST /api/inference/load >"$work/load.json"
+jq -c '{status,model,is_gguf,error,detail}' "$work/load.json"
+jq -e '.status == "loaded"' "$work/load.json" >/dev/null || { echo "chat: model load failed" >&2; exit 1; }
 
 # Studio's own child: find llama-server processes below the Studio pid.
-pids=$(pgrep -f '[l]lama-server' || true)
+echo "studio_pid=$studio_pid"
+pids=
+for p in $(descendants "$studio_pid"); do
+    case $(readlink "/proc/$p/exe" 2>/dev/null) in *llama-server*) pids="$pids $p" ;; esac
+done
 for p in $pids; do
     echo "pid=$p ppid=$(ps -o ppid= -p "$p" | tr -d ' ')"
     echo "exe=$(readlink "/proc/$p/exe")"
     echo "cmdline=$(tr '\0' ' ' <"/proc/$p/cmdline")"
 done
 echo "--- ss"
-ss -ltnp | grep -E 'llama-server|llama' || true
+for p in $pids; do
+    ss -ltnp | grep "pid=$p," || true
+done
 
 jq -n '{messages:[{role:"user",content:"Name the capital of France in one short sentence."}],max_tokens:48,stream:false}' |
     api POST /v1/chat/completions | jq -r '.choices[0].message.content // .'
