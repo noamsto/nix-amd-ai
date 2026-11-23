@@ -14,9 +14,10 @@ Baseline: nixpkgs' llama.cpp build 12110.
   same files and flags as `qwen38-flash-next-llamacpp-12110-2026-11-13`, run through that
   directory's gated `rows.sh`.
 - Part 2: `smoke.sh` (this directory) against `llama-server` loaded directly
-  (`-ngl 99 -c 8192 --jinja`) behind the same gated harness hand-off, **not** through lemond:
-  loading through lemond would have meant registering the model in the host's running service,
-  which was out of bounds.
+  (`-ngl 99 -c 8192 --jinja`) behind the same gated harness hand-off.
+- Part 3: the same model pulled and loaded through this branch's `lemond` (`.#lemonade`) run as a
+  scratch instance on a loopback port with its own cache and config directories, pointed at this
+  branch's `llama-cpp-vulkan`, behind the gated harness hand-off.
 - The committed `smoke.sh` was hardened (cleanup, port and backend checks) after the measured runs;
   the request and measurement logic is unchanged.
 
@@ -69,14 +70,26 @@ Single runs, one request each; 216 generated tokens (text) and 43 (image).
 
 ### Lemonade's architecture allowlist
 
-lemonade's HF-variant pull path checks GGUF architectures against a static allowlist
-(`llamacpp_architectures_generated.h`) that has no `inkling2_loop`, so it would refuse this model
-as incompatible with llama.cpp even though b12653 loads it. This PR adds the entry in
-`pkgs/lemonade`. Verified by build only, not by pulling the model.
+lemonade's HF-variant pull path (`GET /api/v1/pull/variants`) checks GGUF architectures against a
+static allowlist (`llamacpp_architectures_generated.h`) that has no `inkling2_loop`. Same request
+against two scratch `lemond` instances, Strix Halo (gfx1151):
+
+- Without this PR's allowlist entry: `Repository ggml-org/Inkling-2-Mini-GGUF is not compatible with
+  llama.cpp: GGUF architecture 'inkling2_loop' is not supported by Lemonade's shipped llama.cpp
+  backends`.
+- With it: the repository's variants (Q8_0, BF16, IQ4_NL) and mmproj files are listed.
+
+The plain `POST /api/v1/pull` with an explicit checkpoint is not gated: the unpatched build also
+started downloading.
+
+With the entry, `POST /api/v1/pull` of `ggml-org/Inkling-2-Mini-GGUF:IQ4_NL` succeeded, `/api/v1/load`
+(llamacpp, Vulkan) reported the model ready, and a chat completion through lemond's OpenAI API gave the
+same coherent Paris answer: decode 35.9 t/s, 216 tokens (single request, Vulkan, gfx1151). The ROCm
+backend and the image prompt were not run through lemond.
 
 ## Not measured
 
-- End-to-end through lemond.
+- Through lemond: the ROCm backend and the image prompt (Vulkan text only).
 - gfx1150.
 - The Q8_0 quant of the model.
 - Whether #32704 (the loop-architecture fix) is needed: only b12653, which has both PRs, was
