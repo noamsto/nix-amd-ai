@@ -12,8 +12,10 @@ steps=${STEPS:-40}
 mkdir -p "$out"
 
 dev=$(printf "%s\n" /sys/class/drm/card*/device | while read -r d; do [ -r "$d/mem_info_gtt_used" ] && echo "$d" && break; done)
+[ -n "$dev" ] || { echo "lora: no amdgpu mem_info device found" >&2; exit 1; }
 used() { echo $(($(cat "$dev/mem_info_gtt_used") + $(cat "$dev/mem_info_vram_used"))); }
 base=$(used)
+case $base in '' | *[!0-9]*) echo "lora: non-numeric baseline '$base'" >&2; exit 1 ;; esac
 load_start=$(cut -d" " -f1 /proc/loadavg)
 (
     peak=0
@@ -45,6 +47,8 @@ start=$(date +%s)
     >"$out/train.log" 2>&1
 rc=$?
 end=$(date +%s)
+kill "$sampler" 2>/dev/null
+wait "$sampler" 2>/dev/null
 {
     echo "rc=$rc"
     echo "wall_s=$((end - start))"

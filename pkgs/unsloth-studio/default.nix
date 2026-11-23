@@ -2,6 +2,7 @@
   lib,
   buildFHSEnv,
   writeShellScript,
+  writeText,
   runCommand,
   fetchurl,
   uv,
@@ -29,9 +30,10 @@
 
   torchIndex = "https://repo.amd.com/rocm/whl/${target}/";
 
-  # Upstream's installer is served unpinned and its --package flag takes a
-  # name only, so fetch it by commit: the commit fixes the unsloth floor
-  # (version) and the torch routing; PyPI still supplies the newest release.
+  # Upstream's installer is served unpinned, so fetch it by commit: the commit
+  # pins the installer itself and the torch routing. Its normal path still runs
+  # an unversioned `uv pip install unsloth`; UV_CONSTRAINT (below) pins unsloth
+  # and unsloth-zoo to `version`. Transitive wheels are not hash-pinned.
   installer = fetchurl {
     url = "https://raw.githubusercontent.com/unslothai/unsloth/078b962742873cf5dcf2b33cb1aee806f4152afe/install.sh";
     hash = "sha256-NepeusGNaGDEbra05Dq/YFKDRIcFMHEyHqXYLl4KeFU=";
@@ -43,7 +45,11 @@
     ln -s ${llama-cpp-vulkan}/bin/llama-server $out/llama-server
   '';
 
-  pin = ".pin-${version}-${target}";
+  constraints = writeText "unsloth-constraints.txt" "unsloth==${version}\nunsloth-zoo==${version}\n";
+
+  # The store path basename leads with the installer's content hash, so the
+  # stamp changes whenever the installer does.
+  pin = ".pin-${version}-${target}-${builtins.substring 0 12 (baseNameOf (toString installer))}";
 
   runScript = writeShellScript "unsloth-studio-run" ''
     set -euo pipefail
@@ -64,10 +70,36 @@
     # Hugging Face config/tokenizer fetches fail certificate verification.
     export SSL_CERT_FILE=${cacert}/etc/ssl/certs/ca-bundle.crt
 
+    export UV_CONSTRAINT=${constraints}
+
     if [ ! -e "$state/${pin}" ]; then
-      bash ${installer} \
-        --with-llama-cpp-dir ${llamaDir}
-      touch "$state/${pin}"
+      lock="$state/.install.lock"
+      waited=0
+      until mkdir "$lock" 2>/dev/null; do
+        if [ "$waited" -ge 1800 ]; then
+          echo "unsloth-studio: install lock $lock held for 30 min; remove it if no other instance is installing" >&2
+          exit 1
+        fi
+        sleep 5
+        waited=$((waited + 5))
+      done
+      trap 'rmdir "$lock"' EXIT
+      if [ ! -e "$state/${pin}" ]; then
+        bash ${installer} \
+          --with-llama-cpp-dir ${llamaDir}
+        touch "$state/${pin}"
+      fi
+      rmdir "$lock"
+      trap - EXIT
+    fi
+
+    # The installer links its llama.cpp dir at this fixed path, outside
+    # UNSLOTH_STUDIO_HOME; refresh it so a GC or flake bump cannot leave it
+    # pointing at a deleted store path.
+    llama_link="$HOME/.unsloth/llama.cpp"
+    if [ ! -e "$llama_link" ] || [ -L "$llama_link" ]; then
+      mkdir -p "$HOME/.unsloth"
+      ln -sfn ${llamaDir} "$llama_link"
     fi
 
     if [ "$#" -eq 0 ]; then
