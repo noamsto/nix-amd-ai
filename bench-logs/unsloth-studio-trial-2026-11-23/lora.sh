@@ -22,7 +22,7 @@ load_start=$(cut -d" " -f1 /proc/loadavg)
     while :; do
         u=$(used)
         [ "$u" -gt "$peak" ] && peak=$u
-        echo "$peak" >"$out/peak.bytes"
+        echo "$peak" >"$out/peak.bytes.tmp" && mv "$out/peak.bytes.tmp" "$out/peak.bytes"
         sleep 1
     done
 ) &

@@ -8,6 +8,7 @@
   uv,
   git,
   curl,
+  util-linux,
   cmake,
   gcc,
   gnumake,
@@ -73,32 +74,33 @@
     export UV_CONSTRAINT=${constraints}
 
     if [ ! -e "$state/${pin}" ]; then
-      lock="$state/.install.lock"
-      waited=0
-      until mkdir "$lock" 2>/dev/null; do
-        if [ "$waited" -ge 1800 ]; then
-          echo "unsloth-studio: install lock $lock held for 30 min; remove it if no other instance is installing" >&2
-          exit 1
-        fi
-        sleep 5
-        waited=$((waited + 5))
-      done
-      trap 'rmdir "$lock"' EXIT
+      exec 9>"$state/.install.lock"
+      flock -w 1800 9 || {
+        echo "unsloth-studio: another instance has held the install lock for 30 min" >&2
+        exit 1
+      }
       if [ ! -e "$state/${pin}" ]; then
         bash ${installer} \
           --with-llama-cpp-dir ${llamaDir}
         touch "$state/${pin}"
       fi
-      rmdir "$lock"
-      trap - EXIT
+      exec 9>&-
     fi
 
-    # The installer links its llama.cpp dir at this fixed path, outside
-    # UNSLOTH_STUDIO_HOME; refresh it so a GC or flake bump cannot leave it
-    # pointing at a deleted store path.
-    llama_link="$HOME/.unsloth/llama.cpp"
+    # The installer links its llama.cpp dir under UNSLOTH_HOME if set, else
+    # under the state dir when that is not the default, else ~/.unsloth;
+    # refresh it so a GC or flake bump cannot leave it pointing at a deleted
+    # store path.
+    if [ -n "''${UNSLOTH_HOME:-}" ]; then
+      root="$UNSLOTH_HOME"
+    elif [ "$state" != "$HOME/.unsloth/studio" ]; then
+      root="$state"
+    else
+      root="$HOME/.unsloth"
+    fi
+    mkdir -p "$root"
+    llama_link="$root/llama.cpp"
     if [ ! -e "$llama_link" ] || [ -L "$llama_link" ]; then
-      mkdir -p "$HOME/.unsloth"
       ln -sfn ${llamaDir} "$llama_link"
     fi
 
@@ -115,6 +117,7 @@ in
       uv
       git
       curl
+      util-linux
       cmake
       gcc
       gnumake

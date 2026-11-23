@@ -5,7 +5,7 @@
 # This CHANGES the admin password of the instance in UNSLOTH_STUDIO_HOME, so that variable must be
 # set explicitly, to a scratch install (exit 2 otherwise).
 # Usage: UNSLOTH_STUDIO_HOME=<scratch dir> health-probe.sh <unsloth-studio> [port]
-set -u
+set -u -o pipefail
 bin=$1
 port=${2:-8899}
 [ -n "${UNSLOTH_STUDIO_HOME:-}" ] || { echo "health-probe: set UNSLOTH_STUDIO_HOME to a scratch install" >&2; exit 2; }
@@ -57,7 +57,7 @@ tok=$(jq -n --arg c "$boot" --arg n "$new" '{current_password:$c,new_password:$n
 set_token "$tok"
 
 for _ in 1 2 3 4 5 6; do
-    curl -s "localhost:$port/api/health?detect_hardware=true" -H @"$hdr" |
-        jq -c '{chat_only,hardware_detecting,version}'
+    curl -sf "localhost:$port/api/health?detect_hardware=true" -H @"$hdr" |
+        jq -c '{chat_only,hardware_detecting,version}' || { echo "health-probe: health poll failed" >&2; exit 1; }
     sleep 4
 done
