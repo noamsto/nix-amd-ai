@@ -36,8 +36,13 @@ for _ in $(seq 1 60); do
 done
 [ -n "$up" ] || { echo "health-probe: Studio did not come up" >&2; exit 1; }
 
-boot=$(cat "$home/auth/.bootstrap_password") || { echo "health-probe: bootstrap file unreadable" >&2; exit 1; }
-new=$(head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n')
+boot_file=$home/auth/.bootstrap_password
+[ -r "$boot_file" ] || { echo "health-probe: bootstrap file unreadable" >&2; exit 1; }
+new_file=$work/new_password
+(
+    umask 077
+    head -c 16 /dev/urandom | od -An -tx1 | tr -d ' \n' >"$new_file"
+)
 
 # Bodies go to curl on stdin and the bearer header via a 0600 file, never argv.
 hdr=$work/hdr
@@ -47,11 +52,11 @@ hdr=$work/hdr
 )
 set_token() { printf 'authorization: Bearer %s\n' "$1" >"$hdr"; }
 
-tok=$(jq -n --arg p "$boot" '{username:"unsloth",password:$p}' |
+tok=$(jq -n --rawfile p "$boot_file" '{username:"unsloth",password:($p|rtrimstr("\n"))}' |
     curl -s -X POST "localhost:$port/api/auth/login" -H 'content-type: application/json' -d @- | jq -r .access_token)
 [ -n "$tok" ] && [ "$tok" != null ] || { echo "health-probe: login returned no token" >&2; exit 1; }
 set_token "$tok"
-tok=$(jq -n --arg c "$boot" --arg n "$new" '{current_password:$c,new_password:$n}' |
+tok=$(jq -n --rawfile c "$boot_file" --rawfile n "$new_file" '{current_password:($c|rtrimstr("\n")),new_password:$n}' |
     curl -s -X POST "localhost:$port/api/auth/change-password" -H @"$hdr" -H 'content-type: application/json' -d @- | jq -r .access_token)
 [ -n "$tok" ] && [ "$tok" != null ] || { echo "health-probe: password change returned no token" >&2; exit 1; }
 set_token "$tok"
