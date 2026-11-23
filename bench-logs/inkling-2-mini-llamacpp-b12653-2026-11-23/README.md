@@ -17,6 +17,8 @@ Baseline: nixpkgs' llama.cpp build 12110.
   (`-ngl 99 -c 8192 --jinja`) behind the same gated harness hand-off, **not** through lemond:
   loading through lemond would have meant registering the model in the host's running service,
   which was out of bounds.
+- The committed `smoke.sh` was hardened (cleanup, port and backend checks) after the measured runs;
+  the request and measurement logic is unchanged.
 
 ## 1. Flash-Next MTP regression check
 
@@ -44,9 +46,11 @@ was meant to be six interleaved rows but was cut short after three (runs 5-7: 12
 12110) by a memory-pressure kill of the runner; the remaining rows have no results.
 
 MTP-on mean: 12110 **42.5** t/s (range 38.6-47.3, four runs), b12653 **40.1** t/s (range
-37.2-41.9, three runs). The mean gap is -5.5%, but the ranges overlap heavily and the
-interleaved pairs show no consistent drop (12110 40.9 vs b12653 41.3; the next pair's b12653
-row was never measured). MTP-off is identical (about 23.7). **The ROCm gap is within run-to-run
+37.2-41.9, three runs). The mean gap is -5.5%, but the ranges overlap heavily.
+b12653 was slower in two of three adjacent ROCm pairs (12110 43.0 vs b12653 37.2, -13.5%;
+b12653 41.9 vs 12110 47.3, -11.4%) and level in the third (12110 40.9 vs b12653 41.3, +1.0%);
+with 12110 alone spanning 38.6-47.3, three runs cannot separate this from noise. MTP-off is
+level (mean 23.5 on 12110 vs 23.7 on b12653). **The ROCm gap is within run-to-run
 noise and not proven either way.** Vulkan shows no regression.
 
 The 24.0 / 40.4 ROCm and 27.4 / 42.1 Vulkan figures in

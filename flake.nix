@@ -97,14 +97,14 @@
     # bakes build 12110 into -DLLAMA_BUILD_NUMBER), so pin src to a newer
     # upstream tag on top of its derivation. lemonade's backend_versions.json
     # is built from `version` as "b${version}", so `version` is the build
-    # number. `pinBuildNumber` and `pinCommit` move together with `pinTag` on
-    # the next bump -- there is no single source of truth to derive them from
+    # number, derived from `pinTag`. `pinCommit` and the `src` hash move together
+    # with `pinTag` on the next bump -- `pinCommit` can't be derived
     # (fetchFromGitHub's `src.rev` is just the tag we passed in, not the
     # resolved commit). Drop the pin, don't raise it, once nixpkgs catches up:
     # the assert fails eval when nixpkgs' own build is newer than the pin.
     llamaCppPin = pkgs: pkg: let
       pinTag = "b12653";
-      pinBuildNumber = "12653";
+      pinBuildNumber = pkgs.lib.removePrefix "b" pinTag;
       pinCommit = "7d9b931";
       prefix = "-DLLAMA_BUILD_NUMBER:STRING=";
       nixpkgsBuild = pkgs.lib.toInt (pkgs.lib.removePrefix prefix (builtins.head (builtins.filter (pkgs.lib.hasPrefix prefix) pkg.cmakeFlags)));

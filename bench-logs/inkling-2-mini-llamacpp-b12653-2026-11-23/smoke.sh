@@ -11,8 +11,17 @@ set -euo pipefail
 port=${PORT:-18080}
 work=$(mktemp -d)
 srv=
-cleanup() { [ -z "$srv" ] || { kill "$srv" 2>/dev/null; wait "$srv" 2>/dev/null || true; }; rm -rf -- "$work"; }
-trap cleanup EXIT INT TERM
+fail=0
+# shellcheck disable=SC2329 # invoked via trap
+cleanup() { if [ -n "$srv" ]; then kill "$srv" 2>/dev/null || true; wait "$srv" 2>/dev/null || true; srv=; fi; rm -rf -- "$work"; }
+trap 'cleanup; exit 143' TERM
+trap 'cleanup; exit 130' INT
+trap cleanup EXIT
+
+if curl -fsS "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+    echo "port $port already in use" >&2
+    exit 1
+fi
 
 # 64x64 solid red PNG, no image tooling needed.
 python3 -I - "$work/red.png" <<'PY'
@@ -27,26 +36,41 @@ PY
 img=$(base64 -w0 "$work/red.png")
 
 ask() { # name, json body -> prints reply text and decode t/s
-    curl -fsS "http://127.0.0.1:$port/v1/chat/completions" -H 'Content-Type: application/json' -d "$2" |
+    curl -fsS --max-time 300 "http://127.0.0.1:$port/v1/chat/completions" -H 'Content-Type: application/json' -d "$2" |
         jq -r --arg n "$1" '"\($n): decode \(.timings.predicted_per_second|.*10|round/10) t/s, prompt \(.timings.prompt_per_second|.*10|round/10) t/s, \(.usage.completion_tokens) tokens\n  reply: \((.choices[0].message.content // "")|gsub("\n";" ")|.[0:300])\n  reasoning: \((.choices[0].message.reasoning_content // "")|gsub("\n";" ")|.[0:200])"'
 }
 
 for backend in ${BACKENDS:-vulkan rocm}; do
-    bin=$VULKAN_BIN
-    [ "$backend" = rocm ] && bin=$ROCM_BIN
+    case $backend in
+        vulkan) bin=$VULKAN_BIN ;;
+        rocm) bin=$ROCM_BIN ;;
+        *) echo "unknown backend: $backend" >&2; exit 2 ;;
+    esac
     echo "=== $backend: $("$bin/bin/llama-server" --version 2>&1 | grep -i '^version')"
-    "$bin/bin/llama-server" -m "$GGUF" --mmproj "$MMPROJ" -ngl 99 -c 8192 --no-webui --port "$port" --jinja >"$work/$backend.log" 2>&1 &
+    setpriv --pdeathsig KILL -- "$bin/bin/llama-server" -m "$GGUF" --mmproj "$MMPROJ" -ngl 99 -c 8192 --no-webui --port "$port" --jinja >"$work/$backend.log" 2>&1 &
     srv=$!
+    ready=0
     for _ in $(seq 1 180); do
-        curl -fsS "http://127.0.0.1:$port/health" >/dev/null 2>&1 && break
-        kill -0 "$srv" 2>/dev/null || { echo "$backend: server exited"; tail -20 "$work/$backend.log"; break; }
-        sleep 5
+        if curl -fsS --max-time 10 "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
+            ready=1
+            break
+        fi
+        kill -0 "$srv" 2>/dev/null || { echo "$backend: server exited"; break; }
+        sleep 5 & wait $!
     done
-    if curl -fsS "http://127.0.0.1:$port/health" >/dev/null 2>&1; then
-        ask "$backend text" '{"max_tokens":512,"temperature":0,"messages":[{"role":"user","content":"In two sentences, what is the capital of France and why is it famous?"}]}' || true
-        ask "$backend image" "{\"max_tokens\":64,\"temperature\":0,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What colour is this image? One word.\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,$img\"}}]}]}" || true
+    if [ "$ready" = 0 ]; then
+        echo "$backend: not healthy after 900 s"
+        tail -20 "$work/$backend.log"
+        fail=1
+    elif kill -0 "$srv" 2>/dev/null; then
+        ask "$backend text" '{"max_tokens":512,"temperature":0,"messages":[{"role":"user","content":"In two sentences, what is the capital of France and why is it famous?"}]}' || fail=1
+        ask "$backend image" "{\"max_tokens\":64,\"temperature\":0,\"messages\":[{\"role\":\"user\",\"content\":[{\"type\":\"text\",\"text\":\"What colour is this image? One word.\"},{\"type\":\"image_url\",\"image_url\":{\"url\":\"data:image/png;base64,$img\"}}]}]}" || fail=1
+    else
+        echo "$backend: server died after becoming healthy"
+        fail=1
     fi
     kill "$srv" 2>/dev/null || true
     wait "$srv" 2>/dev/null || true
     srv=
 done
+exit "${fail:-0}"
