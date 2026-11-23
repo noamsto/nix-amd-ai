@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# One small LoRA fine-tune through the unsloth-studio wrapper, with GPU memory sampling.
+# Studio only accepts an output dir under its own outputs/ root, so the adapter lands there.
+# Run under gpu-gate.sh:  ./gpu-gate.sh unsloth-lora ./lora.sh <unsloth-studio> <outdir>
+# Peak memory is the sampled maximum of amdgpu GTT+VRAM minus the idle baseline taken before the run,
+# so a resident model server on the same GPU is excluded.
+set -u
+bin=$1
+out=$2
+model=${MODEL:-unsloth/Llama-3.2-1B-Instruct}
+steps=${STEPS:-40}
+mkdir -p "$out"
+
+dev=$(printf "%s\n" /sys/class/drm/card*/device | while read -r d; do [ -r "$d/mem_info_gtt_used" ] && echo "$d" && break; done)
+used() { echo $(($(cat "$dev/mem_info_gtt_used") + $(cat "$dev/mem_info_vram_used"))); }
+base=$(used)
+load_start=$(cut -d" " -f1 /proc/loadavg)
+(
+    peak=0
+    while :; do
+        u=$(used)
+        [ "$u" -gt "$peak" ] && peak=$u
+        echo "$peak" >"$out/peak.bytes"
+        sleep 1
+    done
+) &
+sampler=$!
+trap 'kill "$sampler" 2>/dev/null' EXIT
+
+start=$(date +%s)
+"$bin" train \
+    --model "$model" \
+    --dataset yahma/alpaca-cleaned \
+    --format-type alpaca \
+    --training-type lora \
+    --no-load-in-4bit \
+    --max-seq-length 512 \
+    --batch-size 2 \
+    --gradient-accumulation-steps 4 \
+    --max-steps "$steps" \
+    --warmup-steps 5 \
+    --learning-rate 2e-4 \
+    --lora-r 16 --lora-alpha 16 \
+    --output-dir unsloth-studio-trial \
+    >"$out/train.log" 2>&1
+rc=$?
+end=$(date +%s)
+{
+    echo "rc=$rc"
+    echo "wall_s=$((end - start))"
+    echo "load1_start=$load_start"
+    echo "load1_end=$(cut -d" " -f1 /proc/loadavg)"
+    echo "baseline_bytes=$base"
+    echo "peak_bytes=$(cat "$out/peak.bytes")"
+} >"$out/summary.txt"
+exit "$rc"

@@ -68,3 +68,4 @@ llama.cpp's HIP path never adds to the include search. Passing it via
 Build was `llama-cpp-mtp` 9213 against ROCm 7.2.2 / rocWMMA 7.2.2, all fourteen
 `gfx*` targets. With that flag the build completes (loop-unroll warnings from
 `fattn-tile.cuh` only) — and then loses 42% of `pp4096`.
+| [`unsloth-studio-trial-2026-11-23`](unsloth-studio-trial-2026-11-23/) | Strix Halo (gfx1151) | `unsloth-studio` wrapper (#368): installer routing, Studio health, one 40-step LoRA of a 1B model on ROCm torch 2.11 | **Works** for a small bf16 LoRA — loss 1.95 → 1.14, no NaN, peak +3.9 GiB; step time measured under heavy host load, not a speed figure. |
