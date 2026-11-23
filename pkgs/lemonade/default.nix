@@ -178,6 +178,19 @@ in stdenv.mkDerivation {
                                 }
                                 return true;'
 
+    # The HF-variant pull path gates GGUF architectures through this static,
+    # sorted allowlist. Our llama-cpp is pinned past lemonade's shipped refs and
+    # loads inkling2_loop (Inkling-2-Mini), which the list lacks, so pulls
+    # would be refused. Keep byte-wise sorted (binary_search) and bump the size.
+    substituteInPlace src/cpp/include/lemon/llamacpp_architectures_generated.h \
+      --replace-fail \
+        'std::array<std::string_view, 162> names' \
+        'std::array<std::string_view, 163> names' \
+      --replace-fail \
+        '"internlm2",' \
+        '"inkling2_loop",
+    "internlm2",'
+
     # Never fetch lemonade's downloaded "TheRock" ROCm runtime: it prepends its
     # lib/ to LD_LIBRARY_PATH for rocm-stable, shadowing our nix sd-server /
     # llama-server's own ROCm libs (same sonames) with TheRock copies that need

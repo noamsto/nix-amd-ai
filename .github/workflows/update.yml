@@ -146,9 +146,9 @@ jobs:
           LLAMA_PIN_REQUIRED_TAG: ${{ steps.check.outputs.llama_pin_required_tag }}
         run: |
           TITLE="llama.cpp: Lemonade pins a newer build than this repo ships"
-          BODY="Lemonade \`$LEM_LATEST\` pins llama.cpp \`$LLAMA_PIN_REQUIRED_TAG\` (\`backend_versions.json\`, \`llamacpp.vulkan\`); this repo ships nixpkgs' llama-cpp at build \`$LLAMA_PIN_CURRENT\`."$'\n\n'
+          BODY="Lemonade \`$LEM_LATEST\` pins llama.cpp \`$LLAMA_PIN_REQUIRED_TAG\` (\`backend_versions.json\`, \`llamacpp.vulkan\`); this repo ships llama.cpp at build \`$LLAMA_PIN_CURRENT\`."$'\n\n'
           BODY+="Compare: https://github.com/ggml-org/llama.cpp/compare/b$LLAMA_PIN_CURRENT...$LLAMA_PIN_REQUIRED_TAG"$'\n\n'
-          BODY+="The build follows nixpkgs' \`llama-cpp\` (\`llamaCppBuildVersion\` in \`flake.nix\` only reports its build number), so it catches up when the nixpkgs lock does. If MTP or another fix needs the newer build sooner, pin \`src\` and the build number in that helper after the halo MTP bench, which CI cannot run."$'\n\n'
+          BODY+="The build is pinned in \`llamaCppPin\` in \`flake.nix\`, past nixpkgs' \`llama-cpp\`. To catch up, move \`pinTag\`, \`pinCommit\` and the \`src\` hash together after a GPU MTP bench, which CI cannot run. Once nixpkgs' own build passes the pin, the pin must be dropped, not raised: an assert fails eval until it is."$'\n\n'
           BODY+="Report-only: no PR is opened for this. The issue closes itself once the shipped build is at least Lemonade's."$'\n'
           existing=$(gh issue list --state open --search "\"$TITLE\" in:title" \
             --json number,title \
