@@ -40,10 +40,17 @@
     hash = "sha256-NepeusGNaGDEbra05Dq/YFKDRIcFMHEyHqXYLl4KeFU=";
   };
 
-  # The installer wants a directory holding `llama-server` at its root.
+  # The installer wants a directory holding `llama-server` at its root. GGUF
+  # export also reads `llama-quantize` and the converter scripts from there; the
+  # scripts come from the source, because the package's bin/ entries are wrapper
+  # scripts, and `gguf-py` and `conversion/` must sit beside the entrypoint.
   llamaDir = runCommand "unsloth-studio-llama-server" {} ''
     mkdir -p $out
     ln -s ${llama-cpp-vulkan}/bin/llama-server $out/llama-server
+    ln -s ${llama-cpp-vulkan}/bin/llama-quantize $out/llama-quantize
+    for f in convert_hf_to_gguf.py convert_lora_to_gguf.py conversion gguf-py; do
+      ln -s ${llama-cpp-vulkan.src}/$f $out/$f
+    done
   '';
 
   constraints = writeText "unsloth-constraints.txt" "unsloth==${version}\nunsloth-zoo==${version}\n";
@@ -100,9 +107,27 @@
     fi
     mkdir -p "$root"
     llama_link="$root/llama.cpp"
-    if [ ! -e "$llama_link" ] || [ -L "$llama_link" ]; then
-      ln -sfn ${llamaDir} "$llama_link"
+    # GGUF export patches the converter and its gguf-py in place, so the dir
+    # must be writable: binaries stay store symlinks, the Python sources are
+    # copied. The marker file identifies a dir this wrapper owns; a user's own
+    # llama.cpp checkout is left alone.
+    marker="$llama_link/.unsloth-studio-llamadir"
+    if [ ! -e "$llama_link" ] || [ -L "$llama_link" ] || [ -f "$marker" ]; then
+      if [ "$(cat "$marker" 2>/dev/null)" != ${llamaDir} ]; then
+        rm -rf "$llama_link"
+        mkdir -p "$llama_link"
+        for f in llama-server llama-quantize; do
+          ln -s ${llamaDir}/$f "$llama_link/$f"
+        done
+        for f in convert_hf_to_gguf.py convert_lora_to_gguf.py conversion gguf-py; do
+          cp -rL --no-preserve=mode ${llamaDir}/$f "$llama_link/$f"
+        done
+        echo ${llamaDir} >"$marker"
+      fi
     fi
+    # Unsloth resolves its llama.cpp dir from the real home otherwise, even
+    # when the state dir is elsewhere.
+    export UNSLOTH_LLAMA_CPP_PATH="$llama_link"
 
     if [ "$#" -eq 0 ]; then
       set -- studio -p 8888
