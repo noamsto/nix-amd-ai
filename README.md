@@ -28,7 +28,7 @@ On Apple Silicon (`aarch64-darwin`) the same flake also serves the cross-platfor
 | `vllm-rocm` | Experimental vLLM ROCm backend, relocated from a prebuilt bundle; opt-in via `enableVllm` (see [vLLM](#opt-in-vllm-rocm-backend)) | Repackaged from the [lemonade-sdk/vllm-rocm](https://github.com/lemonade-sdk/vllm-rocm) prebuilt |
 | `ds4` | DeepSeek V4 inference engine, Strix Halo (`gfx1151`) ROCm backend (`ds4`, `ds4-server`, `ds4-bench`, `ds4-eval`, `ds4-agent`) | Built from [antirez/ds4](https://github.com/antirez/ds4) |
 | `strata` | Qwen3.8-Flash-Next engine on TheRock ROCm 7.14.1, Strix Halo (`gfx1151`); opt-in lemond backend via `hardware.amd-npu.strata` ([section](#opt-in-strata-backend-strix-halo)) | Built from [Niko1221/Strata](https://github.com/Niko1221/Strata) |
-| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-cli`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
+| `gaia` | AMD GAIA agent framework launcher (`gaia`, `gaia-mcp`) | `uvx` wrapper around [amd/gaia](https://github.com/amd/gaia) |
 | `unsloth-studio` | Unsloth Studio (local UI to run and fine-tune LLMs) in an FHS env with AMD ROCm torch; opt-in, not built by CI ([section](#opt-in-unsloth-studio-strix-halo)) | `buildFHSEnv` wrapper around [unslothai/unsloth](https://github.com/unslothai/unsloth)'s installer (AGPL-3.0) |
 | `benchmark` | Multi-backend benchmark harness | `nix run .#benchmark` |
 
@@ -494,7 +494,7 @@ nix run .#gaia -- --cli            # interactive CLI chat
 nix shell .#gaia -c gaia-mcp       # MCP bridge server
 ```
 
-It exports the three console scripts the wheel declares — `gaia`, `gaia-cli`, `gaia-mcp`. 0.24.0 deleted the thirteen per-task agents (`analyst`, `blender`, `browser`, `code`, `doc-search`, `docker`, `docqa`, `emr`, `fileio`, `jira`, `routing`, `sd`, `summarize`), so there is no per-task command left to invoke: install the flagship agent with `gaia hub install gaia --trust` and it loads the matching `SKILL.md`.
+It exports the two console scripts the wheel declares — `gaia`, `gaia-mcp`. 0.24.0 deleted the thirteen per-task agents (`analyst`, `blender`, `browser`, `code`, `doc-search`, `docker`, `docqa`, `emr`, `fileio`, `jira`, `routing`, `sd`, `summarize`), so there is no per-task command left to invoke: install the flagship agent with `gaia hub install gaia --trust` and it loads the matching `SKILL.md`.
 
 The wrapper pre-sets `LEMONADE_BASE_URL=http://localhost:13305/api/v1` (matching the module's default `lemonade.port`); override the env var to point at a different host. Behind the scenes it runs `uvx --from "amd-gaia[ui]==<version>" <entry>` — so the first invocation downloads the wheel and ~120 packages into `~/.cache/uv` (~30 s, with progress visible) and subsequent runs reuse it.
 

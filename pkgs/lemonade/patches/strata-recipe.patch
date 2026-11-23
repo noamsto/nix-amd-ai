@@ -43,7 +43,7 @@
 +    },
 +    /*about*/ {
 +        {"rocm", {"Strata, a Qwen3.8-Flash-Next engine for AMD Strix Halo, run through a Nix-built shim.",
-+                  "Niko1221", "Niko1221", "", "https://github.com/Niko1221/Strata"}},
++                  "Niko1221", "nix-amd-ai (Nix build)", "MIT", "https://github.com/Niko1221/Strata"}},
 +    },
 +    /*supported_modes*/ {"chat"},
 +    /*required_checkpoints*/ {"main"},
