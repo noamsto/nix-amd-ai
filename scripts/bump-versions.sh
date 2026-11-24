@@ -45,7 +45,7 @@ update_dep_hash() {
   echo "  Prefetching $field for $attr..."
   sed -i "s|$field = \"[^\"]*\"|$field = \"\"|" "$file"
   local new_hash
-  new_hash=$(nix build ".#$attr" --max-jobs 2 --cores 12 2>&1 | grep -oP 'got:\s+\K\S+' || true)
+  new_hash=$(nix build ".#$attr" 2>&1 | grep -oP 'got:\s+\K\S+' || true)
   if [ -z "$new_hash" ]; then
     echo "ERROR: could not auto-prefetch $field for $attr" >&2
     exit 1
