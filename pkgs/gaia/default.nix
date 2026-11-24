@@ -4,14 +4,15 @@
   writeShellScriptBin,
   uv,
 }: let
-  version = "0.25.4";
+  version = "0.26.0";
 
   # Upstream dropped the gaia-emr and gaia-code console scripts in 0.21.0
-  # (changelog: "drop stale gaia-emr smoke check", amd/gaia#1563). Verified
-  # against the published wheels' entry_points.txt: 0.20.0 still ships all
-  # five, 0.21.0 through 0.25.4 ship only these three. Keeping the other two
+  # (changelog: "drop stale gaia-emr smoke check", amd/gaia#1563) and gaia-cli
+  # in 0.26.0. Verified against the published wheels' entry_points.txt: 0.20.0
+  # still ships all five, 0.21.0 through 0.25.4 ship gaia, gaia-cli and
+  # gaia-mcp, 0.26.0 ships only gaia and gaia-mcp. Keeping the dropped ones
   # would generate wrappers that fail at run time with "executable not found".
-  bins = ["gaia" "gaia-cli" "gaia-mcp"];
+  bins = ["gaia" "gaia-mcp"];
 
   # GAIA reads LEMONADE_BASE_URL from .env / environ; default it to lemond's
   # in-tree port (modules/amd-npu.nix lemonade.port = 13305) so users don't

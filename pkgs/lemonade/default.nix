@@ -40,7 +40,7 @@
     owner = "lemonade-sdk";
     repo = "lemonade";
     rev = "v${version}";
-    hash = "sha256-YabSrYGjRMIVoq0sI/LQFy/hwXrMpMaHgkc+3Jtly+A=";
+    hash = "sha256-eL7vhEmcDmSuevcfW6Cxw6a9cOiKinG3eJmNojCeIDQ=";
   };
 
   web-app = callPackage ./web-app.nix {inherit src version;};
@@ -184,8 +184,8 @@ in stdenv.mkDerivation {
     # would be refused. Keep byte-wise sorted (binary_search) and bump the size.
     substituteInPlace src/cpp/include/lemon/llamacpp_architectures_generated.h \
       --replace-fail \
-        'std::array<std::string_view, 162> names' \
-        'std::array<std::string_view, 163> names' \
+        'std::array<std::string_view, 168> names' \
+        'std::array<std::string_view, 169> names' \
       --replace-fail \
         '"internlm2",' \
         '"inkling2_loop",
