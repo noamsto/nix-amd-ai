@@ -37,6 +37,23 @@ update_hash() {
   echo "  Hash updated: $new_hash"
 }
 
+# Vendored-dependency hashes (cargoHash / npmDepsHash) derive from the source
+# tarball, so they go stale with it. Build only the fixed-output deps
+# derivation: the full package would first compile or bundle everything.
+update_dep_hash() {
+  local attr="$1" file="$2" field="$3"
+  echo "  Prefetching $field for $attr..."
+  sed -i "s|$field = \"[^\"]*\"|$field = \"\"|" "$file"
+  local new_hash
+  new_hash=$(nix build ".#$attr" --max-jobs 2 --cores 12 2>&1 | grep -oP 'got:\s+\K\S+' || true)
+  if [ -z "$new_hash" ]; then
+    echo "ERROR: could not auto-prefetch $field for $attr" >&2
+    exit 1
+  fi
+  sed -i "s|$field = \"\"|$field = \"$new_hash\"|" "$file"
+  echo "  Hash updated: $new_hash"
+}
+
 # Release tags come in two shapes — `vllm<ver>+rocm<...>` nightlies and
 # `vllm-omni<ver>-rocm<...>` cuts. Both reduce to the bare version.
 vllm_version() {
@@ -80,6 +97,10 @@ if [ "$LEM_NEW" != "$LEM_OLD" ]; then
   # Linux source tarball: blank + rebuild to capture the new hash.
   sed -i 's/hash = "sha256-[^"]*"/hash = ""/' pkgs/lemonade/default.nix
   update_hash lemonade
+
+  update_dep_hash lemonade.tauri-app.cargoDeps pkgs/lemonade/tauri-app.nix cargoHash
+  update_dep_hash lemonade.web-app.npmDeps pkgs/lemonade/web-app.nix npmDepsHash
+  update_dep_hash lemonade.tauri-frontend.npmDeps pkgs/lemonade/tauri-frontend.nix npmDepsHash
 
   # macOS embeddable bundle: a fixed-output fetch, so prefetch the URL directly
   # (works on the Linux CI runner, where the aarch64-darwin package can't build).
