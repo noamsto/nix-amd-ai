@@ -4,7 +4,8 @@
 # ub, mm/fiton) must ascend in ctx so the extrapolated compute buffer can stop the series before a near-full
 # allocation wedges the GPU. A series skips when its predicted total compute buffer (device + host) exceeds GUARD_MIB;
 # with no prior row to extrapolate from, a series must start at ctx <= 8192 unless a ub-512 row of the same backend,
-# fa and ctx ran earlier in the same invocation (then 4x its total is the prediction). Meant to run as the child of the gated harness, never against the GPU directly:
+# fa and ctx ran earlier in the same invocation (then its total scaled by min(ub, 2048)/512 is the prediction; llama.cpp
+# clamps -ub to -b, default 2048). Meant to run as the child of the gated harness, never against the GPU directly:
 #
 #   LEMOND_MODEL=<resident lemond model> EXEC_DEV=gpu TARGET=<gguf> NEED_GIB=28 OUT=row.json EXEC_LOG=probe.log \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh exec -- \
@@ -15,7 +16,8 @@
 # Logs at -lv 4 (buffer sizes need it). fa is on|off|auto (auto passes no -fa flag); fiton passes --fit on instead of --fit off.
 # Output columns: backend ctx ub fa mm fiton n_ctx_train fa_enabled model_MiB kv_MiB compute_MiB host_compute_MiB status.
 # GUARD_MIB (default 24576) caps the predicted and the measured total (device + host) compute buffer.
-# DRY_RUN=1 prints the argv of every row and launches nothing.
+# DRY_RUN=1 prints the argv of every row and launches nothing; each would-run row counts as a 1 MiB result, so the dry
+# run shows the series-start skips a live run would make but never the byte guard.
 set -euo pipefail
 
 guard=${GUARD_MIB:-24576}
@@ -170,7 +172,15 @@ predict() { # key backend fa ctx ub
     fi
     if [ "$5" != 512 ]; then t1=${ref512[$2|$3|$4]:-0}; fi
     if [ "$n" = 1 ]; then t2=$(awk -v y="${ly[$key]}" -v x="$4" -v x1="${lx[$key]}" 'BEGIN { print y * x / x1 }'); fi
-    pred=$(awk -v a="$t1" -v b="$t2" 'BEGIN { p = (4 * a > b) ? 4 * a : b; if (p > 0) printf "%d", p + 0.5 }')
+    pred=$(awk -v a="$t1" -v b="$t2" -v ub="$5" \
+        'BEGIN { s = (ub < 2048 ? ub : 2048) / 512; p = (a * s > b) ? a * s : b; if (p > 0) printf "%d", p + 0.5 }')
+}
+
+record_ok() { # total MiB of a finished (or, in a dry run, nominal) row of the current key
+    if [ "${n_ok[$key]:-0}" -ge 1 ]; then px[$key]=${lx[$key]} py[$key]=${ly[$key]}; fi
+    lx[$key]=$ctx ly[$key]=$1
+    n_ok[$key]=$(("${n_ok[$key]:-0}" + 1))
+    if [ "$ub" = 512 ]; then ref512[$backend|$fa|$ctx]=$1; fi
 }
 
 emit() { # status
@@ -202,7 +212,7 @@ for i in "${!r_backend[@]}"; do
         emit "skipped(predicted $pred MiB)"
         continue
     fi
-    if [ "$dry" != 1 ] && [ -z "$pred" ] && [ "${n_ok[$key]:-0}" = 0 ] && [ "$ctx" -gt 8192 ]; then
+    if [ -z "$pred" ] && [ "${n_ok[$key]:-0}" = 0 ] && [ "$ctx" -gt 8192 ]; then
         dead[$key]=1
         emit "skipped(no prediction above ctx 8192)"
         continue
@@ -210,6 +220,7 @@ for i in "${!r_backend[@]}"; do
 
     if [ "$dry" = 1 ]; then
         echo "would run: setpriv --pdeathsig KILL -- ${bin[$backend]}/bin/llama-server ${args[*]}"
+        record_ok 1
         continue
     fi
 
@@ -238,10 +249,7 @@ for i in "${!r_backend[@]}"; do
     if [ "$status" = ok ] && [ "$comp" = NA ]; then status=no_compute_line; fi
     if [ "$status" = ok ]; then
         total=$(awk -v a="$comp" -v b="$host" 'BEGIN { printf "%.2f", a + (b == "NA" ? 0 : b) }')
-        if [ "${n_ok[$key]:-0}" -ge 1 ]; then px[$key]=${lx[$key]} py[$key]=${ly[$key]}; fi
-        lx[$key]=$ctx ly[$key]=$total
-        n_ok[$key]=$(("${n_ok[$key]:-0}" + 1))
-        if [ "$ub" = 512 ]; then ref512[$backend|$fa|$ctx]=$total; fi
+        record_ok "$total"
         if over_guard "$total"; then dead[$key]=1; fi
     else
         dead[$key]=1
