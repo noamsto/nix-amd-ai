@@ -7,7 +7,7 @@
 # fa and ctx ran earlier in the same invocation (then its total scaled by min(ub, 2048)/512 is the prediction; llama.cpp
 # clamps -ub to -b, default 2048). Meant to run as the child of the gated harness, never against the GPU directly:
 #
-#   LEMOND_MODEL=<resident lemond model> EXEC_DEV=gpu TARGET=<gguf> NEED_GIB=28 OUT=row.json EXEC_LOG=probe.log \
+#   LEMOND_MODEL=<resident lemond model> EXEC_DEV=gpu TARGET=<gguf> NEED_GIB=48 OUT=row.json EXEC_LOG=probe.log \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh exec -- \
 #     env GGUF=<gguf> MMPROJ=<mmproj gguf> ROCM_BIN=<llama-cpp-rocm> VULKAN_BIN=<llama-cpp-vulkan> \
 #     bench-logs/inkling-2-mini-rocm-compute-buffer-2026-11-25/probe.sh \

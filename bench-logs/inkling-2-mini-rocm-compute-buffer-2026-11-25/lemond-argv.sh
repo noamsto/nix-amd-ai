@@ -5,7 +5,7 @@
 # llama-server argv, then unloads and stops lemond. Meant to run as the child of the gated harness, never against
 # the GPU directly:
 #
-#   LEMOND_MODEL=<resident lemond model> EXEC_DEV=gpu TARGET=<Q4_K_XL gguf> NEED_GIB=28 OUT=row.json EXEC_LOG=argv.log \
+#   LEMOND_MODEL=<resident lemond model> EXEC_DEV=gpu TARGET=<Q4_K_XL gguf> NEED_GIB=48 OUT=row.json EXEC_LOG=argv.log \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh exec -- \
 #     env LEMONADE=<lemonade pkg> ROCM_BIN=<llama-cpp-rocm> VULKAN_BIN=<llama-cpp-vulkan> HUB=<hf hub-cache dir> \
 #     bench-logs/inkling-2-mini-rocm-compute-buffer-2026-11-25/lemond-argv.sh
