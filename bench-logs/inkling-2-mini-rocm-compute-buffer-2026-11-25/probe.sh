@@ -2,7 +2,9 @@
 # Inkling-2-Mini compute-buffer probe: for each row backend:ctx:ub:fa[:mm][:fiton], start llama-server just far enough
 # to log its buffer sizes, print one TSV line of the parsed sizes, and kill it. Rows of one series (same backend, fa,
 # ub, mm/fiton) must ascend in ctx so the extrapolated compute buffer can stop the series before a near-full
-# allocation wedges the GPU. Meant to run as the child of the gated harness, never against the GPU directly:
+# allocation wedges the GPU. A series skips when its predicted total compute buffer (device + host) exceeds GUARD_MIB;
+# with no prior row to extrapolate from, a series must start at ctx <= 8192 unless a ub-512 row of the same backend,
+# fa and ctx ran earlier in the same invocation (then 4x its total is the prediction). Meant to run as the child of the gated harness, never against the GPU directly:
 #
 #   LEMOND_MODEL=<resident lemond model> EXEC_DEV=gpu TARGET=<gguf> NEED_GIB=28 OUT=row.json EXEC_LOG=probe.log \
 #     bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh exec -- \
@@ -10,8 +12,10 @@
 #     bench-logs/inkling-2-mini-rocm-compute-buffer-2026-11-25/probe.sh \
 #     rocm:4096:512:on rocm:8192:512:on rocm:16384:512:on rocm:4096:2048:off:mm
 #
-# Logs at -lv 4 (buffer sizes need it). fa is on|off|auto (auto passes no -fa flag); fiton passes --fit on instead of --fit off. GUARD_MIB (default 24576)
-# caps the predicted and the measured compute buffer. DRY_RUN=1 prints the argv of every row and launches nothing.
+# Logs at -lv 4 (buffer sizes need it). fa is on|off|auto (auto passes no -fa flag); fiton passes --fit on instead of --fit off.
+# Output columns: backend ctx ub fa mm fiton n_ctx_train fa_enabled model_MiB kv_MiB compute_MiB host_compute_MiB status.
+# GUARD_MIB (default 24576) caps the predicted and the measured total (device + host) compute buffer.
+# DRY_RUN=1 prints the argv of every row and launches nothing.
 set -euo pipefail
 
 guard=${GUARD_MIB:-24576}
@@ -99,12 +103,12 @@ if [ "$dry" != 1 ]; then
         shown[$backend]=1
         echo "# $backend: $("${bin[$backend]}/bin/llama-server" --version 2>&1 | grep -i '^version' || true)"
     done
-    printf '# backend\tctx\tub\tfa\tn_ctx_train\tfa_enabled\tmodel_MiB\tkv_MiB\tcompute_MiB\thost_compute_MiB\tstatus\n'
+    printf '# backend\tctx\tub\tfa\tmm\tfiton\tn_ctx_train\tfa_enabled\tmodel_MiB\tkv_MiB\tcompute_MiB\thost_compute_MiB\tstatus\n'
 fi
 
 # Prints one TSV line: n_ctx_train fa_enabled model kv compute host_compute (NA when absent). Only the last round of
-# model/compute buffer lines counts so a --fit probe pass does not double the sums; KV lines are summed because a
-# sliding-window cache logs a second line per device. Buffers logged after the multimodal projector starts belong to it.
+# model/compute buffer lines counts so a --fit probe pass does not double the sums (a repeated model buffer also
+# restarts the KV sums); KV lines are summed because a sliding-window cache logs a second line per device. Buffers logged after the multimodal projector starts belong to it.
 parse_log() {
     awk '
     {
@@ -112,6 +116,7 @@ parse_log() {
         if (nct == "" && match(l, /n_ctx_train[ \t]*=[ \t]*[0-9]+/)) { s = substr(l, RSTART, RLENGTH); sub(/.*=[ \t]*/, "", s); nct = s }
         if (nct == "" && match(l, /n_ctx_train \([0-9]+\)/)) { s = substr(l, RSTART, RLENGTH); gsub(/[^0-9]/, "", s); nct = s }
         if (match(l, /flash attention was auto, set to [a-z0-9]+/)) { s = substr(l, RSTART, RLENGTH); n = split(s, w, " "); fa_set = w[n] }
+        if (match(l, /flash attention (enabled|disabled)/)) { s = substr(l, RSTART, RLENGTH); n = split(s, w, " "); fa_set = w[n] }
         if (match(l, /flash_attn[ \t]*=[ \t]*[a-z0-9_]+/)) { s = substr(l, RSTART, RLENGTH); sub(/.*=[ \t]*/, "", s); fa_raw = s }
         if (l ~ /mtmd_context|mtmd_backends|alloc_compute_meta/) stop = 1
         if (stop) next
@@ -125,6 +130,7 @@ parse_log() {
             if (kind != "KV" && ((kind SUBSEP dev) in seen)) {
                 for (k in seen) { split(k, p, SUBSEP); if (p[1] == kind) delete seen[k] }
                 sum[kind] = 0; hsum[kind] = 0; gseen[kind] = 0; hseen[kind] = 0
+                if (kind == "model") { sum["KV"] = 0; hsum["KV"] = 0; gseen["KV"] = 0; hseen["KV"] = 0 }
             }
             seen[kind, dev] = 1
             if (host) { hsum[kind] += val; hseen[kind] = 1 } else { sum[kind] += val; gseen[kind] = 1 }
@@ -163,8 +169,12 @@ predict() { # key backend fa ctx ub
         return
     fi
     if [ "$5" != 512 ]; then t1=${ref512[$2|$3|$4]:-0}; fi
-    if [ "$n" = 1 ]; then t2=${ly[$key]}; fi
-    pred=$(awk -v a="$t1" -v b="$t2" 'BEGIN { p = (4 * a > 2 * b) ? 4 * a : 2 * b; if (p > 0) printf "%d", p + 0.5 }')
+    if [ "$n" = 1 ]; then t2=$(awk -v y="${ly[$key]}" -v x="$4" -v x1="${lx[$key]}" 'BEGIN { print y * x / x1 }'); fi
+    pred=$(awk -v a="$t1" -v b="$t2" 'BEGIN { p = (4 * a > b) ? 4 * a : b; if (p > 0) printf "%d", p + 0.5 }')
+}
+
+emit() { # status
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$backend" "$ctx" "$ub" "$fa" "$mm" "$fiton" "$nct" "$fae" "$model" "$kv" "$comp" "$host" "$1"
 }
 
 over_guard() { awk -v a="$1" -v g="$guard" 'BEGIN { exit !(a > g) }'; }
@@ -182,14 +192,19 @@ for i in "${!r_backend[@]}"; do
     args+=(--parallel 1 --no-webui --port "$port" --jinja -lv 4) # -lv 4: buffer sizes are not logged at the default level 3
 
     if [ -n "${dead[$key]:-}" ]; then
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$backend" "$ctx" "$ub" "$fa" "$nct" "$fae" "$model" "$kv" "$comp" "$host" "skipped(series stopped)"
+        emit "skipped(series stopped)"
         continue
     fi
 
     predict "$key" "$backend" "$fa" "$ctx" "$ub"
     if [ -n "$pred" ] && over_guard "$pred"; then
         dead[$key]=1
-        printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$backend" "$ctx" "$ub" "$fa" "$nct" "$fae" "$model" "$kv" "$comp" "$host" "skipped(predicted $pred MiB)"
+        emit "skipped(predicted $pred MiB)"
+        continue
+    fi
+    if [ "$dry" != 1 ] && [ -z "$pred" ] && [ "${n_ok[$key]:-0}" = 0 ] && [ "$ctx" -gt 8192 ]; then
+        dead[$key]=1
+        emit "skipped(no prediction above ctx 8192)"
         continue
     fi
 
@@ -222,13 +237,14 @@ for i in "${!r_backend[@]}"; do
     IFS=$'\t' read -r nct fae model kv comp host < <(parse_log "$log")
     if [ "$status" = ok ] && [ "$comp" = NA ]; then status=no_compute_line; fi
     if [ "$status" = ok ]; then
+        total=$(awk -v a="$comp" -v b="$host" 'BEGIN { printf "%.2f", a + (b == "NA" ? 0 : b) }')
         if [ "${n_ok[$key]:-0}" -ge 1 ]; then px[$key]=${lx[$key]} py[$key]=${ly[$key]}; fi
-        lx[$key]=$ctx ly[$key]=$comp
+        lx[$key]=$ctx ly[$key]=$total
         n_ok[$key]=$(("${n_ok[$key]:-0}" + 1))
-        if [ "$ub" = 512 ]; then ref512[$backend|$fa|$ctx]=$comp; fi
-        if over_guard "$comp"; then dead[$key]=1; fi
+        if [ "$ub" = 512 ]; then ref512[$backend|$fa|$ctx]=$total; fi
+        if over_guard "$total"; then dead[$key]=1; fi
     else
         dead[$key]=1
     fi
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$backend" "$ctx" "$ub" "$fa" "$nct" "$fae" "$model" "$kv" "$comp" "$host" "$status"
+    emit "$status"
 done

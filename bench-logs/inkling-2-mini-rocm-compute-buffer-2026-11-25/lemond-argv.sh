@@ -27,6 +27,7 @@ loadpid=
 cleanup() {
     if [ -n "$loadpid" ]; then kill "$loadpid" 2>/dev/null || true; wait "$loadpid" 2>/dev/null || true; loadpid=; fi
     if [ -n "$lemond" ]; then
+        if declare -F find_llama >/dev/null; then llama=$(find_llama 2>/dev/null) || llama=${llama:-}; fi
         curl -fsS --max-time 30 -X POST "$api/unload" >/dev/null 2>&1 || true
         kill "$lemond" 2>/dev/null || true
         for _ in $(seq 1 30); do kill -0 "$lemond" 2>/dev/null || break; sleep 1 & wait $!; done

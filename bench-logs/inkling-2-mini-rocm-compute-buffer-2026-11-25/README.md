@@ -14,16 +14,28 @@ pin, ROCm and Vulkan builds; Lemonade 2026.47.1. File: `unsloth/Inkling-2-Mini-G
 ## Short answer
 
 The compute buffer grows **linearly with context and with `-ub`**, and for `inkling2_loop` it is huge per
-token: with flash attention on and `-ub 512` it is **99.0 KiB per context token**. Extrapolated to the
-model's trained context (1,048,576 tokens) that is **101,564 MiB, within 0.7% of the reported 102,253 MiB**.
-So the report matches: flash attention on (the llama.cpp default, `-fa auto` resolves to on for this
-model on both backends), `-ub` at its default 512, and a context at the model's full trained window.
-lemond's default `ctx_size` is `-1` (auto), which resolves to as many tokens as free memory allows, capped
-at the trained window; its sizing reserves a few GiB for the compute buffer that does not grow with
-context, so on a machine with enough free memory auto picks the full window. Setting an explicit
-`ctx_size` (for example 131072) brings the buffer to about 12.6 GiB; no lemond or module change is
-needed to avoid the failure, though a change could keep auto from picking an unusable size (see
-Findings).
+token: with flash attention on and `-ub 512` it is **99.0 KiB per context token** (396 KiB at `-ub 2048`).
+Two natural configurations extrapolate to the reported 102,253 MiB, both with flash attention on (the
+llama.cpp default: `-fa auto` resolves to on for this model on both backends):
+
+- `-ub 512` (llama-server's default, and what lemond passes) at the model's trained context of 1,048,576
+  tokens: **101,564 MiB, 0.7% below** the report.
+- `-ub 2048` at context 262,144: **102,147 MiB, 0.1% below** (lemond only sets `-ub 2048` for its
+  `nathanw` and `halobox` backends).
+
+The reporter's `-ub`, context and backend are unknown, so neither is excluded (FA off at `-ub 512` and a
+context near 706,000 would also land there). Either way the fix is the same: a smaller context, or
+a smaller `-ub`. lemond's default `ctx_size` is `-1` (auto), which resolves to as many tokens as the free
+memory budget allows, capped at the trained window; the compute-buffer reserve it applies is a small
+constant (about 0.7 GiB for this model, from source) that does not grow with context, so with enough free
+memory auto picks the full window, and on this host it resolved to 869,891, which would also fail. Setting
+an explicit `ctx_size` (for example 131072) brings the buffer to about 12.6 GiB at `-ub 512`. No lemond
+or module change is needed to avoid the failure, though a change could keep auto from picking an unusable
+size (see Findings).
+
+Everything above ctx 32768 is extrapolated from a linear fit, and the one large-context observation we have
+(an earlier Vulkan IQ4_NL load through lemond at an auto context of 876,675, not committed) succeeded with
+far less memory growth than the fit predicts (Answer 5), so the extrapolation is unconfirmed at scale.
 
 ## Method
 
@@ -31,9 +43,14 @@ Findings).
   --fit off --parallel 1 --jinja -lv 4`, stopped as soon as the context's compute buffer is logged. `-lv 4`
   is needed: at the default level 3 this build does not log buffer sizes. The script prints only parsed
   sizes (device and host-pinned compute buffer, KV, weights). It runs a series in ascending context and
-  skips the rest of a series when the extrapolated next compute buffer, or the last measured one, exceeds
-  24 GiB (`GUARD_MIB`); no context above 32768 is allowed. Nothing near the reported 102 GiB was ever
-  allocated.
+  skips the rest of a series when the predicted next total compute buffer (device plus host-pinned), or
+  the last measured one, exceeds 24 GiB (`GUARD_MIB`); no context above 32768 is allowed. Nothing near the
+  reported 102 GiB was ever allocated. The committed script was hardened after the measured runs (the
+  prediction rules, the `mm`/`fiton` columns, the flash-attention detection for `-fa auto`, whose first
+  version printed `auto`); the request and measurement logic did not change. The ROCm ctx 32768 rows ran as
+  their own call with the earlier script, which did not yet require a series to start at ctx 8192 or below;
+  their 24 GiB guard rested on the linear extrapolation from the 16384 rows (about 19.7 GiB for the largest,
+  measured 19.8). The `-fa auto` rows are read from the log's `Flash Attention enabled` line.
 - Every GPU process ran through the repository's gated harness
   (`bench-logs/qwen38-flash-next-engine-bakeoff-2026-10-05/run.sh exec`), which unloads the resident model,
   holds the GPU signal file and restores the resident model afterwards. `NEED_GIB` was weights + 24 GiB
@@ -73,7 +90,7 @@ Other measured rows:
 - ROCm with the mmproj (`--mmproj mmproj-F16.gguf`, ctx 8192, `-ub 512`, FA on): the language-model buffers
   are unchanged (980 MiB compute); the projector adds its own 99 MiB device compute buffer.
 - ROCm `--fit on` (the llama-server default), ctx 4096: the fit pass projected 17,288 MiB for the device
-  against 106,349 MiB free and changed nothing; the real run then used 16,332 + 371 + 584 = 17,287 MiB.
+  against 106,349 MiB free and changed nothing; the real run then used 16,332 + 371 (KV plus 3.7 MiB recurrent state) + 584 = 17,287 MiB.
   Only measured at ctx 4096: `--fit on` at a large context was deliberately not run.
 - The Vulkan `-ub 2048` cells at 32768 are not comparable to their row: the scheduler split the graph
   into 34 pieces instead of 2 and placed 12.9 / 19.2 GiB of the compute buffer in host-pinned memory.
@@ -87,7 +104,7 @@ exactly linear in this range. Compute buffer in MiB ≈ intercept + slope × con
 
 | ROCm series | Slope (KiB per token) | Intercept (MiB) | At 131,072 | At 869,891 | At 1,048,576 (trained) |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| ub 512, FA on | 99.0 | 188 | 12,860 MiB (12.6 GiB) | 84,286 MiB (82.3 GiB) | **101,564 MiB (99.2 GiB)** |
+| ub 512, FA on | 99.0 | 188 | 12,860 MiB (12.6 GiB) | 84,289 MiB (82.3 GiB) | **101,564 MiB (99.2 GiB)** |
 | ub 512, FA off | 148.0 | 198 | 19,142 MiB | 125.9k MiB | 151,750 MiB (148 GiB) |
 | ub 2048, FA on | 396.0 | 771 | 51.5k MiB | 337k MiB | 406,275 MiB |
 | ub 2048, FA off | 592.0 | 815 | 76.6k MiB | 504k MiB | 607,023 MiB |
@@ -98,8 +115,10 @@ exactly linear in this range. Compute buffer in MiB ≈ intercept + slope × con
 - Nothing above ctx 32768 was run; every value in the last three columns is extrapolated from the linear
   fit, including the match to the report. The 0.7% gap (101,564 vs 102,253 MiB) is unexplained; the
   reporter's llama.cpp build and exact arguments are unknown.
-- Only FA on with `-ub` 512 lands near the report. FA off at the trained window would be 148 GiB; larger
-  `-ub` is far above it.
+- Which configuration the report used is not determined by this data: FA on at `-ub` 512 with the trained
+  window (101,564 MiB) and FA on at `-ub` 2048 with context 262,144 (102,147 MiB) both land within 1% of
+  102,253 MiB, FA off at `-ub` 512 would match at a context near 706,000, and FA off at the trained window
+  would be 148 GiB.
 
 ## Answers
 
@@ -111,14 +130,15 @@ exactly linear in this range. Compute buffer in MiB ≈ intercept + slope × con
    this model, so `-ub` is llama-server's 512. `--flash-attn on` comes from `llamacpp.args`, which the
    NixOS module sets; without it llama-server's own `-fa auto` also enables flash attention for this model
    (measured above). `ctx_size` defaults to `-1`, which lemond resolves itself (below).
-2. **How does the buffer scale?** Linearly in context and in `-ub`, table above. FA off costs 1.5× the
-   buffer of FA on at the same `-ub`.
+2. **How does the buffer scale?** Linearly in context and in `-ub`, table above. FA off costs about 1.5× per
+   token what FA on does at the same `-ub`.
 3. **Which configuration reproduces ~102 GiB?** Extrapolated, not measured: FA on, `-ub` 512, context
-   1,048,576 (the trained window) gives 101,564 MiB, 0.7% below the report. lemond's auto size is what
-   gets there without a user setting: `resolved_ctx_size` for this model on this host, with the resident
-   model unloaded and ROCm selected, is **869,891** (the earlier Vulkan IQ4_NL load in
-   the scratch-lemond IQ4_NL load in the #367 session, whose logs were not committed, resolved 876,675). That is read from lemond's options
-   endpoint, not loaded. At that size the extrapolated ROCm compute buffer is 82.3 GiB, with about 26.5
+   1,048,576 (the trained window) gives 101,564 MiB, 0.7% below the report; FA on, `-ub` 2048, context
+   262,144 gives 102,147 MiB, 0.1% below, and the data cannot tell them apart. For the first, lemond's auto
+   size is what gets there without a user setting: `resolved_ctx_size` for this model on this host, with the resident
+   model unloaded and ROCm selected, is **869,891** (an earlier scratch-lemond Vulkan IQ4_NL
+   load, for #367, whose logs were not committed, resolved 876,675). That is read from lemond's options
+   endpoint, not loaded. At that size the extrapolated ROCm compute buffer is 82.3 GiB, with about 26.8
    GiB of KV and 16 GiB of weights on top, so it would also fail on this host (104 GiB GTT). The
    reporter's free memory is unknown; auto is `min(memory budget, trained window)`, and a larger budget
    gives exactly the 1,048,576 that matches their number. Read from source, not measured: lemond's budget
@@ -129,12 +149,12 @@ exactly linear in this range. Compute buffer in MiB ≈ intercept + slope × con
    buffers to the Unsloth file to the hundredth of a MiB (584.22 / 1,772.22 MiB at 4096 / 16384 FA on,
    789.71 / 2,565.71 FA off, `-ub` 512, ROCm), so the quant does not matter. Qwen3.8-27B UD-Q4_K_XL
    (ordinary 27B, similar file size, ROCm, `-ub` 512) needs 146 / 158 MiB at 4096 / 16384 with FA on
-   (about 1 KiB per token) and 280 / 880 MiB with FA off (about 49 KiB per token): about 100× less with FA
+   (about 1 KiB per token) and 280 / 880 MiB with FA off (about 50 KiB per token): about 100× less with FA
    on and 3× less with FA off than Inkling-2-Mini.
-5. **Does Vulkan allocate the same buffer?** At `-ub` 512 yes, within 6% of ROCm in every cell (table),
+5. **Does Vulkan allocate the same buffer?** At `-ub` 512 and context up to 32768 yes: every cell is within about 6% of ROCm (table),
    with the same linear growth (99.5 KiB per token FA on). The Vulkan `-ub 2048` rows are irregular at
    32768 (split graph, above). So the size is not ROCm-specific; what differs at scale is not measured.
-   One unreconciled prior observation (from that same uncommitted #367 run): the Vulkan IQ4_NL load through lemond at auto context
+   One unreconciled prior observation (from that same uncommitted run): the Vulkan IQ4_NL load through lemond at auto context
    876,675 with `--flash-attn on` succeeded with a GTT peak growth of about 49 GiB, far below the
    extrapolated ~82 GiB compute buffer plus ~27 GiB KV. Why (for example Vulkan committing the buffer
    lazily) was not tested.
